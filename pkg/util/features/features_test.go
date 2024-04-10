@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/httpclient"
+	"github.com/DataDog/datadog-agent/pkg/httpclient"
 	"github.com/stretchr/testify/assert"
 )
 

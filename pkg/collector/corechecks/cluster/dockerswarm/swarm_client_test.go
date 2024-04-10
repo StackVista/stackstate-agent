@@ -3,14 +3,15 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package dockerswarm
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
 	"github.com/docker/docker/api/types/swarm"
 	"time"
 )

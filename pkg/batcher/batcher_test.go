@@ -1,12 +1,12 @@
 package batcher
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/health"
-	serializer2 "github.com/StackVista/stackstate-agent/pkg/serializer"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/health"
+	serializer2 "github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"

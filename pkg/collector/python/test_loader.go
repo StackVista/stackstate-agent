@@ -9,7 +9,7 @@
 package python
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"runtime"
 	"testing"
 

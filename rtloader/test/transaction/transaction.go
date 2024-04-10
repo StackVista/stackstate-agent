@@ -2,10 +2,10 @@ package testtransaction
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/DataDog/datadog-agent/pkg/health"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/topology"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,8 +13,8 @@ import (
 	"strings"
 	"unsafe"
 
-	common "github.com/StackVista/stackstate-agent/rtloader/test/common"
-	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
+	common "github.com/DataDog/datadog-agent/rtloader/test/common"
+	"github.com/DataDog/datadog-agent/rtloader/test/helpers"
 )
 
 /*

@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/DataDog/viper"
-	"github.com/StackVista/stackstate-agent/pkg/trace/test/testutil"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/DataDog/datadog-agent/pkg/trace/testutil"

@@ -10,7 +10,7 @@ package flags
 import (
 	"path/filepath"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
+	"github.com/DataDog/datadog-agent/pkg/util/winutil"
 )
 
 // DefaultConfigPath specifies the default configuration path.

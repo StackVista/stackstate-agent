@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers"
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers"
+	"github.com/DataDog/datadog-agent/pkg/config"
 
 	yaml "gopkg.in/yaml.v2"
 )

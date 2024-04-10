@@ -8,7 +8,7 @@ package collectors
 import (
 	"context"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"sort"
 	"testing"
 

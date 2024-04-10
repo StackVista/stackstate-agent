@@ -9,7 +9,7 @@ package common
 import (
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // CloudProviderName contains the inventory name of for ECS

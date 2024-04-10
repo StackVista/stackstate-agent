@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/topology"
 	v1 "k8s.io/api/core/v1"
 )
 

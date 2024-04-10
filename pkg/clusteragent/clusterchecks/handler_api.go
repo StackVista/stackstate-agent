@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
 )
 
 var errNotReady = errors.New("Startup in progress")

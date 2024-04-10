@@ -8,9 +8,9 @@
 package collector
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/python"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/collector/python"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 func pySetup(paths ...string) (pythonVersion, pythonHome, pythonPath string) {

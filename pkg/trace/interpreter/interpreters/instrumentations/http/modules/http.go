@@ -2,12 +2,12 @@ package modules
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/trace/api"
-	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
-	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	instrumentationbuilders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/trace/api"
+	config "github.com/DataDog/datadog-agent/pkg/trace/interpreter/config"
+	interpreter "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters"
+	instrumentationbuilders "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // OpenTelemetryHTTPInterpreter default span interpreter for this data structure

@@ -9,7 +9,7 @@
 package cri
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
 )
 
 func init() {

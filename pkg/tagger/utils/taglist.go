@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // TagList allows collector to incremental build a tag list

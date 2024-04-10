@@ -12,7 +12,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/kubestatemetrics/store"
+	"github.com/DataDog/datadog-agent/pkg/kubestatemetrics/store"
 
 	"github.com/prometheus/client_golang/prometheus"
 	corev1 "k8s.io/api/core/v1"

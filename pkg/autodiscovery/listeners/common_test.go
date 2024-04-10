@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/common/types"
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/common/types"
+	"github.com/DataDog/datadog-agent/pkg/config"
 
 	"github.com/stretchr/testify/assert"
 )

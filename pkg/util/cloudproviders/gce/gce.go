@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/cachedfetch"
-	"github.com/StackVista/stackstate-agent/pkg/util/common"
-	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/cachedfetch"
+	"github.com/DataDog/datadog-agent/pkg/util/common"
+	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // declare these as vars not const to ease testing

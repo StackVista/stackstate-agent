@@ -2,13 +2,13 @@ package testtelemetry
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
+	"github.com/DataDog/datadog-agent/rtloader/test/helpers"
 )
 
 func TestMain(m *testing.M) {

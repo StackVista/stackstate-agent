@@ -1,7 +1,7 @@
 package instrumentationbuilders
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
 )
 
 // StackStateSpanBuilder Map span data for the Open Telemetry service.

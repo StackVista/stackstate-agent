@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"strings"
 
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta"

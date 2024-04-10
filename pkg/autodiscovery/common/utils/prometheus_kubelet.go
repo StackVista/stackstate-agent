@@ -12,11 +12,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/common/types"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers/names"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/common/types"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers/names"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // ConfigsForPod returns the openmetrics configurations for a given pod if it matches the AD configuration

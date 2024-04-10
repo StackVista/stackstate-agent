@@ -10,7 +10,7 @@ package clusterchecks
 import (
 	"errors"
 
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
 )
 
 func getLeaderIPCallback() (types.LeaderIPCallback, error) {

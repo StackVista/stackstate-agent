@@ -11,7 +11,7 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
+	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
 )
 
 var (

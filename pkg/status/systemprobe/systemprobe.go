@@ -11,7 +11,7 @@ package systemprobe
 import (
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/process/net"
+	"github.com/DataDog/datadog-agent/pkg/process/net"
 )
 
 // GetStatus returns the expvar stats of the system probe

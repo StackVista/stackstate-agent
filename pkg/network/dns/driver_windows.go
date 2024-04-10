@@ -18,7 +18,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/StackVista/stackstate-agent/pkg/network/driver"
+	"github.com/DataDog/datadog-agent/pkg/network/driver"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 )

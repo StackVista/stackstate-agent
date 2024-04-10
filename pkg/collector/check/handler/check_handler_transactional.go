@@ -2,12 +2,12 @@ package handler
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	checkState "github.com/DataDog/datadog-agent/pkg/collector/check/state"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"sync"
 )
 

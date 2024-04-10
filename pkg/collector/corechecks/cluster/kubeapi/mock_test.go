@@ -2,7 +2,7 @@ package kubeapi
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"

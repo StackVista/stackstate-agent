@@ -23,9 +23,9 @@ import (
 	"k8s.io/kube-state-metrics/v2/pkg/allowdenylist"
 	"k8s.io/kube-state-metrics/v2/pkg/options"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster"
-	kubestatemetrics "github.com/StackVista/stackstate-agent/pkg/kubestatemetrics/builder"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster"
+	kubestatemetrics "github.com/DataDog/datadog-agent/pkg/kubestatemetrics/builder"
 )
 
 const (

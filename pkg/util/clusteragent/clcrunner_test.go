@@ -21,10 +21,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/version"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/version"
 )
 
 type dummyCLCRunner struct {

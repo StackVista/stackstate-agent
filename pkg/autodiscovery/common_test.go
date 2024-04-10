@@ -8,9 +8,9 @@ package autodiscovery
 import (
 	"context"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/listeners"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/listeners"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
 )
 
 type dummyService struct {

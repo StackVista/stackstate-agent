@@ -3,9 +3,9 @@ package transactional
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/health"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/topology"
 	"reflect"
 )
 

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // newListener creates a listening connection

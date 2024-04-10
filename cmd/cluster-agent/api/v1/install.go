@@ -15,7 +15,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent"
 )
 
 // InstallMetadataEndpoints registers endpoints for metadata

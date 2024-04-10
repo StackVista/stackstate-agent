@@ -18,8 +18,8 @@ import (
 	"github.com/fatih/color"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/config/legacy"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config/legacy"
 )
 
 // TransformationFunc type represents transformation applicable to byte slices

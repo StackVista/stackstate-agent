@@ -11,7 +11,7 @@ package tags
 import (
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // newTagListBuilder returns a tagListBuilder.

@@ -9,7 +9,7 @@
 package docker
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"testing"

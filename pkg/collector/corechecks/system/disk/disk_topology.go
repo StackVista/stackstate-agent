@@ -6,11 +6,11 @@ package disk
 import (
 	"context"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/shirou/gopsutil/disk"
 )
 

@@ -12,10 +12,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
-	ecsmeta "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata"
+	ecsmeta "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata"
 )
 
 func init() {

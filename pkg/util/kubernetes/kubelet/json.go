@@ -13,7 +13,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // jsoniterConfig mirrors jsoniter.ConfigFastest

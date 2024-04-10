@@ -10,11 +10,11 @@ package python
 
 import (
 	"encoding/json"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 /*
@@ -31,6 +31,7 @@ import "C"
 // rtloader/test/telemetry/telemetry.go
 
 // SubmitTopologyEvent is the method exposed to Python scripts to submit topology event
+//
 //export SubmitTopologyEvent
 func SubmitTopologyEvent(id *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
@@ -51,6 +52,7 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 }
 
 // SubmitRawMetricsData
+//
 //export SubmitRawMetricsData
 func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C.char, hostname *C.char, timestamp C.longlong) {
 	goCheckID := C.GoString(checkID)

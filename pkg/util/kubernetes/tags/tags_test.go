@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/DataDog/datadog-agent/pkg/util/cache"
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

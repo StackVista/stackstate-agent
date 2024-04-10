@@ -9,7 +9,7 @@ package eval
 import (
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/ast"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/ast"
 )
 
 // MacroID - ID of a Macro

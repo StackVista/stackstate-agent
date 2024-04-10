@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
 	appsV1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

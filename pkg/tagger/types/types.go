@@ -7,8 +7,8 @@
 package types
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/utils"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	"github.com/DataDog/datadog-agent/pkg/tagger/utils"
 )
 
 // Entity is an entity ID + tags.

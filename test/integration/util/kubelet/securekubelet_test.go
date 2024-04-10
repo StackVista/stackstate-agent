@@ -17,9 +17,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
-	"github.com/StackVista/stackstate-agent/test/integration/utils"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/DataDog/datadog-agent/test/integration/utils"
 )
 
 type SecureTestSuite struct {
@@ -95,7 +95,9 @@ func (suite *SecureTestSuite) TestTLSWithoutCA() {
 	assert.Contains(suite.T(), err.Error(), "impossible to reach Kubelet with host: 127.0.0.1. Please check if your setup requires kubelet_tls_verify = false")
 }
 
-/* sts
+/*
+	sts
+
 TestSecureUnknownAuthHTTPSKubelet with:
 - https
 - kubelet_fallback_to_unverified_tls

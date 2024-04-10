@@ -22,7 +22,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/metrics/servicecheck"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 )
 
 const (

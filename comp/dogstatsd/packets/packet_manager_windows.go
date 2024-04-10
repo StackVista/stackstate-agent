@@ -10,7 +10,7 @@ package packets
 import (
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // PacketManager gathers everything required to create and assemble packets.

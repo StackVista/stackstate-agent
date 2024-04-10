@@ -3,8 +3,8 @@ package transactionforwarder
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/fatih/color"
 )
 

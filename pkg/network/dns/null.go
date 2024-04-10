@@ -8,7 +8,7 @@
 package dns
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
 )
 
 // NewNullReverseDNS returns a dummy implementation of ReverseDNS

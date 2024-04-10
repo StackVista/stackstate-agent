@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/cache"
-	"github.com/StackVista/stackstate-agent/pkg/util/ecs/common"
-	ecsmeta "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/cache"
+	"github.com/DataDog/datadog-agent/pkg/util/ecs/common"
+	ecsmeta "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (

@@ -16,7 +16,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
 )
 
 func TestPathValidation(t *testing.T) {

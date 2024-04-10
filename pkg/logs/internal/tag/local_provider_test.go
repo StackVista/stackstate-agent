@@ -13,7 +13,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/stretchr/testify/assert"
 
-	coreConfig "github.com/StackVista/stackstate-agent/pkg/config"
+	coreConfig "github.com/DataDog/datadog-agent/pkg/config"
 )
 
 func TestLocalProviderShouldReturnEmptyList(t *testing.T) {

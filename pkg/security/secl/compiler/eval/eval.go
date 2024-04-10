@@ -18,7 +18,7 @@ import (
 
 	"github.com/alecthomas/participle/lexer"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/ast"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/ast"
 )
 
 // defines factor applied by specific operator

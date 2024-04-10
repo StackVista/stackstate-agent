@@ -1,9 +1,9 @@
 package interpreter
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/trace/api"
-	"github.com/StackVista/stackstate-agent/pkg/trace/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/trace/api"
+	"github.com/DataDog/datadog-agent/pkg/trace/config"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

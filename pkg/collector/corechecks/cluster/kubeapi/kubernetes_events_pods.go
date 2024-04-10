@@ -10,9 +10,9 @@ package kubeapi
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 	obj "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"

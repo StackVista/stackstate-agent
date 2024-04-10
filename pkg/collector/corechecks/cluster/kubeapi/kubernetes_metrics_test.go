@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
@@ -13,9 +14,9 @@ import (
 	"k8s.io/api/core/v1"
 	obj "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
 )
 
 func TestParseComponentStatus(t *testing.T) {

@@ -8,19 +8,19 @@
 package kubeapi
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/version"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	collectors "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/topologycollectors"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util/features"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	collectors "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/topologycollectors"
+	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (

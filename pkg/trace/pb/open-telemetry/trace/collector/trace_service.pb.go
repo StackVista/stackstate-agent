@@ -6,7 +6,7 @@ package collector
 import (
 	context "context"
 	fmt "fmt"
-	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
+	v1 "github.com/DataDog/datadog-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	proto "github.com/gogo/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"

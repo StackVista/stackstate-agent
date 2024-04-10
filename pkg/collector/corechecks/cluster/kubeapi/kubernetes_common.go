@@ -9,11 +9,11 @@ package kubeapi
 
 import (
 	"errors"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // CommonCheck.

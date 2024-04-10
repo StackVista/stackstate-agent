@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"

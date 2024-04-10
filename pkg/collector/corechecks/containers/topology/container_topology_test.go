@@ -3,10 +3,10 @@ package topology
 
 import (
 	"context"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	cspec "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/spec"
+	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/util"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
 	"testing"

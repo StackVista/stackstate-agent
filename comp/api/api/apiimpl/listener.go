@@ -10,7 +10,7 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // getIPCAddressPort returns a listening connection

@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"reflect"
 
-	"github.com/StackVista/stackstate-agent/pkg/httpclient"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/httpclient"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // FeatureID type ensures well-defined list of features in this file

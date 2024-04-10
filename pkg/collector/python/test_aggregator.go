@@ -9,10 +9,10 @@
 package python
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

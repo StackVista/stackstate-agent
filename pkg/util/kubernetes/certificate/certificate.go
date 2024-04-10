@@ -23,7 +23,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/DataDog/datadog-agent/pkg/util/cache"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

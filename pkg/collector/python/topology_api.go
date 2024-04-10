@@ -11,10 +11,10 @@ package python
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 /*
@@ -31,6 +31,7 @@ import "C"
 // rtloader/test/topology/topology.go
 
 // SubmitComponent is the method exposed to Python scripts to submit topology component
+//
 //export SubmitComponent
 func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternalID *C.char, _ignoredComponentType *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
@@ -53,6 +54,7 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternal
 }
 
 // SubmitRelation is the method exposed to Python scripts to submit topology relation
+//
 //export SubmitRelation
 func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID *C.char, _ignoredTargetID *C.char, _ignoredRelationType *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
@@ -76,6 +78,7 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID 
 }
 
 // SubmitStartSnapshot starts a snapshot
+//
 //export SubmitStartSnapshot
 func SubmitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 	goCheckID := C.GoString(id)
@@ -89,6 +92,7 @@ func SubmitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 }
 
 // SubmitStopSnapshot stops a snapshot
+//
 //export SubmitStopSnapshot
 func SubmitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 	goCheckID := C.GoString(id)
@@ -102,6 +106,7 @@ func SubmitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 }
 
 // SubmitDelete deletes a topology element
+//
 //export SubmitDelete
 func SubmitDelete(id *C.char, instanceKey *C.instance_key_t, topoElementID *C.char) {
 	goCheckID := C.GoString(id)

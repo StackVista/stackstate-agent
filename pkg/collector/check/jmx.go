@@ -8,8 +8,8 @@ package check
 import (
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	agentconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	agentconfig "github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // IsJMXConfig checks if a certain YAML config contains at least one instance of a JMX config

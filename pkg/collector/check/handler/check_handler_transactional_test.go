@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/state"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"

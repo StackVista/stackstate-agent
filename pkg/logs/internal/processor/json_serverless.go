@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/DataDog/datadog-agent/pkg/logs/message"
 )
 
 // JSONServerlessEncoder is a shared json encoder sending a struct message field

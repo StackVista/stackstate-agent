@@ -1,7 +1,7 @@
 package transactionmanager
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"sync"
 )
 

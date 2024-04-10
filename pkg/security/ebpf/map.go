@@ -13,7 +13,7 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
 )
 
 // BytesMapItem describes a raw table key or value

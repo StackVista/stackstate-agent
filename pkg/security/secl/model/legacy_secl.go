@@ -9,7 +9,7 @@
 
 package model
 
-import "github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
+import "github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
 
 // SECLLegacyFields contains the list of the legacy attributes we need to support
 var SECLLegacyFields = map[eval.Field]eval.Field{

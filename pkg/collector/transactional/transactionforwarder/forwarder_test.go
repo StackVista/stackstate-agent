@@ -1,9 +1,9 @@
 package transactionforwarder
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"

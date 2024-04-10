@@ -3,12 +3,12 @@ package transactionbatcher
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionforwarder"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/google/uuid"
 	"sync"
 )

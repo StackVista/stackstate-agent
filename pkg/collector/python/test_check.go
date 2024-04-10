@@ -10,8 +10,8 @@ package python
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"runtime"
 	"testing"
 	"time"
@@ -685,7 +685,6 @@ func testSetCollectionIntervalToInvalidDataWithInvalidData(t *testing.T) {
 // sts end
 func testGetDiagnoses(t *testing.T) {
 	C.reset_check_mock()
-
 
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()

@@ -1,6 +1,6 @@
 package topologycollectors
 
-import "github.com/StackVista/stackstate-agent/pkg/topology"
+import "github.com/DataDog/datadog-agent/pkg/topology"
 
 func testCaseName(baseName string, sourcePropertiesEnabled bool, kubernetesStatusEnabled bool) string {
 	if sourcePropertiesEnabled {

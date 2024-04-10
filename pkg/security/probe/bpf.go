@@ -10,7 +10,7 @@
 package probe
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/security/ebpf/kernel"
+	"github.com/DataDog/datadog-agent/pkg/security/ebpf/kernel"
 )
 
 func getCheckHelperCallInputType(kernelVersion *kernel.Version) uint64 {

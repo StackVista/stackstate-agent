@@ -1,4 +1,4 @@
-module github.com/StackVista/stackstate-agent/internal/tools
+module github.com/DataDog/datadog-agent/internal/tools
 
 go 1.21
 

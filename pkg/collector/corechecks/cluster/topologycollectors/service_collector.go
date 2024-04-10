@@ -7,9 +7,9 @@ import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/dns"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/dns"
+	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 )
 

@@ -11,7 +11,7 @@ import (
 	"expvar"
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
 )
 
 type listenerTelemetry struct {

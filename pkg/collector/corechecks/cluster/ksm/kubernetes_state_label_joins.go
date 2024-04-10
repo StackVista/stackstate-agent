@@ -9,8 +9,8 @@
 package ksm
 
 import (
-	ksmstore "github.com/StackVista/stackstate-agent/pkg/kubestatemetrics/store"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	ksmstore "github.com/DataDog/datadog-agent/pkg/kubestatemetrics/store"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 /*

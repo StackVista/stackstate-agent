@@ -9,11 +9,11 @@
 package python
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/state"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/DataDog/datadog-agent/pkg/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

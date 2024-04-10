@@ -10,7 +10,7 @@ package apiserver
 import (
 	"context"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 var _ OpenShiftDetector = (*APIClient)(nil) // Compile-time check

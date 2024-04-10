@@ -2,10 +2,10 @@ package awssdkinstrumentation
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/trace/api"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk/modules"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/trace/api"
+	"github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk/modules"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // InstrumentationIdentifier Identifier for this instrumentation library

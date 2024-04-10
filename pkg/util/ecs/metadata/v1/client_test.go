@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/testutil"
+	"github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/testutil"
 )
 
 func TestGetInstance(t *testing.T) {

@@ -20,12 +20,12 @@ import (
 	"k8s.io/metrics/pkg/apis/external_metrics"
 	"sigs.k8s.io/custom-metrics-apiserver/pkg/provider"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/autoscalers"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/autoscalers"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (

@@ -1,8 +1,8 @@
 package instrumentationbuilders
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // GetSpanMeta Retrieve span data or display a message saying what is missing in the agent logs and returning false

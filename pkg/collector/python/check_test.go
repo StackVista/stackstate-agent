@@ -9,7 +9,7 @@
 package python
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/batcher"
 	"os"
 	"testing"
 )

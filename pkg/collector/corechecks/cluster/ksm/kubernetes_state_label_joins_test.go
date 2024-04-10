@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	ksmstore "github.com/StackVista/stackstate-agent/pkg/kubestatemetrics/store"
+	ksmstore "github.com/DataDog/datadog-agent/pkg/kubestatemetrics/store"
 )
 
 func Test_labelJoiner(t *testing.T) {

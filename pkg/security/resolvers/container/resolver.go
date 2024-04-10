@@ -10,7 +10,7 @@
 package container
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/security/utils"
+	"github.com/DataDog/datadog-agent/pkg/security/utils"
 )
 
 // Resolver is used to resolve the container context of the events

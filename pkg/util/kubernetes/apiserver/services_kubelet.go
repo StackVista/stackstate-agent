@@ -14,9 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	apiv1 "github.com/StackVista/stackstate-agent/pkg/clusteragent/api/v1"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	apiv1 "github.com/DataDog/datadog-agent/pkg/clusteragent/api/v1"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 type serviceMapper apiv1.NamespacesPodsStringsSet

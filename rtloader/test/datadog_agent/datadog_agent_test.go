@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
+	"github.com/DataDog/datadog-agent/rtloader/test/helpers"
 )
 
 func TestMain(m *testing.M) {

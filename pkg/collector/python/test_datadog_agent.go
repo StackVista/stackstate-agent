@@ -10,7 +10,7 @@ package python
 
 import (
 	"context"
-	collectorutils "github.com/StackVista/stackstate-agent/pkg/collector/util"
+	collectorutils "github.com/DataDog/datadog-agent/pkg/collector/util"
 	"os"
 	"strconv"
 	"testing"

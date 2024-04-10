@@ -10,7 +10,7 @@ package topologycollectors
 import (
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/topology"
 	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/stretchr/testify/assert"

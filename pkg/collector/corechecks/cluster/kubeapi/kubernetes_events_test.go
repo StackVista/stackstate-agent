@@ -20,13 +20,13 @@ import (
 	v1 "k8s.io/api/core/v1"
 	obj "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/urn"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"k8s.io/apimachinery/pkg/types"
 )
 

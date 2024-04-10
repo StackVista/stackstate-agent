@@ -12,9 +12,9 @@ package kfilters
 import (
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
 )
 
 var openCapabilities = Capabilities{

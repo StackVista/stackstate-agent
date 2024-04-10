@@ -12,7 +12,7 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"strings"
 	"sync"
 	"unsafe"
@@ -29,7 +29,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/tagset"
 	"github.com/DataDog/datadog-agent/pkg/version"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 /*

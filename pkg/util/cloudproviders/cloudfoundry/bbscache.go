@@ -20,7 +20,7 @@ import (
 	"code.cloudfoundry.org/bbs/models"
 	"code.cloudfoundry.org/lager"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // BBSCacheI is an interface for a structure that caches and automatically refreshes data from Cloud Foundry BBS API

@@ -1,11 +1,11 @@
 package transactionforwarder
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/httpclient"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional"
+	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/httpclient"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"regexp"
 	"sync"
 )

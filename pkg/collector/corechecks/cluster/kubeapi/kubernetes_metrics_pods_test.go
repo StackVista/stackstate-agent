@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/stretchr/testify/mock"
 	v1 "k8s.io/api/core/v1"
 )

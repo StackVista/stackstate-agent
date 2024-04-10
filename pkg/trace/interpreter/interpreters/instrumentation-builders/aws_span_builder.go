@@ -2,7 +2,7 @@ package instrumentationbuilders
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
 )
 
 // AwsSpanBuilder Map span data for the Open Telemetry service.

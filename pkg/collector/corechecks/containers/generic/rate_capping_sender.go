@@ -6,11 +6,13 @@
 //go:build docker && !darwin
 // +build docker,!darwin
 
+package generic
+
 import (
 	"sort"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/util/cache"

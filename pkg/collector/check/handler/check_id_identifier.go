@@ -1,6 +1,6 @@
 package handler
 
-import "github.com/StackVista/stackstate-agent/pkg/collector/check"
+import "github.com/DataDog/datadog-agent/pkg/collector/check"
 
 // NewCheckIdentifier returns a IDOnlyCheckIdentifier that implements the CheckIdentifier interface for a given check ID.
 func NewCheckIdentifier(checkID check.ID) CheckIdentifier {

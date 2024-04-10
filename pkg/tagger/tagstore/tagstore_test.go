@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/types"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	"github.com/DataDog/datadog-agent/pkg/tagger/types"
 )
 
 type StoreTestSuite struct {

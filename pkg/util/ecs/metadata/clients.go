@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/retry"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/retry"
 
 	"github.com/DataDog/datadog-agent/pkg/util/ecs/common"
 	v1 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v1"

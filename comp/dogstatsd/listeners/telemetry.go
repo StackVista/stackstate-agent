@@ -6,7 +6,7 @@
 package listeners
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
 )
 
 var (

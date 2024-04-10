@@ -8,7 +8,7 @@ package util
 import (
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // SetupCoreDump enables core dumps and sets the core dump size limit based on configuration

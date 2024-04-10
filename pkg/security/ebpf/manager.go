@@ -16,7 +16,7 @@ import (
 	"github.com/cilium/ebpf"
 	"golang.org/x/sys/unix"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/ebpf/probes"
+	"github.com/DataDog/datadog-agent/pkg/security/ebpf/probes"
 )
 
 // NewDefaultOptions returns a new instance of the default runtime security manager options

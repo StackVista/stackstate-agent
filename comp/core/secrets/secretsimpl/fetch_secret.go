@@ -6,6 +6,8 @@
 //go:build secrets
 // +build secrets
 
+package secretsimpl
+
 import (
 	"bytes"
 	"context"

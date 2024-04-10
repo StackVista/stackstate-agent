@@ -17,8 +17,8 @@ package python
 */
 import "C"
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 )
 
 // NOTE
@@ -26,6 +26,7 @@ import (
 // rtloader/test/state/state.go
 
 // SetState set the current state
+//
 //export SetState
 func SetState(id *C.char, key *C.char, state *C.char) {
 	goCheckID := C.GoString(id)
@@ -36,6 +37,7 @@ func SetState(id *C.char, key *C.char, state *C.char) {
 }
 
 // GetState get the current state
+//
 //export GetState
 func GetState(id *C.char, key *C.char) *C.char {
 	goCheckID := C.GoString(id)

@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
 )
 
 const defaultRetryDuration = 5 * time.Second

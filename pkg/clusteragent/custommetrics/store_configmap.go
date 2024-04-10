@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	le "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	le "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection/metrics"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

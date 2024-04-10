@@ -16,7 +16,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	dderrors "github.com/StackVista/stackstate-agent/pkg/errors"
+	dderrors "github.com/DataDog/datadog-agent/pkg/errors"
 )
 
 const kubeEndpointIDPrefix = "kube_endpoint_uid://"

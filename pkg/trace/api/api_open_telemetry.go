@@ -2,11 +2,11 @@ package api
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	v12 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
-	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
-	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	v12 "github.com/DataDog/datadog-agent/pkg/trace/pb/open-telemetry/common/v1"
+	openTelemetryTrace "github.com/DataDog/datadog-agent/pkg/trace/pb/open-telemetry/trace/collector"
+	v1 "github.com/DataDog/datadog-agent/pkg/trace/pb/open-telemetry/trace/v1"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"strconv"
 )
 

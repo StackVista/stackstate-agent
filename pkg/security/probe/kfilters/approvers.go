@@ -12,10 +12,10 @@ package kfilters
 import (
 	"path"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
+	"github.com/DataDog/datadog-agent/pkg/security/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
 )
 
 // BasenameApproverKernelMapName defines the basename approver kernel map name

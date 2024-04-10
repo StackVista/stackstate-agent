@@ -3,7 +3,7 @@ package testhealth
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/DataDog/datadog-agent/pkg/health"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,8 +11,8 @@ import (
 	"strings"
 	"unsafe"
 
-	common "github.com/StackVista/stackstate-agent/rtloader/test/common"
-	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
+	common "github.com/DataDog/datadog-agent/rtloader/test/common"
+	"github.com/DataDog/datadog-agent/rtloader/test/helpers"
 )
 
 /*

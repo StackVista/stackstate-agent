@@ -1,12 +1,12 @@
 package instrumentations
 
 import (
-	awsLambdaInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-lambda"
-	awsSdkInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk"
-	httpInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/http"
-	stackStateInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/stackstate"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	awsLambdaInstrumentation "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-lambda"
+	awsSdkInstrumentation "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk"
+	httpInstrumentation "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations/http"
+	stackStateInstrumentation "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations/stackstate"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // InterpretBasedOnInstrumentationLibrary OpenTelemetry contains multiple instrumentation libraries in the wild

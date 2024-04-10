@@ -12,7 +12,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // HandleSignals tells us whether we should exit.

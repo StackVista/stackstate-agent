@@ -23,11 +23,11 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/retry"
 	"github.com/opencontainers/image-spec/identity"
 
-	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec" // sts
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	dderrors "github.com/StackVista/stackstate-agent/pkg/errors"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/retry"
+	cspec "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/spec" // sts
+	"github.com/DataDog/datadog-agent/pkg/config"
+	dderrors "github.com/DataDog/datadog-agent/pkg/errors"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/retry"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/types"

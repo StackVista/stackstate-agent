@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 var (

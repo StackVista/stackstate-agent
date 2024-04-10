@@ -7,8 +7,8 @@
 package telemetry
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
 )
 
 const (

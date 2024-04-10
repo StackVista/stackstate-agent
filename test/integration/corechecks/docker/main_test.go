@@ -8,7 +8,7 @@ package docker
 import (
 	"context"
 	"flag"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/batcher"
 	"os"
 	"strings"
 	"testing"

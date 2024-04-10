@@ -8,8 +8,8 @@ package scheduler
 import (
 	"sync"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // MetaScheduler is a scheduler dispatching to all its registered schedulers

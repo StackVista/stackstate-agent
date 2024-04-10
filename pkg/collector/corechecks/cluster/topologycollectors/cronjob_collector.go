@@ -4,8 +4,8 @@
 package topologycollectors
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

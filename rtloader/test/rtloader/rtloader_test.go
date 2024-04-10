@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	common "github.com/StackVista/stackstate-agent/rtloader/test/common"
-	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
+	common "github.com/DataDog/datadog-agent/rtloader/test/common"
+	"github.com/DataDog/datadog-agent/rtloader/test/helpers"
 )
 
 func TestMain(m *testing.M) {

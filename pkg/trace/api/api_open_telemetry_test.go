@@ -1,10 +1,10 @@
 package api
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	v11 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
-	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
-	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	v11 "github.com/DataDog/datadog-agent/pkg/trace/pb/open-telemetry/common/v1"
+	openTelemetryTrace "github.com/DataDog/datadog-agent/pkg/trace/pb/open-telemetry/trace/collector"
+	v1 "github.com/DataDog/datadog-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

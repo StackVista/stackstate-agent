@@ -5,15 +5,13 @@
 //go:build linux
 // +build linux
 
-
-
 // Package modules is all the module definitions for system-probe
 package modules
 
 import (
 	"time"
 
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/api/module"
 )
 
 // All System Probe modules should register their factories here

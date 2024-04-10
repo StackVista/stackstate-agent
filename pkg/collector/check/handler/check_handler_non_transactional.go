@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 )
 
 // NonTransactionalCheckHandler is a wrapper for check that have no register handler.

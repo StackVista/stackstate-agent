@@ -7,7 +7,7 @@
 package rules
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
 )
 
 // FieldCapabilities holds a list of field capabilities

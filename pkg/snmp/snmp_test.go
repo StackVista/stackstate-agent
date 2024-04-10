@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 
 	"github.com/gosnmp/gosnmp"
 	"github.com/stretchr/testify/assert"

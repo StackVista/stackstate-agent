@@ -1,8 +1,8 @@
 package batcher
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/topology"
 )
 
 // Topologies is the type representing topologies gathered per check

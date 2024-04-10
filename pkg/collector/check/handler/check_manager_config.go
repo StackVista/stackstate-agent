@@ -1,6 +1,6 @@
 package handler
 
-import "github.com/StackVista/stackstate-agent/pkg/config"
+import "github.com/DataDog/datadog-agent/pkg/config"
 
 // Config contains all the configuration values for the check manager
 type Config struct {

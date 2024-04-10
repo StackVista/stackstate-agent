@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
@@ -15,9 +16,9 @@ import (
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (

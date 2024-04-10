@@ -9,9 +9,9 @@
 package python
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
 )
 
 /*

@@ -14,9 +14,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/docker"
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/docker"
+	"github.com/DataDog/datadog-agent/pkg/config"
 
 	yaml "gopkg.in/yaml.v2"
 )

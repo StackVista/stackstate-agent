@@ -12,8 +12,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
 )
 
 func validateBasenameFilter(value rules.FilterValue) bool {

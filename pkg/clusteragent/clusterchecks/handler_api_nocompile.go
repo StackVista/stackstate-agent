@@ -12,8 +12,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
 )
 
 var (

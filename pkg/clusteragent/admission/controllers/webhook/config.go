@@ -14,8 +14,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
 )
 
 // Config contains config parameters

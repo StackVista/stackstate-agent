@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/hostname"
 	v1 "k8s.io/api/core/v1"
 )
 

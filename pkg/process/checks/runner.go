@@ -9,7 +9,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // RunnerConfig implements config for runners that work with CheckWithRealTime

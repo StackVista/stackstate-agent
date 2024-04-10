@@ -2,8 +2,8 @@ package interpreters
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/trace/interpreter/config"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
 	"strings"
 )
 

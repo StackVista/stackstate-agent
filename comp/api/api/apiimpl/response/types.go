@@ -7,7 +7,7 @@
 package response
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 )
 
 // ConfigCheckResponse holds the config check response

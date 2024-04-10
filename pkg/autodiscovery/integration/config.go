@@ -15,9 +15,9 @@ import (
 	"github.com/twmb/murmur3"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/tmplvar"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/tmplvar"
 )
 
 const (
@@ -107,16 +107,16 @@ type Config struct {
 
 // CommonInstanceConfig holds the reserved fields for the yaml instance data
 type CommonInstanceConfig struct {
-	EmptyDefaultHostname  bool     `yaml:"empty_default_hostname"`
-	Tags                  []string `yaml:"tags"`
-	Service               string   `yaml:"service"`
-	Name                  string   `yaml:"name"`
-	Namespace             string   `yaml:"namespace"`
-	NoIndex               bool     `yaml:"no_index"`
+	EmptyDefaultHostname bool     `yaml:"empty_default_hostname"`
+	Tags                 []string `yaml:"tags"`
+	Service              string   `yaml:"service"`
+	Name                 string   `yaml:"name"`
+	Namespace            string   `yaml:"namespace"`
+	NoIndex              bool     `yaml:"no_index"`
 	// [sts] This is a legacy setting and is replaced by the CollectionInterval below, we keep this for backwards compatibility
 	MinCollectionInterval int `yaml:"min_collection_interval"`
 	// [sts] Add CollectionInterval, replacing MinCollectionInterval
-	CollectionInterval   int      `yaml:"collection_interval"`
+	CollectionInterval int `yaml:"collection_interval"`
 }
 
 // CommonGlobalConfig holds the reserved fields for the yaml init_config data

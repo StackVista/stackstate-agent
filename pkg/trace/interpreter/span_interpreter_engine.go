@@ -1,18 +1,18 @@
 package interpreter
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/trace/api"
-	"github.com/StackVista/stackstate-agent/pkg/trace/config"
-	interpreterConfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations"
-	awsLambdaInstrumentationModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-lambda/modules"
-	awsSdkInstrumentationModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk/modules"
-	httpInstrumentationModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/http/modules"
-	stackStateInstrumentationModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/stackstate/modules"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/model"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/trace/api"
+	"github.com/DataDog/datadog-agent/pkg/trace/config"
+	interpreterConfig "github.com/DataDog/datadog-agent/pkg/trace/interpreter/config"
+	"github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters"
+	"github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations"
+	awsLambdaInstrumentationModules "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-lambda/modules"
+	awsSdkInstrumentationModules "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk/modules"
+	httpInstrumentationModules "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations/http/modules"
+	stackStateInstrumentationModules "github.com/DataDog/datadog-agent/pkg/trace/interpreter/interpreters/instrumentations/stackstate/modules"
+	"github.com/DataDog/datadog-agent/pkg/trace/interpreter/model"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/golang/protobuf/proto"
 )
 

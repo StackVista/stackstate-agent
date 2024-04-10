@@ -8,7 +8,7 @@ package corechecks
 import (
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator"

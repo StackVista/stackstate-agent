@@ -2,7 +2,7 @@ package testdata
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	appsV1 "k8s.io/api/apps/v1"
 	batchV1 "k8s.io/api/batch/v1"
 	batchV1B1 "k8s.io/api/batch/v1beta1"
@@ -35,7 +35,6 @@ func NewMockBenchmarkAPICollectorClient() apiserver.APICollectorClient {
 	}
 }
 
-//
 type MockBenchmarkAPICollectorClient struct {
 	creationTime         v1.Time
 	replicas             int32

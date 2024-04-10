@@ -8,7 +8,7 @@ package dogstatsd
 import (
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 func TestUDSOriginDetectionDatagram(t *testing.T) {

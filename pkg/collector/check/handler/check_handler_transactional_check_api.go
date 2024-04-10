@@ -2,12 +2,12 @@ package handler
 
 import (
 	"fmt"
-	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
-	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	checkState "github.com/DataDog/datadog-agent/pkg/collector/check/state"
+	"github.com/DataDog/datadog-agent/pkg/health"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/google/uuid"
 )
 

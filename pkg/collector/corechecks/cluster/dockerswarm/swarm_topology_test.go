@@ -9,12 +9,12 @@
 package dockerswarm
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/health"
+	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

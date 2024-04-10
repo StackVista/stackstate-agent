@@ -10,10 +10,10 @@ package kprobe
 import (
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/network/config"
-	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
-	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
+	"github.com/DataDog/datadog-agent/pkg/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/network/config"
+	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
+	"github.com/DataDog/datadog-agent/pkg/util/kernel"
 )
 
 func enableProbe(enabled map[probes.ProbeFuncName]struct{}, name probes.ProbeFuncName) {

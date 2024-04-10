@@ -1,6 +1,6 @@
 package model
 
-import "github.com/StackVista/stackstate-agent/pkg/trace/pb"
+import "github.com/DataDog/datadog-agent/pkg/trace/pb"
 
 // SpanMetadata contains the fields of the span meta that we are interested in
 type SpanMetadata struct {

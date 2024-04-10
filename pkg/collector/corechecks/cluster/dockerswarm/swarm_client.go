@@ -3,12 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package dockerswarm
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
 )
 
 // SwarmClient represents a docker client that can retrieve docker swarm information from the docker API

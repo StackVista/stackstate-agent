@@ -11,7 +11,7 @@ package kubelet
 import (
 	"context"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // GetHostAliases uses the "kubelet" hostname provider to fetch the kubernetes alias

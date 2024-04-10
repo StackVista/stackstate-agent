@@ -8,7 +8,7 @@ package settings
 import (
 	"errors"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
+	"github.com/DataDog/datadog-agent/pkg/util/profiling"
 )
 
 func checkProfilingNeedsRestart(old, new int) error {

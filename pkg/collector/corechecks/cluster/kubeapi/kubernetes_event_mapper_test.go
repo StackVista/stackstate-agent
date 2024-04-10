@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/urn"
 )
 
 var firstTimestamp = int64(709662600)
