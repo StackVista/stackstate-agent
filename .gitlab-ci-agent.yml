@@ -35,7 +35,8 @@ stages:
 
 .rename_datadog_stackvista: &rename_datadog_stackvista |
   find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
-  find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
+  find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/\bdatadog-agent\b/stackstate-agent/g' {} +
+  find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/\bDataDog\b/StackVista/g' {} +
   find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bdatadog-agent\b/stackstate-agent/g' {} +
   find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bDataDog\b/StackVista/g' {} +
 
