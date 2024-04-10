@@ -33,6 +33,10 @@ stages:
   export PATH=/go/bin:/usr/local/go/bin:$PATH
   eval $(gimme)
 
+.rename_datadog_stackvista: &rename_datadog_stackvista |
+  find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
+  find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
+
 .configure_debian_env_script: &configure_debian_env_script |
   . /root/miniforge3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
   conda activate $CONDA_ENV
@@ -173,8 +177,9 @@ deps_deb:
     paths:
       - vendor
       - venv
-      - go-pkg.tar.gz
   script:
+    - go clean -modcache
+    - *rename_datadog_stackvista
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
@@ -185,6 +190,10 @@ deps_deb:
     <<: *artifacts_expire_in
     paths:
       - $CI_PROJECT_DIR/version.txt
+      - $CI_PROJECT_DIR/go-pkg.tar.gz
+      - $CI_PROJECT_DIR/go-bin.tar.gz
+      - $CI_PROJECT_DIR/vendor.tar.gz
+
   retry:
     max: 2
     when:
