@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build functionaltests || stresstests
-// +build functionaltests stresstests
 
 // Package tests holds tests related files
 package tests

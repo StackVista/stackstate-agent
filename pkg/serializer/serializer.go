@@ -351,11 +351,7 @@ func (s *Serializer) SendServiceChecks(serviceChecks servicecheck.ServiceChecks)
 		return fmt.Errorf("dropping service check payload: %s", err)
 	}
 
-	// check if V1 API and enableCheckRuns is true. For StackState we default enableCheckRuns to false
-	if useV1API && s.enableCheckRuns {
-		return s.Forwarder.SubmitV1CheckRuns(serviceCheckPayloads, extraHeaders)
-	}
-	return s.Forwarder.SubmitServiceChecks(serviceCheckPayloads, extraHeaders)
+	return s.Forwarder.SubmitV1CheckRuns(serviceCheckPayloads, extraHeaders)
 }
 
 // AreSeriesEnabled returns whether series are enabled for serialization
@@ -401,6 +397,37 @@ func (s *Serializer) AreSketchesEnabled() bool {
 	return s.enableSketches
 }
 
+//// SendSketch serializes a list of SketSeriesList and sends the payload to the forwarder
+//func (s *Serializer) SendSketch(sketches metrics.SketchesSource) error {
+//	if !s.AreSketchesEnabled() {
+//		log.Debug("sketches payloads are disabled: dropping it")
+//		return nil
+//	}
+//	sketchesSerializer := metricsserializer.SketchSeriesList{SketchesSource: sketches}
+//	if s.enableSketchProtobufStream {
+//		payloads, err := sketchesSerializer.MarshalSplitCompress(marshaler.NewBufferContext())
+//		if err != nil {
+//			return fmt.Errorf("dropping sketch payload: %v", err)
+//		}
+//
+//		return s.Forwarder.SubmitSketchSeries(payloads, protobufExtraHeadersWithCompression)
+//	} else {
+//		//nolint:revive // TODO(AML) Fix revive linter
+//		compress := true
+//		splitSketches, extraHeaders, err := s.serializePayloadProto(sketchesSerializer, compress)
+//		if err != nil {
+//			return fmt.Errorf("dropping sketch payload: %s", err)
+//		}
+//
+//		return s.Forwarder.SubmitSketchSeries(splitSketches, extraHeaders)
+//	compress := false // TODO [sts]: enable compression once the backend supports it on this endpoint
+//	useV1API := false // Sketches only have a v2 endpoint
+//	splitSketches, extraHeaders, err := s.serializePayload(sketches, compress, useV1API)
+//	if err != nil {
+//		return fmt.Errorf("dropping sketch payload: %s", err)
+//	}
+//}
+
 // SendSketch serializes a list of SketSeriesList and sends the payload to the forwarder
 func (s *Serializer) SendSketch(sketches metrics.SketchesSource) error {
 	if !s.AreSketchesEnabled() {
@@ -417,18 +444,13 @@ func (s *Serializer) SendSketch(sketches metrics.SketchesSource) error {
 		return s.Forwarder.SubmitSketchSeries(payloads, protobufExtraHeadersWithCompression)
 	} else {
 		//nolint:revive // TODO(AML) Fix revive linter
-		compress := true
+		compress := false
 		splitSketches, extraHeaders, err := s.serializePayloadProto(sketchesSerializer, compress)
 		if err != nil {
 			return fmt.Errorf("dropping sketch payload: %s", err)
 		}
 
 		return s.Forwarder.SubmitSketchSeries(splitSketches, extraHeaders)
-	compress := false // TODO [sts]: enable compression once the backend supports it on this endpoint
-	useV1API := false // Sketches only have a v2 endpoint
-	splitSketches, extraHeaders, err := s.serializePayload(sketches, compress, useV1API)
-	if err != nil {
-		return fmt.Errorf("dropping sketch payload: %s", err)
 	}
 }
 

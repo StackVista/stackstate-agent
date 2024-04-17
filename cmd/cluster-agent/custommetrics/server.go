@@ -4,7 +4,6 @@
 // Copyright 2017-present Datadog, Inc.
 
 //go:build kubeapiserver
-// +build kubeapiserver
 
 // Package custommetrics runs the Kubernetes custom metrics API server.
 package custommetrics

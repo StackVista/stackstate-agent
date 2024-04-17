@@ -1,4 +1,3 @@
-// +build python,test
 
 package python
 

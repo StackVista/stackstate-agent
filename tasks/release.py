@@ -518,7 +518,7 @@ def _fetch_dependency_repo_version(
         compatible_version_re,
         allowed_major_versions,
         max_version=max_allowed_version,
-        vendor="StackVista",
+        vendor="DataDog",
     )
 
     if check_for_rc and version.is_rc():
@@ -561,7 +561,7 @@ def _get_windows_ddnpm_release_json_info(release_json, agent_major_version, is_f
     )
     # NOTE: This assumes that the repository doesn't change the way it prefixes versions.
     version = _get_highest_repo_version(github_token, repo_name, previous_version.prefix, VERSION_RE,
-                                        vendor="StackVista")  # sts
+                                        vendor="DataDog")  # sts
 
     if win_ddnpm_driver not in ['release-signed', 'attestation-signed']:
         print(f"WARN: WINDOWS_DDNPM_DRIVER value '{win_ddnpm_driver}' is not valid")

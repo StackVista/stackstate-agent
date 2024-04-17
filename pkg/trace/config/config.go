@@ -438,11 +438,6 @@ type AgentConfig struct {
 
 	// Install Signature
 	InstallSignature InstallSignatureConfig
-	// Profiling settings, or nil if profiling is disabled
-	ProfilingSettings *profiling.Settings
-
-	// InterpreterConfig contains span interpreter config. [sts]
-	InterpreterConfig *interpreterconfig.Config
 }
 
 // RemoteClient client is used to APM Sampling Updates from a remote source.
@@ -527,8 +522,6 @@ func New() *AgentConfig {
 			Enabled:        true,
 			MaxPayloadSize: 5 * 1024 * 1024,
 		},
-		// [sts] interpreter config
-		InterpreterConfig: interpreterconfig.DefaultInterpreterConfig(),
 
 		Features: make(map[string]struct{}),
 	}
@@ -541,37 +534,8 @@ func computeGlobalTags() map[string]string {
 	return make(map[string]string)
 }
 
-// fallbackHostnameFunc specifies the function to use for obtaining the hostname
-// when it can not be obtained by any other means. It is replaced in tests.
-var fallbackHostnameFunc = os.Hostname
-
-// acquireHostname attempts to acquire a hostname for the trace-agent by connecting to the core agent's
-// gRPC endpoints. If it fails, it will return an error.
-func (c *AgentConfig) acquireHostname() error {
-	/* sts - Get hostname from util.GetHostname instead
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	client, err := grpc.GetDDAgentClient(ctx)
-	if err != nil {
-		return err
-	}
-	reply, err := client.GetHostname(ctx, &pbgo.HostnameRequest{})
-	if err != nil {
-		return err
-	}
-	if features.Has("disable_empty_hostname") && reply.Hostname == "" {
-		log.Debugf("Acquired empty hostname from gRPC but it's disallowed.")
-		return errors.New("empty hostname disallowed")
-	}
-	c.Hostname = reply.Hostname
-	log.Debugf("Acquired hostname from gRPC: %s", c.Hostname)
-	*/
-	// sts - use util.GetHostname instead of using the agent bin path and running a shell command.
-	hostname, err := util.GetHostname(context.TODO())
-	if err == nil {
-		c.Hostname = hostname
-	}
-	return nil
+func noopContainerTagsFunc(_ string) ([]string, error) {
+	return nil, errors.New("ContainerTags function not defined")
 }
 
 // APIKey returns the first (main) endpoint's API key.

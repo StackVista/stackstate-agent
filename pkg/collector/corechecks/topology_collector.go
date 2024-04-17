@@ -1,18 +1,18 @@
 package corechecks
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 )
 
 // CheckTopologyCollector contains all the metadata needed to produce disk topology
 type CheckTopologyCollector struct {
-	CheckID          check.ID
+	CheckID          checkid.ID
 	TopologyInstance topology.Instance
 }
 
 // MakeCheckProcessTopologyCollector returns an instance of the CheckTopologyCollector
-func MakeCheckProcessTopologyCollector(checkID check.ID) CheckTopologyCollector {
+func MakeCheckProcessTopologyCollector(checkID checkid.ID) CheckTopologyCollector {
 	return CheckTopologyCollector{
 		CheckID: checkID,
 		TopologyInstance: topology.Instance{
@@ -23,7 +23,7 @@ func MakeCheckProcessTopologyCollector(checkID check.ID) CheckTopologyCollector 
 }
 
 // MakeCheckTopologyCollector returns an instance of the CheckTopologyCollector
-func MakeCheckTopologyCollector(checkID check.ID, instance topology.Instance) CheckTopologyCollector {
+func MakeCheckTopologyCollector(checkID checkid.ID, instance topology.Instance) CheckTopologyCollector {
 	return CheckTopologyCollector{
 		CheckID:          checkID,
 		TopologyInstance: instance,

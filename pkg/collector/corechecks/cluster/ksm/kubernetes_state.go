@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
-// +build kubeapiserver
 
 // Package ksm implements the Kubernetes State Core cluster check.
 package ksm

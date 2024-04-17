@@ -5,7 +5,6 @@
 
 // Package model holds model related files
 //go:build linux
-// +build linux
 
 package model
 

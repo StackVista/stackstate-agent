@@ -4,7 +4,6 @@
 // Copyright 2019-present StackState
 
 //go:build kubeapiserver
-// +build kubeapiserver
 
 package apiserver
 

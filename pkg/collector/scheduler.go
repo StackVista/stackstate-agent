@@ -20,6 +20,7 @@ import (
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/loaders"
 	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	yaml "gopkg.in/yaml.v2"

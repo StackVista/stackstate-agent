@@ -44,12 +44,12 @@ type Events []*event.Event
 
 // IntakeEvents are used in the transactional batcher to keep state of events in a payload [sts]
 type IntakeEvents struct {
-	Events []Event
+	Events []event.Event
 }
 
 // IntakeFormat returns a map of events grouped by source type name
-func (ie IntakeEvents) IntakeFormat() map[string][]Event {
-	eventsBySourceType := make(map[string][]Event)
+func (ie IntakeEvents) IntakeFormat() map[string][]event.Event {
+	eventsBySourceType := make(map[string][]event.Event)
 	for _, e := range ie.Events {
 		sourceTypeName := e.SourceTypeName
 		if sourceTypeName == "" {
@@ -59,7 +59,7 @@ func (ie IntakeEvents) IntakeFormat() map[string][]Event {
 		// ensure that event context lists are not empty. ie serialized to null
 		if e.EventContext != nil {
 			if e.EventContext.SourceLinks == nil {
-				e.EventContext.SourceLinks = make([]SourceLink, 0)
+				e.EventContext.SourceLinks = make([]event.SourceLink, 0)
 			}
 
 			if e.EventContext.ElementIdentifiers == nil {

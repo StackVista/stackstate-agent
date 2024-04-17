@@ -24,7 +24,6 @@
 // "--with-provider-prefixes" and is kept to avoid breaking compatibility.
 package secrethelper
 //go:build secrets
-// +build secrets
 
 import (
 	"encoding/json"

@@ -15,6 +15,7 @@ import (
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/stats"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 )
 
 // Check is an interface for types capable to run checks
@@ -51,9 +52,9 @@ type Check interface {
 	InstanceConfig() string
 	// GetDiagnoses returns the diagnoses cached in last run or diagnose explicitly
 	GetDiagnoses() ([]diagnosis.Diagnosis, error)
-	// Set the StackState features
+	// SetFeatures Set the StackState features
 	SetFeatures(features features.Features)
-	// Get the StackState features
+	// GetFeatures Get the StackState features
 	GetFeatures() features.Features
 }
 

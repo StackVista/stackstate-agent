@@ -78,7 +78,24 @@ type Event struct {
 	OriginFromUDS    string         `json:"-"`
 	OriginFromClient string         `json:"-"`
 	Cardinality      string         `json:"-"`
+	EventContext     *EventContext  `json:"context,omitempty"`
 }
+
+// EventContext enriches the event with some more context and allows correlation to topology in StackState
+type EventContext struct {
+	SourceIdentifier   string                 `json:"source_identifier,omitempty" msg:"source_identifier,omitempty"`
+	ElementIdentifiers []string               `json:"element_identifiers" msg:"element_identifiers"`
+	Source             string                 `json:"source" msg:"source"`
+	Category           string                 `json:"category" msg:"category"`
+	Data               map[string]interface{} `json:"data,omitempty" msg:"data,omitempty"`
+	SourceLinks        []SourceLink           `json:"source_links" msg:"source_links"`
+} // [sts]
+
+// SourceLink points to links that may contain more information about this event
+type SourceLink struct {
+	Title string `json:"title" msg:"title"`
+	URL   string `json:"url" msg:"url"`
+} // [sts]
 
 // Return a JSON string or "" in case of error during the Marshaling
 func (e *Event) String() string {

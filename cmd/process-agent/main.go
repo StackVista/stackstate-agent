@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 //go:build !windows
 
-// +build !windows
 
 //nolint:revive // TODO(PROC) Fix revive linter
 package main

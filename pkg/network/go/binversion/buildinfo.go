@@ -116,7 +116,6 @@ func ReadElfBuildInfo(elfFile *elf.File) (vers string, err error) {
 			data = data[i:]
 			break
 		}
-		data = data[(i+buildInfoAlign-1)&^buildInfoAlign:]
 	}
 
 	// Decode the blob.

@@ -4,7 +4,6 @@
 // Copyright 2018-present Datadog, Inc.
 
 //go:build zlib
-// +build zlib
 
 //nolint:revive // TODO(AML) Fix revive linter
 package stream

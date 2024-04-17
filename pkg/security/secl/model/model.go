@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build linux
-// +build linux
 //go:generate stringer -type=HashState -linecomment -output model_string.go
 
 // Package model holds model related files

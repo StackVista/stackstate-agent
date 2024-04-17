@@ -10,13 +10,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"strings"
 	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/util/cachedfetch"
+	"github.com/DataDog/datadog-agent/pkg/util/hostname/validate"
 	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // declare these as vars not const to ease testing
@@ -167,7 +168,7 @@ func getHostnameWithConfig(ctx context.Context, conf config.Config) (string, err
 		return "", fmt.Errorf("invalid azure_hostname_style value: %s", style)
 	}
 
-	if err := config.ValidHostname(name); err != nil {
+	if err := validate.ValidHostname(name); err != nil {
 		return "", err
 	}
 

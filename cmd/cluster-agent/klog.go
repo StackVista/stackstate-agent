@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build !windows && kubeapiserver
-// +build !windows,kubeapiserver
 
 //nolint:revive // TODO(CINT) Fix revive linter
 package main

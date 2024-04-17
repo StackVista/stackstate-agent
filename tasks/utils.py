@@ -18,9 +18,9 @@ from invoke.exceptions import Exit
 from .libs.common.color import color_message
 
 # constants
-ORG_PATH = "github.com/StackVista"  # sts
+ORG_PATH = "github.com/DataDog"  # sts
 DEFAULT_BRANCH = "master"  # sts
-REPO_PATH = "{}/stackstate-agent".format(ORG_PATH)  # sts
+REPO_PATH = "{}/datadog-agent".format(ORG_PATH)  # sts
 GITHUB_ORG = "DataDog"
 REPO_NAME = "datadog-agent"
 GITHUB_REPO_NAME = f"{GITHUB_ORG}/{REPO_NAME}"
@@ -235,10 +235,10 @@ def get_payload_version():
             if len(whitespace_split) < 2:
                 continue
             pkgname = whitespace_split[0]
-            if pkgname == "github.com/DataDog/agent-payload/v5":
+            if pkgname == "github.com/StackVista/agent-payload/v5":
                 # Example of line
-                # github.com/DataDog/agent-payload/v5 v5.0.2
-                # github.com/DataDog/agent-payload/v5 v5.0.1-0.20200826134834-1ddcfb686e3f
+                # github.com/StackVista/agent-payload/v5 v5.0.2
+                # github.com/StackVista/agent-payload/v5 v5.0.1-0.20200826134834-1ddcfb686e3f
                 version_split = re.split(r'[ +]', line)
                 if len(version_split) < 2:
                     raise Exception(
@@ -413,7 +413,7 @@ def get_version(
 #         if not agent_version_cache_file_exist:
 #             if pipeline_id and pipeline_id.isdigit() and project_name == REPO_NAME:
 #                 ctx.run(
-#                     f"aws s3 cp s3://dd-ci-artefacts-build-stable/stackstate-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
+#                     f"aws s3 cp s3://dd-ci-artefacts-build-stable/datadog-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
 #                     hide="stdout",
 #                 )
 #                 agent_version_cache_file_exist = True
@@ -475,7 +475,7 @@ def get_version_numeric_only(ctx, major_version='3'):
 #         try:
 #             if not os.path.exists(AGENT_VERSION_CACHE_NAME):
 #                 ctx.run(
-#                     f"aws s3 cp s3://dd-ci-artefacts-build-stable/stackstate-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
+#                     f"aws s3 cp s3://dd-ci-artefacts-build-stable/datadog-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
 #                     hide="stdout",
 #                 )
 #

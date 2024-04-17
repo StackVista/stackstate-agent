@@ -121,7 +121,7 @@ class GoModule:
         >>> [mod.import_path for mod in mods]
         ["github.com/DataDog/datadog-agent", "github.com/DataDog/datadog-agent/pkg/util/log"]
         """
-        path = "github.com/StackVista/stackstate-agent"
+        path = "github.com/DataDog/datadog-agent"
         if self.path != ".":
             path += "/" + self.path
         return path

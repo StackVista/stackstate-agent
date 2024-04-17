@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/batcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/DataDog/datadog-agent/pkg/topology"
@@ -34,7 +34,7 @@ func MakeContainerTopologyCollector(runtime string) *ContainerTopologyCollector 
 	}
 	return &ContainerTopologyCollector{
 		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector(
-			check.ID(fmt.Sprintf("%s_topology", containerType)), topology.Instance{
+			checkid.ID(fmt.Sprintf("%s_topology", containerType)), topology.Instance{
 				Type: containerType,
 				URL:  "agents",
 			}),

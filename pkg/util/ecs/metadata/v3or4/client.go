@@ -4,7 +4,6 @@
 // Copyright 2022-present Datadog, Inc.
 
 //go:build docker
-// +build docker
 
 // Package v3or4 provides an ECS client for the version v3 and v4 of the API.
 package v3or4

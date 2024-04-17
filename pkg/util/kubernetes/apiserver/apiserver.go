@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
-// +build kubeapiserver
 
 // Package apiserver provides an API client for the Kubernetes API server.
 package apiserver

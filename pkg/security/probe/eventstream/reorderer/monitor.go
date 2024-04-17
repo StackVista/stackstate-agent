@@ -4,7 +4,6 @@
 // Copyright 2016-2020 Datadog, Inc.
 
 //go:build linux
-// +build linux
 
 // Package reorderer holds reorderer related files
 package reorderer

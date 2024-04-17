@@ -4,7 +4,6 @@
 // Copyright 2021 StackState
 
 //go:build python
-// +build python
 
 package python
 

@@ -46,9 +46,9 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"DOCKER_DD_AGENT\\" -> \\"DOCKER_STS_AGENT\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"DD\\" -> \\"STS\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/etc/datadog-agent/conf.d\\" -> \\"/etc/stackstate-agent/conf.d\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/etc/datadog-agent/checks.d\\" -> \\"/etc/stackstate-agent/checks.d\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/etc/datadog-agent/conf.d\\" -> \\"/etc/datadog-agent/conf.d\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/etc/datadog-agent/checks.d\\" -> \\"/etc/datadog-agent/checks.d\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/datadog-agent/run\\""', "./pkg/config")
 
     # [sts] turn of the metadata collection, the receiver does not recognize these payloads
     do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g',
@@ -76,8 +76,8 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"datadogtoken\\" -> \\"stackstatetoken\\""', "./pkg/util/kubernetes/apiserver")
 
     # Defaults
-    do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
-    do_go_rename(ctx, '"\\"/var/log/datadog/cluster-agent.log\\" -> \\"/var/log/stackstate-agent/cluster-agent.log\\""',
+    do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/datadog-agent\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"/var/log/datadog/cluster-agent.log\\" -> \\"/var/log/datadog-agent/cluster-agent.log\\""',
                  "./cmd/agent/common")
     do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./cmd/agent")
     do_go_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./cmd/agent")

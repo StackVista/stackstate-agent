@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
-// +build kubeapiserver
 
 // Package kubernetesapiserver implements the Kubernetes API Server cluster
 // check.

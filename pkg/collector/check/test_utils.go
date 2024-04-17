@@ -2,6 +2,7 @@ package check
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"time"
 )
 
@@ -32,7 +33,7 @@ func (c *STSTestCheck) Interval() time.Duration { return 1 }
 func (c *STSTestCheck) Run() error { return nil }
 
 // ID returns the string as a Check.ID
-func (c *STSTestCheck) ID() ID { return ID(c.String()) }
+func (c *STSTestCheck) ID() checkid.ID { return checkid.ID(c.String()) }
 
 // GetWarnings returns an empty []error
 func (c *STSTestCheck) GetWarnings() []error { return []error{} }

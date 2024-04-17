@@ -115,7 +115,7 @@ func (c *WorkloadMetaCollector) processEvents(evBundle workloadmeta.EventBundle)
 		entity := ev.Entity
 		// plaster to figure out what is causing: https://stackstate.atlassian.net/browse/STAC-19780
 		if entity == nil {
-			_ = log.Warnf("Event with type: %s with sources %v, has no entity.", ev.Type, ev.Sources)
+			_ = log.Warnf("Event with type %s has no entity.", ev.Type)
 			continue
 		}
 		entityID := entity.GetID()

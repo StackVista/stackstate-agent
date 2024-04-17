@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build !linux
-// +build !linux
 
 // Package rules holds rules related files
 package rules

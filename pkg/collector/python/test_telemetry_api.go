@@ -1,5 +1,4 @@
 //go:build python && test
-// +build python,test
 
 package python
 

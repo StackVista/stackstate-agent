@@ -4,7 +4,6 @@
 // Copyright 2017-present Datadog, Inc.
 
 //go:build kubeapiserver
-// +build kubeapiserver
 
 // Package autoscalers provides helpers to work with Kubernetes HPA objects and
 // external metrics.

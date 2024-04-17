@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build containerd
-// +build containerd
 
 // Package containerd provides a containerd client.
 package containerd
@@ -22,13 +21,9 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/util/retry"
 	"github.com/opencontainers/image-spec/identity"
+	"github.com/opencontainers/runtime-spec/specs-go"
 
 	cspec "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/spec" // sts
-	"github.com/DataDog/datadog-agent/pkg/config"
-	dderrors "github.com/DataDog/datadog-agent/pkg/errors"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/retry"
-
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
@@ -212,14 +207,22 @@ func (c *ContainerdUtil) GetContainers(ctx context.Context) ([]*cspec.Container,
 	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
 	defer cancel()
 
-	dContainers, err := c.Containers()
+	ns, err := namespaces.NamespaceRequired(ctx)
+	if err != nil {
+		ns = config.Datadog.GetString("containerd_namespace")
+		if ns == "" {
+			return []*cspec.Container{}, err
+		}
+	}
+
+	dContainers, err := c.Containers(ns)
 	if err != nil {
 		return nil, err
 	}
 
 	uContainers := make([]*cspec.Container, 0, len(dContainers))
 	for _, dContainer := range dContainers {
-		ctxNamespace := namespaces.WithNamespace(ctx, c.namespace)
+		ctxNamespace := namespaces.WithNamespace(ctx, ns)
 
 		info, err := dContainer.Info(ctxNamespace)
 		if err != nil {

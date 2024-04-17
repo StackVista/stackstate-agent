@@ -4,7 +4,6 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build cri
-// +build cri
 
 // Package cri implements a Container Runtime Interface (CRI) client.
 package cri

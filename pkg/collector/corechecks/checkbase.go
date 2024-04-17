@@ -8,6 +8,7 @@ package corechecks
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -51,6 +52,7 @@ type CheckBase struct {
 	telemetry      bool
 	initConfig     string
 	instanceConfig string
+	features       features.Features
 }
 
 // NewCheckBase returns a check base struct with a given check name
