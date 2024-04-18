@@ -37,5 +37,8 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD" ]; then
     echo "---                      ---"
     echo "--- Building agent       ---"
     echo "---                      ---"
+    echo "--- Building dogstatsd   ---"
     inv -e dogstatsd.build --static --major-version 3
+    echo "--- Building rtloader    ---"
+    inv -e rtloader.make
 fi
