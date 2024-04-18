@@ -613,7 +613,7 @@ def build(
     python_runtimes='3',
     arch='x64',
     exclude_rtloader=False,
-    go_mod="vendor",
+    go_mod="mod",
     windows_sysprobe=False,
     cmake_options='',
 ):

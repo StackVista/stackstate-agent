@@ -4,8 +4,6 @@
 // Copyright 2017-present Datadog, Inc.
 //go:build kubeapiserver
 
-//go:build kubeapiserver
-
 package kubernetesapiserver
 
 import (
