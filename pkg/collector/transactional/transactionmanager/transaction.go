@@ -2,7 +2,7 @@ package transactionmanager
 
 import (
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"time"
 )
 
@@ -69,7 +69,7 @@ type Action struct {
 // IntakeTransaction represents an intake checkmanager which consists of one or more actions
 type IntakeTransaction struct {
 	TransactionID        string
-	CheckID              check.ID
+	CheckID              checkid.ID
 	Status               TransactionStatus
 	Actions              map[string]*Action // pointer to allow in-place mutation instead of setting the value again
 	NotifyChannel        chan interface{}
@@ -104,7 +104,7 @@ type RejectAction struct {
 
 // StartTransaction starts a transaction for a given checkID, with an optional OnComplete callback function.
 type StartTransaction struct {
-	CheckID       check.ID
+	CheckID       checkid.ID
 	TransactionID string
 	NotifyChannel chan interface{}
 }

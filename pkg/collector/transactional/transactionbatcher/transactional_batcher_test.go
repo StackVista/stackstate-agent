@@ -2,7 +2,6 @@ package transactionbatcher
 
 import (
 	"encoding/json"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
@@ -23,8 +22,8 @@ var (
 	testInstance2      = topology.Instance{Type: "mytype2", URL: "myurl2"}
 	testHost           = "myhost"
 	testAgent          = "myagent"
-	testID             = check.ID("myid")
-	testID2            = check.ID("myid2")
+	testID             = checkid.ID("myid")
+	testID2            = checkid.ID("myid2")
 	testTransactionID  = "transaction1"
 	testTransaction2ID = "transaction2"
 	testComponent      = topology.Component{

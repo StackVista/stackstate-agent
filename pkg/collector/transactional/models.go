@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 	"reflect"
 )
@@ -23,11 +23,11 @@ type PayloadTransaction struct {
 
 // IntakePayload is a Go representation of the Receiver Intake structure
 type IntakePayload struct {
-	InternalHostname string                     `json:"internalHostname"`
-	Topologies       []topology.Topology        `json:"topologies"`
-	Health           []health.Health            `json:"health"`
-	Metrics          []interface{}              `json:"metrics"`
-	Events           map[string][]metrics.Event `json:"events"`
+	InternalHostname string                   `json:"internalHostname"`
+	Topologies       []topology.Topology      `json:"topologies"`
+	Health           []health.Health          `json:"health"`
+	Metrics          []interface{}            `json:"metrics"`
+	Events           map[string][]event.Event `json:"events"`
 }
 
 // JSONString returns a JSON string of the Component
@@ -55,6 +55,6 @@ func NewIntakePayload() IntakePayload {
 		Topologies: make([]topology.Topology, 0),
 		Health:     make([]health.Health, 0),
 		Metrics:    make([]interface{}, 0),
-		Events:     make(map[string][]metrics.Event, 0),
+		Events:     make(map[string][]event.Event),
 	}
 }

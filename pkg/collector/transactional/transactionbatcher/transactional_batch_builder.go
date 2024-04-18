@@ -3,9 +3,10 @@ package transactionbatcher
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 )
@@ -36,7 +37,7 @@ func (t TransactionCheckInstanceBatchState) JSONString() string {
 }
 
 // TransactionCheckInstanceBatchStates is the type representing batched data for all check instances
-type TransactionCheckInstanceBatchStates map[check.ID]TransactionCheckInstanceBatchState
+type TransactionCheckInstanceBatchStates map[checkid.ID]TransactionCheckInstanceBatchState
 
 // TransactionBatchBuilder is a helper class to build Topology based on submitted data, this data structure is not thread safe
 type TransactionBatchBuilder struct {
@@ -50,13 +51,13 @@ type TransactionBatchBuilder struct {
 // NewTransactionalBatchBuilder constructs a TransactionBatchBuilder
 func NewTransactionalBatchBuilder(maxCapacity int) TransactionBatchBuilder {
 	return TransactionBatchBuilder{
-		states:       make(map[check.ID]TransactionCheckInstanceBatchState),
+		states:       make(map[checkid.ID]TransactionCheckInstanceBatchState),
 		elementCount: 0,
 		maxCapacity:  maxCapacity,
 	}
 }
 
-func (builder *TransactionBatchBuilder) getOrCreateState(checkID check.ID, transactionID string) TransactionCheckInstanceBatchState {
+func (builder *TransactionBatchBuilder) getOrCreateState(checkID checkid.ID, transactionID string) TransactionCheckInstanceBatchState {
 	if value, ok := builder.states[checkID]; ok {
 		return value
 	}
@@ -71,7 +72,7 @@ func (builder *TransactionBatchBuilder) getOrCreateState(checkID check.ID, trans
 	return state
 }
 
-func (builder *TransactionBatchBuilder) getOrCreateTopology(checkID check.ID, transactionID string, instance topology.Instance) *topology.Topology {
+func (builder *TransactionBatchBuilder) getOrCreateTopology(checkID checkid.ID, transactionID string, instance topology.Instance) *topology.Topology {
 	state := builder.getOrCreateState(checkID, transactionID)
 
 	if state.Topology != nil {
@@ -95,7 +96,7 @@ func (builder *TransactionBatchBuilder) getOrCreateTopology(checkID check.ID, tr
 	return builder.states[checkID].Topology
 }
 
-func (builder *TransactionBatchBuilder) getOrCreateHealth(checkID check.ID, transactionID string, stream health.Stream) health.Health {
+func (builder *TransactionBatchBuilder) getOrCreateHealth(checkID checkid.ID, transactionID string, stream health.Stream) health.Health {
 	state := builder.getOrCreateState(checkID, transactionID)
 
 	if value, ok := state.Health[stream.GoString()]; ok {
@@ -112,7 +113,7 @@ func (builder *TransactionBatchBuilder) getOrCreateHealth(checkID check.ID, tran
 	return builder.states[checkID].Health[stream.GoString()]
 }
 
-func (builder *TransactionBatchBuilder) getOrCreateRawMetrics(checkID check.ID, transactionID string) *telemetry.Metrics {
+func (builder *TransactionBatchBuilder) getOrCreateRawMetrics(checkID checkid.ID, transactionID string) *telemetry.Metrics {
 	state := builder.getOrCreateState(checkID, transactionID)
 
 	if state.Metrics != nil {
@@ -130,7 +131,7 @@ func (builder *TransactionBatchBuilder) getOrCreateRawMetrics(checkID check.ID, 
 	return builder.states[checkID].Metrics
 }
 
-func (builder *TransactionBatchBuilder) getOrCreateEvents(checkID check.ID, transactionID string) *metrics.IntakeEvents {
+func (builder *TransactionBatchBuilder) getOrCreateEvents(checkID checkid.ID, transactionID string) *metrics.IntakeEvents {
 	state := builder.getOrCreateState(checkID, transactionID)
 
 	if state.Events != nil {
@@ -149,42 +150,42 @@ func (builder *TransactionBatchBuilder) getOrCreateEvents(checkID check.ID, tran
 }
 
 // AddComponent adds a component
-func (builder *TransactionBatchBuilder) AddComponent(checkID check.ID, transactionID string, instance topology.Instance, component topology.Component) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) AddComponent(checkID checkid.ID, transactionID string, instance topology.Instance, component topology.Component) TransactionCheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, transactionID, instance)
 	topologyData.Components = append(topologyData.Components, component)
 	return builder.incrementAndTryFlush()
 }
 
 // AddRelation adds a relation
-func (builder *TransactionBatchBuilder) AddRelation(checkID check.ID, transactionID string, instance topology.Instance, relation topology.Relation) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) AddRelation(checkID checkid.ID, transactionID string, instance topology.Instance, relation topology.Relation) TransactionCheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, transactionID, instance)
 	topologyData.Relations = append(topologyData.Relations, relation)
 	return builder.incrementAndTryFlush()
 }
 
 // TopologyStartSnapshot starts a snapshot
-func (builder *TransactionBatchBuilder) TopologyStartSnapshot(checkID check.ID, transactionID string, instance topology.Instance) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) TopologyStartSnapshot(checkID checkid.ID, transactionID string, instance topology.Instance) TransactionCheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, transactionID, instance)
 	topologyData.StartSnapshot = true
 	return nil
 }
 
 // TopologyStopSnapshot stops a snapshot. This will always flush
-func (builder *TransactionBatchBuilder) TopologyStopSnapshot(checkID check.ID, transactionID string, instance topology.Instance) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) TopologyStopSnapshot(checkID checkid.ID, transactionID string, instance topology.Instance) TransactionCheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, transactionID, instance)
 	topologyData.StopSnapshot = true
 	return builder.incrementAndTryFlush()
 }
 
 // Delete deletes a topology element
-func (builder *TransactionBatchBuilder) Delete(checkID check.ID, transactionID string, instance topology.Instance, deleteID string) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) Delete(checkID checkid.ID, transactionID string, instance topology.Instance, deleteID string) TransactionCheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, transactionID, instance)
 	topologyData.DeleteIDs = append(topologyData.DeleteIDs, deleteID)
 	return builder.incrementAndTryFlush()
 }
 
 // AddHealthCheckData adds a component
-func (builder *TransactionBatchBuilder) AddHealthCheckData(checkID check.ID, transactionID string, stream health.Stream, data health.CheckData) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) AddHealthCheckData(checkID checkid.ID, transactionID string, stream health.Stream, data health.CheckData) TransactionCheckInstanceBatchStates {
 	healthData := builder.getOrCreateHealth(checkID, transactionID, stream)
 	healthData.CheckStates = append(healthData.CheckStates, data)
 	builder.states[checkID].Health[stream.GoString()] = healthData
@@ -192,7 +193,7 @@ func (builder *TransactionBatchBuilder) AddHealthCheckData(checkID check.ID, tra
 }
 
 // HealthStartSnapshot starts a Health snapshot
-func (builder *TransactionBatchBuilder) HealthStartSnapshot(checkID check.ID, transactionID string, stream health.Stream, repeatIntervalSeconds int, expirySeconds int) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) HealthStartSnapshot(checkID checkid.ID, transactionID string, stream health.Stream, repeatIntervalSeconds int, expirySeconds int) TransactionCheckInstanceBatchStates {
 	healthData := builder.getOrCreateHealth(checkID, transactionID, stream)
 	healthData.StartSnapshot = &health.StartSnapshotMetadata{
 		RepeatIntervalS: repeatIntervalSeconds,
@@ -203,7 +204,7 @@ func (builder *TransactionBatchBuilder) HealthStartSnapshot(checkID check.ID, tr
 }
 
 // HealthStopSnapshot stops a Health snapshot. This will always flush
-func (builder *TransactionBatchBuilder) HealthStopSnapshot(checkID check.ID, transactionID string, stream health.Stream) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) HealthStopSnapshot(checkID checkid.ID, transactionID string, stream health.Stream) TransactionCheckInstanceBatchStates {
 	healthData := builder.getOrCreateHealth(checkID, transactionID, stream)
 	healthData.StopSnapshot = &health.StopSnapshotMetadata{}
 	builder.states[checkID].Health[stream.GoString()] = healthData
@@ -211,14 +212,14 @@ func (builder *TransactionBatchBuilder) HealthStopSnapshot(checkID check.ID, tra
 }
 
 // AddRawMetricsData adds raw metric data
-func (builder *TransactionBatchBuilder) AddRawMetricsData(checkID check.ID, transactionID string, rawMetric telemetry.RawMetrics) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) AddRawMetricsData(checkID checkid.ID, transactionID string, rawMetric telemetry.RawMetrics) TransactionCheckInstanceBatchStates {
 	rawMetricsData := builder.getOrCreateRawMetrics(checkID, transactionID)
 	rawMetricsData.Values = append(rawMetricsData.Values, rawMetric)
 	return builder.incrementAndTryFlush()
 }
 
 // AddEvent adds a event
-func (builder *TransactionBatchBuilder) AddEvent(checkID check.ID, transactionID string, event metrics.Event) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) AddEvent(checkID checkid.ID, transactionID string, event event.Event) TransactionCheckInstanceBatchStates {
 	events := builder.getOrCreateEvents(checkID, transactionID)
 	events.Events = append(events.Events, event)
 	return builder.incrementAndTryFlush()
@@ -227,7 +228,7 @@ func (builder *TransactionBatchBuilder) AddEvent(checkID check.ID, transactionID
 // Flush the collected data. Returning the data and wiping the current build up Topology
 func (builder *TransactionBatchBuilder) Flush() TransactionCheckInstanceBatchStates {
 	data := builder.states
-	builder.states = make(map[check.ID]TransactionCheckInstanceBatchState)
+	builder.states = make(map[checkid.ID]TransactionCheckInstanceBatchState)
 	builder.elementCount = 0
 	return data
 }
@@ -243,7 +244,7 @@ func (builder *TransactionBatchBuilder) incrementAndTryFlush() TransactionCheckI
 }
 
 // StartTransaction creates a batch transaction for the given check ID
-func (builder *TransactionBatchBuilder) StartTransaction(checkID check.ID, transactionID string) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) StartTransaction(checkID checkid.ID, transactionID string) TransactionCheckInstanceBatchStates {
 	state := builder.getOrCreateState(checkID, transactionID)
 	state.Transaction = &BatchTransaction{
 		TransactionID:        transactionID,
@@ -253,7 +254,7 @@ func (builder *TransactionBatchBuilder) StartTransaction(checkID check.ID, trans
 }
 
 // MarkTransactionComplete marks a transaction as complete and flushes the data if produced
-func (builder *TransactionBatchBuilder) MarkTransactionComplete(checkID check.ID, transactionID string) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) MarkTransactionComplete(checkID checkid.ID, transactionID string) TransactionCheckInstanceBatchStates {
 	if state, ok := builder.states[checkID]; ok {
 		if state.Transaction.TransactionID == transactionID {
 			state.Transaction.CompletedTransaction = true
@@ -279,7 +280,7 @@ func (builder *TransactionBatchBuilder) MarkTransactionComplete(checkID check.ID
 }
 
 // ClearState removes the batch state for a given checkID
-func (builder *TransactionBatchBuilder) ClearState(checkID check.ID) TransactionCheckInstanceBatchStates {
+func (builder *TransactionBatchBuilder) ClearState(checkID checkid.ID) TransactionCheckInstanceBatchStates {
 	delete(builder.states, checkID)
 
 	return nil

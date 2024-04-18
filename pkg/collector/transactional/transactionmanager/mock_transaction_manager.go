@@ -1,7 +1,7 @@
 package transactionmanager
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"sync"
 )
 
@@ -49,7 +49,7 @@ func (ttm *MockTransactionManager) Stop() {
 }
 
 // StartTransaction sets the current transaction value and updates the notify channel
-func (ttm *MockTransactionManager) StartTransaction(_ check.ID, TransactionID string, NotifyChannel chan interface{}) {
+func (ttm *MockTransactionManager) StartTransaction(_ checkid.ID, TransactionID string, NotifyChannel chan interface{}) {
 	ttm.mux.Lock()
 	ttm.currentTransaction = TransactionID
 	ttm.currentTransactionNotifyChannel = NotifyChannel

@@ -1,7 +1,6 @@
 package batcher
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/health"
 	serializer2 "github.com/DataDog/datadog-agent/pkg/serializer"
@@ -17,8 +16,8 @@ var (
 	testInstance2 = topology.Instance{Type: "mytype2", URL: "myurl2"}
 	testHost      = "myhost"
 	testAgent     = "myagent"
-	testID        = check.ID("myid")
-	testID2       = check.ID("myid2")
+	testID        = checkid.ID("myid")
+	testID2       = checkid.ID("myid2")
 	testComponent = topology.Component{
 		ExternalID: "id",
 		Type:       topology.Type{Name: "typename"},

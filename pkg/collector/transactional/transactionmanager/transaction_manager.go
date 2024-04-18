@@ -2,7 +2,7 @@ package transactionmanager
 
 import (
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"sync"
 	"time"
@@ -160,7 +160,7 @@ transactionHandler:
 }
 
 // startTransaction creates a transaction and puts it into the transactions map
-func (txm *transactionManager) startTransaction(transactionID string, checkID check.ID, notify chan interface{}) (*IntakeTransaction, error) {
+func (txm *transactionManager) startTransaction(transactionID string, checkID checkid.ID, notify chan interface{}) (*IntakeTransaction, error) {
 	transaction := &IntakeTransaction{
 		TransactionID:        transactionID,
 		CheckID:              checkID,

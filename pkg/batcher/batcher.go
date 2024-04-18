@@ -2,7 +2,7 @@ package batcher
 
 import (
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/serializer"
@@ -23,23 +23,23 @@ var (
 // data is complete.
 type Batcher interface {
 	// Topology
-	SubmitComponent(checkID check.ID, instance topology.Instance, component topology.Component)
-	SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation)
-	SubmitStartSnapshot(checkID check.ID, instance topology.Instance)
-	SubmitStopSnapshot(checkID check.ID, instance topology.Instance)
-	SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string)
+	SubmitComponent(checkID checkid.ID, instance topology.Instance, component topology.Component)
+	SubmitRelation(checkID checkid.ID, instance topology.Instance, relation topology.Relation)
+	SubmitStartSnapshot(checkID checkid.ID, instance topology.Instance)
+	SubmitStopSnapshot(checkID checkid.ID, instance topology.Instance)
+	SubmitDelete(checkID checkid.ID, instance topology.Instance, topologyElementID string)
 
 	// Health
-	SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData)
-	SubmitHealthStartSnapshot(checkID check.ID, stream health.Stream, intervalSeconds int, expirySeconds int)
-	SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream)
-	SubmitError(checkID check.ID, err error)
+	SubmitHealthCheckData(checkID checkid.ID, stream health.Stream, data health.CheckData)
+	SubmitHealthStartSnapshot(checkID checkid.ID, stream health.Stream, intervalSeconds int, expirySeconds int)
+	SubmitHealthStopSnapshot(checkID checkid.ID, stream health.Stream)
+	SubmitError(checkID checkid.ID, err error)
 
 	// Raw Metrics
-	SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetrics)
+	SubmitRawMetricsData(checkID checkid.ID, data telemetry.RawMetrics)
 
 	// lifecycle
-	SubmitComplete(checkID check.ID)
+	SubmitComplete(checkID checkid.ID)
 	Shutdown()
 }
 
@@ -83,58 +83,58 @@ type AsynchronousBatcher struct {
 }
 
 type submitComponent struct {
-	checkID   check.ID
+	checkID   checkid.ID
 	instance  topology.Instance
 	component topology.Component
 }
 
 type submitRelation struct {
-	checkID  check.ID
+	checkID  checkid.ID
 	instance topology.Instance
 	relation topology.Relation
 }
 
 type submitStartSnapshot struct {
-	checkID  check.ID
+	checkID  checkid.ID
 	instance topology.Instance
 }
 
 type submitStopSnapshot struct {
-	checkID  check.ID
+	checkID  checkid.ID
 	instance topology.Instance
 }
 
 type submitDelete struct {
-	checkID  check.ID
+	checkID  checkid.ID
 	instance topology.Instance
 	deleteID string
 }
 
 type submitHealthCheckData struct {
-	checkID check.ID
+	checkID checkid.ID
 	stream  health.Stream
 	data    health.CheckData
 }
 
 type submitHealthStartSnapshot struct {
-	checkID         check.ID
+	checkID         checkid.ID
 	stream          health.Stream
 	intervalSeconds int
 	expirySeconds   int
 }
 
 type submitHealthStopSnapshot struct {
-	checkID check.ID
+	checkID checkid.ID
 	stream  health.Stream
 }
 
 type submitRawMetricsData struct {
-	checkID   check.ID
+	checkID   checkid.ID
 	rawMetric telemetry.RawMetrics
 }
 
 type submitComplete struct {
-	checkID check.ID
+	checkID checkid.ID
 }
 
 type submitShutdown struct{}
@@ -243,7 +243,7 @@ func (batcher *AsynchronousBatcher) run() {
 }
 
 // SubmitComponent submits a component to the batch
-func (batcher AsynchronousBatcher) SubmitComponent(checkID check.ID, instance topology.Instance, component topology.Component) {
+func (batcher AsynchronousBatcher) SubmitComponent(checkID checkid.ID, instance topology.Instance, component topology.Component) {
 	batcher.input <- submitComponent{
 		checkID:   checkID,
 		instance:  instance,
@@ -252,7 +252,7 @@ func (batcher AsynchronousBatcher) SubmitComponent(checkID check.ID, instance to
 }
 
 // SubmitRelation submits a relation to the batch
-func (batcher AsynchronousBatcher) SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation) {
+func (batcher AsynchronousBatcher) SubmitRelation(checkID checkid.ID, instance topology.Instance, relation topology.Relation) {
 	batcher.input <- submitRelation{
 		checkID:  checkID,
 		instance: instance,
@@ -261,7 +261,7 @@ func (batcher AsynchronousBatcher) SubmitRelation(checkID check.ID, instance top
 }
 
 // SubmitStartSnapshot submits start of a snapshot
-func (batcher AsynchronousBatcher) SubmitStartSnapshot(checkID check.ID, instance topology.Instance) {
+func (batcher AsynchronousBatcher) SubmitStartSnapshot(checkID checkid.ID, instance topology.Instance) {
 	batcher.input <- submitStartSnapshot{
 		checkID:  checkID,
 		instance: instance,
@@ -269,7 +269,7 @@ func (batcher AsynchronousBatcher) SubmitStartSnapshot(checkID check.ID, instanc
 }
 
 // SubmitStopSnapshot submits a stop of a snapshot. This always causes a flush of the data downstream
-func (batcher AsynchronousBatcher) SubmitStopSnapshot(checkID check.ID, instance topology.Instance) {
+func (batcher AsynchronousBatcher) SubmitStopSnapshot(checkID checkid.ID, instance topology.Instance) {
 	batcher.input <- submitStopSnapshot{
 		checkID:  checkID,
 		instance: instance,
@@ -277,7 +277,7 @@ func (batcher AsynchronousBatcher) SubmitStopSnapshot(checkID check.ID, instance
 }
 
 // SubmitDelete submits a deletion of topology element.
-func (batcher AsynchronousBatcher) SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string) {
+func (batcher AsynchronousBatcher) SubmitDelete(checkID checkid.ID, instance topology.Instance, topologyElementID string) {
 	batcher.input <- submitDelete{
 		checkID:  checkID,
 		instance: instance,
@@ -286,7 +286,7 @@ func (batcher AsynchronousBatcher) SubmitDelete(checkID check.ID, instance topol
 }
 
 // SubmitHealthCheckData submits a Health check data record to the batch
-func (batcher AsynchronousBatcher) SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData) {
+func (batcher AsynchronousBatcher) SubmitHealthCheckData(checkID checkid.ID, stream health.Stream, data health.CheckData) {
 	log.Debugf("Submitting Health check data for check [%s] stream [%s]: %s", checkID, stream.GoString(), util.JSONString(data))
 	batcher.input <- submitHealthCheckData{
 		checkID: checkID,
@@ -296,7 +296,7 @@ func (batcher AsynchronousBatcher) SubmitHealthCheckData(checkID check.ID, strea
 }
 
 // SubmitHealthStartSnapshot submits start of a Health snapshot
-func (batcher AsynchronousBatcher) SubmitHealthStartSnapshot(checkID check.ID, stream health.Stream, intervalSeconds int, expirySeconds int) {
+func (batcher AsynchronousBatcher) SubmitHealthStartSnapshot(checkID checkid.ID, stream health.Stream, intervalSeconds int, expirySeconds int) {
 	batcher.input <- submitHealthStartSnapshot{
 		checkID:         checkID,
 		stream:          stream,
@@ -306,7 +306,7 @@ func (batcher AsynchronousBatcher) SubmitHealthStartSnapshot(checkID check.ID, s
 }
 
 // SubmitHealthStopSnapshot submits a stop of a Health snapshot. This always causes a flush of the data downstream
-func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream) {
+func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID checkid.ID, stream health.Stream) {
 	batcher.input <- submitHealthStopSnapshot{
 		checkID: checkID,
 		stream:  stream,
@@ -314,7 +314,7 @@ func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID check.ID, st
 }
 
 // SubmitRawMetricsData submits a raw metrics data record to the batch
-func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) {
+func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID checkid.ID, rawMetric telemetry.RawMetrics) {
 	if rawMetric.HostName == "" {
 		rawMetric.HostName = batcher.hostname
 	}
@@ -326,7 +326,7 @@ func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMet
 }
 
 // SubmitComplete signals completion of a check. May trigger a flush only if the check produced data
-func (batcher AsynchronousBatcher) SubmitComplete(checkID check.ID) {
+func (batcher AsynchronousBatcher) SubmitComplete(checkID checkid.ID) {
 	log.Debugf("Submitting complete for check [%s]", checkID)
 	batcher.input <- submitComplete{
 		checkID: checkID,
@@ -339,5 +339,5 @@ func (batcher AsynchronousBatcher) Shutdown() {
 }
 
 // SubmitError takes error in the testing code, not yet accounted for health or anything else
-func (batcher AsynchronousBatcher) SubmitError(checkID check.ID, err error) {
+func (batcher AsynchronousBatcher) SubmitError(checkID checkid.ID, err error) {
 }

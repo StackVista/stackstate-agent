@@ -1,7 +1,7 @@
 package transactionmanager
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"sync"
 )
@@ -52,7 +52,7 @@ func (txm *transactionManager) TransactionCount() int {
 }
 
 // StartTransaction begins a transaction for a given check
-func (txm *transactionManager) StartTransaction(checkID check.ID, transactionID string, notifyChannel chan interface{}) {
+func (txm *transactionManager) StartTransaction(checkID checkid.ID, transactionID string, notifyChannel chan interface{}) {
 	txm.transactionChannel <- StartTransaction{
 		CheckID:       checkID,
 		TransactionID: transactionID,

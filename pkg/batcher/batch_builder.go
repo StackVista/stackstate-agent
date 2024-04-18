@@ -1,7 +1,7 @@
 package batcher
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/topology"
@@ -15,7 +15,7 @@ type CheckInstanceBatchState struct {
 }
 
 // CheckInstanceBatchStates is the type representing batched data for all check instances
-type CheckInstanceBatchStates map[check.ID]CheckInstanceBatchState
+type CheckInstanceBatchStates map[checkid.ID]CheckInstanceBatchState
 
 // BatchBuilder is a helper class to build Topology based on submitted data, this data structure is not thread safe
 type BatchBuilder struct {
@@ -31,7 +31,7 @@ type BatchBuilder struct {
 // NewBatchBuilder constructs a BatchBuilder
 func NewBatchBuilder(maxCapacity int) BatchBuilder {
 	return BatchBuilder{
-		states:       make(map[check.ID]CheckInstanceBatchState),
+		states:       make(map[checkid.ID]CheckInstanceBatchState),
 		elementCount: 0,
 		maxCapacity:  maxCapacity,
 		noForceFlash: false,
@@ -43,7 +43,7 @@ func (builder *BatchBuilder) DisabledForceFlush() {
 	builder.noForceFlash = true
 }
 
-func (builder *BatchBuilder) getOrCreateState(checkID check.ID) CheckInstanceBatchState {
+func (builder *BatchBuilder) getOrCreateState(checkID checkid.ID) CheckInstanceBatchState {
 	if value, ok := builder.states[checkID]; ok {
 		return value
 	}
@@ -57,7 +57,7 @@ func (builder *BatchBuilder) getOrCreateState(checkID check.ID) CheckInstanceBat
 	return state
 }
 
-func (builder *BatchBuilder) getOrCreateTopology(checkID check.ID, instance topology.Instance) *topology.Topology {
+func (builder *BatchBuilder) getOrCreateTopology(checkID checkid.ID, instance topology.Instance) *topology.Topology {
 	state := builder.getOrCreateState(checkID)
 
 	if state.Topology != nil {
@@ -79,7 +79,7 @@ func (builder *BatchBuilder) getOrCreateTopology(checkID check.ID, instance topo
 	return builder.states[checkID].Topology
 }
 
-func (builder *BatchBuilder) getOrCreateHealth(checkID check.ID, stream health.Stream) health.Health {
+func (builder *BatchBuilder) getOrCreateHealth(checkID checkid.ID, stream health.Stream) health.Health {
 	state := builder.getOrCreateState(checkID)
 
 	if value, ok := state.Health[stream.GoString()]; ok {
@@ -96,7 +96,7 @@ func (builder *BatchBuilder) getOrCreateHealth(checkID check.ID, stream health.S
 	return builder.states[checkID].Health[stream.GoString()]
 }
 
-func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *[]telemetry.RawMetrics {
+func (builder *BatchBuilder) getOrCreateRawMetrics(checkID checkid.ID) *[]telemetry.RawMetrics {
 	state := builder.getOrCreateState(checkID)
 
 	if state.Metrics != nil {
@@ -113,28 +113,28 @@ func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *[]telemetr
 }
 
 // AddComponent adds a component
-func (builder *BatchBuilder) AddComponent(checkID check.ID, instance topology.Instance, component topology.Component) CheckInstanceBatchStates {
+func (builder *BatchBuilder) AddComponent(checkID checkid.ID, instance topology.Instance, component topology.Component) CheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, instance)
 	topologyData.Components = append(topologyData.Components, component)
 	return builder.incrementAndTryFlush()
 }
 
 // AddRelation adds a relation
-func (builder *BatchBuilder) AddRelation(checkID check.ID, instance topology.Instance, relation topology.Relation) CheckInstanceBatchStates {
+func (builder *BatchBuilder) AddRelation(checkID checkid.ID, instance topology.Instance, relation topology.Relation) CheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, instance)
 	topologyData.Relations = append(topologyData.Relations, relation)
 	return builder.incrementAndTryFlush()
 }
 
 // TopologyStartSnapshot starts a snapshot
-func (builder *BatchBuilder) TopologyStartSnapshot(checkID check.ID, instance topology.Instance) CheckInstanceBatchStates {
+func (builder *BatchBuilder) TopologyStartSnapshot(checkID checkid.ID, instance topology.Instance) CheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, instance)
 	topologyData.StartSnapshot = true
 	return nil
 }
 
 // TopologyStopSnapshot stops a snapshot. This will always flush
-func (builder *BatchBuilder) TopologyStopSnapshot(checkID check.ID, instance topology.Instance) CheckInstanceBatchStates {
+func (builder *BatchBuilder) TopologyStopSnapshot(checkID checkid.ID, instance topology.Instance) CheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, instance)
 	topologyData.StopSnapshot = true
 	// We always flush after a TopologyStopSnapshot to limit latency
@@ -145,14 +145,14 @@ func (builder *BatchBuilder) TopologyStopSnapshot(checkID check.ID, instance top
 }
 
 // Delete deletes a topology element
-func (builder *BatchBuilder) Delete(checkID check.ID, instance topology.Instance, deleteID string) CheckInstanceBatchStates {
+func (builder *BatchBuilder) Delete(checkID checkid.ID, instance topology.Instance, deleteID string) CheckInstanceBatchStates {
 	topologyData := builder.getOrCreateTopology(checkID, instance)
 	topologyData.DeleteIDs = append(topologyData.DeleteIDs, deleteID)
 	return builder.incrementAndTryFlush()
 }
 
 // AddHealthCheckData adds a component
-func (builder *BatchBuilder) AddHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData) CheckInstanceBatchStates {
+func (builder *BatchBuilder) AddHealthCheckData(checkID checkid.ID, stream health.Stream, data health.CheckData) CheckInstanceBatchStates {
 	healthData := builder.getOrCreateHealth(checkID, stream)
 	healthData.CheckStates = append(healthData.CheckStates, data)
 	builder.states[checkID].Health[stream.GoString()] = healthData
@@ -160,7 +160,7 @@ func (builder *BatchBuilder) AddHealthCheckData(checkID check.ID, stream health.
 }
 
 // HealthStartSnapshot starts a Health snapshot
-func (builder *BatchBuilder) HealthStartSnapshot(checkID check.ID, stream health.Stream, repeatIntervalSeconds int, expirySeconds int) CheckInstanceBatchStates {
+func (builder *BatchBuilder) HealthStartSnapshot(checkID checkid.ID, stream health.Stream, repeatIntervalSeconds int, expirySeconds int) CheckInstanceBatchStates {
 	healthData := builder.getOrCreateHealth(checkID, stream)
 	healthData.StartSnapshot = &health.StartSnapshotMetadata{
 		RepeatIntervalS: repeatIntervalSeconds,
@@ -171,7 +171,7 @@ func (builder *BatchBuilder) HealthStartSnapshot(checkID check.ID, stream health
 }
 
 // HealthStopSnapshot stops a Health snapshot. This will always flush
-func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.Stream) CheckInstanceBatchStates {
+func (builder *BatchBuilder) HealthStopSnapshot(checkID checkid.ID, stream health.Stream) CheckInstanceBatchStates {
 	healthData := builder.getOrCreateHealth(checkID, stream)
 	healthData.StopSnapshot = &health.StopSnapshotMetadata{}
 	builder.states[checkID].Health[stream.GoString()] = healthData
@@ -183,7 +183,7 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.
 }
 
 // AddRawMetricsData adds raw metric data
-func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) CheckInstanceBatchStates {
+func (builder *BatchBuilder) AddRawMetricsData(checkID checkid.ID, rawMetric telemetry.RawMetrics) CheckInstanceBatchStates {
 	rawMetricsData := builder.getOrCreateRawMetrics(checkID)
 	*rawMetricsData = append(*rawMetricsData, rawMetric)
 	return builder.incrementAndTryFlush()
@@ -192,7 +192,7 @@ func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, rawMetric telem
 // Flush the collected data. Returning the data and wiping the current build up Topology
 func (builder *BatchBuilder) Flush() CheckInstanceBatchStates {
 	data := builder.states
-	builder.states = make(map[check.ID]CheckInstanceBatchState)
+	builder.states = make(map[checkid.ID]CheckInstanceBatchState)
 	builder.elementCount = 0
 	return data
 }
@@ -208,7 +208,7 @@ func (builder *BatchBuilder) incrementAndTryFlush() CheckInstanceBatchStates {
 }
 
 // FlushIfDataProduced checks whether the check produced data, if so, flush
-func (builder *BatchBuilder) FlushIfDataProduced(checkID check.ID) CheckInstanceBatchStates {
+func (builder *BatchBuilder) FlushIfDataProduced(checkID checkid.ID) CheckInstanceBatchStates {
 	if _, ok := builder.states[checkID]; ok {
 		return builder.Flush()
 	}
