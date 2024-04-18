@@ -324,7 +324,7 @@ func (s *checkSender) ServiceCheck(checkName string, status servicecheck.Service
 		serviceCheck.Host = s.defaultHostname
 	}
 
-	s.eventOut <- serviceCheck
+	s.serviceCheckOut <- serviceCheck
 
 	s.statsLock.Lock()
 	s.metricStats.ServiceChecks++

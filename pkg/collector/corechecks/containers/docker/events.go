@@ -10,6 +10,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
 	"strconv"
 	"time"
 

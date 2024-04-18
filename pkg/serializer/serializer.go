@@ -397,37 +397,6 @@ func (s *Serializer) AreSketchesEnabled() bool {
 	return s.enableSketches
 }
 
-//// SendSketch serializes a list of SketSeriesList and sends the payload to the forwarder
-//func (s *Serializer) SendSketch(sketches metrics.SketchesSource) error {
-//	if !s.AreSketchesEnabled() {
-//		log.Debug("sketches payloads are disabled: dropping it")
-//		return nil
-//	}
-//	sketchesSerializer := metricsserializer.SketchSeriesList{SketchesSource: sketches}
-//	if s.enableSketchProtobufStream {
-//		payloads, err := sketchesSerializer.MarshalSplitCompress(marshaler.NewBufferContext())
-//		if err != nil {
-//			return fmt.Errorf("dropping sketch payload: %v", err)
-//		}
-//
-//		return s.Forwarder.SubmitSketchSeries(payloads, protobufExtraHeadersWithCompression)
-//	} else {
-//		//nolint:revive // TODO(AML) Fix revive linter
-//		compress := true
-//		splitSketches, extraHeaders, err := s.serializePayloadProto(sketchesSerializer, compress)
-//		if err != nil {
-//			return fmt.Errorf("dropping sketch payload: %s", err)
-//		}
-//
-//		return s.Forwarder.SubmitSketchSeries(splitSketches, extraHeaders)
-//	compress := false // TODO [sts]: enable compression once the backend supports it on this endpoint
-//	useV1API := false // Sketches only have a v2 endpoint
-//	splitSketches, extraHeaders, err := s.serializePayload(sketches, compress, useV1API)
-//	if err != nil {
-//		return fmt.Errorf("dropping sketch payload: %s", err)
-//	}
-//}
-
 // SendSketch serializes a list of SketSeriesList and sends the payload to the forwarder
 func (s *Serializer) SendSketch(sketches metrics.SketchesSource) error {
 	if !s.AreSketchesEnabled() {
@@ -516,8 +485,8 @@ func (s *Serializer) SendProcessesMetadata(data interface{}) error {
 		return err
 	}
 
-	log.Infof("Sent intake payload, size: %d bytes.", len(payload)) // [sts]
-	log.Debugf("Sent intake payload, content: %v", string(payload)) // [sts]
+	log.Infof("Sent processes metadata payload, size: %d bytes.", len(payload))
+	log.Debugf("Sent processes metadata payload, content: %v", string(payload))
 	return nil
 }
 

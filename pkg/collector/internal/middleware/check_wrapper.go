@@ -7,6 +7,7 @@
 package middleware
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"sync"
 	"time"
 
@@ -136,4 +137,14 @@ func (c *CheckWrapper) GetDiagnoses() ([]diagnosis.Diagnosis, error) {
 		return nil, nil
 	}
 	return c.inner.GetDiagnoses()
+}
+
+// SetFeatures implements Check#SetFeatures
+func (c *CheckWrapper) SetFeatures(features features.Features) {
+	c.inner.SetFeatures(features)
+}
+
+// GetFeatures implements Check#GetFeatures
+func (c *CheckWrapper) GetFeatures() features.Features {
+	return c.inner.GetFeatures()
 }
