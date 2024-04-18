@@ -38,6 +38,7 @@ ALL_TAGS = {
     "podman",
     "process",
     "python",
+    "secrets",
     "serverless",
     "systemd",
     "trivy",
@@ -69,6 +70,7 @@ AGENT_TAGS = {
     "podman",
     "process",
     "python",
+    "secrets",
     "systemd",
     "trivy",
     "zk",
@@ -101,7 +103,7 @@ CLUSTER_AGENT_TAGS = set(["clusterchecks", "kubeapiserver", "orchestrator", "sec
 CLUSTER_AGENT_CLOUDFOUNDRY_TAGS = {"clusterchecks"}
 
 # DOGSTATSD_TAGS lists the tags needed when building dogstatsd
-DOGSTATSD_TAGS = {"containerd", "docker", "kubelet", "podman", "zlib"}
+DOGSTATSD_TAGS = set(["containerd", "docker", "kubelet", "secrets", "zlib"])
 
 # IOT_AGENT_TAGS lists the tags needed when building the IoT agent
 IOT_AGENT_TAGS = {"jetson", "otlp", "systemd", "zlib"}
