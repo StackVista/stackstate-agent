@@ -9,9 +9,9 @@ package python
 
 import (
 	"encoding/json"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
@@ -37,13 +37,13 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 
 	var err error
 
-	var topologyEvent metrics.Event
+	var topologyEvent event.Event
 	rawEvent := C.GoString(data)
 	err = json.Unmarshal([]byte(rawEvent), &topologyEvent)
 
 	if err == nil {
 		// [sts] send events via die check handler
-		handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitEvent(topologyEvent)
+		handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitEvent(topologyEvent)
 	} else {
 		_ = log.Errorf("Empty topology event not sent. Raw: %v, Json: %v, Error: %v", rawEvent,
 			topologyEvent.String(), err)
@@ -61,7 +61,7 @@ func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C
 	rawTimestamp := int64(timestamp)
 	rawTags := cStringArrayToSlice(tags)
 
-	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetrics{
+	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetrics{
 		Name:      rawName,
 		Timestamp: rawTimestamp,
 		HostName:  rawHostname,

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"runtime"
 	"strings"
 	"time"
@@ -27,6 +28,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/config/utils"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
@@ -61,7 +63,7 @@ type PythonCheck struct {
 	telemetry      bool // whether or not the telemetry is enabled for this check
 	initConfig     string
 	instanceConfig string
-	features     features.Features
+	features       features.Features
 }
 
 // NewPythonCheck conveniently creates a PythonCheck instance

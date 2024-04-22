@@ -146,7 +146,7 @@ func saveHostname(cacheHostnameKey string, hostname string, providerName string)
 	return data
 }
 
-// GetWithProvider returns the hostname for the Agent and the provider that was use to retrieve it
+// GetWithProvider returns the hostname for the Agent and the provider that was used to retrieve it
 func GetWithProvider(ctx context.Context) (Data, error) {
 	cacheHostnameKey := cache.BuildAgentKey("hostname")
 

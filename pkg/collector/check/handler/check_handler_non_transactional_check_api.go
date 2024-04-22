@@ -5,7 +5,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/batcher"
 	checkState "github.com/DataDog/datadog-agent/pkg/collector/check/state"
 	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -100,13 +100,12 @@ func (ch *NonTransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawM
 }
 
 // SubmitEvent submits an event to the forwarder.
-func (ch *NonTransactionalCheckHandler) SubmitEvent(event metrics.Event) {
-	sender, err := aggregator.GetSender(ch.ID())
+func (ch *NonTransactionalCheckHandler) SubmitEvent(event event.Event) {
+	sender, err := aggregator.Senders.GetSender(ch.ID())
 	if err != nil || sender == nil {
 		_ = log.Errorf("Error submitting metric to the Sender: %v", err)
 		return
 	}
-
 	sender.Event(event)
 }
 

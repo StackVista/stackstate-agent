@@ -2,13 +2,13 @@ package handler
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 )
 
 // CheckIdentifier encapsulates all the functionality needed to describe and configure an agent check.
 type CheckIdentifier interface {
 	String() string       // provide a printable version of the check name
-	ID() check.ID         // provide a unique identifier for every check instance
+	ID() checkid.ID       // provide a unique identifier for every check instance
 	ConfigSource() string // return the configuration source of the check
 }
 

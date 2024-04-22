@@ -7,7 +7,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/google/uuid"
 	"sync"
@@ -193,7 +193,7 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 	intake.InternalHostname = ctb.Hostname
 
 	// Create the topologies payload
-	allEvents := &metrics.IntakeEvents{}
+	allEvents := &event.IntakeEvents{}
 	for _, state := range states {
 		if state.Topology != nil {
 			intake.Topologies = append(intake.Topologies, *state.Topology)

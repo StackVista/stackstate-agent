@@ -16,8 +16,8 @@ package python
 */
 import "C"
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 )
 
 // NOTE
@@ -32,7 +32,7 @@ func SetState(id *C.char, key *C.char, state *C.char) {
 	stateKey := C.GoString(key)
 	stateValue := C.GoString(state)
 
-	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SetState(stateKey, stateValue)
+	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SetState(stateKey, stateValue)
 }
 
 // GetState get the current state
@@ -42,7 +42,7 @@ func GetState(id *C.char, key *C.char) *C.char {
 	goCheckID := C.GoString(id)
 	stateKey := C.GoString(key)
 
-	getStateResult := handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).GetState(stateKey)
+	getStateResult := handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).GetState(stateKey)
 
 	return C.CString(getStateResult)
 }

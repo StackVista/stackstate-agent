@@ -23,7 +23,6 @@
 // "/some/path/my_secret". This option was offered before introducing
 // "--with-provider-prefixes" and is kept to avoid breaking compatibility.
 package secrethelper
-//go:build secrets
 
 import (
 	"encoding/json"

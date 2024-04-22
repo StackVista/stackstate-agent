@@ -4,7 +4,7 @@ import (
 	"fmt"
 	checkState "github.com/DataDog/datadog-agent/pkg/collector/check/state"
 	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -132,7 +132,7 @@ func (ch *TransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawMetr
 }
 
 // SubmitEvent submits an event to the current transaction channel to be forwarded.
-func (ch *TransactionalCheckHandler) SubmitEvent(event metrics.Event) {
+func (ch *TransactionalCheckHandler) SubmitEvent(event event.Event) {
 	ch.currentTransactionChannel <- SubmitEvent{
 		Event: event,
 	}

@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"sync"
 )
@@ -47,7 +47,7 @@ func newCheckManager() *CheckManager {
 }
 
 // GetCheckHandler returns a check handler (if found) for a given check ID
-func (cm *CheckManager) GetCheckHandler(checkID check.ID) CheckHandler {
+func (cm *CheckManager) GetCheckHandler(checkID checkid.ID) CheckHandler {
 	if !cmInitialized {
 		_ = log.Errorf("CheckManager not initialized, initialize it using handler.InitCheckManager()")
 		return nil
@@ -69,7 +69,7 @@ func (cm *CheckManager) registerNonTransactionalCheckHandler(check CheckIdentifi
 }
 
 // MakeCheckHandlerTransactional converts a non-transactional check handler to a transactional check handler
-func (cm *CheckManager) MakeCheckHandlerTransactional(checkID check.ID) CheckHandler {
+func (cm *CheckManager) MakeCheckHandlerTransactional(checkID checkid.ID) CheckHandler {
 	if !cm.config.CheckTransactionalityEnabled {
 		_ = log.Warnf("Check transaction is disabled, defaulting %s to non-transactional check", checkID)
 		return nil
@@ -102,7 +102,7 @@ func (cm *CheckManager) RegisterCheckHandler(check CheckIdentifier, config, init
 }
 
 // UnsubscribeCheckHandler removes a check handler for the given check
-func (cm *CheckManager) UnsubscribeCheckHandler(checkID check.ID) {
+func (cm *CheckManager) UnsubscribeCheckHandler(checkID checkid.ID) {
 	log.Debugf("Removing Check Handler for: %s", checkID)
 	delete(cm.checkHandlers, string(checkID))
 }

@@ -62,7 +62,7 @@ func (c *Check) Run() error {
 	return nil
 }
 
-func (c *Check) collectPartitionMetrics(sender sender.Sender) error {
+func (c *Check) collectPartitionMetrics(sender sender.Sender) ([]disk.PartitionStat, error) {
 	partitions, err := diskPartitions(true)
 	if err != nil {
 		return nil, err

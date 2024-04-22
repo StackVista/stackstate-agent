@@ -9,8 +9,8 @@ package python
 
 import (
 	"encoding/json"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/util"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -40,7 +40,7 @@ func SubmitHealthCheckData(id *C.char, _ *C.health_stream_t, data *C.char) {
 
 	if err == nil {
 		if !healthPayload.Data.IsEmpty() {
-			handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitHealthCheckData(healthPayload.Stream, healthPayload.Data)
+			handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitHealthCheckData(healthPayload.Stream, healthPayload.Data)
 		} else {
 			_ = log.Errorf("Empty json submitted to as check data, this is not allowed, data will not be forwarded.")
 		}
@@ -57,7 +57,7 @@ func SubmitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expi
 	goCheckID := C.GoString(id)
 	_stream := convertStream(healthStream)
 
-	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitHealthStartSnapshot(_stream, int(repeatIntervalSeconds), int(expirySeconds))
+	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitHealthStartSnapshot(_stream, int(repeatIntervalSeconds), int(expirySeconds))
 }
 
 // SubmitHealthStopSnapshot stops a health snapshot
@@ -67,7 +67,7 @@ func SubmitHealthStopSnapshot(id *C.char, healthStream *C.health_stream_t) {
 	goCheckID := C.GoString(id)
 	_stream := convertStream(healthStream)
 
-	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitHealthStopSnapshot(_stream)
+	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitHealthStopSnapshot(_stream)
 }
 
 func convertStream(healthStream *C.health_stream_t) health.Stream {

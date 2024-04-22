@@ -24,9 +24,9 @@ func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
 
 	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
 
-	config.Datadog.Set("api_key", "my-test-api-key")
-	config.Datadog.Set("transactional_forwarder_retry_min", 100*time.Millisecond)
-	config.Datadog.Set("transactional_forwarder_retry_max", 500*time.Millisecond)
+	config.Datadog.SetWithoutSource("api_key", "my-test-api-key")
+	config.Datadog.SetWithoutSource("transactional_forwarder_retry_min", 100*time.Millisecond)
+	config.Datadog.SetWithoutSource("transactional_forwarder_retry_max", 500*time.Millisecond)
 
 	state.InitCheckStateManager()
 	transactionbatcher.InitTransactionalBatcher("test-hostname", "test-agent-name", 100)
@@ -38,7 +38,7 @@ func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 
-		config.Datadog.Set("sts_url", httpServer.URL)
+		config.Datadog.SetWithoutSource("sts_url", httpServer.URL)
 
 		transactionforwarder.InitTransactionalForwarder()
 
@@ -72,7 +72,7 @@ func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 
-		config.Datadog.Set("sts_url", httpServer.URL)
+		config.Datadog.SetWithoutSource("sts_url", httpServer.URL)
 
 		transactionforwarder.InitTransactionalForwarder()
 
@@ -118,7 +118,7 @@ func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
 		httpServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}))
-		config.Datadog.Set("sts_url", httpServer.URL)
+		config.Datadog.SetWithoutSource("sts_url", httpServer.URL)
 		transactionforwarder.InitTransactionalForwarder()
 
 		// update the base state to updatedState with the new http server

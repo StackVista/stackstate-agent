@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/state"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
@@ -49,7 +50,7 @@ func TestCheckHandler(t *testing.T) {
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
 			assert.Equal(t, tc.expectedCHString, tc.checkHandler.String())
-			assert.Equal(t, check.ID(tc.expectedCHName), tc.checkHandler.ID())
+			assert.Equal(t, checkid.ID(tc.expectedCHName), tc.checkHandler.ID())
 			actualInstanceCfg, actualInitCfg := tc.checkHandler.GetConfig()
 			assert.EqualValues(t, tc.expectedConfig, actualInstanceCfg)
 			assert.EqualValues(t, tc.expectedInitConfig, actualInitCfg)

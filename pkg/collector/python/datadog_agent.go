@@ -10,6 +10,9 @@ package python
 import (
 	"context"
 	"encoding/json"
+	collectorutils "github.com/DataDog/datadog-agent/pkg/collector/util"
+	"os"
+	"strconv"
 	"sync"
 	"unsafe"
 
@@ -71,6 +74,7 @@ func GetClusterName(clusterName **C.char) {
 }
 
 // GetPid exposes the current pid of the agent to Python checks.
+//
 //export GetPid
 func GetPid(pid **C.char) {
 	goPid := os.Getpid()
@@ -79,6 +83,7 @@ func GetPid(pid **C.char) {
 }
 
 // GetCreateTime exposes the current pid create time of the agent to Python checks.
+//
 //export GetCreateTime
 func GetCreateTime(createTime **C.char) {
 	pid := os.Getpid()

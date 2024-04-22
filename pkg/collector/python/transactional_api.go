@@ -8,8 +8,8 @@
 package python
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 )
 
 /*
@@ -30,7 +30,7 @@ import "C"
 //export StartTransaction
 func StartTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StartTransaction()
+	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).StartTransaction()
 }
 
 // StopTransaction stops a transaction
@@ -38,7 +38,7 @@ func StartTransaction(id *C.char) {
 //export StopTransaction
 func StopTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StopTransaction()
+	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).StopTransaction()
 }
 
 // DiscardTransaction cancels a transaction
@@ -47,7 +47,7 @@ func StopTransaction(id *C.char) {
 func DiscardTransaction(id *C.char, reason *C.char) {
 	goCheckID := C.GoString(id)
 	goReason := C.GoString(reason)
-	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).DiscardTransaction(goReason)
+	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).DiscardTransaction(goReason)
 }
 
 // SetTransactionState sets a state for a transaction
@@ -58,5 +58,5 @@ func SetTransactionState(id *C.char, key *C.char, state *C.char) {
 	keyValue := C.GoString(key)
 	stateValue := C.GoString(state)
 
-	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SetTransactionState(keyValue, stateValue)
+	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SetTransactionState(keyValue, stateValue)
 }

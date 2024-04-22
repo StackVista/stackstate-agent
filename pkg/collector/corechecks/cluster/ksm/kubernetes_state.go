@@ -112,7 +112,7 @@ type KSMConfig struct {
 	// Example: Adding kube_namespace tag instead of namespace.
 	// labels_mapper:
 	//   namespace: kube_namespace
-	LabelsMapper map[string][]string `yaml:"labels_mapper"`
+	LabelsMapper map[string]string `yaml:"labels_mapper"`
 
 	// Tags contains the list of tags to attach to every metric, event and service check emitted by this integration.
 	// It is also enriched in `initTags` with `kube_cluster_name` and global tags.
@@ -597,8 +597,8 @@ func (k *KSMCheck) hostnameAndTags(labels map[string]string, labelJoiner *labelJ
 		case createdByNameKey, ownerNameKey:
 			ownerName = value
 		default:
-			tagsForKey, hostTag := k.buildTag(key, value, lMapperOverride)
-			tags = append(tags, tagsForKey...)
+			tag, hostTag := k.buildTag(key, value, lMapperOverride)
+			tags = append(tags, tag)
 			if hostTag != "" {
 				if k.clusterNameRFC1123 != "" {
 					hostname = hostTag + "-" + k.clusterNameRFC1123
@@ -617,8 +617,8 @@ func (k *KSMCheck) hostnameAndTags(labels map[string]string, labelJoiner *labelJ
 		case createdByNameKey, ownerNameKey:
 			ownerName = label.value
 		default:
-			tagsForKey, hostTag := k.buildTag(label.key, label.value, lMapperOverride)
-			tags = append(tags, tagsForKey...)
+			tag, hostTag := k.buildTag(label.key, label.value, lMapperOverride)
+			tags = append(tags, tag)
 			if hostTag != "" {
 				if k.clusterNameRFC1123 != "" {
 					hostname = hostTag + "-" + k.clusterNameRFC1123
@@ -657,23 +657,25 @@ func (k *KSMCheck) metricFilter(m ksmstore.DDMetric) bool {
 // [STS] build multiple tags for the original label key
 // buildTag applies the LabelsMapper config and returns the tag in a key:value string format
 // The second return value is the hostname of the metric if a 'node' or 'host' tag is found, empty string otherwise
-func (k *KSMCheck) buildTag(originalKey, value string, lMapperOverride map[string]string) (tags []string, hostname string) {
-	tagKeys := []string{originalKey}
-	if tagNewKeys, found := k.instance.LabelsMapper[originalKey]; found {
-		tagKeys = tagNewKeys
+func (k *KSMCheck) buildTag(key, value string, lMapperOverride map[string]string) (tag, hostname string) {
+	if newKey, found := k.instance.LabelsMapper[key]; found {
+		key = newKey
 	}
 
 	if lMapperOverride != nil {
-		if keyOverride, found := lMapperOverride[originalKey]; found {
-			tagKeys = []string{keyOverride}
+		if keyOverride, found := lMapperOverride[key]; found {
+			key = keyOverride
 		}
 	}
 
-	for _, key := range tagKeys {
-		tags = append(tags, fmt.Sprintf("%s:%s", key, value))
-	}
+	var sb strings.Builder
+	sb.Grow(len(key) + 1 + len(value))
+	sb.WriteString(key)
+	sb.WriteByte(':')
+	sb.WriteString(value)
+	tag = sb.String()
 
-	if originalKey == "host" || originalKey == "node" {
+	if key == "host" || key == "node" {
 		hostname = value
 	}
 	return
@@ -681,7 +683,7 @@ func (k *KSMCheck) buildTag(originalKey, value string, lMapperOverride map[strin
 
 // mergeLabelsMapper adds extra label mappings to the configured labels mapper
 // User-defined mappings are prioritized over additional mappings
-func (k *KSMCheck) mergeLabelsMapper(extra map[string][]string) {
+func (k *KSMCheck) mergeLabelsMapper(extra map[string]string) {
 	for key, value := range extra {
 		if _, found := k.instance.LabelsMapper[key]; !found {
 			k.instance.LabelsMapper[key] = value
@@ -757,14 +759,6 @@ func (k *KSMCheck) processLabelsOrAnnotationsAsTags(what string, configStuffAsTa
 			// Ref: https://github.com/kubernetes/kube-state-metrics/blob/v2.2.2/internal/store/utils.go#L133
 			label = what + "_" + toSnakeCase(labelRegexp.ReplaceAllString(label, "_"))
 			labels[label] = tag
-			label = "label_" + label
-			// [STS] multiple tags per label
-			if labelTags, ok := k.instance.LabelsMapper[label]; !ok {
-				k.instance.LabelsMapper[label] = []string{tag}
-			} else {
-				k.instance.LabelsMapper[label] = append(labelTags, tag)
-			}
-			labels = append(labels, label)
 		}
 
 		if joinsCfg, ok := k.instance.labelJoins["kube_"+resourceKind+"_"+what+"s"]; ok {
@@ -797,12 +791,6 @@ func (k *KSMCheck) getClusterName() {
 func (k *KSMCheck) initTags() {
 	if k.clusterNameTagValue != "" {
 		k.instance.Tags = append(k.instance.Tags, "kube_cluster_name:"+k.clusterNameTagValue)
-	}
-
-	if k.clusterName != "" {
-		k.instance.Tags = append(k.instance.Tags, "kube_cluster_name:"+k.clusterName)
-		// [STS] add cluster_name tag to all metrics
-		k.instance.Tags = append(k.instance.Tags, "cluster_name:"+k.clusterName)
 	}
 
 	if !k.instance.DisableGlobalTags {

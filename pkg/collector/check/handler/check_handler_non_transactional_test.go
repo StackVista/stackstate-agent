@@ -6,6 +6,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/batcher"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/state"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
@@ -52,7 +53,7 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 
 	actualState := mockBatcher.CollectedTopology.Flush()
 
-	expectedState := batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+	expectedState := batcher.CheckInstanceBatchStates(map[checkid.ID]batcher.CheckInstanceBatchState{
 		nonTransactionCH.ID(): {
 			Topology: &topology.Topology{
 				StartSnapshot: true,

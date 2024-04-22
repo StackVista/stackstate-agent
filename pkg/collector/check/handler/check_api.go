@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 )
@@ -29,7 +29,7 @@ type CheckTransactionalAPI interface {
 
 // StartTransaction is used to start a transaction to the input channel
 type StartTransaction struct {
-	CheckID       check.ID
+	CheckID       checkid.ID
 	TransactionID string
 }
 
@@ -116,7 +116,7 @@ type SubmitHealthStopSnapshot struct {
 // CheckTelemetryAPI contains all the telemetry operations for a check
 type CheckTelemetryAPI interface {
 	SubmitRawMetricsData(data telemetry.RawMetrics)
-	SubmitEvent(event metrics.Event)
+	SubmitEvent(event event.Event)
 }
 
 // SubmitRawMetric is used to submit a raw metric value for the current transaction
@@ -126,7 +126,7 @@ type SubmitRawMetric struct {
 
 // SubmitEvent is used to submit an event for the current transaction
 type SubmitEvent struct {
-	Event metrics.Event
+	Event event.Event
 }
 
 // CheckLifecycleAPI contains all the lifecylce operations for a check

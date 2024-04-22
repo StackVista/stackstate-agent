@@ -427,3 +427,17 @@ func (sp *checkSenderPool) removeSender(id checkid.ID) {
 	delete(sp.senders, id)
 	sp.agg.deregisterSender(id)
 }
+
+// GetSender returns a Sender with passed ID, properly registered with the aggregator
+// If no error is returned here, DestroySender must be called with the same ID
+// once the sender is not used anymore
+//func GetSender(id checkid.ID) (Sender, error) { // [sts]
+//	if aggregatorInstance == nil {
+//		return nil, errors.New("Aggregator was not initialized")
+//	}
+//	sender, err := senderPool.getSender(id)
+//	if err != nil {
+//		sender, err = senderPool.mkSender(id)
+//	}
+//	return sender, err
+//}

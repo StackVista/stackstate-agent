@@ -5,7 +5,6 @@ import (
 	"fmt"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/topology"
@@ -23,7 +22,7 @@ type TransactionCheckInstanceBatchState struct {
 	Topology    *topology.Topology
 	Metrics     *telemetry.Metrics
 	Health      map[string]health.Health
-	Events      *metrics.IntakeEvents
+	Events      *event.IntakeEvents
 }
 
 // JSONString returns a JSON string representation of a TransactionCheckInstanceBatchState
@@ -131,7 +130,7 @@ func (builder *TransactionBatchBuilder) getOrCreateRawMetrics(checkID checkid.ID
 	return builder.states[checkID].Metrics
 }
 
-func (builder *TransactionBatchBuilder) getOrCreateEvents(checkID checkid.ID, transactionID string) *metrics.IntakeEvents {
+func (builder *TransactionBatchBuilder) getOrCreateEvents(checkID checkid.ID, transactionID string) *event.IntakeEvents {
 	state := builder.getOrCreateState(checkID, transactionID)
 
 	if state.Events != nil {
@@ -143,7 +142,7 @@ func (builder *TransactionBatchBuilder) getOrCreateEvents(checkID checkid.ID, tr
 		Topology:    state.Topology,
 		Health:      state.Health,
 		Metrics:     state.Metrics,
-		Events:      &metrics.IntakeEvents{},
+		Events:      &event.IntakeEvents{},
 	}
 
 	return builder.states[checkID].Events

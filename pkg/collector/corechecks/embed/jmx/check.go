@@ -19,6 +19,7 @@ import (
 	pkgConfig "github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/config/utils"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
@@ -32,7 +33,7 @@ type JMXCheck struct {
 	telemetry      bool
 	initConfig     string
 	instanceConfig string
-	features  features.Features
+	features       features.Features
 }
 
 func newJMXCheck(senderManager sender.SenderManager, config integration.Config, source string) *JMXCheck {
