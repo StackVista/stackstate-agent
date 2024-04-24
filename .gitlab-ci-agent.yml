@@ -359,10 +359,7 @@ build_binaries:
     - inv -e rtloader.make
     - inv -e rtloader.install
     - cd $SRC_PATH
-    - inv -e agent.build --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES 2>&1 | tee build.log
-  artifacts:
-    paths:
-      - $CI_PROJECT_DIR/build.log
+    - inv -e agent.build --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
   tags:
     - sts-k8s-xl-runner
   retry:
@@ -385,14 +382,13 @@ build_cluster_agent:
     - go mod tidy
     - go mod vendor
     - go mod tidy
-    - inv -e cluster-agent.build 2>&1 | tee build.log
+    - inv -e cluster-agent.build
     - ls -la $CI_PROJECT_DIR/bin/
   artifacts:
     paths:
       - $CI_PROJECT_DIR/bin/stackstate-cluster-agent
       - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
       - $CI_PROJECT_DIR/version.txt
-      - $CI_PROJECT_DIR/build.log
     <<: *artifacts_expire_in
   tags:
     - sts-k8s-xl-runner
