@@ -187,14 +187,14 @@ deps_deb:
 #    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz . || echo "No go-pkg"
 #    - cd $GOPATH/pkg && tar czf - . | split -b 800M - $CI_PROJECT_DIR/go-pkg.tar.gz.part. || echo "No go-pkg"
 #    - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz . || echo "No go-bin"
-#    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz . || echo "No vendor"
+    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz . || echo "No vendor"
   artifacts:
     <<: *artifacts_expire_in
     paths:
       - $CI_PROJECT_DIR/version.txt
 #      - $CI_PROJECT_DIR/go-pkg.tar.gz.part.*
 #      - $CI_PROJECT_DIR/go-bin.tar.gz
-#      - $CI_PROJECT_DIR/vendor.tar.gz
+      - $CI_PROJECT_DIR/vendor.tar.gz
 
   retry:
     max: 2
