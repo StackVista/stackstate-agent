@@ -41,7 +41,7 @@ UNIT_TEST_FILE_FORMAT = re.compile(r'[^a-zA-Z0-9_\-]')
 
 class TestProfiler:
     times = []
-    parser = re.compile(r"^ok\s+github.com\/DataDog\/datadog-agent\/(\S+)\s+([0-9\.]+)s", re.MULTILINE)
+    parser = re.compile(r"^ok\s+github.com\/StackVista\/stackstate-agent\/(\S+)\s+([0-9\.]+)s", re.MULTILINE)
 
     def write(self, txt):
         # Output to stdout
@@ -850,7 +850,7 @@ def lint_teamassignment(_):
 
         pr_id = pr_url.rsplit('/')[-1]
 
-        res = requests.get(f"https://api.github.com/repos/DataDog/datadog-agent/issues/{pr_id}")
+        res = requests.get(f"https://api.github.com/repos/StackVista/stackstate-agent/issues/{pr_id}")
         issue = res.json()
 
         labels = {l['name'] for l in issue.get('labels', [])}
@@ -890,7 +890,7 @@ def lint_skip_qa(_):
 
         pr_id = pr_url.rsplit('/')[-1]
 
-        res = requests.get(f"https://api.github.com/repos/DataDog/datadog-agent/issues/{pr_id}")
+        res = requests.get(f"https://api.github.com/repos/StackVista/stackstate-agent/issues/{pr_id}")
         issue = res.json()
 
         labels = {l['name'] for l in issue.get('labels', [])}
@@ -923,7 +923,7 @@ def lint_milestone(_):
 
         pr_id = pr_url.rsplit('/')[-1]
 
-        res = requests.get(f"https://api.github.com/repos/DataDog/datadog-agent/issues/{pr_id}")
+        res = requests.get(f"https://api.github.com/repos/StackVista/stackstate-agent/issues/{pr_id}")
         pr = res.json()
         if pr.get("milestone"):
             print(f"Milestone: {pr['milestone'].get('title', 'NO_TITLE')}")
@@ -956,14 +956,14 @@ def lint_releasenote(ctx):
         pr_id = pr_url.rsplit('/')[-1]
 
         # first check 'changelog/no-changelog' label
-        res = requests.get(f"https://api.github.com/repos/DataDog/datadog-agent/issues/{pr_id}")
+        res = requests.get(f"https://api.github.com/repos/StackVista/stackstate-agent/issues/{pr_id}")
         issue = res.json()
         if any([l['name'] == 'changelog/no-changelog' for l in issue.get('labels', {})]):
             print("'changelog/no-changelog' label found on the PR: skipping linting")
             return
 
         # Then check that at least one note was touched by the PR
-        url = f"https://api.github.com/repos/DataDog/datadog-agent/pulls/{pr_id}/files"
+        url = f"https://api.github.com/repos/StackVista/stackstate-agent/pulls/{pr_id}/files"
         # traverse paginated github response
         while True:
             res = requests.get(url)
@@ -1088,7 +1088,7 @@ def lint_python(ctx):
 
     print(
         f"""Remember to set up pre-commit to lint your files before committing:
-    https://github.com/DataDog/datadog-agent/blob/{DEFAULT_BRANCH}/docs/dev/agent_dev_env.md#pre-commit-hooks"""
+    https://github.com/StackVista/stackstate-agent/blob/{DEFAULT_BRANCH}/docs/dev/agent_dev_env.md#pre-commit-hooks"""
     )
 
     ctx.run("flake8 .")
@@ -1250,7 +1250,7 @@ def send_unit_tests_stats(_, job_name):
             tags=[
                 "experimentation:fast-tests",
                 "test_type:classic",
-                "repository:datadog-agent",
+                "repository:stackstate-agent",
                 f"pipeline_id:{os.getenv('CI_PIPELINE_ID')}",
                 f"job_name:{job_name}",
             ],
@@ -1266,7 +1266,7 @@ def send_unit_tests_stats(_, job_name):
             tags=[
                 "experimentation:fast-tests",
                 "test_type:fast",
-                "repository:datadog-agent",
+                "repository:stackstate-agent",
                 f"pipeline_id:{os.getenv('CI_PIPELINE_ID')}",
                 f"job_name:{job_name}-fast",
             ],
@@ -1293,7 +1293,7 @@ def send_unit_tests_stats(_, job_name):
             false_positive,
             tags=[
                 "experimentation:fast-tests",
-                "repository:datadog-agent",
+                "repository:stackstate-agent",
                 f"pipeline_id:{os.getenv('CI_PIPELINE_ID')}",
                 f"job_name:{job_name}",
             ],
@@ -1306,7 +1306,7 @@ def send_unit_tests_stats(_, job_name):
             false_negative,
             tags=[
                 "experimentation:fast-tests",
-                "repository:datadog-agent",
+                "repository:stackstate-agent",
                 f"pipeline_id:{os.getenv('CI_PIPELINE_ID')}",
                 f"job_name:{job_name}",
             ],

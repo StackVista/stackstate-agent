@@ -10,7 +10,7 @@ from .types import FailedJobs, Test
 
 DEFAULT_SLACK_CHANNEL = "#agent-platform"
 DEFAULT_JIRA_PROJECT = "AGNTR"
-DATADOG_AGENT_GITHUB_ORG_URL = "https://github.com/DataDog"
+DATADOG_AGENT_GITHUB_ORG_URL = "https://github.com/StackVista"
 # Map keys in lowercase
 GITHUB_SLACK_MAP = {
     "@datadog/agent-platform": DEFAULT_SLACK_CHANNEL,
@@ -28,7 +28,7 @@ GITHUB_SLACK_MAP = {
     "@datadog/serverless": "#serverless-agent",
     "@datadog/remote-config": "#remote-config-monitoring",
     "@datadog/fleet": "#fleet-automation",
-    "@datadog/agent-all": "#datadog-agent-pipelines",
+    "@datadog/agent-all": "#stackstate-agent-pipelines",
     "@datadog/ebpf-platform": "#ebpf-platform-ops",
     "@datadog/networks": "#network-performance-monitoring",
     "@datadog/universal-service-monitoring": "#universal-service-monitoring",
@@ -141,7 +141,7 @@ def find_job_owners(failed_jobs: FailedJobs, owners_file: str = ".gitlab/JOBOWNE
     for job in failed_jobs.all_non_infra_failures():
         job_owners = owners.of(job["name"])
         # job_owners is a list of tuples containing the type of owner (eg. USERNAME, TEAM) and the name of the owner
-        # eg. [('TEAM', '@DataDog/agent-platform')]
+        # eg. [('TEAM', '@StackVista/agent-platform')]
 
         for kind, owner in job_owners:
             if kind == "TEAM":

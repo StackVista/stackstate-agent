@@ -9,7 +9,7 @@ find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*.mod" -exec se
 # The following lines are used to fix ad hoc references in python files in the tasks folder.
 # -------------------- This cannot be used in the pipeline -----------------------
 # -------------------- The changes required must be checked in --------------------
-find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
-find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bdatadog-agent\b/stackstate-agent/g' {} +
-find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bDataDog\b/StackVista/g' {} +
-find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/StackVista\/agent-payload/DataDog\/agent-payload/g' {} +
+#find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
+#find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bdatadog-agent\b/stackstate-agent/g' {} +
+#find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bDataDog\b/StackVista/g' {} +
+#find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/StackVista\/agent-payload/DataDog\/agent-payload/g' {} +

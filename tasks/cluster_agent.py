@@ -24,7 +24,7 @@ from .utils import (
 # constants
 BIN_PATH = os.path.join(".", "bin", "stackstate-cluster-agent")
 AGENT_TAG = "stackstate/cluster_agent:master"
-POLICIES_REPO = "https://github.com/DataDog/security-agent-policies.git"
+POLICIES_REPO = "https://github.com/StackVista/security-agent-policies.git"
 CONTAINER_PLATFORM_MAPPING = {"aarch64": "arm64", "amd64": "amd64", "x86_64": "amd64"}
 
 
@@ -46,9 +46,9 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"DOCKER_DD_AGENT\\" -> \\"DOCKER_STS_AGENT\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"DD\\" -> \\"STS\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/etc/datadog-agent/conf.d\\" -> \\"/etc/datadog-agent/conf.d\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/etc/datadog-agent/checks.d\\" -> \\"/etc/datadog-agent/checks.d\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/datadog-agent/run\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/etc/stackstate-agent/conf.d\\" -> \\"/etc/stackstate-agent/conf.d\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/etc/stackstate-agent/checks.d\\" -> \\"/etc/stackstate-agent/checks.d\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/opt/stackstate-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
 
     # [sts] turn of the metadata collection, the receiver does not recognize these payloads
     do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g',
@@ -58,8 +58,8 @@ def apply_branding(ctx):
 
     # Trace Agent Metrics
     # do_sed_rename(ctx, datadog_metrics_replace, "./pkg/process/statsd/statsd.go")
-    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/statsd/statsd.go")
-    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/statsd/telemetry.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/StackVista/datadog-go/statsd/statsd.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/StackVista/datadog-go/statsd/telemetry.go")
 
     # Cluster Agent
     cluster_agent_replace = '/www/! s/datadog/stackstate/g'
@@ -76,8 +76,8 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"datadogtoken\\" -> \\"stackstatetoken\\""', "./pkg/util/kubernetes/apiserver")
 
     # Defaults
-    do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/datadog-agent\\""', "./cmd/agent/common")
-    do_go_rename(ctx, '"\\"/var/log/datadog/cluster-agent.log\\" -> \\"/var/log/datadog-agent/cluster-agent.log\\""',
+    do_go_rename(ctx, '"\\"/etc/stackstate-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"/var/log/datadog/cluster-agent.log\\" -> \\"/var/log/stackstate-agent/cluster-agent.log\\""',
                  "./cmd/agent/common")
     do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./cmd/agent")
     do_go_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./cmd/agent")
@@ -258,10 +258,10 @@ def hacky_dev_image_build(ctx, base_image=None, target_image="cluster-agent", pu
         dockerfile.write(
             f'''FROM ubuntu:latest AS src
 
-COPY . /usr/src/datadog-agent
+COPY . /usr/src/stackstate-agent
 
-RUN find /usr/src/datadog-agent -type f \\! -name \\*.go -print0 | xargs -0 rm
-RUN find /usr/src/datadog-agent -type d -empty -print0 | xargs -0 rmdir
+RUN find /usr/src/stackstate-agent -type f \\! -name \\*.go -print0 | xargs -0 rm
+RUN find /usr/src/stackstate-agent -type d -empty -print0 | xargs -0 rmdir
 
 FROM golang:latest AS dlv
 
@@ -277,8 +277,8 @@ RUN apt-get update && \
 ENV DELVE_PAGER=less
 
 COPY --from=dlv /go/bin/dlv /usr/local/bin/dlv
-COPY --from=src /usr/src/datadog-agent {os.getcwd()}
-COPY bin/datadog-cluster-agent/datadog-cluster-agent /opt/datadog-agent/bin/datadog-cluster-agent
+COPY --from=src /usr/src/stackstate-agent {os.getcwd()}
+COPY bin/datadog-cluster-agent/datadog-cluster-agent /opt/stackstate-agent/bin/datadog-cluster-agent
 RUN agent                 completion bash > /usr/share/bash-completion/completions/agent
 RUN datadog-cluster-agent completion bash > /usr/share/bash-completion/completions/datadog-cluster-agent
 

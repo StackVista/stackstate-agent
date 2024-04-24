@@ -40,8 +40,8 @@ VERSION_RE = re.compile(r'(v)?(\d+)[.](\d+)([.](\d+))?(-devel)?(-rc\.(\d+))?')
 # Regex matching rc version tag format like 7.50.0-rc.1
 RC_VERSION_RE = re.compile(r'\d+[.]\d+[.]\d+-rc\.\d+')
 
-UNFREEZE_REPO_AGENT = "datadog-agent"
-UNFREEZE_REPOS = [UNFREEZE_REPO_AGENT, "omnibus-software", "omnibus-ruby", "datadog-agent-macos-build"]
+UNFREEZE_REPO_AGENT = "stackstate-agent"
+UNFREEZE_REPOS = [UNFREEZE_REPO_AGENT, "omnibus-software", "omnibus-ruby", "stackstate-agent-macos-build"]
 RELEASE_JSON_FIELDS_TO_UPDATE = [
     "INTEGRATIONS_CORE_VERSION",
     "OMNIBUS_SOFTWARE_VERSION",
@@ -61,7 +61,7 @@ def add_prelude(ctx, version):
     |
     Release on: {date.today()}
 
-    - Please refer to the `{version} tag on integrations-core <https://github.com/DataDog/integrations-core/blob/master/AGENT_CHANGELOG.md#datadog-agent-version-{version.replace('.', '')}>`_ for the list of changes on the Core Checks
+    - Please refer to the `{version} tag on integrations-core <https://github.com/StackVista/integrations-core/blob/master/AGENT_CHANGELOG.md#stackstate-agent-version-{version.replace('.', '')}>`_ for the list of changes on the Core Checks
 """
         )
 
@@ -88,7 +88,7 @@ def add_dca_prelude(ctx, agent7_version, agent6_version=""):
             f"""prelude:
     |
     Released on: {date.today()}
-    Pinned to datadog-agent v{agent7_version}: `CHANGELOG <https://github.com/{GITHUB_REPO_NAME}/blob/{DEFAULT_BRANCH}/CHANGELOG.rst#{agent7_version.replace('.', '')}{agent6_version}>`_."""
+    Pinned to stackstate-agent v{agent7_version}: `CHANGELOG <https://github.com/{GITHUB_REPO_NAME}/blob/{DEFAULT_BRANCH}/CHANGELOG.rst#{agent7_version.replace('.', '')}{agent6_version}>`_."""
         )
 
     ctx.run(f"git add {new_releasenote}")
@@ -302,7 +302,7 @@ def list_major_change(_, milestone):
     List all PR labeled "major_changed" for this release.
     """
 
-    gh = GithubAPI('datadog/datadog-agent')
+    gh = GithubAPI('datadog/stackstate-agent')
     pull_requests = gh.get_pulls(milestone=milestone, labels=['major_change'])
     if pull_requests is None:
         return
@@ -518,7 +518,7 @@ def _fetch_dependency_repo_version(
         compatible_version_re,
         allowed_major_versions,
         max_version=max_allowed_version,
-        vendor="DataDog",
+        vendor="StackVista",
     )
 
     if check_for_rc and version.is_rc():
@@ -561,7 +561,7 @@ def _get_windows_ddnpm_release_json_info(release_json, agent_major_version, is_f
     )
     # NOTE: This assumes that the repository doesn't change the way it prefixes versions.
     version = _get_highest_repo_version(github_token, repo_name, previous_version.prefix, VERSION_RE,
-                                        vendor="DataDog")  # sts
+                                        vendor="StackVista")  # sts
 
     if win_ddnpm_driver not in ['release-signed', 'attestation-signed']:
         print(f"WARN: WINDOWS_DDNPM_DRIVER value '{win_ddnpm_driver}' is not valid")
@@ -691,7 +691,7 @@ def _update_release_json(release_json, release_entry, new_version: Version, max_
     )
 
     macos_build_version = _fetch_dependency_repo_version(
-        "datadog-agent-macos-build",
+        "stackstate-agent-macos-build",
         new_version,
         max_version,
         allowed_major_versions,
@@ -1296,7 +1296,7 @@ def create_and_update_release_branch(ctx, repo, release_branch, base_directory="
         ctx.run(f"git checkout -b {release_branch}")
 
         if repo == UNFREEZE_REPO_AGENT:
-            # Step 1.1 - In datadog-agent repo update base_branch and nightly builds entries
+            # Step 1.1 - In stackstate-agent repo update base_branch and nightly builds entries
             rj = _load_release_json()
 
             rj["base_branch"] = release_branch
@@ -1307,7 +1307,7 @@ def create_and_update_release_branch(ctx, repo, release_branch, base_directory="
 
             _save_release_json(rj)
 
-            # Step 1.2 - In datadog-agent repo update gitlab-ci.yaml jobs
+            # Step 1.2 - In stackstate-agent repo update gitlab-ci.yaml jobs
             with open(".gitlab-ci.yml", "r") as gl:
                 file_content = gl.readlines()
 
@@ -1349,8 +1349,8 @@ def unfreeze(ctx, base_directory="~/dd", major_versions="6,7", upstream="origin"
     """
     Performs set of tasks required for the main branch unfreeze during the agent release cycle.
     That includes:
-    - creates a release branch in datadog-agent, datadog-agent-macos, omnibus-ruby and omnibus-software repositories,
-    - updates release.json on new datadog-agent branch to point to newly created release branches in nightly section
+    - creates a release branch in stackstate-agent, stackstate-agent-macos, omnibus-ruby and omnibus-software repositories,
+    - updates release.json on new stackstate-agent branch to point to newly created release branches in nightly section
     - updates entries in .gitlab-ci.yml which depend on local branch name
 
     Notes:
@@ -1412,7 +1412,7 @@ def cleanup(ctx):
       - Updates the scheduled nightly pipeline to target the new stable branch
       - Updates the release.json last_stable fields
     """
-    gh = GithubAPI('datadog/datadog-agent')
+    gh = GithubAPI('datadog/stackstate-agent')
     latest_release = gh.latest_release()
     match = VERSION_RE.search(latest_release)
     if not match:

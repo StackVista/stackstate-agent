@@ -5,7 +5,7 @@ from enum import Enum
 
 
 class Test:
-    PACKAGE_PREFIX = "github.com/DataDog/datadog-agent/"
+    PACKAGE_PREFIX = "github.com/StackVista/stackstate-agent/"
 
     def __init__(self, owners, name, package):
         self.name = name

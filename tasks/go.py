@@ -119,11 +119,11 @@ def deps_vendored(ctx, verbose=False):
         # We won't need this if/when we change to non-vendored modules
         ctx.run(f'modvendor -copy="**/*.c **/*.h **/*.proto **/*.java"{verbosity}')
 
-        # If github.com/DataDog/datadog-agent gets vendored too - nuke it
+        # If github.com/StackVista/stackstate-agent gets vendored too - nuke it
         # This may happen because of the introduction of nested modules
-        if os.path.exists('vendor/github.com/DataDog/datadog-agent'):
-            print("Removing vendored github.com/DataDog/datadog-agent")
-            shutil.rmtree('vendor/github.com/DataDog/datadog-agent')
+        if os.path.exists('vendor/github.com/StackVista/stackstate-agent'):
+            print("Removing vendored github.com/StackVista/stackstate-agent")
+            shutil.rmtree('vendor/github.com/StackVista/stackstate-agent')
 
 
 @task
@@ -372,7 +372,7 @@ def check_mod_tidy(ctx, test_folder="testmodule"):
                     errors_found.append(f"go.mod or go.sum for {mod.import_path} module is out of sync")
 
         for mod in DEFAULT_MODULES.values():
-            # Ensure that none of these modules import the datadog-agent main module.
+            # Ensure that none of these modules import the stackstate-agent main module.
             if mod.independent:
                 ctx.run(f"go run ./internal/tools/independent-lint/independent.go --path={mod.full_path()}")
 
