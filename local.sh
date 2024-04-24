@@ -26,8 +26,8 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS" ]; then
     echo "          --- Getting dependencies ---"
     echo "          ---                      ---"
     inv -e deps --verbose
-#    go mod vendor
-#    go mod tidy
+    go mod vendor
+    go mod tidy
     inv agent.version --major-version 3 -u > version.txt
     echo "          ---                      ---"
     echo "          --- Agent Version String ---"
@@ -54,8 +54,8 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD" ]; then
 fi
 
 if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "CA_BUILD" ]; then
-    echo "          ---                      ---"
+    echo "          ---                        ---"
     echo "          --- Building cluster agent ---"
-    echo "          ---                      ---"
+    echo "          ---                        ---"
     inv -e cluster-agent.build
 fi

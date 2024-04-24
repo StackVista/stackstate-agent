@@ -125,9 +125,9 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"https://orchestrator.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/process/config")
 
     # [sts] turn of the metadata collection, the receiver does not recognize these payloads
-    do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g', "./pkg/config/config.go")
-    do_sed_rename(ctx, 's/"enable_gohai"\\, true/"enable_gohai"\\, false/g', "./pkg/config/config.go")
-    do_sed_rename(ctx, 's/"inventories_enabled"\\, true/"inventories_enabled"\\, false/g', "./pkg/config/config.go")
+    do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g', "./pkg/config/setup/config.go")
+    do_sed_rename(ctx, 's/"enable_gohai"\\, true/"enable_gohai"\\, false/g', "./pkg/config/setup/config.go")
+    do_sed_rename(ctx, 's/"inventories_enabled"\\, true/"inventories_enabled"\\, false/g', "./pkg/config/setup/config.go")
 
     # [sts] switch DisableAPIKeyChecking to true to skip api key validation
     do_sed_rename(ctx, 's/DisableAPIKeyChecking:    false/DisableAPIKeyChecking:    true/g', "./pkg/forwarder/forwarder.go")
