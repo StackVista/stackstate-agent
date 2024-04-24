@@ -181,8 +181,8 @@ deps_deb:
     - *rename_datadog_stackvista
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
-    - go mod vendor
-    - go mod tidy
+#    - go mod vendor
+#    - go mod tidy
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
 #    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz . || echo "No go-pkg"
 #    - cd $GOPATH/pkg && tar czf - . | split -b 800M - $CI_PROJECT_DIR/go-pkg.tar.gz.part. || echo "No go-pkg"
