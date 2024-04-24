@@ -58,19 +58,21 @@ def apply_branding(ctx):
 
     # Trace Agent Metrics
     # do_sed_rename(ctx, datadog_metrics_replace, "./pkg/process/statsd/statsd.go")
-    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/statsd/statsd.go")
-    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/statsd/telemetry.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/v5/statsd/statsd.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/v5/statsd/telemetry.go")
 
     # Cluster Agent
     cluster_agent_replace = '/www/! s/datadog/stackstate/g'
     do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/main.go")
-    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/app/*")
-    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/commands/*")
-    do_sed_rename(ctx, cluster_agent_replace, "./cmd/agent/common/commands/*.go")
-    do_sed_rename(ctx, 's/Datadog Cluster/StackState Cluster/g', "./cmd/cluster-agent/app/*")
-    do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/cluster-agent/app/*")
-    do_sed_rename(ctx, 's/to Datadog/to StackState/g', "./cmd/cluster-agent/app/*")
-    do_sed_rename(ctx, 's/"datadog-cluster"/"stackstate-cluster"/g', "./cmd/cluster-agent/app/*")
+#     do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/app/*") # sts - might need similar later on, for now irrelevant due to dd upstream changes
+    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/command/*")
+#     do_sed_rename(ctx, cluster_agent_replace, "./cmd/agent/common/command/*.go") # sts - might need similar later on, for now irrelevant due to dd upstream changes
+    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/subcommands/*.go")
+    do_sed_rename(ctx, 's/Datadog Cluster/StackState Cluster/g', "./cmd/cluster-agent/command/*")
+    do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/cluster-agent/command/*")
+    do_sed_rename(ctx, 's/datadog-agent/stackstate-agent/g', "./cmd/cluster-agent/custommetrics/*.go")
+#     do_sed_rename(ctx, 's/to Datadog/to StackState/g', "./cmd/cluster-agent/app/*") # sts - might need similar later on, for now irrelevant due to dd upstream changes
+#     do_sed_rename(ctx, 's/"datadog-cluster"/"stackstate-cluster"/g', "./cmd/cluster-agent/app/*") # sts - might need similar later on, for now irrelevant due to dd upstream changes
 
     # Cluster Agent - Kubernetes API client
     do_go_rename(ctx, '"\\"datadogtoken\\" -> \\"stackstatetoken\\""', "./pkg/util/kubernetes/apiserver")
