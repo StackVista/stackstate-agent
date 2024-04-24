@@ -34,12 +34,7 @@ stages:
   eval $(gimme)
 
 .rename_datadog_stackvista: &rename_datadog_stackvista |
-  find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
-  find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
-  find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
-  find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bdatadog-agent\b/stackstate-agent/g' {} +
-  find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bDataDog\b/StackVista/g' {} +
-  find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/StackVista\/agent-payload/DataDog\/agent-payload/g' {} +
+  ./fix_package_paths.sh
 
 .configure_debian_env_script: &configure_debian_env_script |
   . /root/miniforge3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
@@ -186,6 +181,8 @@ deps_deb:
     - *rename_datadog_stackvista
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
+    - go mod vendor
+    - go mod tidy
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
 #    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz . || echo "No go-pkg"
 #    - cd $GOPATH/pkg && tar czf - . | split -b 800M - $CI_PROJECT_DIR/go-pkg.tar.gz.part. || echo "No go-pkg"

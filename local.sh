@@ -5,7 +5,7 @@ SRC_PATH="/go/src/github.com/StackVista/stackstate-agent"
 WHAT=$1
 
 if [ -z "${WHAT}" ]; then
-	echo "Usage: $0 [all | prep | deps | build]"
+	echo "Usage: $0 [all | prep | deps | build | ca_build]"
 	exit 1
 fi
 
@@ -26,6 +26,8 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS" ]; then
     echo "          --- Getting dependencies ---"
     echo "          ---                      ---"
     inv -e deps --verbose
+    go mod vendor
+    go mod tidy
     inv agent.version --major-version 3 -u > version.txt
     echo "          ---                      ---"
     echo "          --- Agent Version String ---"
@@ -49,4 +51,11 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD" ]; then
     inv -e agent.build --major-version "3" --python-runtimes "3"
     # shellcheck disable=SC2164
     cd "$CI_PROJECT_DIR"
+fi
+
+if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "CA_BUILD" ]; then
+    echo "          ---                      ---"
+    echo "          --- Building cluster agent ---"
+    echo "          ---                      ---"
+    inv -e cluster-agent.build
 fi
