@@ -364,7 +364,7 @@ build_binaries:
     paths:
       - $CI_PROJECT_DIR/build.log
   tags:
-    - sts-k8s-m-runner
+    - sts-k8s-xl-runner
   retry:
     max: 2
     when:
@@ -394,6 +394,8 @@ build_cluster_agent:
       - $CI_PROJECT_DIR/version.txt
       - $CI_PROJECT_DIR/build.log
     <<: *artifacts_expire_in
+  tags:
+    - sts-k8s-xl-runner
   rules:
     - *cluster_agent
   retry:
