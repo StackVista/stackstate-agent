@@ -217,6 +217,9 @@ deps_rpm:
   script:
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
+    - go mod tidy
+    - go mod vendor
+    - go mod tidy
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
@@ -280,6 +283,9 @@ unit_tests:
     - *rename_datadog_stackvista
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
+    - go mod tidy
+    - go mod vendor
+    - go mod tidy
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
     - inv deps
     - inv -e agent.build --race --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
@@ -309,6 +315,9 @@ filename_linting:
     - *rename_datadog_stackvista
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
+    - go mod tidy
+    - go mod vendor
+    - go mod tidy
     - inv -e lint-filenames
   rules:
     - when: on_success
@@ -343,6 +352,9 @@ build_binaries:
     - *rename_datadog_stackvista
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
+    - go mod tidy
+    - go mod vendor
+    - go mod tidy
     - inv -e dogstatsd.build --static --major-version $MAJOR_VERSION
     - inv -e rtloader.make
     - inv -e rtloader.install
@@ -367,6 +379,9 @@ build_cluster_agent:
     - *rename_datadog_stackvista
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
+    - go mod tidy
+    - go mod vendor
+    - go mod tidy
     - inv -e cluster-agent.build
     - ls -la $CI_PROJECT_DIR/bin/
   artifacts:
@@ -403,6 +418,9 @@ build_deb:
     - *rename_datadog_stackvista
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
+    - go mod tidy
+    - go mod vendor
+    - go mod tidy
     - inv agent.version --major-version $MAJOR_VERSION
     - cat version.txt || true
     - source ./.gitlab-scripts/setup_artifactory.sh
