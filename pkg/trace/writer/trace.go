@@ -281,7 +281,7 @@ func (w *TraceWriter) flush() {
 	defer w.resetBuffer()
 
 	log.Debugf("Serializing %d tracer payloads.", len(w.tracerPayloads))
-	/* sts
+	/* sts */
 	p := pb.AgentPayload{
 		AgentVersion:       w.agentVersion,
 		HostName:           w.hostname,

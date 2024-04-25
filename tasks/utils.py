@@ -608,3 +608,24 @@ def do_sed_rename(ctx, rename, at):
 
 def do_sed_rename_quoted(ctx, rename, at):
     ctx.run("sed -i \"{}\" {}".format(rename, at))
+
+def do_find_sed_rename(ctx, file_pattern, to_rename, rename_to, at):
+    # find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*windows*.go" -exec sed -i 's/Datadog Agent Service/StackState Agent Service/g' {} +
+    ctx.run("find {} -type d -name .git -prune -o -type f -name \"{}\" -exec sed -i 's/{}/{}/g' {{}} +".format(at, file_pattern, to_rename, rename_to))
+
+def do_find_sed_rename_pattern(ctx, file_pattern, rename_pattern, at):
+    # find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*windows*.go" -exec sed -i 's/Datadog Agent Service/StackState Agent Service/g' {} +
+    ctx.run("find {} -type d -name .git -prune -o -type f -name \"{}\" -exec sed -i '{}' {{}} +".format(at, file_pattern, rename_pattern))
+
+def do_find_sed_rename_pattern_multi_ignore(ctx, file_pattern, rename_pattern, at, ignore_dirs):
+    # find $CI_PROJECT_DIR \( -type d -name .git -o -type d -name vendor \) -prune -o -type f -name "*windows*.go" -exec sed -i 's/Datadog Agent Service/StackState Agent Service/g' {} +
+    to_ignore = "\("
+    ig_len = len(ignore_dirs)
+    count = 0
+    for ignore_dir in ignore_dirs:
+        if count == ig_len - 1:
+            to_ignore += f" -type d -name {ignore_dir} \)"
+        else:
+            to_ignore += f" -type d -name {ignore_dir} -o"
+        count += 1
+    ctx.run("find {} {} -prune -o -type f -name \"{}\" -exec sed -i '{}' {{}} +".format(at, to_ignore, file_pattern, rename_pattern))

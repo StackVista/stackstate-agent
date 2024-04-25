@@ -183,7 +183,6 @@ deps_deb:
     - inv -e deps --verbose
     - go mod tidy
     - go mod vendor
-    - go mod tidy
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
 #    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz . || echo "No go-pkg"
 #    - cd $GOPATH/pkg && tar czf - . | split -b 800M - $CI_PROJECT_DIR/go-pkg.tar.gz.part. || echo "No go-pkg"
@@ -219,7 +218,6 @@ deps_rpm:
     - inv -e deps --verbose
     - go mod tidy
     - go mod vendor
-    - go mod tidy
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
@@ -285,7 +283,6 @@ unit_tests:
     - inv -e deps --verbose
     - go mod tidy
     - go mod vendor
-    - go mod tidy
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
     - inv deps
     - inv -e agent.build --race --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
@@ -317,7 +314,6 @@ filename_linting:
     - inv -e deps --verbose
     - go mod tidy
     - go mod vendor
-    - go mod tidy
     - inv -e lint-filenames
   rules:
     - when: on_success
@@ -354,7 +350,6 @@ build_binaries:
     - inv -e deps --verbose
     - go mod tidy
     - go mod vendor
-    - go mod tidy
     - inv -e dogstatsd.build --static --major-version $MAJOR_VERSION
     - inv -e rtloader.make
     - inv -e rtloader.install
@@ -381,7 +376,6 @@ build_cluster_agent:
     - inv -e deps --verbose
     - go mod tidy
     - go mod vendor
-    - go mod tidy
     - inv -e cluster-agent.build
     - ls -la $CI_PROJECT_DIR/bin/
   artifacts:
@@ -422,7 +416,6 @@ build_deb:
     - inv -e deps --verbose
     - go mod tidy
     - go mod vendor
-    - go mod tidy
     - inv agent.version --major-version $MAJOR_VERSION
     - cat version.txt || true
     - source ./.gitlab-scripts/setup_artifactory.sh

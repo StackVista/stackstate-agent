@@ -5,7 +5,7 @@ SRC_PATH="/go/src/github.com/StackVista/stackstate-agent"
 WHAT=$1
 
 if [ -z "${WHAT}" ]; then
-	echo "Usage: $0 [all | prep | deps | build | ca_build]"
+	echo "Usage: $0 [all | prep | deps_deb | build_binaries | build_cluster_agent | build_deb]"
 	exit 1
 fi
 
@@ -18,7 +18,7 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "PREP" ]; then
     ln -s "${CI_PROJECT_DIR}" /go/src/github.com/StackVista/stackstate-agent
 fi
 
-if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS" ]; then
+if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS_DEB" ]; then
     # shellcheck disable=SC2164
     go clean -modcache
 
@@ -35,7 +35,7 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS" ]; then
     cat version.txt
 fi
 
-if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD" ]; then
+if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_BINARIES" ]; then
     echo "          ---                      ---"
     echo "          --- Building agent       ---"
     echo "          ---                      ---"
@@ -53,9 +53,21 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD" ]; then
     cd "$CI_PROJECT_DIR"
 fi
 
-if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "CA_BUILD" ]; then
+if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_CLUSTER_AGENT" ]; then
     echo "          ---                        ---"
     echo "          --- Building cluster agent ---"
     echo "          ---                        ---"
     inv -e cluster-agent.build
+fi
+
+if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_DEB" ]; then
+    echo "          ---                      ---"
+    echo "          --- Building deb package  ---"
+    echo "          ---                      ---"
+    mv "${CI_PROJECT_DIR}"/.omnibus /omnibus || mkdir -p /omnibus
+    inv agent.version --major-version 3
+    cat version.txt || true
+    source ./.gitlab-scripts/setup_artifactory.sh
+    export OMNIBUS_BASE_DIR="/.omnibus"
+    inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version 3 --python-runtimes 3
 fi
