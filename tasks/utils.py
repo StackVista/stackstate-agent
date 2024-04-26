@@ -496,11 +496,16 @@ def load_release_versions(_, target_version):
     print("[load_release_versions] Loading deps for version ", target_version)
     with open("stackstate-deps.json", "r") as f:
         versions = json.load(f)
-        if target_version in versions:
-            # windows runners don't accepts anything else than strings in the
-            # environment when running a subprocess.
-            return {str(k): str(v) for k, v in versions[target_version].items()}
-    raise Exception(f"Could not find '{target_version}' version in release.json")
+        print("Using the following build environment:")
+        for k, v in versions.items():
+            print("[dep_version]", str(k), str(v))
+        return {str(k):str(v) for k, v in versions.items()}
+        # versions = json.load(f)
+        # if target_version in versions:
+        #     # windows runners don't accepts anything else than strings in the
+        #     # environment when running a subprocess.
+        #     return {str(k): str(v) for k, v in versions[target_version].items()}
+    # raise Exception("Could not find '{}' version in release.json".format(target_version))
 
 
 @task()
