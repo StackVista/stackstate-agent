@@ -120,9 +120,9 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"DOCKER_DD_AGENT\\" -> \\"DOCKER_STS_AGENT\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"DD\\" -> \\"STS\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/etc/stackstate-agent/conf.d\\" -> \\"/etc/stackstate-agent/conf.d\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/etc/stackstate-agent/checks.d\\" -> \\"/etc/stackstate-agent/checks.d\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/opt/stackstate-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/etc/datadog-agent/conf.d\\" -> \\"/etc/stackstate-agent/conf.d\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/etc/datadog-agent/checks.d\\" -> \\"/etc/stackstate-agent/checks.d\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"https://process.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config/setup")
     do_go_rename(ctx, '"\\"https://orchestrator.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config/setup")
 
@@ -308,10 +308,10 @@ def apply_branding(ctx):
 #     do_go_rename(ctx, '"\\"datadog.trace_agent.obfuscations\\" -> \\"stackstate.trace_agent.obfuscations\\""', "./pkg/trace/obfuscate")
     do_go_rename(ctx, '"\\"datadog.agent.python.version\\" -> \\"stackstate.agent.python.version\\""', "./pkg/collector/python")
     do_go_rename(ctx, '"\\"/var/log/datadog/trace-agent.log\\" -> \\"/var/log/stackstate-agent/trace-agent.log\\""', "./pkg/trace/config/")
-    do_go_rename(ctx, '"\\"/opt/stackstate-agent/embedded/bin/python\\" -> \\"/opt/stackstate-agent/embedded/bin/python\\""', "./pkg/trace/config/")
-    do_go_rename(ctx, '"\\"PYTHONPATH=/opt/stackstate-agent/agent\\" -> \\"PYTHONPATH=/opt/stackstate-agent/agent\\""', "./pkg/trace/config/")
+    do_go_rename(ctx, '"\\"/opt/datadog-agent/embedded/bin/python\\" -> \\"/opt/stackstate-agent/embedded/bin/python\\""', "./pkg/trace/config/")
+    do_go_rename(ctx, '"\\"PYTHONPATH=/opt/datadog-agent/agent\\" -> \\"PYTHONPATH=/opt/stackstate-agent/agent\\""', "./pkg/trace/config/")
     do_go_rename(ctx, '"\\"/var/log/datadog/agent.log\\" -> \\"/var/log/stackstate-agent/agent.log\\""', "./pkg/trace/config/")
-    do_go_rename(ctx, '"\\"/opt/stackstate-agent/bin/agent/agent\\" -> \\"/opt/stackstate-agent/bin/agent/agent\\""', "./pkg/trace/config/")
+    do_go_rename(ctx, '"\\"/opt/datadog-agent/bin/agent/agent\\" -> \\"/opt/stackstate-agent/bin/agent/agent\\""', "./pkg/trace/config/")
     do_go_rename(ctx, '"\\"/etc/dd-agent/datadog.conf\\" -> \\"/etc/sts-agent/stackstate.conf\\""', "./pkg/trace/config/")
     do_go_rename(ctx, '"\\"https://trace.agent.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/trace/config/")
 
@@ -400,7 +400,7 @@ def apply_branding(ctx):
 #                   "./pkg/trace/writer/sender.go")
 
     # Defaults
-    do_go_rename(ctx, '"\\"/etc/stackstate-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"/var/log/datadog/agent.log\\" -> \\"/var/log/stackstate-agent/agent.log\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"/var/log/datadog/cluster-agent.log\\" -> \\"/var/log/stackstate-agent/cluster-agent.log\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./cmd/agent")
@@ -569,16 +569,16 @@ def apply_branding(ctx):
 
     # omnibus
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/agent.rb")
-    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
+    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\datadog-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
                   "./omnibus/config/projects/agent.rb")
-    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
+    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\datadog-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
                   "./omnibus/config/projects/agent-binaries.rb")
-    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
+    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\datadog-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
                   "./omnibus/config/projects/iot-agent.rb")
     do_sed_rename(ctx, 's/StackVista\\\\\\\\\\\\\\\\stackstate-agent/Stackvista\\\\\\\\\\\\\\\\stackstate-agent/g', "./omnibus/config/projects/agent.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/iot-agent.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/software/datadog-agent-finalize.rb")
-    do_sed_rename(ctx, 's/StackVista\/stackstate-agent/StackVista\/stackstate-agent/g', "./omnibus/config/software/datadog-cf-finalize.rb")
+    do_sed_rename(ctx, 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g', "./omnibus/config/software/datadog-cf-finalize.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/templates/datadog-agent/sysvinit_debian.erb")
 
     do_find_sed_rename_pattern_multi_ignore(ctx, "*postinst", 's/\/opt\/datadog/\/opt\/stackstate/g',
@@ -608,19 +608,19 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/datadog\.yaml/stackstate\.yaml/', "./omnibus/config/templates/datadog-agent/systemd.sysprobe.service.erb")
     do_sed_rename(ctx, 's/datadog/stackstate/', "./omnibus/config/templates/datadog-agent/systemd.sysprobe.service.erb")
 
-    do_sed_rename(ctx, 's/stackstate-agent/stackstate-agent/', "./omnibus/config/software/datadog-iot-agent.rb")
+    do_sed_rename(ctx, 's/datadog-agent/stackstate-agent/', "./omnibus/config/software/datadog-iot-agent.rb")
     do_sed_rename(ctx, 's/StackVista/Stackvista/', "./omnibus/config/software/datadog-iot-agent.rb")
     do_sed_rename(ctx, 's/\/var\/log\/datadog/\/var\/log\/stackstate/', "./omnibus/config/software/datadog-iot-agent.rb")
     do_sed_rename(ctx, 's/datadog-iot-agent\/src/stackstate-iot-agent\/src/', "./omnibus/config/software/datadog-iot-agent.rb")
-    do_sed_rename(ctx, 's/StackVista\/stackstate-agent\/tools\/windows\/decompress_merge_module.ps1/StackVista\/stackstate-agent\/tools\/windows\/decompress_merge_module.ps1/',
+    do_sed_rename(ctx, 's/DataDog\/datadog-agent\/tools\/windows\/decompress_merge_module.ps1/StackVista\/stackstate-agent\/tools\/windows\/decompress_merge_module.ps1/',
                   "./omnibus/config/software/vc_redist_14.rb")
-    do_sed_rename(ctx, 's/StackVista\/stackstate-agent/StackVista\/stackstate-agent/',
+    do_sed_rename(ctx, 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/',
                   "./omnibus/config/software/vc_redist.rb")
-    do_sed_rename(ctx, 's/StackVista\/stackstate-agent\/bin\/agent/StackVista\/stackstate-agent\/bin\/agent/',
+    do_sed_rename(ctx, 's/DataDog\/datadog-agent\/bin\/agent/StackVista\/stackstate-agent\/bin\/agent/',
                   "./omnibus/config/software/datadog-agent.rb")
-    do_sed_rename(ctx, 's/\/etc\/stackstate-agent/\/etc\/stackstate-agent/',
+    do_sed_rename(ctx, 's/\/etc\/datadog-agent/\/etc\/stackstate-agent/',
                   "./omnibus/config/software/datadog-agent.rb")
-    do_sed_rename(ctx, 's/stackstate-agent\/src\/github\.com\/StackVista\/stackstate-agent\/rtloader/stackstate-agent\/src\/github\.com\/StackVista\/stackstate-agent\/rtloader/',
+    do_sed_rename(ctx, 's/datadog-agent\/src\/github\.com\/DataDog\/datadog-agent\/rtloader/stackstate-agent\/src\/github\.com\/StackVista\/stackstate-agent\/rtloader/',
                   "./omnibus/config/software/datadog-agent.rb")
     do_sed_rename(ctx, 's/"datadog.yaml"/"stackstate.yaml"/g',
                   "./omnibus/config/projects/agent.rb")
@@ -628,9 +628,9 @@ def apply_branding(ctx):
                   "./omnibus/resources/iot/msi/localbuild/rebuild.bat")
     do_sed_rename(ctx, 's/opt\\\\datadog-agent/opt\\\\stackstate-agent/',
                   "./omnibus/resources/agent/msi/localbuild/rebuild.bat")
-    do_sed_rename(ctx, 's/src\\\\etc\\\\stackstate-agent/src\\\\etc\\\\stackstate-agent/',
+    do_sed_rename(ctx, 's/src\\\\etc\\\\datadog-agent/src\\\\etc\\\\stackstate-agent/',
                   "./omnibus/resources/iot/msi/localbuild/rebuild.bat")
-    do_sed_rename(ctx, 's/src\\\\etc\\\\stackstate-agent/src\\\\etc\\\\stackstate-agent/',
+    do_sed_rename(ctx, 's/src\\\\etc\\\\datadog-agent/src\\\\etc\\\\stackstate-agent/',
                   "./omnibus/resources/agent/msi/localbuild/rebuild.bat")
 
 
