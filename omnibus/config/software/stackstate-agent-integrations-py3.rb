@@ -11,7 +11,7 @@ name 'stackstate-agent-integrations-py3'
 dependency 'datadog-agent'
 dependency 'pip3'
 
-if arm?
+if arm_target?
   # psycopg2 doesn't come with pre-built wheel on the arm architecture.
   # to compile from source, it requires the `pg_config` executable present on the $PATH
   dependency 'postgresql'
@@ -83,7 +83,7 @@ if osx?
   blacklist_folders.push('aerospike')
 end
 
-if arm?
+if arm_target?
   # These two checks don't build on ARM
   blacklist_folders.push('aerospike')
   blacklist_folders.push('ibm_mq')
@@ -93,7 +93,7 @@ end
 # _64_bit checks the kernel arch.  On windows, the builder is 64 bit
 # even when doing a 32 bit build.  Do a specific check for the 32 bit
 # build
-if arm? || !_64_bit? || (windows? && windows_arch_i386?)
+if arm_target? || !_64_bit? || (windows? && windows_arch_i386?)
   blacklist_packages.push(/^orjson==/)
 end
 
