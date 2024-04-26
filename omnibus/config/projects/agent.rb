@@ -34,6 +34,7 @@ if windows_target?
   python_3_embedded "#{install_dir}/embedded3"
   maintainer 'StackState' # Windows doesn't want our e-mail address :(
 else
+  INSTALL_DIR = ENV["INSTALL_DIR"] || '/opt/datadog-agent'
   if redhat? || suse?
     maintainer 'StackState <info@stackstate.com>'
   else
@@ -55,6 +56,8 @@ else
     conflict 'datadog-iot-agent'
   end
 end
+
+install_dir INSTALL_DIR
 
 # build_version is computed by an invoke command/function.
 # We can't call it directly from there, we pass it through the environment instead.
