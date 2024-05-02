@@ -84,6 +84,15 @@ require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/CycloneDX/cyclonedx-go v0.7.2
 	github.com/DataDog/appsec-internal-go v1.3.0
+	github.com/DataDog/datadog-agent/pkg/gohai v0.51.1
+	github.com/DataDog/datadog-agent/pkg/obfuscate v0.51.1
+	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.51.1
+	github.com/DataDog/datadog-agent/pkg/security/secl v0.51.1
+	github.com/DataDog/datadog-agent/pkg/trace v0.51.1
+	github.com/DataDog/datadog-agent/pkg/util/cgroups v0.51.1
+	github.com/DataDog/datadog-agent/pkg/util/log v0.51.1
+	github.com/DataDog/datadog-agent/pkg/util/pointer v0.51.1
+	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.51.1
 	github.com/DataDog/datadog-go/v5 v5.4.0
 	// do not update datadog-operator to 1.2.1 because the indirect dependency github.com/DataDog/datadog-api-client-go/v2 v2.15.0 is trigger a huge Go heap memory increase.
 	github.com/DataDog/datadog-operator v1.1.0
@@ -102,15 +111,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
 	github.com/Microsoft/go-winio v0.6.1
 	github.com/Microsoft/hcsshim v0.12.0-rc.2
-	github.com/DataDog/datadog-agent/pkg/gohai v0.51.1
-	github.com/DataDog/datadog-agent/pkg/obfuscate v0.51.1
-	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.51.1
-	github.com/DataDog/datadog-agent/pkg/security/secl v0.51.1
-	github.com/DataDog/datadog-agent/pkg/trace v0.51.1
-	github.com/DataDog/datadog-agent/pkg/util/cgroups v0.51.1
-	github.com/DataDog/datadog-agent/pkg/util/log v0.51.1
-	github.com/DataDog/datadog-agent/pkg/util/pointer v0.51.1
-	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.51.1
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/alecthomas/participle v0.7.1 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137
@@ -593,8 +593,6 @@ require github.com/lorenzosaino/go-sysctl v0.3.1
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/DataDog/agent-payload/v5 v5.0.100
-	github.com/DataDog/go-libddwaf/v2 v2.2.2
-	github.com/DataDog/opentelemetry-mapping-go/pkg/otlp/logs v0.11.0
 	github.com/DataDog/datadog-agent/cmd/agent/common/path v0.51.1
 	github.com/DataDog/datadog-agent/comp/core/config v0.51.1
 	github.com/DataDog/datadog-agent/comp/core/flare/types v0.51.1
@@ -636,6 +634,8 @@ require (
 	github.com/DataDog/datadog-agent/pkg/util/testutil v0.51.1
 	github.com/DataDog/datadog-agent/pkg/util/winutil v0.51.1
 	github.com/DataDog/datadog-agent/pkg/version v0.51.1
+	github.com/DataDog/go-libddwaf/v2 v2.2.2
+	github.com/DataDog/opentelemetry-mapping-go/pkg/otlp/logs v0.11.0
 	github.com/aquasecurity/trivy v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go-v2/service/kms v1.27.1
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.25.1
@@ -664,13 +664,10 @@ require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20230306123547-8075edf89bb0 // indirect
-	github.com/DataDog/datadog-agent/pkg/obfuscate v0.48.0 // indirect
-	github.com/DataDog/datadog-agent/pkg/proto v0.50.0-rc.1 // indirect
-	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.48.1 // indirect
-	github.com/DataDog/datadog-api-client-go/v2 v2.13.0 // indirect
-	github.com/DataDog/go-sqllexer v0.0.9 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/buf v0.51.1 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/system/socket v0.51.1 // indirect
+	github.com/DataDog/datadog-api-client-go/v2 v2.13.0 // indirect
+	github.com/DataDog/go-sqllexer v0.0.9 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.3 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect

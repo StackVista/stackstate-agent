@@ -1,10 +1,12 @@
 #!/bin/bash
 
+DIR=${1:-CI_PROJECT_DIR}
+
 # This line is used to fix the package import paths in golang files in the agent codebase.
-find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
+find "$DIR" -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
 
 # This line is used to fix the package import paths in go.mod files in the agent codebase.
-find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
+find "$DIR" -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
 
 # The following lines are used to fix ad hoc references in python files in the tasks folder.
 # -------------------- This cannot be used in the pipeline -----------------------
