@@ -24,22 +24,38 @@ dependency "zlib"
 dependency "cacerts"
 dependency "makedepend" unless aix? || windows?
 
-default_version "1.0.2o"
+default_version "1.1.1u"
 
 # OpenSSL source ships with broken symlinks which windows doesn't allow.
 # Skip error checking.
-source url: "https://www.openssl.org/source/old/1.0.2/openssl-#{version}.tar.gz", extract: :lax_tar
 
+# Note: Since April 2020, only the most recent version of openssl is
+# available at https://www.openssl.org/source/.
+# Older versions of openssl are now there: https://www.openssl.org/source/old/
+# This software definition may break every time openssl is updated.
+# To build with an older version of openssl, you'll need to update the source url to
+# https://www.openssl.org/source/old/<bugfix_version>/openssl-<full_version>.tar.gz
+source url: "https://www.openssl.org/source/openssl-#{version}.tar.gz", extract: :lax_tar
+
+version("1.1.1u") { source sha256: "e2f8d84b523eecd06c7be7626830370300fbcc15386bf5142d72758f6963ebc6" }
+version("1.1.1t") { source sha256: "8dee9b24bdb1dcbf0c3d1e9b02fb8f6bf22165e807f45adeb7c9677536859d3b" }
+version("1.1.1q") { source sha256: "d7939ce614029cdff0b6c20f0e2e5703158a489a72b2507b8bd51bf8c8fd10ca" }
+version("1.1.1p") { source sha256: "bf61b62aaa66c7c7639942a94de4c9ae8280c08f17d4eac2e44644d9fc8ace6f" }
+version("1.1.1o") { source sha256: "9384a2b0570dd80358841464677115df785edb941c71211f75076d72fe6b438f" }
+version("1.1.1n") { source sha256: "40dceb51a4f6a5275bde0e6bf20ef4b91bfc32ed57c0552e2e8e15463372b17a" }
+version("1.1.1l") { source sha256: "0b7a3e5e59c34827fe0c3a74b7ec8baef302b98fa80088d7f9153aa16fa76bd1" }
+version("1.1.1k") { source sha256: "892a0875b9872acd04a9fde79b1f943075d5ea162415de3047c327df33fbaee5" }
+version("1.1.1i") { source sha256: "e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5242" }
+version("1.1.1h") { source sha256: "5c9ca8774bd7b03e5784f26ae9e9e6d749c9da2438545077e6b3d755a06595d9" }
+version("1.1.1f") { source sha256: "186c6bfe6ecfba7a5b48c47f8a1673d0f3b0e5ba2e25602dd23b629975da3f35" }
+version("1.1.1d") { source sha256: "1e3a91bc1f9dfce01af26026f856e064eab4c8ee0a8f457b5ae30b40b8b711f2" }
+version("1.0.2t") { source sha256: "14cb464efe7ac6b54799b34456bd69558a749a4931ecfd9cf9f71d7881cac7bc" }
 version("1.0.2o") { source sha256: "ec3f5c9714ba0fd45cb4e087301eb1336c317e0d20b575a125050470e8089e4d" }
 version("1.0.2k") { source sha256: "6b3977c61f2aedf0f96367dcfb5c6e578cf37e7b8d913b4ecb6643c3cb88d8c0" }
 version("1.0.2j") { source sha256: "e7aff292be21c259c6af26469c7a9b3ba26e9abaaffd325e3dccc9785256c431" }
 version("1.0.2i") { source sha256: "9287487d11c9545b6efb287cdb70535d4e9b284dd10d51441d9b9963d000de6f" }
 version("1.0.2h") { source sha256: "1d4007e53aad94a5b2002fe045ee7bb0b3d98f1a47f8b2bc851dcd1c74332919" }
-version("1.0.2g") { source md5: "f3c710c045cdee5fd114feb69feba7aa" }
 version("1.0.1u") { source sha256: "4312b4ca1215b6f2c97007503d80db80d5157f76f8f7d3febbe6b4c56ff26739" }
-version("1.0.1t") { source md5: "9837746fcf8a6727d46d22ca35953da1" }
-version("1.0.1s") { source md5: "562986f6937aabc7c11a6d376d8a0d26" }
-version("1.0.1r") { source md5: "1abd905e079542ccae948af37e393d28" }
 
 relative_path "openssl-#{version}"
 
@@ -113,22 +129,24 @@ build do
       "#{prefix} disable-gost"
     end
 
-  if aix?
+  # on 1.0 we have to path before running config
+  if version.start_with? "1.0."
+    if aix?
+      # This enables omnibus to use 'makedepend'
+      # from fileset 'X11.adt.imake' (AIX install media)
+      env["PATH"] = "/usr/lpp/X11/bin:#{ENV["PATH"]}"
 
-    # This enables omnibus to use 'makedepend'
-    # from fileset 'X11.adt.imake' (AIX install media)
-    env["PATH"] = "/usr/lpp/X11/bin:#{ENV["PATH"]}"
+      patch_env = env.dup
+      patch_env["PATH"] = "/opt/freeware/bin:#{env["PATH"]}"
+      patch source: "openssl-1.0.1f-do-not-build-docs.patch", env: patch_env
+    else
+      patch source: "openssl-1.0.1f-do-not-build-docs.patch", env: env
+    end
 
-    patch_env = env.dup
-    patch_env["PATH"] = "/opt/freeware/bin:#{env['PATH']}"
-    patch source: "openssl-1.0.1f-do-not-build-docs.patch", env: patch_env
-  else
-    patch source: "openssl-1.0.1f-do-not-build-docs.patch", env: env
-  end
-
-  if windows?
-    # Patch Makefile.org to update the compiler flags/options table for mingw.
-    patch source: "openssl-1.0.1q-fix-compiler-flags-table-for-msys.patch", env: env
+    if windows?
+      # Patch Makefile.org to update the compiler flags/options table for mingw.
+      patch source: "openssl-1.0.1q-fix-compiler-flags-table-for-msys.patch", env: env
+    end
   end
 
   # Out of abundance of caution, we put the feature flags first and then
@@ -138,9 +156,24 @@ build do
   configure_command = configure_args.unshift(configure_cmd).join(" ")
 
   command configure_command, env: env, in_msys_bash: true
-  make "depend", env: env
-  # make -j N on openssl is not reliable
-  make env: env
+
+  # on 1.1 we have to path after running config
+  if version.start_with? "1.1."
+    if aix?
+      # This enables omnibus to use 'makedepend'
+      # from fileset 'X11.adt.imake' (AIX install media)
+      env["PATH"] = "/usr/lpp/X11/bin:#{ENV["PATH"]}"
+
+      patch_env = env.dup
+      patch_env["PATH"] = "/opt/freeware/bin:#{env["PATH"]}"
+      patch source: "openssl-1.1.1d-do-not-build-docs.patch", env: patch_env
+    else
+      patch source: "openssl-1.1.1d-do-not-build-docs.patch", env: env
+    end
+  end
+
+  command "make depend", env: env
+  command "make -j #{workers}", env: env
   if aix?
     # We have to sudo this because you can't actually run slibclean without being root.
     # Something in openssl changed in the build process so now it loads the libcrypto
@@ -151,5 +184,12 @@ build do
     # Bug Ref: http://rt.openssl.org/Ticket/Display.html?id=2986&user=guest&pass=guest
     command "sudo /usr/sbin/slibclean", env: env
   end
-  make "install", env: env
+  command "make install", env: env
+
+  delete "#{install_dir}/embedded/bin/c_rehash"
+  unless windows?
+    # Remove openssl static libraries here as we can't disable those at build time
+    delete "#{install_dir}/embedded/lib/libcrypto.a"
+    delete "#{install_dir}/embedded/lib/libssl.a"
+  end
 end
