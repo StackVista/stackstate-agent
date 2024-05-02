@@ -2,7 +2,7 @@ package testtelemetry
 
 import (
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
@@ -212,7 +212,7 @@ func TestSubmitTopologyChangeRequestEvents(t *testing.T) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' size: %v", len(_topoEvt.EventContext.SourceLinks))
 	}
 
-	emptySourceLinks := make([]metrics.SourceLink, 0)
+	emptySourceLinks := make([]event.SourceLink, 0)
 	if !assert.ObjectsAreEqualValues(_topoEvt.EventContext.SourceLinks, emptySourceLinks) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' value: %v", _topoEvt.EventContext.SourceLinks)
 	}

@@ -124,11 +124,10 @@ if [ "${WHAT}" = "CMD" ]; then
     cd $SRC_PATH || exit
 
     echo "          ---                         ---"
-    echo "          --- Running command ${@:2} "
+    echo "          --- Running command `$2`"
     echo "          ---                         ---"
 
-
-    $("${@:2}")
+    $2
 
     cd "$CI_PROJECT_DIR" || exit
 fi

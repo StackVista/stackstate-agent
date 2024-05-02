@@ -4,6 +4,7 @@
 // Copyright 2019-present Datadog, Inc.
 #ifndef DATADOG_AGENT_RTLOADER_UTIL__H
 #define DATADOG_AGENT_RTLOADER_UTIL__H
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <rtloader_types.h>
 

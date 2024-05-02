@@ -11,7 +11,7 @@
     The prototypes here defined provide functions to initialize the python util
     builtin module, and set its relevant callbacks for the rtloader caller.
 */
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <rtloader_types.h>
 

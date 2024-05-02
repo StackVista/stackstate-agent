@@ -75,6 +75,7 @@
 extern "C" {
 #endif
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 int init_stringutils(void);

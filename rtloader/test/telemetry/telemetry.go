@@ -3,7 +3,7 @@ package testtelemetry
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"io/ioutil"
 	"log"
 	"os"
@@ -33,7 +33,7 @@ var (
 	rtloader     *C.rtloader_t
 	checkID      string
 	_data        map[string]interface{}
-	_topoEvt     metrics.Event
+	_topoEvt     event.Event
 	rawName      string
 	rawHostname  string
 	rawValue     float64
@@ -44,7 +44,7 @@ var (
 func resetOuputValues() {
 	checkID = ""
 	_data = nil
-	_topoEvt = metrics.Event{}
+	_topoEvt = event.Event{}
 	rawName = ""
 	rawHostname = ""
 	rawValue = 0
