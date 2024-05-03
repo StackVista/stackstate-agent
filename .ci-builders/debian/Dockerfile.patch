@@ -7,3 +7,10 @@ RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list \
     && apt-get update && apt-get install -y apt-utils libtool debsigs
 
 RUN /bin/bash -l -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3 -v 0.10.0"
+
+# Update the Go version to 1.16.15
+RUN rm -r /usr/local/go
+RUN wget https://go.dev/dl/go1.16.15.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go1.16.15.linux-amd64.tar.gz
+RUN rm go1.16.15.linux-amd64.tar.gz
+RUN go version
