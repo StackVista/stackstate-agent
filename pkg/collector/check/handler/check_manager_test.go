@@ -69,7 +69,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 }
 
 func TestCheckManagerSubscriptionTransactionalityDisabled(t *testing.T) {
-	config.Datadog.Set("check_transactionality_enabled", false)
+	config.Datadog.SetWithoutSource("check_transactionality_enabled", false)
 
 	checkManager := newCheckManager()
 	testCheck := &check.STSTestCheck{Name: "test-check"}
@@ -89,5 +89,5 @@ func TestCheckManagerSubscriptionTransactionalityDisabled(t *testing.T) {
 	assert.Equal(t, expectedCH, actualCH)
 
 	// default to true again
-	config.Datadog.Set("check_transactionality_enabled", true)
+	config.Datadog.SetWithoutSource("check_transactionality_enabled", true)
 }

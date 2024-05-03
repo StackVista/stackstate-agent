@@ -31,8 +31,8 @@ func TestRelationCorrelation(t *testing.T) {
 	node1Provider := "aws://eu-west-1/" + instanceID
 	someTimestamp := metav1.NewTime(time.Now())
 
-	mockConfig := config.Mock()
-	mockConfig.Set("cluster_name", testClusterName)
+	mockConfig := config.Mock(t)
+	mockConfig.SetWithoutSource("cluster_name", testClusterName)
 
 	pod1 := podWithConfigMapEnv(namespace, pod1Name, configMap1Name, configMap2Name, someTimestamp)
 	pod2 := podWithSecretEnv(namespace, pod2Name, secret1Name, secret2Name, someTimestamp)

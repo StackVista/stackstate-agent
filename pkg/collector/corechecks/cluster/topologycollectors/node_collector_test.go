@@ -21,9 +21,9 @@ import (
 )
 
 func TestNodeCollector(t *testing.T) {
-	mockConfig := config.Mock()
+	mockConfig := config.Mock(t)
 	var testClusterName = "test-cluster-name"
-	mockConfig.Set("cluster_name", testClusterName)
+	mockConfig.SetWithoutSource("cluster_name", testClusterName)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
@@ -647,7 +647,6 @@ func CreateBaseNode(id int) coreV1.Node {
 			},
 			UID:             types.UID(fmt.Sprintf("test-node-%d", id)),
 			GenerateName:    "",
-			ClusterName:     "mycluster",
 			ResourceVersion: "123",
 			ManagedFields: []v1.ManagedFieldsEntry{
 				{

@@ -3,7 +3,7 @@
 DIR=${1:-$CI_PROJECT_DIR}
 
 # This line is used to fix the package import paths in golang files in the agent codebase.
-find "$DIR" -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
+find "$DIR" -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/\"github.com\/DataDog\/datadog-agent/\"github.com\/StackVista\/stackstate-agent/g' {} +
 
 # This line is used to fix the package import paths in go.mod files in the agent codebase.
 find "$DIR" -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +

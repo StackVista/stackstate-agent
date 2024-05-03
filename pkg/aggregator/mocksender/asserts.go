@@ -140,7 +140,7 @@ func eventLike(expectedEvent, actualEvent event.Event) bool {
 		expectedInActual(expectedEvent.Tags, actualEvent.Tags))
 }
 
-func contextLike(expectedContext, actualContext *metrics.EventContext) bool {
+func contextLike(expectedContext, actualContext *event.EventContext) bool {
 	if expectedContext == nil {
 		return actualContext == nil
 	}

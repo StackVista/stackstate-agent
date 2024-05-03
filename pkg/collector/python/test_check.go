@@ -22,8 +22,8 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	colCheck "github.com/StackVista/stackstate-agent/pkg/collector/check"
 )
 
 /*
@@ -659,7 +659,7 @@ func testConfigureDeprecated(t *testing.T) {
 func testSetCollectionIntervalToInstanceData(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	c, err := NewPythonFakeCheck()
+	c, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -671,7 +671,7 @@ func testSetCollectionIntervalToInstanceData(t *testing.T) {
 func testSetCollectionIntervalToInvalidDataWithInvalidData(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	c, err := NewPythonFakeCheck()
+	c, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
 	if !assert.Nil(t, err) {
 		return
 	}

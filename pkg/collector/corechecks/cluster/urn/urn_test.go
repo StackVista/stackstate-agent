@@ -12,9 +12,9 @@ import (
 )
 
 func TestAwsUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
-	mockConfig := config.Mock()
+	mockConfig := config.Mock(t)
 	var testClusterName = "mycluster"
-	mockConfig.Set("cluster_name", testClusterName)
+	mockConfig.SetWithoutSource("cluster_name", testClusterName)
 
 	clustername.GetClusterName(context.TODO(), "")
 
@@ -43,9 +43,9 @@ func TestAwsUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 }
 
 func TestAzureUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
-	mockConfig := config.Mock()
+	mockConfig := config.Mock(t)
 	var testClusterName = "mycluster"
-	mockConfig.Set("cluster_name", testClusterName)
+	mockConfig.SetWithoutSource("cluster_name", testClusterName)
 
 	clustername.GetClusterName(context.TODO(), "")
 
@@ -77,9 +77,9 @@ func TestAzureUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 }
 
 func TestGceUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
-	mockConfig := config.Mock()
+	mockConfig := config.Mock(t)
 	var testClusterName = "mycluster"
-	mockConfig.Set("cluster_name", testClusterName)
+	mockConfig.SetWithoutSource("cluster_name", testClusterName)
 
 	clustername.GetClusterName(context.TODO(), "")
 

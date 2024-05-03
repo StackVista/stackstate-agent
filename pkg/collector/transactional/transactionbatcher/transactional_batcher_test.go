@@ -2,12 +2,13 @@ package transactionbatcher
 
 import (
 	"encoding/json"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config/setup"
 	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
@@ -76,43 +77,43 @@ var (
 	testRawMetricsDataIntakeMetric  = testRawMetricsData.IntakeMetricJSON()
 	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.IntakeMetricJSON()
 
-	testEvent = metrics.Event{
+	testEvent = event.Event{
 		Title:          "test-event-1",
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},
 		AggregationKey: "docker:redis",
 		SourceTypeName: "docker",
-		Priority:       metrics.EventPriorityNormal,
+		Priority:       event.EventPriorityNormal,
 	}
-	testEvent2 = metrics.Event{
+	testEvent2 = event.Event{
 		Title:          "test-event-2",
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},
 		AggregationKey: "docker:mysql",
 		SourceTypeName: "docker",
-		Priority:       metrics.EventPriorityNormal,
-		EventContext: &metrics.EventContext{
+		Priority:       event.EventPriorityNormal,
+		EventContext: &event.EventContext{
 			Data:     map[string]interface{}{},
 			Source:   "docker",
 			Category: "containers",
 		},
 	}
-	testEvent3 = metrics.Event{
+	testEvent3 = event.Event{
 		Title:          "test-event-3",
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},
 		AggregationKey: "docker:mysql",
 		SourceTypeName: "docker-other",
-		Priority:       metrics.EventPriorityNormal,
-		EventContext: &metrics.EventContext{
+		Priority:       event.EventPriorityNormal,
+		EventContext: &event.EventContext{
 			Data:               map[string]interface{}{},
 			Source:             "docker",
 			Category:           "containers",
 			ElementIdentifiers: []string{"element-identifier"},
-			SourceLinks:        []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
+			SourceLinks:        []event.SourceLink{{Title: "source-link", URL: "source-url"}},
 		},
 	}
 )
@@ -293,7 +294,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 		},
 	}
 	expectedPayload.Metrics = []interface{}{testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2}
-	expectedPayload.Events = map[string][]metrics.Event{
+	expectedPayload.Events = map[string][]event.Event{
 		"docker": {testEvent},
 	}
 
@@ -422,7 +423,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 		testRawMetricsDataIntakeMetric2,
 	}
 
-	expectedPayload.Events = map[string][]metrics.Event{
+	expectedPayload.Events = map[string][]event.Event{
 		"docker":       {testEvent, testEvent2},
 		"docker-other": {testEvent3},
 	}
@@ -518,7 +519,7 @@ func TestBatchFlushOnMaxEvents(t *testing.T) {
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
-	expectedPayload.Events = map[string][]metrics.Event{
+	expectedPayload.Events = map[string][]event.Event{
 		"docker": {testEvent, testEvent2},
 	}
 
@@ -534,7 +535,7 @@ func TestBatchFlushOnMaxEvents(t *testing.T) {
 func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 	// set transactionbatcher max capacity via ENV var
 	os.Setenv("DD_BATCHER_CAPACITY", "1")
-	batcher := newTransactionalBatcher(testHost, testAgent, config.GetMaxCapacity())
+	batcher := newTransactionalBatcher(testHost, testAgent, setup.GetMaxCapacity())
 
 	assert.Equal(t, 1, batcher.builder.maxCapacity)
 
@@ -707,7 +708,7 @@ func TestBatchClearState(t *testing.T) {
 			DeleteIDs:     []string{testDeleteID1},
 		},
 	}
-	expectedPayload.Events = map[string][]metrics.Event{
+	expectedPayload.Events = map[string][]event.Event{
 		"docker": {testEvent},
 	}
 

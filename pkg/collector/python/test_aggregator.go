@@ -18,6 +18,7 @@ import (
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/metrics/servicecheck"
@@ -238,7 +239,7 @@ func testSubmitEvent(t *testing.T) {
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Health:      map[string]health.Health{},
-		Events:      &metrics.IntakeEvents{Events: []metrics.Event{expectedEvent}},
+		Events:      &event.IntakeEvents{Events: []metrics.Event{expectedEvent}},
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 

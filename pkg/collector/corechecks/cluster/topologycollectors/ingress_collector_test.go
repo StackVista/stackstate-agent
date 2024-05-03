@@ -17,7 +17,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
-	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -1314,8 +1313,8 @@ func (m MockIngressAPICollectorClient) GetIngressesNetV1() ([]netV1.Ingress, err
 				},
 			},
 			Status: netV1.IngressStatus{
-				LoadBalancer: coreV1.LoadBalancerStatus{
-					Ingress: []coreV1.LoadBalancerIngress{
+				LoadBalancer: netV1.IngressLoadBalancerStatus{
+					Ingress: []netV1.IngressLoadBalancerIngress{
 						{IP: "34.100.200.22"},
 						{Hostname: "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com"},
 					},
@@ -1403,8 +1402,8 @@ func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress,
 				},
 			},
 			Status: v1beta1.IngressStatus{
-				LoadBalancer: coreV1.LoadBalancerStatus{
-					Ingress: []coreV1.LoadBalancerIngress{
+				LoadBalancer: netV1.IngressLoadBalancerStatus{
+					Ingress: []netV1.IngressLoadBalancerIngress{
 						{IP: "34.100.200.15"},
 						{Hostname: "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com"},
 					},
@@ -1489,8 +1488,8 @@ func (m MockIngressAPICollectorClientNoHTTPRule) GetIngressesExtV1B1() ([]v1beta
 			},
 		},
 		Status: v1beta1.IngressStatus{
-			LoadBalancer: coreV1.LoadBalancerStatus{
-				Ingress: []coreV1.LoadBalancerIngress{
+			LoadBalancer: netV1.IngressLoadBalancerStatus{
+				Ingress: []netV1.IngressLoadBalancerIngress{
 					{IP: "34.100.200.15"},
 					{Hostname: "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com"},
 				},

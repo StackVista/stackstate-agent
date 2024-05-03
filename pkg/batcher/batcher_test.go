@@ -1,7 +1,8 @@
 package batcher
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/config"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
+	"github.com/DataDog/datadog-agent/pkg/config/setup"
 	"github.com/DataDog/datadog-agent/pkg/health"
 	serializer2 "github.com/DataDog/datadog-agent/pkg/serializer"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
@@ -333,7 +334,7 @@ func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 
 	// set batcher max capacity via ENV var
 	os.Setenv("DD_BATCHER_CAPACITY", "1")
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, config.GetMaxCapacity())
+	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, setup.GetMaxCapacity())
 	assert.Equal(t, 1, batcher.builder.maxCapacity)
 	batcher.SubmitComponent(testID, testInstance, testComponent)
 

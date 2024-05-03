@@ -151,9 +151,9 @@ func TestGetAKSHostname(t *testing.T) {
 	defer ts.Close()
 	metadataURL = ts.URL
 
-	mockConfig := config.Mock()
+	mockConfig := config.Mock(t)
 
-	mockConfig.Set(hostnameStyleSetting, "name")
+	mockConfig.SetWithoutSource(hostnameStyleSetting, "name")
 	hostname, err := getHostnameWithConfig(ctx, mockConfig)
 	assert.Equal(t, "aks-agentpool-42726193-vmss_0", hostname)
 	assert.Nil(t, err)

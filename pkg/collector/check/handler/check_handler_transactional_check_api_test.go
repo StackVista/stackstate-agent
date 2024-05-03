@@ -6,7 +6,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
@@ -62,26 +62,26 @@ var (
 		},
 	}
 
-	testEvent = metrics.Event{
+	testEvent = event.Event{
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},
 		AggregationKey: "docker:redis",
 		SourceTypeName: "docker",
-		Priority:       metrics.EventPriorityNormal,
+		Priority:       event.EventPriorityNormal,
 	}
-	testEvent2 = metrics.Event{
+	testEvent2 = event.Event{
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},
 		AggregationKey: "docker:mysql",
 		SourceTypeName: "docker",
-		Priority:       metrics.EventPriorityNormal,
-		EventContext: &metrics.EventContext{
+		Priority:       event.EventPriorityNormal,
+		EventContext: &event.EventContext{
 			Data:        map[string]interface{}{},
 			Source:      "docker",
 			Category:    "containers",
-			SourceLinks: []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
+			SourceLinks: []event.SourceLink{{Title: "source-link", URL: "source-url"}},
 		},
 	}
 )
@@ -219,7 +219,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 				handler.SubmitEvent(testEvent)
 			},
 			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
-				state.Events = &metrics.IntakeEvents{Events: []metrics.Event{testEvent}}
+				state.Events = &event.IntakeEvents{Events: []event.Event{testEvent}}
 			},
 		}, {
 			testCase: "Submit topology event should produce an event in the TransactionCheckInstanceBatchState",

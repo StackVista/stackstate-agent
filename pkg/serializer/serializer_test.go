@@ -306,7 +306,6 @@ func TestSendV1ServiceChecks(t *testing.T) {
 	s.enableCheckRuns = true
 	s.enableServiceChecks = true
 
-	payload := &testPayload{}
 	err := s.SendServiceChecks(servicecheck.ServiceChecks{&servicecheck.ServiceCheck{}})
 	require.Nil(t, err)
 	f.AssertExpectations(t)
@@ -362,7 +361,6 @@ func TestSendSketch(t *testing.T) {
 	// [sts] check runs are disabled by default for StackState
 	s.enableSketches = true
 
-	payload := &testPayload{}
 	err := s.SendSketch(metrics.NewSketchesSourceTestWithSketch())
 	require.Nil(t, err)
 	f.AssertExpectations(t)

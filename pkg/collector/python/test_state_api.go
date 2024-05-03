@@ -25,12 +25,12 @@ func testSetAndGetState(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	mockConfig := config.Mock()
+	mockConfig := config.Mock(t)
 
 	// Set the run path to the temp directory above, this will allow the persistent cache to have a folder to write into
 	// Without doing the above persistent cache will generate a folder does not exist error
-	mockConfig.Set("run_path", path)
-	mockConfig.Set("check_state_root_path", path)
+	mockConfig.SetWithoutSource("run_path", path)
+	mockConfig.SetWithoutSource("check_state_root_path", path)
 
 	SetupTransactionalComponents()
 	testCheck := &check.STSTestCheck{

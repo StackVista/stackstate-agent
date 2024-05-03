@@ -26,14 +26,14 @@ empty_default_hostname: true
 name: foobar
 `
 	// [sts] additional test for backwards compatibility
-	legacyInstance   = `
+	legacyInstance = `
 foo_init: bar_init
 min_collection_interval: 60
 empty_default_hostname: true
 name: foobar
 `
 	// [sts] additional test when legacy and new collection interval are both defined
-	legacyInstanceClash   = `
+	legacyInstanceClash = `
 foo_init: bar_init
 collection_interval: 30
 min_collection_interval: 60
@@ -91,12 +91,12 @@ func TestCommonConfigureMinCollectionInterval(t *testing.T) {
 	mycheck := &dummyCheck{
 		CheckBase: NewCheckBase(checkName),
 	}
-	mycheck.BuildID([]byte(legacyInstance), nil)
+	mycheck.BuildID(1, []byte(legacyInstance), nil)
 	assert.NotEqual(t, checkName, string(mycheck.ID()))
 	mockSender := mocksender.NewMockSender(mycheck.ID())
 
 	mockSender.On("DisableDefaultHostname", true).Return().Once()
-	err := mycheck.CommonConfigure([]byte(legacyInstance), "test")
+	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), integration.FakeConfigHash, nil, []byte(legacyInstance), "test")
 	assert.NoError(t, err)
 	assert.Equal(t, 60*time.Second, mycheck.Interval())
 }
@@ -107,12 +107,12 @@ func TestCommonConfigureClashMinCollectionInterval(t *testing.T) {
 	mycheck := &dummyCheck{
 		CheckBase: NewCheckBase(checkName),
 	}
-	mycheck.BuildID([]byte(legacyInstanceClash), nil)
+	mycheck.BuildID(1, []byte(legacyInstanceClash), nil)
 	assert.NotEqual(t, checkName, string(mycheck.ID()))
 	mockSender := mocksender.NewMockSender(mycheck.ID())
 
 	mockSender.On("DisableDefaultHostname", true).Return().Once()
-	err := mycheck.CommonConfigure([]byte(legacyInstanceClash), "test")
+	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), integration.FakeConfigHash, nil, []byte(legacyInstanceClash), "test")
 	assert.NoError(t, err)
 	assert.Equal(t, 30*time.Second, mycheck.Interval())
 }

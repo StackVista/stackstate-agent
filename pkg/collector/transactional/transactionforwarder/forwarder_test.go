@@ -192,10 +192,10 @@ func TestForwarder(t *testing.T) {
 
 			server := httpServer(tc.Attempts)
 
-			config.Datadog.Set("sts_url", server.URL)
-			config.Datadog.Set("api_key", "my-test-api-key")
-			config.Datadog.Set("transactional_forwarder_retry_min", 100*time.Millisecond)
-			config.Datadog.Set("transactional_forwarder_retry_max", 500*time.Millisecond)
+			config.Datadog.SetWithoutSource("sts_url", server.URL)
+			config.Datadog.SetWithoutSource("api_key", "my-test-api-key")
+			config.Datadog.SetWithoutSource("transactional_forwarder_retry_min", 100*time.Millisecond)
+			config.Datadog.SetWithoutSource("transactional_forwarder_retry_max", 500*time.Millisecond)
 
 			fwd := newTransactionalForwarder()
 
@@ -231,10 +231,10 @@ func TestForwarder_Multiple(t *testing.T) {
 
 	server := httpServer()
 
-	config.Datadog.Set("sts_url", server.URL)
-	config.Datadog.Set("api_key", "my-test-api-key")
-	config.Datadog.Set("transactional_forwarder_retry_min", 100*time.Millisecond)
-	config.Datadog.Set("transactional_forwarder_retry_max", 500*time.Millisecond)
+	config.Datadog.SetWithoutSource("sts_url", server.URL)
+	config.Datadog.SetWithoutSource("api_key", "my-test-api-key")
+	config.Datadog.SetWithoutSource("transactional_forwarder_retry_min", 100*time.Millisecond)
+	config.Datadog.SetWithoutSource("transactional_forwarder_retry_max", 500*time.Millisecond)
 
 	fwd := newTransactionalForwarder()
 

@@ -10,7 +10,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -27,7 +27,7 @@ func testTopologyEvent(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-topology-event-test"}
 	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
-	c := &metrics.Event{
+	c := &event.Event{
 		Title:          "ev_title",
 		Text:           "ev_text",
 		Ts:             21,
@@ -101,7 +101,7 @@ func testTopologyEvent(t *testing.T) {
 					},
 				},
 			},
-			SourceLinks: []metrics.SourceLink{
+			SourceLinks: []event.SourceLink{
 				{Title: "source1_title", URL: "source1_url"},
 				{Title: "source2_title", URL: "source2_url"},
 			},
@@ -116,7 +116,7 @@ func testTopologyEvent(t *testing.T) {
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Health:      map[string]health.Health{},
-		Events:      &metrics.IntakeEvents{Events: []metrics.Event{expectedEvent}},
+		Events:      &event.IntakeEvents{Events: []event.Event{expectedEvent}},
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
@@ -130,7 +130,7 @@ func testTopologyEventMissingFields(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-topology-event-missing-fields-test"}
 	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
-	c := &metrics.Event{
+	c := &event.Event{
 		Title: "ev_title",
 		Text:  "ev_text",
 		Ts:    21,
@@ -146,7 +146,7 @@ func testTopologyEventMissingFields(t *testing.T) {
 	StartTransaction(checkId)
 	SubmitTopologyEvent(checkId, ev)
 
-	expectedEvent := metrics.Event{
+	expectedEvent := event.Event{
 		Title: "ev_title",
 		Text:  "ev_text",
 		Ts:    21,
@@ -161,7 +161,7 @@ func testTopologyEventMissingFields(t *testing.T) {
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Health:      map[string]health.Health{},
-		Events:      &metrics.IntakeEvents{Events: []metrics.Event{expectedEvent}},
+		Events:      &event.IntakeEvents{Events: []event.Event{expectedEvent}},
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
