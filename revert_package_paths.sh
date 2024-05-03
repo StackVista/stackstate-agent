@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR=${1:-CI_PROJECT_DIR}
+DIR=${1:-$CI_PROJECT_DIR}
 
 # This line is used to fix the package import paths in golang files in the agent codebase.
 find "$DIR" -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/StackVista\/stackstate-agent/DataDog\/datadog-agent/g' {} +
