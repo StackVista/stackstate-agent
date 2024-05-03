@@ -50,7 +50,7 @@ func TestNormalizeTag(t *testing.T) {
 		{in: "AlsO:œ#@ö))œk", out: "also:œ_ö_œk"},
 		{in: "test\x99\x8faaa", out: "test_aaa"},
 		{in: "test\x99\x8f", out: "test"},
-		{in: strings.Repeat("a", 888), out: strings.Repeat("a", 500)},
+		{in: strings.Repeat("a", 888), out: strings.Repeat("a", 200)},
 		{
 			in: func() string {
 				b := bytes.NewBufferString("a")
@@ -131,14 +131,9 @@ func TestNormalizeName(t *testing.T) {
 		},
 		{
 			name:       "Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.",
-			normalized: "Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.", // sts
-			err:        nil,                                                                                                   // sts
-		},
-		{ // sts begin
-			name:       strings.Repeat("Too-Long-.", 51),
-			normalized: strings.Repeat("Too_Long.", 50),
+			normalized: "Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.",
 			err:        ErrTooLong,
-		}, // sts end
+		},
 		{
 			name:       "bad-name",
 			normalized: "bad_name",

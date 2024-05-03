@@ -22,9 +22,9 @@ const (
 
 const (
 	// MaxNameLen the maximum length a name can have
-	MaxNameLen = 500 // sts
+	MaxNameLen = 100
 	// MaxServiceLen the maximum length a service can have
-	MaxServiceLen = 500 // sts
+	MaxServiceLen = 100
 )
 
 var (
@@ -113,7 +113,7 @@ func fallbackService(lang string) string {
 	return str.String()
 }
 
-const maxTagLength = 500
+const maxTagLength = 200
 
 // NormalizeTag applies some normalization to ensure the full tag_key:tag_value string matches the backend requirements.
 func NormalizeTag(v string) string {

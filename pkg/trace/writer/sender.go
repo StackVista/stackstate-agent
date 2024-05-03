@@ -231,7 +231,6 @@ func (s *sender) Push(p *payload) {
 
 // sendPayload sends the payload p to the destination URL.
 func (s *sender) sendPayload(p *payload) {
-	log.Infof("[sts] sending payload to %+v, Payload: %+v", s.cfg.url, &p.body)
 	req, err := p.httpRequest(s.cfg.url)
 	if err != nil {
 		log.Errorf("http.Request: %s", err)

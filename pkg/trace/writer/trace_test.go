@@ -69,10 +69,7 @@ func TestTraceWriter(t *testing.T) {
 		// One payload flushes due to overflowing the threshold, and the second one
 		// because of stop.
 		assert.Equal(t, 2, srv.Accepted())
-		// sts begin
-		stsPayloadsContain(t, srv.Payloads(), testSpans) // sts
-
-		// sts end
+		payloadsContain(t, srv.Payloads(), testSpans)
 	})
 }
 
@@ -122,7 +119,7 @@ func TestTraceWriterMultipleEndpointsConcurrent(t *testing.T) {
 
 	wg.Wait()
 	tw.Stop()
-	stsPayloadsContain(t, srv.Payloads(), testSpans) // sts
+	payloadsContain(t, srv.Payloads(), testSpans)
 }
 
 // useFlushThreshold sets n as the number of bytes to be used as the flush threshold
@@ -178,63 +175,6 @@ func payloadsContain(t *testing.T, payloads []*payload, sampledSpans []*SampledC
 	}
 }
 
-// sts begin
-
-// stsPayloadsContain checks that the given payloads contain the given set of sampled spans.
-func stsPayloadsContain(t *testing.T, payloads []*payload, sampledSpans []*SampledChunks) {
-	t.Helper()
-	var all stspb.TracePayload
-	for _, p := range payloads {
-		assert := assert.New(t)
-		gzipr, err := gzip.NewReader(p.body)
-		assert.NoError(err)
-		slurp, err := ioutil.ReadAll(gzipr)
-		assert.NoError(err)
-		var payload stspb.TracePayload
-		err = proto.Unmarshal(slurp, &payload)
-		assert.NoError(err)
-		assert.Equal(payload.HostName, testHostname)
-		assert.Equal(payload.Env, testEnv)
-		all.Traces = append(all.Traces, payload.Traces...)
-	}
-	for _, ss := range sampledSpans {
-		for _, c := range ss.TracerPayload.Chunks {
-			for _, expectedSpan := range c.Spans {
-				var found bool
-				for _, traces := range all.Traces {
-					for _, span := range traces.Spans {
-						if equalSpans(*expectedSpan, *span) {
-							found = true
-							break
-						}
-					}
-				}
-				if !found {
-					t.Fatal("payloads didn't contain given traces")
-				}
-			}
-		}
-
-	}
-}
-
-func equalSpans(span pb.Span, stsSpan stspb.Span) bool {
-	return span.Service == stsSpan.Service &&
-		span.Name == stsSpan.Name &&
-		span.Resource == stsSpan.Resource &&
-		span.TraceID == stsSpan.TraceID &&
-		span.SpanID == stsSpan.SpanID &&
-		span.ParentID == stsSpan.ParentID &&
-		span.Start == stsSpan.Start &&
-		span.Duration == stsSpan.Duration &&
-		span.Error == stsSpan.Error &&
-		reflect.DeepEqual(span.Meta, stsSpan.Meta) &&
-		reflect.DeepEqual(span.Metrics, stsSpan.Metrics) &&
-		span.Type == stsSpan.Type
-}
-
-// sts end
-
 func TestTraceWriterFlushSync(t *testing.T) {
 	srv := newTestServer()
 	cfg := &config.AgentConfig{
@@ -264,7 +204,7 @@ func TestTraceWriterFlushSync(t *testing.T) {
 		tw.FlushSync()
 		// Now all trace payloads should be sent
 		assert.Equal(t, 1, srv.Accepted())
-		stsPayloadsContain(t, srv.Payloads(), testSpans)
+		payloadsContain(t, srv.Payloads(), testSpans)
 	})
 }
 
@@ -333,7 +273,7 @@ func TestTraceWriterSyncStop(t *testing.T) {
 		tw.Stop()
 		// Now all trace payloads should be sent
 		assert.Equal(t, 1, srv.Accepted())
-		stsPayloadsContain(t, srv.Payloads(), testSpans)
+		payloadsContain(t, srv.Payloads(), testSpans)
 	})
 }
 
