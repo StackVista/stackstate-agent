@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/util"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
@@ -19,7 +20,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"k8s.io/api/core/v1"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
@@ -129,7 +129,7 @@ func (k *MetricsCheck) Run() error {
 		return err
 	}
 
-	sender, err := aggregator.GetSender(k.ID())
+	sender, err := k.GetSender()
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (k *MetricsCheck) Run() error {
 	return nil
 }
 
-func (k *MetricsCheck) parseComponentStatus(sender aggregator.Sender, componentsStatus *v1.ComponentStatusList) error {
+func (k *MetricsCheck) parseComponentStatus(sender sender.Sender, componentsStatus *v1.ComponentStatusList) error {
 	for _, component := range componentsStatus.Items {
 
 		if component.ObjectMeta.Name == "" {

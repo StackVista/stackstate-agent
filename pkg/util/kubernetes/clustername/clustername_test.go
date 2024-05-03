@@ -18,7 +18,7 @@ func TestGetClusterName(t *testing.T) {
 	ctx := context.Background()
 	mockConfig := config.Mock(t)
 	// [sts] validtion is skipped by default, so we set it to "dont skip" explicitly
-	mockConfig.Set("skip_validate_clustername", false)
+	mockConfig.SetWithoutSource("skip_validate_clustername", false)
 	config.SetFeatures(t, config.Kubernetes)
 	data := newClusterNameData()
 

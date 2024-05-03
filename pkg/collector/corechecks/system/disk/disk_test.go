@@ -9,7 +9,7 @@ package disk
 import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/batcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/topology"
@@ -108,7 +108,7 @@ func TestDiskCheck(t *testing.T) {
 	mockBatcher := batcher.NewMockBatcher()
 	// set mock hostname
 	testHostname := "test-hostname"
-	config.Datadog.Set("hostname", testHostname)
+	config.Datadog.SetWithoutSource("hostname", testHostname)
 
 	expectedMonoCounts := 2
 	expectedRates := 2
@@ -148,7 +148,7 @@ func TestDiskCheck(t *testing.T) {
 	mock.AssertNumberOfCalls(t, "Commit", 1)
 
 	producedTopology := mockBatcher.CollectedTopology.Flush()
-	expectedTopology := batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+	expectedTopology := batcher.CheckInstanceBatchStates(map[checkid.ID]batcher.CheckInstanceBatchState{
 		"disk_topology": {
 			Health: make(map[string]health.Health),
 			Topology: &topology.Topology{
@@ -317,7 +317,7 @@ func TestExcludedDiskFSFromConfig(t *testing.T) {
 		t.Run(tc.test, func(t *testing.T) {
 			diskPartitions = diskSampler
 			diskCheck := diskFactory().(*Check)
-			err := diskCheck.Configure(tc.config, nil, "test")
+			err := diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, tc.config, "test")
 
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, diskCheck.cfg.excludedDisks, tc.excludedDisks)

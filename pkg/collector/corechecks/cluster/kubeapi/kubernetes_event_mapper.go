@@ -15,10 +15,9 @@ import (
 
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
-
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -162,9 +161,9 @@ func newKubernetesEventMapper(detector apiserver.OpenShiftDetector, clusterName 
 
 var _ KubernetesEventMapperFactory = newKubernetesEventMapper // Compile-time check
 
-func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (metrics.Event, error) {
+func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (event.Event, error) {
 	if err := checkEvent(event); err != nil {
-		return metrics.Event{}, err
+		return event.Event{}, err
 	}
 
 	// Map Category to event type
@@ -240,15 +239,15 @@ func (k *kubernetesEventMapper) getCategory(event *v1.Event) EventCategory {
 	return Others
 }
 
-func getAlertType(event *v1.Event) metrics.EventAlertType {
+func getAlertType(event *v1.Event) event.EventAlertType {
 	switch strings.ToLower(event.Type) {
 	case "normal":
-		return metrics.EventAlertTypeInfo
+		return event.EventAlertTypeInfo
 	case "warning":
-		return metrics.EventAlertTypeWarning
+		return event.EventAlertTypeWarning
 	default:
 		log.Warnf("Unhandled kubernetes event type '%s', fallback to metrics.EventAlertTypeInfo", event.Type)
-		return metrics.EventAlertTypeInfo
+		return event.EventAlertTypeInfo
 	}
 }
 

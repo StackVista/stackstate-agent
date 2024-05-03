@@ -1346,7 +1346,7 @@ func TestKSMCheck_processLabelsAsTags(t *testing.T) {
 			name: "Initially empty",
 			config: &KSMConfig{
 				labelJoins:   map[string]*joinsConfig{},
-				LabelsMapper: map[string][]string{},
+				LabelsMapper: map[string]string{},
 				LabelsAsTags: map[string]map[string]string{
 					"pod": {"my_pod_label": "my_pod_tag"},
 				},
@@ -1370,7 +1370,7 @@ func TestKSMCheck_processLabelsAsTags(t *testing.T) {
 						labelsToGet:   map[string]string{"standard_pod_label": "standard_pod_tag"},
 					},
 				},
-				LabelsMapper: map[string][]string{},
+				LabelsMapper: map[string]string{},
 				LabelsAsTags: map[string]map[string]string{
 					"pod":  {"my_pod_label": "my_pod_tag"},
 					"node": {"my_node_label": "my_node_tag"},
@@ -1457,32 +1457,32 @@ func TestKSMCheck_mergeLabelsMapper(t *testing.T) {
 	tests := []struct {
 		name     string
 		config   *KSMConfig
-		extra    map[string][]string
-		expected map[string][]string
+		extra    map[string]string
+		expected map[string]string
 	}{
 		{
 			name:     "collision",
-			config:   &KSMConfig{LabelsMapper: map[string][]string{"foo": {"bar"}, "baz": {"baf"}}},
-			extra:    map[string][]string{"foo": {"tar"}, "tar": {"foo"}},
-			expected: map[string][]string{"foo": {"bar"}, "baz": {"baf"}, "tar": {"foo"}},
+			config:   &KSMConfig{LabelsMapper: map[string]string{"foo": "bar", "baz": "baf"}},
+			extra:    map[string]string{"foo": "tar", "tar": "foo"},
+			expected: map[string]string{"foo": "bar", "baz": "baf", "tar": "foo"},
 		},
 		{
 			name:     "no collision",
-			config:   &KSMConfig{LabelsMapper: map[string][]string{"foo": {"bar"}, "baz": {"baf"}}},
-			extra:    map[string][]string{"tar": {"foo"}},
-			expected: map[string][]string{"foo": {"bar"}, "baz": {"baf"}, "tar": {"foo"}},
+			config:   &KSMConfig{LabelsMapper: map[string]string{"foo": "bar", "baz": "baf"}},
+			extra:    map[string]string{"tar": "foo"},
+			expected: map[string]string{"foo": "bar", "baz": "baf", "tar": "foo"},
 		},
 		{
 			name:     "empty LabelsMapper",
-			config:   &KSMConfig{LabelsMapper: map[string][]string{}},
-			extra:    map[string][]string{"tar": {"foo"}},
-			expected: map[string][]string{"tar": {"foo"}},
+			config:   &KSMConfig{LabelsMapper: map[string]string{}},
+			extra:    map[string]string{"tar": "foo"},
+			expected: map[string]string{"tar": "foo"},
 		},
 		{
 			name:     "empty extra",
-			config:   &KSMConfig{LabelsMapper: map[string][]string{"tar": {"foo"}}},
-			extra:    map[string][]string{},
-			expected: map[string][]string{"tar": {"foo"}},
+			config:   &KSMConfig{LabelsMapper: map[string]string{"tar": "foo"}},
+			extra:    map[string]string{},
+			expected: map[string][]string{"tar": "foo"},
 		},
 	}
 	for _, tt := range tests {

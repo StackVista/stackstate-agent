@@ -3,18 +3,18 @@ package disk
 import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/batcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/topology"
-	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestMakeTopologyCollector(t *testing.T) {
 	dtc := MakeTopologyCollector()
-	assert.Equal(t, check.ID("disk_topology"), dtc.CheckID)
+	assert.Equal(t, checkid.ID("disk_topology"), dtc.CheckID)
 	expectedInstance := topology.Instance{
 		Type: "disk",
 		URL:  "agents",
@@ -62,7 +62,7 @@ func TestDiskTopologyCollector_BuildTopology(t *testing.T) {
 	mockBatcher := batcher.NewMockBatcher()
 	// set mock hostname
 	testHostname := "test-hostname"
-	config.Datadog.Set("hostname", testHostname)
+	config.Datadog.SetWithoutSource("hostname", testHostname)
 
 	dtc := MakeTopologyCollector()
 	partitions := []disk.PartitionStat{
@@ -90,7 +90,7 @@ func TestDiskTopologyCollector_BuildTopology(t *testing.T) {
 	assert.NoError(t, err)
 
 	producedTopology := mockBatcher.CollectedTopology.Flush()
-	expectedTopology := batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+	expectedTopology := batcher.CheckInstanceBatchStates(map[checkid.ID]batcher.CheckInstanceBatchState{
 		"disk_topology": {
 			Health: make(map[string]health.Health),
 			Topology: &topology.Topology{

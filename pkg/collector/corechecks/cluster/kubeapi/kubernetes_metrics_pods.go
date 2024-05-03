@@ -10,6 +10,7 @@ package kubeapi
 import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 	"time"
@@ -60,7 +61,7 @@ func (k *MetricsCheck) processPods(sender aggregator.Sender, pods []*v1.Pod) {
 	}
 }
 
-func (k *MetricsCheck) podToMetricMappingForOutOfMemory(pod *v1.Pod, sender aggregator.Sender) {
+func (k *MetricsCheck) podToMetricMappingForOutOfMemory(pod *v1.Pod, sender sender.Sender) {
 	// Go through the pods statuses and attempt to find a OOM state
 	for _, containerStatus := range pod.Status.ContainerStatuses {
 		value := float64(0)

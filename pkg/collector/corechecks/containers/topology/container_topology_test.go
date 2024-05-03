@@ -6,7 +6,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	cspec "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/DataDog/datadog-agent/pkg/topology"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/hostname"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -43,7 +43,7 @@ func (m MockUtil) GetContainers(ctx context.Context) ([]*cspec.Container, error)
 }
 
 func TestMakeContainerTopologyCollector(t *testing.T) {
-	hostname, err := util.GetHostname(context.TODO())
+	hostname, err := hostname.Get(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, &ContainerTopologyCollector{
 		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("container_topology", topology.Instance{

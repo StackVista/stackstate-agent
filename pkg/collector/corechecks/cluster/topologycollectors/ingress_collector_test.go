@@ -1402,8 +1402,8 @@ func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress,
 				},
 			},
 			Status: v1beta1.IngressStatus{
-				LoadBalancer: netV1.IngressLoadBalancerStatus{
-					Ingress: []netV1.IngressLoadBalancerIngress{
+				LoadBalancer: v1beta1.IngressLoadBalancerStatus{
+					Ingress: []v1beta1.IngressLoadBalancerIngress{
 						{IP: "34.100.200.15"},
 						{Hostname: "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com"},
 					},
@@ -1488,8 +1488,8 @@ func (m MockIngressAPICollectorClientNoHTTPRule) GetIngressesExtV1B1() ([]v1beta
 			},
 		},
 		Status: v1beta1.IngressStatus{
-			LoadBalancer: netV1.IngressLoadBalancerStatus{
-				Ingress: []netV1.IngressLoadBalancerIngress{
+			LoadBalancer: v1beta1.IngressLoadBalancerStatus{
+				Ingress: []v1beta1.IngressLoadBalancerIngress{
 					{IP: "34.100.200.15"},
 					{Hostname: "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com"},
 				},

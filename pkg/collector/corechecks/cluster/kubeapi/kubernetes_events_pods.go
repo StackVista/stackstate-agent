@@ -9,8 +9,8 @@ package kubeapi
 
 import (
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 	obj "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,7 +72,7 @@ func (k *EventsCheck) podEventsCollectionCheck() (pods []*v1.Pod, err error) {
 	return pods, nil
 }
 
-func (k *EventsCheck) processPods(sender aggregator.Sender, pods []*v1.Pod) {
+func (k *EventsCheck) processPods(sender sender.Sender, pods []*v1.Pod) {
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, pod := range pods {
 		events := k.podToEventMapper(pod, mapper, sender)
@@ -84,8 +84,8 @@ func (k *EventsCheck) processPods(sender aggregator.Sender, pods []*v1.Pod) {
 	}
 }
 
-func (k *EventsCheck) podToEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender aggregator.Sender) []metrics.Event {
-	var events []metrics.Event
+func (k *EventsCheck) podToEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender sender.Sender) []event.Event {
+	var events []event.Event
 
 	// Test on active Status. This will be the current state the pod is in not the previous state
 	for _, containerStatus := range pod.Status.ContainerStatuses {
@@ -107,7 +107,7 @@ func (k *EventsCheck) podToEventMapper(pod *v1.Pod, mapper *kubernetesEventMappe
 }
 
 // mapPodToMetricEventForOutOfMemory Attempt to map a pod to a metric event which can be forwarded to the aggregator
-func (k *EventsCheck) mapPodToMetricEventForOutOfMemory(pod *v1.Pod, containerName string, terminatedState *v1.ContainerStateTerminated, mapper *kubernetesEventMapper) (metrics.Event, error) {
+func (k *EventsCheck) mapPodToMetricEventForOutOfMemory(pod *v1.Pod, containerName string, terminatedState *v1.ContainerStateTerminated, mapper *kubernetesEventMapper) (event.Event, error) {
 	event := &v1.Event{
 		InvolvedObject: v1.ObjectReference{
 			Name:      pod.Name,

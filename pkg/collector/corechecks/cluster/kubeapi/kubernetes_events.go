@@ -10,6 +10,7 @@ package kubeapi
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/util"
 	"strings"
 	"time"
@@ -18,7 +19,6 @@ import (
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
@@ -104,8 +104,8 @@ func KubernetesAPIEventsFactory() check.Check {
 }
 
 // Configure parses the check configuration and init the check.
-func (k *EventsCheck) Configure(config, initConfig integration.Data, source string) error {
-	err := k.ConfigureKubeAPICheck(config, source)
+func (k *EventsCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+	err := k.ConfigureKubeAPICheck(senderManager, integrationConfigDigest, config, initConfig, source)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func (k *EventsCheck) Run() error {
 		return nil
 	}
 
-	sender, err := aggregator.GetSender(k.ID())
+	sender, err := k.GetSender()
 	if err != nil {
 		return err
 	}
@@ -302,7 +302,7 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 // - iterates over the Kubernetes Events
 // - extracts some attributes and builds a structure ready to be submitted as a StackState event
 // - convert each K8s event to a metrics event to be processed by the intake
-func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event) {
+func (k *EventsCheck) processEvents(sender sender.Sender, events []*v1.Event) {
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, event := range events {
 		mappedEvent, err := mapper.mapKubernetesEvent(event)

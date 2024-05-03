@@ -38,7 +38,7 @@ func testTopologyEvent(t *testing.T) {
 		AggregationKey: "aggregation_key",
 		SourceTypeName: "source_type",
 		EventType:      "event_type",
-		EventContext: &metrics.EventContext{
+		EventContext: &event.EventContext{
 			SourceIdentifier:   "ctx_source_id",
 			ElementIdentifiers: []string{"ctx_elem_id1", "ctx_elem_id2"},
 			Source:             "ctx_source",
@@ -53,7 +53,7 @@ func testTopologyEvent(t *testing.T) {
 					},
 				},
 			},
-			SourceLinks: []metrics.SourceLink{
+			SourceLinks: []event.SourceLink{
 				{
 					Title: "source1_title",
 					URL:   "source1_url",
@@ -75,7 +75,7 @@ func testTopologyEvent(t *testing.T) {
 	StartTransaction(checkId)
 	SubmitTopologyEvent(checkId, ev)
 
-	expectedEvent := metrics.Event{
+	expectedEvent := event.Event{
 		Title:          "ev_title",
 		Text:           "ev_text",
 		Ts:             21,
@@ -86,7 +86,7 @@ func testTopologyEvent(t *testing.T) {
 		AggregationKey: "aggregation_key",
 		SourceTypeName: "source_type",
 		EventType:      "event_type",
-		EventContext: &metrics.EventContext{
+		EventContext: &event.EventContext{
 			SourceIdentifier:   "ctx_source_id",
 			ElementIdentifiers: []string{"ctx_elem_id1", "ctx_elem_id2"},
 			Source:             "ctx_source",

@@ -15,6 +15,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/core/config"
 	"github.com/DataDog/datadog-agent/comp/core/log/logimpl"
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta"
+	pkgconfig "github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/tagger/utils"
 	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes"
@@ -459,7 +460,7 @@ func TestHandleKubePod(t *testing.T) {
 func TestHandleKubePodWithClusterName(t *testing.T) {
 	// set the cluster name config for all test scenarios
 	clustername.ResetClusterName()
-	config.Datadog.Set("cluster_name", "test-cluster")
+	pkgconfig.Datadog.SetWithoutSource("cluster_name", "test-cluster")
 
 	const (
 		fullyFleshedContainerID = "foobarquux"
@@ -493,7 +494,14 @@ func TestHandleKubePodWithClusterName(t *testing.T) {
 		Tag:       "latest",
 	}
 
-	store := workloadmetatesting.NewStore()
+	store := fxutil.Test[workloadmeta.Mock](t, fx.Options(
+		logimpl.MockModule(),
+		config.MockModule(),
+		fx.Supply(workloadmeta.NewParams()),
+		fx.Supply(context.Background()),
+		workloadmeta.MockModule(),
+	))
+
 	store.Set(&workloadmeta.Container{
 		EntityID: workloadmeta.EntityID{
 			Kind: workloadmeta.KindContainer,
@@ -656,7 +664,7 @@ func TestHandleKubePodWithClusterName(t *testing.T) {
 	}
 
 	// clear up test cases
-	config.Datadog.Set("cluster_name", "")
+	pkgconfig.Datadog.SetWithoutSource("cluster_name", "")
 	clustername.ResetClusterName()
 }
 

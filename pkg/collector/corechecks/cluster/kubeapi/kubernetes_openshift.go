@@ -10,12 +10,12 @@ package kubeapi
 import (
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 
 	osq "github.com/openshift/api/quota/v1"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
@@ -49,7 +49,7 @@ func (k *MetricsCheck) retrieveOShiftClusterQuotas() ([]osq.ClusterResourceQuota
 }
 
 // reportClusterQuotas reports metrics on OpenShift ClusterResourceQuota objects
-func (k *MetricsCheck) reportClusterQuotas(quotas []osq.ClusterResourceQuota, sender aggregator.Sender) {
+func (k *MetricsCheck) reportClusterQuotas(quotas []osq.ClusterResourceQuota, sender sender.Sender) {
 	for _, quota := range quotas {
 		quotaTags := []string{fmt.Sprintf("clusterquota:%s", quota.Name)}
 		remaining := computeQuotaRemaining(quota.Status.Total.Used, quota.Status.Total.Hard)
@@ -67,7 +67,7 @@ func (k *MetricsCheck) reportClusterQuotas(quotas []osq.ClusterResourceQuota, se
 	}
 }
 
-func (k *MetricsCheck) reportQuota(quotas v1.ResourceList, metricPrefix, metricSuffix string, tags []string, sender aggregator.Sender) {
+func (k *MetricsCheck) reportQuota(quotas v1.ResourceList, metricPrefix, metricSuffix string, tags []string, sender sender.Sender) {
 	for res, qty := range quotas {
 		metricName := fmt.Sprintf("%s.%s.%s", metricPrefix, res, metricSuffix)
 		sender.Gauge(metricName, quantityToFloat64(qty), "", tags)

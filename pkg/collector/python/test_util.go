@@ -22,7 +22,7 @@ import "C"
 
 func SetupTransactionalComponents() {
 	// Set storage root for tests
-	config.Datadog.Set("check_state_root_path", "/tmp/fake-datadog-run")
+	config.Datadog.SetWithoutSource("check_state_root_path", "/tmp/fake-datadog-run")
 
 	handler.InitCheckManager()
 	state.InitCheckStateManager()

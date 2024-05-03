@@ -4,7 +4,7 @@ package kubeapi
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/batcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -24,7 +24,7 @@ type TopologyConfig struct {
 	ConfigMapMaxDataSize    int             `yaml:"configmap_max_datasize"`
 	CSIPVMapperEnabled      bool            `yaml:"csi_pv_mapper_enabled"`
 	Resources               ResourcesConfig `yaml:"resources"`
-	CheckID                 check.ID
+	CheckID                 checkid.ID
 	Instance                topology.Instance
 }
 
@@ -87,7 +87,7 @@ type TopologySubmitter interface {
 }
 
 // NewBatchTopologySubmitter creates a new instance of BatchTopologySubmitter
-func NewBatchTopologySubmitter(checkID check.ID, instance topology.Instance) TopologySubmitter {
+func NewBatchTopologySubmitter(checkID checkid.ID, instance topology.Instance) TopologySubmitter {
 	return &BatchTopologySubmitter{
 		CheckID:  checkID,
 		Instance: instance,
@@ -96,7 +96,7 @@ func NewBatchTopologySubmitter(checkID check.ID, instance topology.Instance) Top
 
 // BatchTopologySubmitter provides functionality to submit topology data with the Batcher.
 type BatchTopologySubmitter struct {
-	CheckID  check.ID
+	CheckID  checkid.ID
 	Instance topology.Instance
 }
 

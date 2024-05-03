@@ -239,7 +239,7 @@ func testSubmitEvent(t *testing.T) {
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Health:      map[string]health.Health{},
-		Events:      &event.IntakeEvents{Events: []metrics.Event{expectedEvent}},
+		Events:      &event.IntakeEvents{Events: []event.Event{expectedEvent}},
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 

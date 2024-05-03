@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/DataDog/datadog-agent/pkg/batcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	collectors "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/topologycollectors"
 	agentConfig "github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/topology"
@@ -212,7 +212,7 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool, exposeKuberne
 }
 
 // NewTestTopologySubmitter creates a new instance of TestTopologySubmitter
-func NewTestTopologySubmitter(t *testing.T, checkID check.ID, instance topology.Instance) TopologySubmitter {
+func NewTestTopologySubmitter(t *testing.T, checkID checkid.ID, instance topology.Instance) TopologySubmitter {
 	return &TestTopologySubmitter{
 		t:        t,
 		CheckID:  checkID,
@@ -223,7 +223,7 @@ func NewTestTopologySubmitter(t *testing.T, checkID check.ID, instance topology.
 // TestTopologySubmitter provides functionality to submit topology data with the Batcher.
 type TestTopologySubmitter struct {
 	t        *testing.T
-	CheckID  check.ID
+	CheckID  checkid.ID
 	Instance topology.Instance
 }
 
