@@ -230,7 +230,7 @@ dependency 'datadog-agent-prepare'
 dependency 'agent-dependencies'
 
 # Datadog agent
-dependency 'datadog-agent'
+# dependency 'datadog-agent'
 
 # System-probe
 if linux_target? && !heroku_target?

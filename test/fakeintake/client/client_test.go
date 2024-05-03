@@ -352,7 +352,7 @@ func TestClient(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, client.containerImageAggregator.ContainsPayloadName("gcr.io/datadoghq/agent"))
 		assert.False(t, client.containerImageAggregator.ContainsPayloadName("totoro"))
-		assert.True(t, client.containerImageAggregator.ContainsPayloadNameAndTags("gcr.io/datadoghq/agent", []string{"git.repository_url:https://github.com/DataDog/datadog-agent"}))
+		assert.True(t, client.containerImageAggregator.ContainsPayloadNameAndTags("gcr.io/datadoghq/agent", []string{"git.repository_url:https://github.com/StackVista/stackstate-agent"}))
 		assert.False(t, client.containerImageAggregator.ContainsPayloadNameAndTags("gcr.io/datadoghq/agent", []string{"totoro"}))
 	})
 
@@ -365,7 +365,7 @@ func TestClient(t *testing.T) {
 		client := NewClient(ts.URL)
 		images, err := client.getContainerImage("gcr.io/datadoghq/agent")
 		require.NoError(t, err)
-		assert.NotEmpty(t, aggregator.FilterByTags(images, []string{"git.repository_url:https://github.com/DataDog/datadog-agent"}))
+		assert.NotEmpty(t, aggregator.FilterByTags(images, []string{"git.repository_url:https://github.com/StackVista/stackstate-agent"}))
 		assert.Empty(t, aggregator.FilterByTags(images, []string{"totoro"}))
 	})
 
@@ -377,7 +377,7 @@ func TestClient(t *testing.T) {
 
 		client := NewClient(ts.URL)
 		images, err := client.FilterContainerImages("gcr.io/datadoghq/agent",
-			WithTags[*aggregator.ContainerImagePayload]([]string{"git.repository_url:https://github.com/DataDog/datadog-agent"}))
+			WithTags[*aggregator.ContainerImagePayload]([]string{"git.repository_url:https://github.com/StackVista/stackstate-agent"}))
 		require.NoError(t, err)
 		assert.NotEmpty(t, images)
 	})
@@ -419,7 +419,7 @@ func TestClient(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, client.sbomAggregator.ContainsPayloadName("gcr.io/datadoghq/agent@sha256:c08324052945874a0a5fb1ba5d4d5d1d3b8ff1a87b7b3e46810c8cf476ea4c3d"))
 		assert.False(t, client.sbomAggregator.ContainsPayloadName("totoro"))
-		assert.True(t, client.sbomAggregator.ContainsPayloadNameAndTags("gcr.io/datadoghq/agent@sha256:c08324052945874a0a5fb1ba5d4d5d1d3b8ff1a87b7b3e46810c8cf476ea4c3d", []string{"git.repository_url:https://github.com/DataDog/datadog-agent"}))
+		assert.True(t, client.sbomAggregator.ContainsPayloadNameAndTags("gcr.io/datadoghq/agent@sha256:c08324052945874a0a5fb1ba5d4d5d1d3b8ff1a87b7b3e46810c8cf476ea4c3d", []string{"git.repository_url:https://github.com/StackVista/stackstate-agent"}))
 		assert.False(t, client.sbomAggregator.ContainsPayloadNameAndTags("gcr.io/datadoghq/agent@sha256:c08324052945874a0a5fb1ba5d4d5d1d3b8ff1a87b7b3e46810c8cf476ea4c3d", []string{"totoro"}))
 	})
 
@@ -432,7 +432,7 @@ func TestClient(t *testing.T) {
 		client := NewClient(ts.URL)
 		sboms, err := client.getSBOM("gcr.io/datadoghq/agent@sha256:c08324052945874a0a5fb1ba5d4d5d1d3b8ff1a87b7b3e46810c8cf476ea4c3d")
 		require.NoError(t, err)
-		assert.NotEmpty(t, aggregator.FilterByTags(sboms, []string{"git.repository_url:https://github.com/DataDog/datadog-agent"}))
+		assert.NotEmpty(t, aggregator.FilterByTags(sboms, []string{"git.repository_url:https://github.com/StackVista/stackstate-agent"}))
 		assert.Empty(t, aggregator.FilterByTags(sboms, []string{"totoro"}))
 	})
 
@@ -444,7 +444,7 @@ func TestClient(t *testing.T) {
 
 		client := NewClient(ts.URL)
 		sboms, err := client.FilterSBOMs("gcr.io/datadoghq/agent@sha256:c08324052945874a0a5fb1ba5d4d5d1d3b8ff1a87b7b3e46810c8cf476ea4c3d",
-			WithTags[*aggregator.SBOMPayload]([]string{"git.repository_url:https://github.com/DataDog/datadog-agent"}))
+			WithTags[*aggregator.SBOMPayload]([]string{"git.repository_url:https://github.com/StackVista/stackstate-agent"}))
 		require.NoError(t, err)
 		assert.NotEmpty(t, sboms)
 	})
