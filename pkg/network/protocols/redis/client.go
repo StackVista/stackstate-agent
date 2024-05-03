@@ -8,7 +8,7 @@ package redis
 import (
 	"net"
 
-	"github.com/go-redis/redis/v9"
+	redis "github.com/redis/go-redis/v9"
 )
 
 // NewClient returns a new redis client.

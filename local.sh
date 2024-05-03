@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 SRC_PATH="/go/src/github.com/StackVista/stackstate-agent"
 WHAT=$1
 
