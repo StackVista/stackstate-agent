@@ -1,6 +1,6 @@
 module github.com/StackVista/stackstate-agent/pkg/util/log
 
-go 1.16
+go 1.19
 
 replace github.com/StackVista/stackstate-agent/pkg/util/scrubber => ../scrubber
 

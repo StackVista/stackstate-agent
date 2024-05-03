@@ -1,6 +1,6 @@
 module github.com/StackVista/stackstate-agent
 
-go 1.16
+go 1.19
 
 // v0.8.0 was tagged long ago, and appared on pkg.go.dev.  We do not want any tagged version
 // to appear there.  The trick to accomplish this is to make a new version (in this case v0.9.0)
