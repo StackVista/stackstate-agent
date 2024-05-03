@@ -1,7 +1,7 @@
 name "python3"
 
 if ohai["platform"] != "windows"
-  default_version "3.8.11"
+  default_version "3.8.18"
   dependency "libffi"
   dependency "ncurses"
   dependency "zlib"
@@ -63,7 +63,7 @@ if ohai["platform"] != "windows"
   end
 
 else
-  default_version "3.8.11-v3.8.11"
+  default_version "3.8.18-v3.8.18"
   dependency "vc_redist_14"
 
   if windows_arch_i386?
