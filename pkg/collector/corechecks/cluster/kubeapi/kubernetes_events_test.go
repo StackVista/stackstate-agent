@@ -9,6 +9,7 @@ package kubeapi
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"sort"
 	"testing"
 
@@ -23,7 +24,6 @@ import (
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"k8s.io/apimachinery/pkg/types"
@@ -94,14 +94,14 @@ func TestProcessBundledEvents(t *testing.T) {
 		ev2,
 	}
 	mocked := mocksender.NewMockSender(kubeAPIEventsCheck.ID())
-	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
+	mocked.On("Event", mock.AnythingOfType("event.Event"))
 
 	kubeAPIEventsCheck.processEvents(mocked, newKubeEventsBundle)
 
 	// We are only expecting one bundle event.
 	// We need to check that the countByAction concatenated string contains the source events.
 	// As the order is not guaranteed we want to use contains.
-	res1 := (mocked.Calls[0].Arguments.Get(0)).(metrics.Event)
+	res1 := (mocked.Calls[0].Arguments.Get(0)).(event.Event)
 	assert.Contains(t, res1.Title, "Scheduled - dca-789976f5d7-2ljx6 Pod")
 	assert.Equal(t, "Activities", res1.EventContext.Category)
 	mocked.AssertNumberOfCalls(t, "Event", 2)
@@ -112,7 +112,7 @@ func TestProcessBundledEvents(t *testing.T) {
 		ev3,
 		ev4,
 	}
-	modifiedNewDatadogEvents := metrics.Event{
+	modifiedNewDatadogEvents := event.Event{
 		Title:    "Events from the machine-blue Node",
 		Text:     "%%% \n30 **MissingClusterDNS**: MountVolume.SetUp succeeded\n \n _Events emitted by the kubelet seen at " + time.Unix(709675200, 0).String() + "_ \n\n %%%",
 		Priority: "normal",
@@ -122,7 +122,7 @@ func TestProcessBundledEvents(t *testing.T) {
 		Ts:             709675200,
 		Host:           "machine-blue",
 		EventType:      "MissingClusterDNS",
-		EventContext: &metrics.EventContext{
+		EventContext: &event.EventContext{
 			Source:   "kubernetes",
 			Category: "Alerts",
 			ElementIdentifiers: []string{
@@ -132,7 +132,7 @@ func TestProcessBundledEvents(t *testing.T) {
 		},
 	}
 	mocked = mocksender.NewMockSender(kubeAPIEventsCheck.ID())
-	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
+	mocked.On("Event", mock.AnythingOfType("event.Event"))
 
 	kubeAPIEventsCheck.processEvents(mocked, modifiedKubeEventsBundle)
 
@@ -141,15 +141,15 @@ func TestProcessBundledEvents(t *testing.T) {
 
 	// Test the hostname change when a cluster name is set
 	var testClusterName = "laika"
-	mockConfig := config.Mock()
-	mockConfig.Set("cluster_name", testClusterName)
+	mockConfig := config.Mock(nil)
+	mockConfig.SetWithoutSource("cluster_name", testClusterName)
 	clustername.ResetClusterName() // reset state as clustername was already read
 	// defer a reset of the state so that future hostname fetches are not impacted
-	defer mockConfig.Set("cluster_name", nil)
+	defer mockConfig.SetWithoutSource("cluster_name", nil)
 	defer clustername.ResetClusterName()
 	kubeAPIEventsCheck.clusterName = clustername.GetClusterName(context.TODO(), "")
 
-	modifiedNewDatadogEventsWithClusterName := metrics.Event{
+	modifiedNewDatadogEventsWithClusterName := event.Event{
 		Title:    "Events from the machine-blue Node",
 		Text:     "%%% \n30 **MissingClusterDNS**: MountVolume.SetUp succeeded\n \n _Events emitted by the kubelet seen at " + time.Unix(709675200, 0).String() + "_ \n\n %%%",
 		Priority: "normal",
@@ -159,7 +159,7 @@ func TestProcessBundledEvents(t *testing.T) {
 		Ts:             709675200,
 		Host:           "machine-blue-" + testClusterName,
 		EventType:      "MissingClusterDNS",
-		EventContext: &metrics.EventContext{
+		EventContext: &event.EventContext{
 			Source:   "kubernetes",
 			Category: "Alerts",
 			ElementIdentifiers: []string{
@@ -170,7 +170,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	}
 
 	mocked = mocksender.NewMockSender(kubeAPIEventsCheck.ID())
-	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
+	mocked.On("Event", mock.AnythingOfType("event.Event"))
 
 	kubeAPIEventsCheck.processEvents(mocked, modifiedKubeEventsBundle)
 
@@ -208,7 +208,7 @@ func TestProcessEvent(t *testing.T) {
 		ev1,
 	}
 	// 1 Scheduled:
-	newDatadogEvent := metrics.Event{
+	newDatadogEvent := event.Event{
 		Title:          "Events from the dca-789976f5d7-2ljx6 ReplicaSet",
 		Text:           "%%% \n2 **Scheduled**: Successfully assigned dca-789976f5d7-2ljx6 to ip-10-0-0-54\n \n _New events emitted by the default-scheduler seen at " + time.Unix(709662600000, 0).String() + "_ \n\n %%%",
 		Priority:       "normal",
@@ -217,7 +217,7 @@ func TestProcessEvent(t *testing.T) {
 		Ts:             709662600,
 		Host:           "",
 		EventType:      "Scheduled",
-		EventContext: &metrics.EventContext{
+		EventContext: &event.EventContext{
 			Source:   "kubernetes",
 			Category: "Activities",
 			ElementIdentifiers: []string{
@@ -226,7 +226,7 @@ func TestProcessEvent(t *testing.T) {
 			Data: map[string]interface{}{},
 		},
 	}
-	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
+	mocked.On("Event", mock.AnythingOfType("event.Event"))
 	kubeAPIEventsCheck.processEvents(mocked, newKubeEventBundle)
 	mocked.AssertEvent(t, newDatadogEvent, 0)
 	mocked.AssertExpectations(t)
@@ -298,16 +298,16 @@ func TestProcessEventsType(t *testing.T) {
 		ev3,
 	}
 	mocked := mocksender.NewMockSender(kubeAPIEventsCheck.ID())
-	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
+	mocked.On("Event", mock.AnythingOfType("event.Event"))
 
 	kubeAPIEventsCheck.processEvents(mocked, newKubeEventsBundle)
 	// We are only expecting two bundle events from the 3 kubernetes events because the event types differ.
 	// We need to check that the countByAction concatenated string contains the source events.
 	// As the order is not guaranteed we want to use contains.
 	calls := []string{
-		(mocked.Calls[0].Arguments.Get(0)).(metrics.Event).EventType,
-		(mocked.Calls[1].Arguments.Get(0)).(metrics.Event).EventType,
-		(mocked.Calls[2].Arguments.Get(0)).(metrics.Event).EventType,
+		(mocked.Calls[0].Arguments.Get(0)).(event.Event).EventType,
+		(mocked.Calls[1].Arguments.Get(0)).(event.Event).EventType,
+		(mocked.Calls[2].Arguments.Get(0)).(event.Event).EventType,
 	}
 
 	// The order of calls is random in processEvents because of the map eventsByObject
@@ -337,7 +337,7 @@ event_categories:
 	assert.NoError(t, err)
 
 	mockSender := mocksender.NewMockSender(evCheck.ID())
-	mockSender.On("Event", mock.AnythingOfType("metrics.Event"))
+	mockSender.On("Event", mock.AnythingOfType("event.Event"))
 
 	createEventShort := func(reason, alertType, message string) *v1.Event {
 		return createEvent(1, "default", "pearl-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "component1", "pearl.host", reason, message, 709662600, 709662600, alertType, "")
@@ -354,7 +354,7 @@ event_categories:
 
 	getCategoryForEventWithMessage := func(message string) string {
 		for _, call := range mockSender.Calls {
-			event := call.Arguments.Get(0).(metrics.Event)
+			event := call.Arguments.Get(0).(event.Event)
 			if event.Text == message {
 				return event.EventContext.Category
 			}

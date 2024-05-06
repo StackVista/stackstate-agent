@@ -7,6 +7,7 @@
 package kubeapi
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"sync"
 	"time"
@@ -46,7 +47,7 @@ func warnDisabledResource(name string, additionalWarning string, isEnabled bool)
 
 // Configure parses the check configuration and init the check.
 func (t *TopologyCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
-	err := t.ConfigureKubeAPICheck(senderManagerm, integrationConfigDigest, config, initConfig, source)
+	err := t.ConfigureKubeAPICheck(senderManager, integrationConfigDigest, config, initConfig, source)
 	if err != nil {
 		return err
 	}

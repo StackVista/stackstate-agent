@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/hostname"
 	"strings"
 	"time"
 
@@ -154,7 +155,7 @@ func (k *EventsCheck) setDefaults() {
 
 // getClusterName retrieves the name of the cluster, if found
 func (k *EventsCheck) getClusterName() {
-	hostname, _ := util.GetHostname(context.TODO())
+	hostname, _ := hostname.Get(context.TODO())
 	if clusterName := clustername.GetClusterName(context.TODO(), hostname); clusterName != "" {
 		k.clusterName = clusterName
 	}

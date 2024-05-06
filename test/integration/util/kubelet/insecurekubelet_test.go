@@ -69,7 +69,7 @@ func (suite *InsecureTestSuite) TestHTTP() {
 
 // sts
 func (suite *InsecureTestSuite) TestHTTPNotAllowed() {
-	mockConfig := config.Mock()
+	mockConfig := config.Mock(nil)
 
 	mockConfig.Set("kubernetes_http_kubelet_port", 10255)
 

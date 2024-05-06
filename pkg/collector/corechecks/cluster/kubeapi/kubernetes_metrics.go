@@ -13,7 +13,8 @@ import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/metrics/servicecheck"
+	"github.com/DataDog/datadog-agent/pkg/util/hostname"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"time"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
@@ -86,15 +86,15 @@ func KubernetesAPIMetricsFactory() check.Check {
 
 // getClusterName retrieves the name of the cluster, if found
 func (k *MetricsCheck) getClusterName() {
-	hostname, _ := util.GetHostname(context.TODO())
+	hostname, _ := hostname.Get(context.TODO())
 	if clusterName := clustername.GetClusterName(context.TODO(), hostname); clusterName != "" {
 		k.clusterName = clusterName
 	}
 }
 
 // Configure parses the check configuration and init the check.
-func (k *MetricsCheck) Configure(config, initConfig integration.Data, source string) error {
-	err := k.CommonConfigure(config, source)
+func (k *MetricsCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+	err := k.CommonConfigure(senderManager, integrationConfigDigest, config, initConfig, source)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (k *MetricsCheck) parseComponentStatus(sender sender.Sender, componentsStat
 		}
 		tagComp := []string{fmt.Sprintf("component:%s", component.Name)}
 		for _, condition := range component.Conditions {
-			statusCheck := metrics.ServiceCheckUnknown
+			statusCheck := servicecheck.ServiceCheckUnknown
 			message := ""
 
 			// We only expect the Healthy condition. May change in the future. https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#typical-status-properties
@@ -190,10 +190,10 @@ func (k *MetricsCheck) parseComponentStatus(sender sender.Sender, componentsStat
 			// We only expect True, False and Unknown (default).
 			switch condition.Status {
 			case "True":
-				statusCheck = metrics.ServiceCheckOK
+				statusCheck = servicecheck.ServiceCheckOK
 				message = condition.Message
 			case "False":
-				statusCheck = metrics.ServiceCheckCritical
+				statusCheck = servicecheck.ServiceCheckCritical
 				message = condition.Error
 			}
 			sender.ServiceCheck(KubeControlPaneCheck, statusCheck, k.KubeAPIServerHostname, tagComp, message)

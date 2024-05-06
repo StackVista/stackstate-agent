@@ -161,32 +161,32 @@ func newKubernetesEventMapper(detector apiserver.OpenShiftDetector, clusterName 
 
 var _ KubernetesEventMapperFactory = newKubernetesEventMapper // Compile-time check
 
-func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (event.Event, error) {
-	if err := checkEvent(event); err != nil {
+func (k *kubernetesEventMapper) mapKubernetesEvent(ev *v1.Event) (event.Event, error) {
+	if err := checkEvent(ev); err != nil {
 		return event.Event{}, err
 	}
 
 	// Map Category to event type
 	//
 
-	mEvent := metrics.Event{
-		Title:          fmt.Sprintf("%s - %s %s (%dx)", event.Reason, event.InvolvedObject.Name, event.InvolvedObject.Kind, event.Count),
-		Host:           getHostName(event, k.clusterName),
+	mEvent := event.Event{
+		Title:          fmt.Sprintf("%s - %s %s (%dx)", ev.Reason, ev.InvolvedObject.Name, ev.InvolvedObject.Kind, ev.Count),
+		Host:           getHostName(ev, k.clusterName),
 		SourceTypeName: k.sourceType,
-		Priority:       metrics.EventPriorityNormal,
-		AlertType:      getAlertType(event),
-		EventType:      event.Reason,
-		Ts:             getTimeStamp(event),
-		Tags:           k.getTags(event),
-		EventContext: &metrics.EventContext{
+		Priority:       event.EventPriorityNormal,
+		AlertType:      getAlertType(ev),
+		EventType:      ev.Reason,
+		Ts:             getTimeStamp(ev),
+		Tags:           k.getTags(ev),
+		EventContext: &event.EventContext{
 			Source:             k.sourceType,
-			Category:           string(k.getCategory(event)),
-			SourceIdentifier:   string(event.GetUID()),
-			ElementIdentifiers: k.externalIdentifierForInvolvedObject(event),
-			SourceLinks:        []metrics.SourceLink{},
+			Category:           string(k.getCategory(ev)),
+			SourceIdentifier:   string(ev.GetUID()),
+			ElementIdentifiers: k.externalIdentifierForInvolvedObject(ev),
+			SourceLinks:        []event.SourceLink{},
 			Data:               map[string]interface{}{},
 		},
-		Text: event.Message,
+		Text: ev.Message,
 	}
 
 	return mEvent, nil
@@ -220,33 +220,33 @@ func getHostName(event *v1.Event, clusterName string) string {
 
 var thrownCategoryWarnings sync.Map
 
-func (k *kubernetesEventMapper) getCategory(event *v1.Event) EventCategory {
-	if category, ok := k.eventCategoriesOverride[event.Reason]; ok {
+func (k *kubernetesEventMapper) getCategory(ev *v1.Event) EventCategory {
+	if category, ok := k.eventCategoriesOverride[ev.Reason]; ok {
 		return category
 	}
 
-	alertType := getAlertType(event)
-	if alertType == metrics.EventAlertTypeWarning || alertType == metrics.EventAlertTypeError {
+	alertType := getAlertType(ev)
+	if alertType == event.EventAlertTypeWarning || alertType == event.EventAlertTypeError {
 		return Alerts
 	}
 
-	if category, ok := DefaultEventCategoriesMap[event.Reason]; ok {
+	if category, ok := DefaultEventCategoriesMap[ev.Reason]; ok {
 		return category
 	}
-	if _, exists := thrownCategoryWarnings.LoadOrStore(event.Reason, true); !exists {
-		_ = log.Warnf("Kubernetes event has unknown reason '%s' found, categorising as 'Others'. Involved object: '%s/%s'", event.Reason, event.InvolvedObject.Kind, event.InvolvedObject.Name)
+	if _, exists := thrownCategoryWarnings.LoadOrStore(ev.Reason, true); !exists {
+		_ = log.Warnf("Kubernetes event has unknown reason '%s' found, categorising as 'Others'. Involved object: '%s/%s'", ev.Reason, ev.InvolvedObject.Kind, ev.InvolvedObject.Name)
 	}
 	return Others
 }
 
-func getAlertType(event *v1.Event) event.EventAlertType {
-	switch strings.ToLower(event.Type) {
+func getAlertType(ev *v1.Event) event.EventAlertType {
+	switch strings.ToLower(ev.Type) {
 	case "normal":
 		return event.EventAlertTypeInfo
 	case "warning":
 		return event.EventAlertTypeWarning
 	default:
-		log.Warnf("Unhandled kubernetes event type '%s', fallback to metrics.EventAlertTypeInfo", event.Type)
+		log.Warnf("Unhandled kubernetes event type '%s', fallback to metrics.EventAlertTypeInfo", ev.Type)
 		return event.EventAlertTypeInfo
 	}
 }

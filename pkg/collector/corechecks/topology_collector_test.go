@@ -1,14 +1,14 @@
 package corechecks
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestMakeCheckTopologyCollector(t *testing.T) {
-	checkID := check.ID("process_check_topology")
+	checkID := checkid.ID("process_check_topology")
 	instance := topology.Instance{
 		Type: "test",
 		URL:  "url",
@@ -19,7 +19,7 @@ func TestMakeCheckTopologyCollector(t *testing.T) {
 }
 
 func TestMakeCheckProcessTopologyCollector(t *testing.T) {
-	checkID := check.ID("process_check_topology")
+	checkID := checkid.ID("process_check_topology")
 	ptc := MakeCheckProcessTopologyCollector(checkID)
 	assert.Equal(t, checkID, ptc.CheckID)
 	expectedInstance := topology.Instance{

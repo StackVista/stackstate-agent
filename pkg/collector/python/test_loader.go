@@ -8,7 +8,6 @@
 package python
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"runtime"
 	"testing"
 

@@ -103,7 +103,7 @@ TestSecureUnknownAuthHTTPSKubelet with:
 - WITHOUT cacert (expecting success)
 */
 func (suite *SecureTestSuite) TestTLSWithoutCAFallbackToUnverified() {
-	mockConfig := config.Mock()
+	mockConfig := config.Mock(nil)
 
 	ctx := context.TODO()
 	mockConfig.Set("kubernetes_https_kubelet_port", 10250)

@@ -1482,7 +1482,7 @@ func TestKSMCheck_mergeLabelsMapper(t *testing.T) {
 			name:     "empty extra",
 			config:   &KSMConfig{LabelsMapper: map[string]string{"tar": "foo"}},
 			extra:    map[string]string{},
-			expected: map[string][]string{"tar": "foo"},
+			expected: map[string]string{"tar": "foo"},
 		},
 	}
 	for _, tt := range tests {

@@ -317,6 +317,7 @@ func TestExcludedDiskFSFromConfig(t *testing.T) {
 		t.Run(tc.test, func(t *testing.T) {
 			diskPartitions = diskSampler
 			diskCheck := diskFactory().(*Check)
+			mock := mocksender.NewMockSender(diskCheck.ID())
 			err := diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, tc.config, "test")
 
 			assert.NoError(t, err)

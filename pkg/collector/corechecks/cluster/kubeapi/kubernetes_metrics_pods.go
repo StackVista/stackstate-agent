@@ -9,7 +9,6 @@ package kubeapi
 
 import (
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
@@ -53,7 +52,7 @@ func (k *MetricsCheck) podMetricsCollectionCheck() (pods []*v1.Pod, err error) {
 	return pods, nil
 }
 
-func (k *MetricsCheck) processPods(sender aggregator.Sender, pods []*v1.Pod) {
+func (k *MetricsCheck) processPods(sender sender.Sender, pods []*v1.Pod) {
 	log.Info("Running kubernetes pod metric collector - processPods...")
 
 	for _, pod := range pods {
