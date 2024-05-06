@@ -2,7 +2,18 @@
 
 set -e
 
-SRC_PATH="/go/src/github.com/StackVista/stackstate-agent"
+# We want to produce a final binary on a branded path, but it is convenient to run unit tests and the like on
+# the original unbranded paths. Hence we allow for both.
+if [[ "${BRANDED}" = "false" ]]; then
+    SRC_PATH="/go/src/github.com/DataDog/datadog-agent"
+    export AGENT_GITHUB_ORG=DataDog
+    export AGENT_REPO_NAME=datadog-agent
+else
+    SRC_PATH="/go/src/github.com/StackVista/stackstate-agent"
+    export AGENT_GITHUB_ORG=StackVista
+    export AGENT_REPO_NAME=stackstate-agent
+fi
+
 WHAT=$1
 
 if [ -z "${WHAT}" ]; then
@@ -31,15 +42,15 @@ function prepare() {
     chown -R root:root $SRC_PATH
     cd "$SRC_PATH" || exit
 
-    echo "Fixing import paths"
-    ./fix_package_paths.sh "$SRC_PATH"
+    if [[ "${BRANDED}" != "false" ]]; then
+        echo "Fixing import paths"
+        ./fix_package_paths.sh "$SRC_PATH"
 
-    echo "Running tidy and vendor"
-    # TODO: Ideally we'd not need to run this, but because we update the package paths, we need to update go.mod/sum/vendor
-    # Alternative is to commit package renames, but that is also pretty messy
-    go mod tidy
-    go mod vendor
-
+        echo "Running tidy after rewriting paths"
+        # TODO: Ideally we'd not need to run this, but because we update the package paths, we need to update go.mod/sum/vendor
+        # Alternative is to commit package renames, but that is also pretty messy
+        go mod tidy
+    fi
     cd "$CI_PROJECT_DIR" || exit
 }
 
@@ -57,7 +68,6 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS_DEB" ]; then
     echo "          --- Getting dependencies ---"
     echo "          ---                      ---"
     inv -e deps --verbose
-    go mod vendor
     go mod tidy
     inv agent.version --major-version 3 -u > version.txt
     echo "          ---                      ---"

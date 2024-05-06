@@ -18,11 +18,9 @@ from invoke.exceptions import Exit
 from .libs.common.color import color_message
 
 # constants
-ORG_PATH = "github.com/StackVista"  # sts
 DEFAULT_BRANCH = "master"  # sts
-REPO_PATH = "{}/stackstate-agent".format(ORG_PATH)  # sts
-GITHUB_ORG = "StackVista"
-REPO_NAME = "stackstate-agent"
+GITHUB_ORG = os.environ['AGENT_GITHUB_ORG'] or "StackVista"
+REPO_NAME = os.environ['AGENT_REPO_NAME'] or "stackstate-agent"
 GITHUB_REPO_NAME = f"{GITHUB_ORG}/{REPO_NAME}"
 REPO_PATH = f"github.com/{GITHUB_REPO_NAME}"
 ALLOWED_REPO_NON_NIGHTLY_BRANCHES = {"dev", "stable", "beta", "none"}
@@ -147,7 +145,7 @@ def get_build_flags(
         base = os.path.dirname(os.path.abspath(__file__))
         task_repo_root = os.path.abspath(os.path.join(base, ".."))
         git_repo_root = get_root()
-        gopath_root = f"{get_gopath(ctx)}/src/github.com/StackVista/stackstate-agent"
+        gopath_root = f"{get_gopath(ctx)}/src/github.com/{GITHUB_ORG}/{REPO_NAME}"
 
         for root_candidate in [task_repo_root, git_repo_root, gopath_root]:
             test_embedded_path = os.path.join(root_candidate, "dev")
