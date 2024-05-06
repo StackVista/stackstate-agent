@@ -22,8 +22,8 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	colCheck "github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
-	colCheck "github.com/StackVista/stackstate-agent/pkg/collector/check"
 )
 
 /*

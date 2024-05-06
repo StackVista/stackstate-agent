@@ -10,6 +10,8 @@ package kubeapi
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"io/ioutil"
 	"testing"
 
@@ -29,7 +31,7 @@ func TestReportClusterQuotas(t *testing.T) {
 	var instanceCfg = []byte("")
 	var initCfg = []byte("")
 	kubeAPIMetricsCheck := KubernetesAPIMetricsFactory().(*MetricsCheck)
-	err = kubeAPIMetricsCheck.Configure(instanceCfg, initCfg, "test")
+	err = kubeAPIMetricsCheck.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, instanceCfg, initCfg, "test")
 	require.NoError(t, err)
 
 	mocked := mocksender.NewMockSender(kubeAPIMetricsCheck.ID())

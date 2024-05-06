@@ -11,7 +11,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
-	"github.com/DataDog/datadog-agent/pkg/util"
 	"github.com/DataDog/datadog-agent/pkg/util/hostname"
 	"strings"
 	"time"

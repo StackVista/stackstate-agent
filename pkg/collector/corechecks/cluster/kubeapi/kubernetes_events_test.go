@@ -9,6 +9,8 @@ package kubeapi
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"sort"
 	"testing"
@@ -333,7 +335,7 @@ event_categories:
   DarkMystery: V0ID
   EnsuringLoadBalancer: Activities
 `
-	err := evCheck.Configure([]byte(mappingOfCustomEvents), nil, "")
+	err := evCheck.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, []byte(mappingOfCustomEvents), []byte(``), "test")
 	assert.NoError(t, err)
 
 	mockSender := mocksender.NewMockSender(evCheck.ID())

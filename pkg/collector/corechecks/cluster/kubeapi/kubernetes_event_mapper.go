@@ -246,7 +246,7 @@ func getAlertType(ev *v1.Event) event.EventAlertType {
 	case "warning":
 		return event.EventAlertTypeWarning
 	default:
-		log.Warnf("Unhandled kubernetes event type '%s', fallback to metrics.EventAlertTypeInfo", ev.Type)
+		log.Warnf("Unhandled kubernetes event type '%s', fallback to event.EventAlertTypeInfo", ev.Type)
 		return event.EventAlertTypeInfo
 	}
 }

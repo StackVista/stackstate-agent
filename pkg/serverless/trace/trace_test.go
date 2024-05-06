@@ -94,14 +94,6 @@ func TestStartEnabledTrueValidConfigValidPath(t *testing.T) {
 func TestLoadConfigShouldBeFast(t *testing.T) {
 	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	setupTraceAgentTest(t)
-	timeout := time.After(1 * time.Second)
-	done := make(chan bool)
-	go func() {
-		var agent = &ServerlessTraceAgent{}
-		agent.Start(true, &LoadConfig{Path: "./testdata/valid.yml"})
-		defer agent.Stop()
-		done <- true
-	}()
 
 	startTime := time.Now()
 	lambdaSpanChan := make(chan *pb.Span)

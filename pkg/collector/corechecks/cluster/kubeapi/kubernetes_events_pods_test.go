@@ -25,7 +25,7 @@ func TestProcessPodEvents(t *testing.T) {
 	evCheck.ac = MockAPIClient(nil)
 
 	mockSender := mocksender.NewMockSender(evCheck.ID())
-	mockSender.On("Event", mock.AnythingOfType("metrics.Event"))
+	mockSender.On("Event", mock.AnythingOfType("event.Event"))
 
 	evCheck.processPods(mockSender, podEvents)
 	mockSender.AssertNumberOfCalls(t, "Event", 1)

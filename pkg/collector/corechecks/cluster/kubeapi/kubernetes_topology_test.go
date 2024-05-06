@@ -8,6 +8,8 @@ package kubeapi
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"strconv"
 	"sync"
 	"testing"
@@ -52,7 +54,7 @@ cluster_name: mycluster
 collect_topology: true
 csi_pv_mapper_enabled: true
 `
-		err := check.Configure([]byte(nothingIsDisabledConfig), nil, "")
+		err := check.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, []byte(nothingIsDisabledConfig), nil, "")
 		check.SetFeatures(features.All())
 		assert.NoError(t, err)
 
@@ -86,7 +88,7 @@ resources:
   cronjobs: false
   secrets: false
 `
-	err := check.Configure([]byte(allResourcesAreDisabledConfig), nil, "")
+	err := check.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, []byte(allResourcesAreDisabledConfig), nil, "")
 	check.SetFeatures(features.All())
 	assert.NoError(t, err)
 
@@ -113,7 +115,7 @@ func TestRunClusterCollectors(t *testing.T) {
 
 func testConfigParsed(t *testing.T, input string, expected TopologyConfig) {
 	check := KubernetesAPITopologyFactory().(*TopologyCheck)
-	err := check.Configure([]byte(input), []byte(""), "whatever")
+	err := check.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, []byte(input), []byte(""), "whatever")
 	assert.NoError(t, err)
 	assert.EqualValues(t, &expected, check.instance)
 }

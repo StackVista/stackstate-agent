@@ -34,7 +34,7 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 	mockBatcher := batcher.NewMockBatcher()
 	// sender for non-transactional events
 	sender := mocksender.NewMockSender(testCheck.ID())
-	sender.On("Event", mock.AnythingOfType("metrics.Event"))
+	sender.On("Event", mock.AnythingOfType("event.Event"))
 
 	nonTransactionCH.SubmitStartSnapshot(instance)
 	nonTransactionCH.SubmitComponent(instance, testComponent)
