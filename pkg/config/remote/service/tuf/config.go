@@ -100,7 +100,8 @@ func (s *configRemoteStore) GetMeta(name string) (stream io.ReadCloser, size int
 // GetTarget downloads the given target file from remote storage.
 //
 // `path` is the path of the file relative to the root of the remote
-//        targets directory (e.g. "/path/to/file.txt").
+//
+//	targets directory (e.g. "/path/to/file.txt").
 //
 // `err` is ErrNotFound if the given file does not exist.
 //

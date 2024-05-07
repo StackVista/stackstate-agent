@@ -209,7 +209,8 @@ func transformIndex(indexes []string, transformRules []MetricIndexTransform) []s
 
 // normalizeMetrics converts legacy syntax to new syntax
 // 1/ converts old symbol syntax to new symbol syntax
-//    metric.Name and metric.OID info are moved to metric.Symbol.Name and metric.Symbol.OID
+//
+//	metric.Name and metric.OID info are moved to metric.Symbol.Name and metric.Symbol.OID
 func normalizeMetrics(metrics []MetricsConfig) {
 	for i := range metrics {
 		metric := &metrics[i]

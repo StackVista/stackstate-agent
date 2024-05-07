@@ -11,7 +11,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/ast"
 )
 
-//MacroID - ID of a Macro
+// MacroID - ID of a Macro
 type MacroID = string
 
 // Macro - Macro object identified by an `ID` containing a SECL `Expression`

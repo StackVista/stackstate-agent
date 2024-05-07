@@ -7,18 +7,20 @@
 // source: span.proto
 
 /*
-	Package pb is a generated protocol buffer package.
+Package pb is a generated protocol buffer package.
 
-	It is generated from these files:
-		span.proto
-		tracer_payload.proto
-		agent_payload.proto
+It is generated from these files:
 
-	It has these top-level messages:
-		Span
-		TraceChunk
-		TracerPayload
-		AgentPayload
+	span.proto
+	tracer_payload.proto
+	agent_payload.proto
+
+It has these top-level messages:
+
+	Span
+	TraceChunk
+	TracerPayload
+	AgentPayload
 */
 package pb
 

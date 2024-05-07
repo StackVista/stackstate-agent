@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build zlib
 // +build zlib
 
 package compression
@@ -48,7 +49,7 @@ func Decompress(dst []byte, src []byte) ([]byte, error) {
 	return dst, nil
 }
 
-//  CompressBound returns the worst case size needed for a destination buffer
+// CompressBound returns the worst case size needed for a destination buffer
 func CompressBound(sourceLen int) int {
 	// From https://code.woboq.org/gcc/zlib/compress.c.html#compressBound
 	return sourceLen + (sourceLen >> 12) + (sourceLen >> 14) + (sourceLen >> 25) + 13

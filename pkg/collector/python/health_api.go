@@ -31,6 +31,7 @@ import "C"
 // rtloader/test/health/health.go
 
 // SubmitHealthCheckData is the method exposed to Python scripts to submit health check data
+//
 //export SubmitHealthCheckData
 func SubmitHealthCheckData(id *C.char, _ *C.health_stream_t, data *C.char) {
 	goCheckID := C.GoString(id)
@@ -51,6 +52,7 @@ func SubmitHealthCheckData(id *C.char, _ *C.health_stream_t, data *C.char) {
 }
 
 // SubmitHealthStartSnapshot starts a health snapshot
+//
 //export SubmitHealthStartSnapshot
 func SubmitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expirySeconds C.int, repeatIntervalSeconds C.int) {
 	goCheckID := C.GoString(id)
@@ -60,6 +62,7 @@ func SubmitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expi
 }
 
 // SubmitHealthStopSnapshot stops a health snapshot
+//
 //export SubmitHealthStopSnapshot
 func SubmitHealthStopSnapshot(id *C.char, healthStream *C.health_stream_t) {
 	goCheckID := C.GoString(id)

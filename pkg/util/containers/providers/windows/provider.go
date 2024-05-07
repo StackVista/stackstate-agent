@@ -3,8 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-present Datadog, Inmetrics.
 
-// +build windows
-// +build docker
+//go:build windows && docker
+// +build windows,docker
 
 package windows
 
@@ -331,31 +331,40 @@ func (mp *provider) GetNumFileDescriptors(pid int) (int, error) {
 // Output from route print 0.0.0.0:
 //
 // λ route print 0.0.0.0
-//===========================================================================
-//Interface List
+// ===========================================================================
+// Interface List
 // 17...00 1c 42 86 10 92 ......Intel(R) 82574L Gigabit Network Connection
 // 16...bc 9a 78 56 34 12 ......Bluetooth Device (Personal Area Network)
-//  1...........................Software Loopback Interface 1
+//
+//	1...........................Software Loopback Interface 1
+//
 // 24...00 15 5d 2c 6f c0 ......Hyper-V Virtual Ethernet Adapter #2
-//===========================================================================
+// ===========================================================================
 //
-//IPv4 Route Table
-//===========================================================================
-//Active Routes:
-//Network Destination        Netmask          Gateway       Interface  Metric
-//          0.0.0.0          0.0.0.0      10.211.55.1      10.211.55.4     25
-//===========================================================================
-//Persistent Routes:
-//  Network Address          Netmask  Gateway Address  Metric
-//          0.0.0.0          0.0.0.0      172.21.96.1  Default
-//===========================================================================
+// IPv4 Route Table
+// ===========================================================================
+// Active Routes:
+// Network Destination        Netmask          Gateway       Interface  Metric
 //
-//IPv6 Route Table
-//===========================================================================
-//Active Routes:
-//  None
-//Persistent Routes:
-//  None
+//	0.0.0.0          0.0.0.0      10.211.55.1      10.211.55.4     25
+//
+// ===========================================================================
+// Persistent Routes:
+//
+//	Network Address          Netmask  Gateway Address  Metric
+//	        0.0.0.0          0.0.0.0      172.21.96.1  Default
+//
+// ===========================================================================
+//
+// IPv6 Route Table
+// ===========================================================================
+// Active Routes:
+//
+//	None
+//
+// Persistent Routes:
+//
+//	None
 //
 // We are interested in the Gateway and Interface fields of the Active Routes,
 // so this method returns any line that has 5 fields with the first one being

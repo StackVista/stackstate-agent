@@ -101,7 +101,7 @@ func (series Series) MarshalStrings() ([]string, [][]string) {
 
 // populateDeviceField removes any `device:` tag in the series tags and uses the value to
 // populate the Serie.Device field
-//FIXME(olivier): remove this as soon as the v1 API can handle `device` as a regular tag
+// FIXME(olivier): remove this as soon as the v1 API can handle `device` as a regular tag
 func populateDeviceField(serie *Serie) {
 	if !hasDeviceTag(serie) {
 		return
@@ -133,7 +133,7 @@ func hasDeviceTag(serie *Serie) bool {
 }
 
 // MarshalJSON serializes timeseries to JSON so it can be sent to V1 endpoints
-//FIXME(maxime): to be removed when v2 endpoints are available
+// FIXME(maxime): to be removed when v2 endpoints are available
 func (series Series) MarshalJSON() ([]byte, error) {
 	// use an alias to avoid infinite recursion while serializing a Series
 	type SeriesAlias Series

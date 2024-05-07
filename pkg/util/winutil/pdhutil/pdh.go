@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
+//go:build windows
 // +build windows
 
 package pdhutil
@@ -251,8 +252,10 @@ func PdhAddEnglishCounter(hQuery PDH_HQUERY, szFullCounterPath string, dwUserDat
 	return uint32(ret)
 }
 
-/* PdhCollectQueryData
-   Collects the current raw data value for all counters in the specified query and updates the status code of each counter.
+/*
+	PdhCollectQueryData
+	  Collects the current raw data value for all counters in the specified query and updates the status code of each counter.
+
 Parameters
 hQuery [in, out]
 Handle of the query for which you want to collect data. The PdhOpenQuery function returns this handle.

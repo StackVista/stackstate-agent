@@ -228,9 +228,9 @@ func getHost(ctx context.Context, tplVar []byte, svc listeners.Service) ([]byte,
 
 // getFallbackHost implements the fallback strategy to get a service's IP address
 // the current strategy is:
-// 		- if there's only one network we use its IP
-// 		- otherwise we look for the bridge net and return its IP address
-// 		- if we can't find it we fail because we shouldn't try and guess the IP address
+//   - if there's only one network we use its IP
+//   - otherwise we look for the bridge net and return its IP address
+//   - if we can't find it we fail because we shouldn't try and guess the IP address
 func getFallbackHost(hosts map[string]string) (string, error) {
 	if len(hosts) == 1 {
 		for _, host := range hosts {

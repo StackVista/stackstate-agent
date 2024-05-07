@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package cgroup
@@ -86,15 +87,16 @@ func (c ContainerCgroup) cgroupParentFilePath(target, file string) string {
 
 // function to get the mount point of all cgroup. by default it should be under /sys/fs/cgroup but
 // it could be mounted anywhere else if manually defined. Example cgroup entries in /proc/mounts would be
-//	 cgroup /sys/fs/cgroup/cpuset cgroup rw,relatime,cpuset 0 0
-//	 cgroup /sys/fs/cgroup/cpu cgroup rw,relatime,cpu 0 0
-//	 cgroup /sys/fs/cgroup/cpuacct cgroup rw,relatime,cpuacct 0 0
-//	 cgroup /sys/fs/cgroup/memory cgroup rw,relatime,memory 0 0
-//	 cgroup /sys/fs/cgroup/devices cgroup rw,relatime,devices 0 0
-//	 cgroup /sys/fs/cgroup/freezer cgroup rw,relatime,freezer 0 0
-//	 cgroup /sys/fs/cgroup/blkio cgroup rw,relatime,blkio 0 0
-//	 cgroup /sys/fs/cgroup/perf_event cgroup rw,relatime,perf_event 0 0
-//	 cgroup /sys/fs/cgroup/hugetlb cgroup rw,relatime,hugetlb 0 0
+//
+//	cgroup /sys/fs/cgroup/cpuset cgroup rw,relatime,cpuset 0 0
+//	cgroup /sys/fs/cgroup/cpu cgroup rw,relatime,cpu 0 0
+//	cgroup /sys/fs/cgroup/cpuacct cgroup rw,relatime,cpuacct 0 0
+//	cgroup /sys/fs/cgroup/memory cgroup rw,relatime,memory 0 0
+//	cgroup /sys/fs/cgroup/devices cgroup rw,relatime,devices 0 0
+//	cgroup /sys/fs/cgroup/freezer cgroup rw,relatime,freezer 0 0
+//	cgroup /sys/fs/cgroup/blkio cgroup rw,relatime,blkio 0 0
+//	cgroup /sys/fs/cgroup/perf_event cgroup rw,relatime,perf_event 0 0
+//	cgroup /sys/fs/cgroup/hugetlb cgroup rw,relatime,hugetlb 0 0
 //
 // Returns a map for every target (cpuset, cpu, cpuacct) => path
 func cgroupMountPoints() (map[string]string, error) {

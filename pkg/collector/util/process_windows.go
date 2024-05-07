@@ -14,7 +14,7 @@ type systemTimes struct {
 	UserTime   windows.Filetime
 }
 
-//GetProcessCreateTime returns the create time for a specific process
+// GetProcessCreateTime returns the create time for a specific process
 func GetProcessCreateTime(pid int32) (int64, error) {
 	var times systemTimes
 

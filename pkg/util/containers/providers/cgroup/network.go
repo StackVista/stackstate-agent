@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package cgroup
@@ -179,7 +180,6 @@ func defaultHostIPs() ([]string, error) {
 // enp0s3  0002000A     00000000  0001   0       0    0       00FFFFFF  0    0       0
 //
 // The returned value would be ["enp0s3","00000000","0202000A","0003","0","0","0","00000000","0","0","0"]
-//
 func defaultGatewayFields() ([]string, error) {
 	procRoot := config.Datadog.GetString("proc_root")
 	netRouteFile := filepath.Join(procRoot, "net", "route")

@@ -4,13 +4,13 @@ import (
 	"time"
 
 	model "github.com/DataDog/agent-payload/v5/process"
+	"github.com/DataDog/gopsutil/cpu"
 	"github.com/StackVista/stackstate-agent/pkg/process/config"
 	"github.com/StackVista/stackstate-agent/pkg/process/net"
 	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/DataDog/gopsutil/cpu"
 )
 
 // runRealtime runs the realtime ProcessCheck to collect statistics about the running processes.
