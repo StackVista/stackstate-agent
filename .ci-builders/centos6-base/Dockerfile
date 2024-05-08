@@ -130,7 +130,7 @@ ENV CPP=/opt/centos/devtoolset-1.1/root/usr/bin/cpp
 ENV CXX=/opt/centos/devtoolset-1.1/root/usr/bin/c++
 
 # Download and install golangci-lint
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.42.1
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.58.0
 
 # Entrypoint
 COPY ./entrypoint.sh /
