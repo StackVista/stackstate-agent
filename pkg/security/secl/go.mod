@@ -1,6 +1,6 @@
 module github.com/StackVista/stackstate-agent/pkg/security/secl
 
-go 1.19
+go 1.21
 
 require (
 	github.com/alecthomas/participle v0.7.1

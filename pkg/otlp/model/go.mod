@@ -1,6 +1,6 @@
 module github.com/StackVista/stackstate-agent/pkg/otlp/model
 
-go 1.19
+go 1.21
 
 replace github.com/StackVista/stackstate-agent/pkg/quantile => ../../quantile
 

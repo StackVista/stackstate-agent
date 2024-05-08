@@ -1,6 +1,6 @@
 module github.com/StackVista/stackstate-agent/internal/tools/proto
 
-go 1.19
+go 1.21
 
 require (
 	github.com/golang/mock v1.5.0

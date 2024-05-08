@@ -8,11 +8,11 @@ RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list \
 
 RUN /bin/bash -l -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3 -v 0.10.0"
 
-# Update the Go version to 1.19.10
+# Update the Go version to 1.21.10
 RUN rm -r /usr/local/go
-RUN wget https://go.dev/dl/go1.19.10.linux-amd64.tar.gz
-RUN tar -C /usr/local -xzf go1.19.10.linux-amd64.tar.gz
-RUN rm go1.19.10.linux-amd64.tar.gz
+RUN wget https://go.dev/dl/go1.21.10.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go1.21.10.linux-amd64.tar.gz
+RUN rm go1.21.10.linux-amd64.tar.gz
 RUN go version
 
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.58.0
