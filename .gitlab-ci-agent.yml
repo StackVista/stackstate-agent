@@ -1,4 +1,4 @@
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-2024-05-03
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20240508
 
 stages:
   - manual
