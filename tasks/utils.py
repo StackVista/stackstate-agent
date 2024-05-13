@@ -19,8 +19,8 @@ from .libs.common.color import color_message
 
 # constants
 DEFAULT_BRANCH = "master"  # sts
-GITHUB_ORG = os.environ['AGENT_GITHUB_ORG'] or "StackVista"
-REPO_NAME = os.environ['AGENT_REPO_NAME'] or "stackstate-agent"
+GITHUB_ORG = os.getenv('AGENT_GITHUB_ORG') or "StackVista"
+REPO_NAME = os.getenv('AGENT_REPO_NAME') or "stackstate-agent"
 GITHUB_REPO_NAME = f"{GITHUB_ORG}/{REPO_NAME}"
 REPO_PATH = f"github.com/{GITHUB_REPO_NAME}"
 ALLOWED_REPO_NON_NIGHTLY_BRANCHES = {"dev", "stable", "beta", "none"}
