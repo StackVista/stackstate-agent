@@ -51,7 +51,7 @@ func TestProcessMetrics(t *testing.T) {
 						Name: "kube_pod_container_status_running",
 						ListMetrics: []ksmstore.DDMetric{
 							{
-								Labels: map[string]string{"container": "kube-state-metrics", "namespace": "default", "pod": "kube-state-metrics-b7fbc487d-4phhj", "uid": "bec19172-8abf-11ea-8546-42010a80022c"},
+								Labels: map[string]string{"kube_container_name": "kube-state-metrics", "kube_namespace": "default", "pod_name": "kube-state-metrics-b7fbc487d-4phhj", "uid": "bec19172-8abf-11ea-8546-42010a80022c"},
 								Val:    1,
 							},
 						},
@@ -61,7 +61,7 @@ func TestProcessMetrics(t *testing.T) {
 						Name: "kube_pod_container_status_running",
 						ListMetrics: []ksmstore.DDMetric{
 							{
-								Labels: map[string]string{"container": "hello", "namespace": "default", "pod": "hello-1509998340-k4f8q", "uid": "05e99c5f-8a64-11ea-8546-42010a80022c"},
+								Labels: map[string]string{"kube_container_name": "hello", "kube_namespace": "default", "pod_name": "hello-1509998340-k4f8q", "uid": "05e99c5f-8a64-11ea-8546-42010a80022c"},
 								Val:    0,
 							},
 						},
@@ -76,11 +76,8 @@ func TestProcessMetrics(t *testing.T) {
 					val:  1,
 					tags: []string{
 						"kube_container_name:kube-state-metrics",
-						"container:kube-state-metrics",
 						"kube_namespace:default",
-						"namespace:default",
 						"pod_name:kube-state-metrics-b7fbc487d-4phhj",
-						"pod:kube-state-metrics-b7fbc487d-4phhj",
 						"uid:bec19172-8abf-11ea-8546-42010a80022c"},
 					numberOfCalls: 1,
 				},
