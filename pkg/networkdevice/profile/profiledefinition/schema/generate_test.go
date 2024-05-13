@@ -6,14 +6,26 @@
 package schema
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"os"
+	"strings"
 	"testing"
 )
 
 func TestGenerateJSONSchemaIsInSync(t *testing.T) {
 	schemaJSON, err := GenerateJSONSchema()
 	require.NoError(t, err)
+	moduleName := fmt.Sprintf("%s/%s", getEnv("AGENT_GITHUB_ORG", "DataDog"), getEnv("AGENT_REPO_NAME", "datadog-agent"))
+	schemaWithModule := strings.ReplaceAll(string(GetDeviceProfileRcConfigJsonschema()), "DataDog/datadog-agent", moduleName)
+	assert.JSONEq(t, schemaWithModule, string(schemaJSON))
+}
 
-	assert.JSONEq(t, string(GetDeviceProfileRcConfigJsonschema()), string(schemaJSON))
+func getEnv(key string, dfault string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		value = dfault
+	}
+	return value
 }

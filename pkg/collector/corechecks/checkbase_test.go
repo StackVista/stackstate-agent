@@ -63,7 +63,7 @@ func TestCommonConfigure(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 60*time.Second, mycheck.Interval())
 	mycheck.BuildID(1, []byte(customInstance), []byte(initConfig))
-	assert.Equal(t, string(mycheck.ID()), "test:foobar:a934df33209f45f4")
+	assert.Equal(t, "test:foobar:c4205343180505fb", string(mycheck.ID()))
 	mockSender.AssertExpectations(t)
 }
 
@@ -81,7 +81,7 @@ func TestCommonConfigureCustomID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 60*time.Second, mycheck.Interval())
 	mycheck.BuildID(1, []byte(customInstance), []byte(initConfig))
-	assert.Equal(t, string(mycheck.ID()), "test:foobar:a934df33209f45f4")
+	assert.Equal(t, "test:foobar:c4205343180505fb", string(mycheck.ID()))
 	mockSender.AssertExpectations(t)
 }
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/StackVista/stackstate-agent/pkg/networkdevice/profile/profiledefinition/device-profile-rc-config",
+  "$id": "https://github.com/DataDog/datadog-agent/pkg/networkdevice/profile/profiledefinition/device-profile-rc-config",
   "$ref": "#/$defs/DeviceProfileRcConfig",
   "$defs": {
     "DeviceMeta": {

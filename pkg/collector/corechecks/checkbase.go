@@ -110,8 +110,10 @@ func (c *CheckBase) CommonConfigure(senderManager sender.SenderManager, integrat
 			return err
 		}
 
-		// See if a collection interval was specified
-		if commonOptions.MinCollectionInterval > 0 {
+		// [STS] See if collection interval was specified
+		if commonOptions.CollectionInterval > 0 {
+			c.checkInterval = time.Duration(commonOptions.CollectionInterval) * time.Second
+		} else if commonOptions.MinCollectionInterval > 0 {
 			c.checkInterval = time.Duration(commonOptions.MinCollectionInterval) * time.Second
 		}
 
