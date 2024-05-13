@@ -20,6 +20,7 @@ from .libs.common.color import color_message
 # constants
 DEFAULT_BRANCH = "master"  # sts
 GITHUB_ORG = os.getenv('AGENT_GITHUB_ORG') or "StackVista"
+BRANDED = GITHUB_ORG == "StackVista"
 REPO_NAME = os.getenv('AGENT_REPO_NAME') or "stackstate-agent"
 GITHUB_REPO_NAME = f"{GITHUB_ORG}/{REPO_NAME}"
 REPO_PATH = f"github.com/{GITHUB_REPO_NAME}"

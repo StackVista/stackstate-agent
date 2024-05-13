@@ -26,6 +26,7 @@ from .ssm import get_pfx_pass, get_signing_cert
 from .trace_agent import build as trace_agent_build
 from .utils import (
     REPO_PATH,
+    BRANDED,
     bin_name,
     cache_version,
     generate_config,
@@ -1270,7 +1271,8 @@ def omnibus_build(
             deps(ctx)
 
     # sts
-    apply_branding(ctx)
+    if BRANDED:
+        apply_branding(ctx)
 
     # base dir (can be overridden through env vars, command line takes precedence)
     base_dir = base_dir or os.environ.get("OMNIBUS_BASE_DIR")

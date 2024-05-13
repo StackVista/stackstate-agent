@@ -19,6 +19,7 @@ from .utils import (
     load_release_versions,
     do_go_rename,  # sts
     do_sed_rename,  # sts
+    BRANDED,     # sts
 )
 
 # constants
@@ -117,7 +118,9 @@ def build(
      Example invokation:
         inv cluster-agent.build
     """
-    apply_branding(ctx)
+    # sts
+    if BRANDED:
+        apply_branding(ctx)
     build_common(
         ctx,
         BIN_PATH,
