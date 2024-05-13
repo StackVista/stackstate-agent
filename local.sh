@@ -50,6 +50,8 @@ function prepare() {
         # TODO: Ideally we'd not need to run this, but because we update the package paths, we need to update go.mod/sum/vendor
         # Alternative is to commit package renames, but that is also pretty messy
         go mod tidy
+        # Vendor so we also rewrite dependencies
+        go mod vendor
     fi
     cd "$CI_PROJECT_DIR" || exit
 }
