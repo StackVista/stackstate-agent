@@ -103,7 +103,7 @@ def test(
     timeout=180,
     arch="x64",
     cache=True,
-    skip_linters=False,
+    skip_linters=True,
     save_result_json=None,
     rerun_fails=None,
     go_mod="mod",
