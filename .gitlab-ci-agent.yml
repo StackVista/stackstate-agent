@@ -229,17 +229,6 @@ before_script:
   - *configure_debian_env_script
   - *retrieve_linux_go_deps_script
 
-to_lupulus:
-  stage: test
-  when: manual
-  image:
-    name: bitnami/kubectl:latest
-    entrypoint: ['']
-  script:
-    - kubectl config get-contexts
-    - kubectl config use-context path/to/agent/project:agent-name
-    - kubectl get pods
-
 deps_deb:
   stage: prepare
   interruptible: true
@@ -1218,6 +1207,16 @@ beest_k8s_1_29_containerd_success_cleanup:
   needs:
     - beest_k8s_1_29_containerd_test
     - beest_k8s_1_29_containerd_create
+
+deploy_to_lupulus_gke:
+  stage: manual
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: ['']
+  script:
+    - kubectl config get-contexts
+    - kubectl config use-context path/to/agent/project:agent-name
+    - kubectl get pods
 
 # Job Seq: Molecule
 # Type: localinstall
