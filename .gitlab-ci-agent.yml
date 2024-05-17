@@ -237,8 +237,8 @@ to_lupulus:
     entrypoint: ['']
   script:
     - kubectl config get-contexts
-	- kubectl config use-context path/to/agent/project:agent-name
-	- kubectl get pods
+    - kubectl config use-context path/to/agent/project:agent-name
+    - kubectl get pods
 
 deps_deb:
   stage: prepare
