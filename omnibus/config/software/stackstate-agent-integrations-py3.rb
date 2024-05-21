@@ -128,7 +128,7 @@ build do
     # install the core integrations.
     #
     command "#{pip} install wheel==0.38.1"
-    command "#{pip} install pip-tools==6.4.0"
+    command "#{pip} install pip-tools==7.3.0"
 
     uninstall_buildtime_deps = ['rtloader', 'click', 'first', 'pip-tools']
     nix_build_env = {
@@ -196,12 +196,19 @@ build do
     # there's no need to refer to `pip`, the interpreter will pick the right script.
     if windows?
       command "#{python} -m pip install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_base"
-#       command "#{python} -m pip install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_downloader --install-option=\"--install-scripts=#{windows_safe_path(install_dir)}/bin\""
+
       command "#{python} -m piptools compile --generate-hashes --output-file #{windows_safe_path(install_dir)}\\#{agent_requirements_file} #{static_reqs_out_file}"
     else
       command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_base"
-#       command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_downloader"
+      puts "-----------------------------------"
+      puts "PIP VERSION:"
+      command "#{pip} --version"
+      output = `#{pip} --version`
+      puts output
+      puts "-----------------------------------"
       command "#{python} -m piptools compile --generate-hashes --output-file #{install_dir}/#{agent_requirements_file} #{static_reqs_out_file}", :env => nix_build_env
+#                                 command "#{python} -m piptools compile --generate-hashes --output-file #{install_dir}/#{agent_requirements_file}                                                                           #{static_reqs_out_file}", :env => nix_build_env
+#       $ /opt/stackstate-agent/embedded/bin/python3 -m piptools compile --generate-hashes --output-file /opt/stackstate-agent/agent_requirements-py3.txt /.omnibus/src/stackstate-agent-integrations-py3/integrations-core/agent_requirements-py3.in
     end
 
     # From now on we don't need piptools anymore, uninstall its deps so we don't include them in the final artifact

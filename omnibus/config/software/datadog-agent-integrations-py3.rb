@@ -113,7 +113,7 @@ build do
     # install the core integrations.
     #
     command "#{pip} install wheel==0.38.1"
-    command "#{pip} install pip-tools==6.4.0"
+    command "#{pip} install pip-tools==7.3.0"
     uninstall_buildtime_deps = ['rtloader', 'click', 'first', 'pip-tools']
     nix_build_env = {
       # Specify C99 standard explicitly to avoid issues while building some
