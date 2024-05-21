@@ -2,16 +2,14 @@
 // source: remote_rates.proto
 
 /*
-Package pb is a generated protocol buffer package.
+	Package pb is a generated protocol buffer package.
 
-It is generated from these files:
+	It is generated from these files:
+		remote_rates.proto
 
-	remote_rates.proto
-
-It has these top-level messages:
-
-	TargetTPS
-	APMSampling
+	It has these top-level messages:
+		TargetTPS
+		APMSampling
 */
 package pb
 

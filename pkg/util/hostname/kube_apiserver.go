@@ -3,8 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build kubeapiserver && !kubelet
-// +build kubeapiserver,!kubelet
+// +build kubeapiserver
+// +build !kubelet
 
 // This provider is only useful for the cluster-agent, that does
 // not have kubelet compiled it. Disable it for the node-agent

@@ -31,7 +31,7 @@ func SetSender(sender *MockSender, id check.ID) {
 	aggregator.SetSender(sender, id) //nolint:errcheck
 }
 
-// MockSender allows mocking of the checks sender for unit testing
+//MockSender allows mocking of the checks sender for unit testing
 type MockSender struct {
 	mock.Mock
 	SentEvents metrics.Events

@@ -25,14 +25,14 @@ empty_default_hostname: true
 name: foobar
 `
 	// [sts] additional test for backwards compatibility
-	legacyInstance = `
+	legacyInstance   = `
 foo_init: bar_init
 min_collection_interval: 60
 empty_default_hostname: true
 name: foobar
 `
 	// [sts] additional test when legacy and new collection interval are both defined
-	legacyInstanceClash = `
+	legacyInstanceClash   = `
 foo_init: bar_init
 collection_interval: 30
 min_collection_interval: 60

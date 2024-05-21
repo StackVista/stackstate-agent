@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build python
 // +build python
 
 package python
@@ -49,14 +48,14 @@ type stickyLock struct {
 	locked uint32 // Flag set to 1 if the lock is locked, 0 otherwise
 }
 
-// PythonStatsEntry are entries for specific object type memory usage
+//PythonStatsEntry are entries for specific object type memory usage
 type PythonStatsEntry struct {
 	Reference string
 	NObjects  int
 	Size      int
 }
 
-// PythonStats contains python memory statistics
+//PythonStats contains python memory statistics
 type PythonStats struct {
 	Type     string
 	NObjects int

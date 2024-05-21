@@ -2,7 +2,6 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
-//go:build windows
 // +build windows
 
 package pdhutil
@@ -227,7 +226,7 @@ func (p *PdhMultiInstanceCounterSet) MakeInstanceList() error {
 	return nil
 }
 
-// RemoveInvalidInstance removes an instance from the counter that is no longer valid
+//RemoveInvalidInstance removes an instance from the counter that is no longer valid
 func (p *PdhMultiInstanceCounterSet) RemoveInvalidInstance(badInstance string) {
 	hc := p.countermap[badInstance]
 	if hc != PDH_HCOUNTER(0) {

@@ -5,5 +5,6 @@
 
 /*
 Package dockerswarm provides core checks for docker swarm topology
+
 */
 package dockerswarm

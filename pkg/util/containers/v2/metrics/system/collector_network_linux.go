@@ -206,6 +206,7 @@ func defaultHostIPs(procPath string) ([]string, error) {
 // enp0s3  0002000A     00000000  0001   0       0    0       00FFFFFF  0    0       0
 //
 // The returned value would be ["enp0s3","00000000","0202000A","0003","0","0","0","00000000","0","0","0"]
+//
 func defaultGatewayFields(procPath string) ([]string, error) {
 	netRouteFile := filepath.Join(procPath, "net", "route")
 	f, err := os.Open(netRouteFile)

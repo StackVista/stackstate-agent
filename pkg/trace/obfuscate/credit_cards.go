@@ -154,6 +154,7 @@ loop:
 // See:
 // • https://en.wikipedia.org/wiki/Luhn_algorithm
 // • https://dev.to/shiraazm/goluhn-a-simple-library-for-generating-calculating-and-verifying-luhn-numbers-588j
+//
 func luhnValid(str []byte) bool {
 	var (
 		sum int

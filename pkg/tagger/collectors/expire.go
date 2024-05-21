@@ -14,7 +14,7 @@ import (
 // expire implements a simple last-seen-time-based expiry logic for watching for disappearing entities (for triggering events or just cache housekeeping).
 // User classes define an expiry delay, then call Update every time they encounter a given entity.
 // ComputeExpires() returns the entity names that have not been seen for longer than the configured delay.
-// As expire keeps an internal state of entity names, Update will return true if a name is new, false otherwise.
+//As expire keeps an internal state of entity names, Update will return true if a name is new, false otherwise.
 type expire struct {
 	sync.Mutex
 	source         string

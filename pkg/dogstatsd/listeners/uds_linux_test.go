@@ -3,9 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build linux
 // +build linux
-
 // Origin detection is linux-only
 
 // Most of it is tested by test/integration/dogstatsd/origin_detection_test.go

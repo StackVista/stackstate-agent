@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build kubeapiserver
 // +build kubeapiserver
 
 package apiserver
@@ -18,9 +17,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/DataDog/watermarkpodautoscaler/api/v1alpha1"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/watermarkpodautoscaler/api/v1alpha1"
 )
 
 // SyncInformers should be called after the instantiation of new informers.

@@ -1,4 +1,3 @@
-//go:build linux && secrets
 // +build linux,secrets
 
 package config

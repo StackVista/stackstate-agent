@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build ignore
 // +build ignore
 
 // The 'make' program is run by go generate to compile the versioning information

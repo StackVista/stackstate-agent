@@ -1,5 +1,6 @@
 //go:build !windows
 // +build !windows
+// +build !darwin
 
 package config
 

@@ -147,7 +147,7 @@ func buildLoggerConfig(loggerName LoggerName, seelogLogLevel, logFile, syslogURI
 	return config, nil
 }
 
-// GenerateLoggerInterface return a logger Interface from a log config
+//GenerateLoggerInterface return a logger Interface from a log config
 func GenerateLoggerInterface(logConfig *seelogCfg.Config) (seelog.LoggerInterface, error) {
 	configTemplate, err := logConfig.Render()
 	if err != nil {

@@ -261,9 +261,9 @@ func (t *Translator) getLegacyBuckets(
 // - The count of values in the population
 // - The sum of values in the population
 // - A number of buckets, each of them having
-//   - the bounds that define the bucket
-//   - the count of the number of items in that bucket
-//   - a sample value from each bucket
+//    - the bounds that define the bucket
+//    - the count of the number of items in that bucket
+//    - a sample value from each bucket
 //
 // We follow a similar approach to our OpenMetrics check:
 // we report sum and count by default; buckets count can also

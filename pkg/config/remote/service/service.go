@@ -66,6 +66,7 @@ type Service struct {
 // - collecting the new subscribers or the one whose configuration has expired
 // - create a query
 // - send the query to the backend
+//
 func (s *Service) refresh() {
 	log.Debug("Refreshing configurations")
 

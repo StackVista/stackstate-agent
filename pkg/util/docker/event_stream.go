@@ -20,8 +20,8 @@ import (
 	"github.com/docker/docker/api/types/filters"
 )
 
-// // eventStreamState logic unit tested in event_stream_test.go
-// // DockerUtil logic covered by the listeners/docker and dogstatsd/origin_detection integration tests.
+//// eventStreamState logic unit tested in event_stream_test.go
+//// DockerUtil logic covered by the listeners/docker and dogstatsd/origin_detection integration tests.
 const eventSendBuffer = 5
 
 // SubscribeToContainerEvents allows a package to subscribe to events from the event stream.

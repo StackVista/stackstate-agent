@@ -5,14 +5,12 @@
 Package otlppb is a generated protocol buffer package.
 
 It is generated from these files:
-
 	trace.proto
 	resource.proto
 	common.proto
 	trace_service.proto
 
 It has these top-level messages:
-
 	ResourceSpans
 	InstrumentationLibrarySpans
 	Span

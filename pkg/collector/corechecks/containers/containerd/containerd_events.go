@@ -23,7 +23,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// containerdEvent contains the timestamp to make sure we flush all events that happened between two checks
+//containerdEvent contains the timestamp to make sure we flush all events that happened between two checks
 type containerdEvent struct {
 	ID        string
 	Timestamp time.Time

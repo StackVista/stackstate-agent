@@ -23,8 +23,7 @@ type memSized interface {
 // printBins pretty prints bins to w.
 //
 // output:
-//
-//	<k>:<n>...
+// 	<k>:<n>...
 func printBins(w io.Writer, bins []bin, maxPerLine int) {
 	for i, b := range bins {
 		prefix := ""

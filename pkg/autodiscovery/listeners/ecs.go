@@ -239,8 +239,8 @@ func (s *ECSService) GetTaggerEntity() string {
 // and the return value will contain only the label value.
 //
 // If the special label was not set, the priority order is the following:
-//  1. Long image name
-//  2. Short image name
+//   1. Long image name
+//   2. Short image name
 func (s *ECSService) GetADIdentifiers(context.Context) ([]string, error) {
 	return s.ADIdentifiers, nil
 }

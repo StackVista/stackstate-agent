@@ -5,8 +5,8 @@ package v1
 
 import (
 	fmt "fmt"
-	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
 	proto "github.com/gogo/protobuf/proto"
+	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
 	math "math"
 )
 

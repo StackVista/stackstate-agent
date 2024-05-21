@@ -27,7 +27,6 @@ import "C"
 // rtloader/test/transaction/transaction.go
 
 // StartTransaction starts a transaction
-//
 //export StartTransaction
 func StartTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
@@ -35,7 +34,6 @@ func StartTransaction(id *C.char) {
 }
 
 // StopTransaction stops a transaction
-//
 //export StopTransaction
 func StopTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
@@ -43,7 +41,6 @@ func StopTransaction(id *C.char) {
 }
 
 // DiscardTransaction cancels a transaction
-//
 //export DiscardTransaction
 func DiscardTransaction(id *C.char, reason *C.char) {
 	goCheckID := C.GoString(id)
@@ -52,7 +49,6 @@ func DiscardTransaction(id *C.char, reason *C.char) {
 }
 
 // SetTransactionState sets a state for a transaction
-//
 //export SetTransactionState
 func SetTransactionState(id *C.char, key *C.char, state *C.char) {
 	goCheckID := C.GoString(id)

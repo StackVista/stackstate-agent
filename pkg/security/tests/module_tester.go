@@ -1147,7 +1147,6 @@ func ifSyscallSupported(syscall string, test func(t *testing.T, syscallNB uintpt
 // waitForProbeEvent returns the first open event with the provided filename.
 // WARNING: this function may yield a "fatal error: concurrent map writes" error if the ruleset of testModule does not
 // contain a rule on "open.file.path"
-//
 //nolint:deadcode,unused
 func waitForProbeEvent(test *testModule, action func() error, key string, value interface{}, eventType model.EventType) error {
 	return test.GetProbeEvent(action, func(event *sprobe.Event) bool {

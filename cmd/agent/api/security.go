@@ -51,7 +51,7 @@ func parseToken(token string) (struct{}, error) {
 	return struct{}{}, nil
 }
 
-// grpcAuth is a middleware (interceptor) that extracts and verifies token from header
+//grpcAuth is a middleware (interceptor) that extracts and verifies token from header
 func grpcAuth(ctx context.Context) (context.Context, error) {
 
 	token, err := grpc_auth.AuthFromMD(ctx, "Bearer")

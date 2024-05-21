@@ -35,6 +35,7 @@ func NewMockBenchmarkAPICollectorClient() apiserver.APICollectorClient {
 	}
 }
 
+//
 type MockBenchmarkAPICollectorClient struct {
 	creationTime         v1.Time
 	replicas             int32

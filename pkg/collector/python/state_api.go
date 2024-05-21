@@ -26,7 +26,6 @@ import (
 // rtloader/test/state/state.go
 
 // SetState set the current state
-//
 //export SetState
 func SetState(id *C.char, key *C.char, state *C.char) {
 	goCheckID := C.GoString(id)
@@ -37,7 +36,6 @@ func SetState(id *C.char, key *C.char, state *C.char) {
 }
 
 // GetState get the current state
-//
 //export GetState
 func GetState(id *C.char, key *C.char) *C.char {
 	goCheckID := C.GoString(id)

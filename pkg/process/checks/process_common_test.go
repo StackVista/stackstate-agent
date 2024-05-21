@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/gopsutil/cpu"
 	"github.com/StackVista/stackstate-agent/pkg/process/config"
 	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
+	"github.com/DataDog/gopsutil/cpu"
 )
 
 //nolint:unused
@@ -91,9 +91,8 @@ func makeProcess(pid int32, cmdline string) *procutil.Process {
 	}
 }
 
-// procMsgsVerification takes raw containers and processes and make sure the chunked messages have all data, and each chunk has the correct grouping
-//
 //nolint:deadcode,unused
+// procMsgsVerification takes raw containers and processes and make sure the chunked messages have all data, and each chunk has the correct grouping
 func procMsgsVerification(t *testing.T, msgs []model.MessageBody, rawContainers []*containers.Container, rawProcesses []*procutil.Process, maxSize int, cfg *config.AgentConfig) {
 	actualProcs := 0
 	for _, msg := range msgs {

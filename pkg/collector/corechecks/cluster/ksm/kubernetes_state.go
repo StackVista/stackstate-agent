@@ -650,9 +650,9 @@ func resourceNameFromMetric(name string) string {
 
 // isKnownMetric returns whether the KSM metric name is known by the check
 // A known metric should satisfy one of the conditions:
-//   - has a datadog metric name
-//   - has a metric transformer
-//   - has a metric aggregator
+//  - has a datadog metric name
+//  - has a metric transformer
+//  - has a metric aggregator
 func isKnownMetric(name string) bool {
 	if _, found := metricNamesMapper[name]; found {
 		return true

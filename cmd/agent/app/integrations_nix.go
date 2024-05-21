@@ -3,8 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build !windows && !darwin && python
-// +build !windows,!darwin,python
+// +build !windows,!darwin
+// +build python
 
 package app
 

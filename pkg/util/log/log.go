@@ -7,7 +7,7 @@
 // supports logging to multiple destinations, buffering messages logged before
 // setup, and scrubbing secrets from log messages.
 //
-// # Compatibility
+// Compatibility
 //
 // This module is exported and can be used outside of the datadog-agent
 // repository, but is not designed as a general-purpose logging system.  Its
@@ -737,7 +737,7 @@ func JMXError(v ...interface{}) error {
 	return logWithError(seelog.ErrorLvl, func() { JMXError(v...) }, jmxLogger.error, true, v...)
 }
 
-// JMXInfo Logs
+//JMXInfo Logs
 func JMXInfo(v ...interface{}) {
 	log(seelog.InfoLvl, func() { JMXInfo(v...) }, jmxLogger.info, v...)
 }
