@@ -237,7 +237,7 @@ func TestInfoHandler(t *testing.T) {
 			if rec.Body.String() != tt.expected {
 				t.Fatal("Output of /info has changed. Changing the keys "+
 					"is not allowed because the client rely on them and "+
-					"is considered a breaking change:\n\n", rec.Body.String())
+					"is considered a breaking change:\n\n%f", rec.Body.String())
 			}
 		})
 	}
