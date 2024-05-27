@@ -1302,10 +1302,32 @@ def omnibus_build(
         target_project = "agent-binaries"
 
     # Get the python_mirror from the PIP_INDEX_URL environment variable if it is not passed in the args
-    python_mirror = python_mirror or os.environ.get("PIP_INDEX_URL")
+#     python_mirror = python_mirror or os.environ.get("PIP_INDEX_URL")
+
+    python_extra_mirror = ""
+    artifactory_user = os.environ.get("artifactory_user")
+    if artifactory_user:
+        artifactory_password = os.environ.get("artifactory_password")
+        if artifactory_password:
+            artifactory_pypi_url = os.environ.get("ARTIFACTORY_PYPI_URL")
+            if artifactory_pypi_url:
+                if not python_mirror or python_mirror is None:
+                    python_mirror = 'https://pypi.python.org/simple/'
+                python_extra_mirror = f'https://{artifactory_user}:{artifactory_password}@{artifactory_pypi_url}'
+            else:
+                print("ARTIFACTORY_PYPI_URL is not set")
+        else:
+            print("artifactory_password is not set")
+    else:
+        print("artifactory_user is not set")
+
 
     # If a python_mirror is set then use it for pip by adding it in the pip.conf file
     pip_index_url = f"[global]\nindex-url = {python_mirror}" if python_mirror else ""
+    if pip_index_url and python_extra_mirror:
+        pip_index_url += f"\nextra-index-url = {python_extra_mirror}"
+    elif not pip_index_url and python_extra_mirror:
+        pip_index_url = f"[global]\nextra-index-url = {python_extra_mirror}"
 
     # We're passing the --index-url arg through a pip.conf file so that omnibus doesn't leak the token
     with open(pip_config_file, 'w') as f:
