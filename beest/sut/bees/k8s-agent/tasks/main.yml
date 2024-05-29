@@ -149,15 +149,13 @@
       pause:
         minutes: 5
 
-#    - name: Copy kube config for local tests
-#      copy:
-#        src: "~/.kube/config"
-#        dest: "{{ playbook_dir }}/config"
-#        mode: '0777'
+    - name: Set kubeconfig path from env if exists, otherwise use default
+      set_fact:
+        kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
 
     - name: Copy kube config for local tests
       copy:
-        src: "/builds/stackvista/agent/stackstate-agent.tmp/KUBECONFIG"
+        src: "{{ kubeconfig_path }}"
         dest: "{{ playbook_dir }}/config"
         mode: '0777'
 
