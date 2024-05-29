@@ -1019,9 +1019,9 @@ molecule_integrations_success_cleanup:
     BEEST_SCENARIO: contd-eks-1-26
     BEEST_TEST_GROUP: k8s
 
-.beest_k8s_1_29_containerd_variables: &beest_k8s_1_29_containerd_variables
+.beest_k8s_1_30_containerd_variables: &beest_k8s_1_30_containerd_variables
   variables:
-    BEEST_SCENARIO: contd-eks-1-29
+    BEEST_SCENARIO: contd-eks-1-30
     BEEST_TEST_GROUP: k8s
 
 beest_k8s_1_26_containerd_create:
@@ -1033,10 +1033,10 @@ beest_k8s_1_26_containerd_create:
     - *v2_merge_train_always_on_tag
     - *v2_merge_train_always_manual
 
-beest_k8s_1_29_containerd_create:
+beest_k8s_1_30_containerd_create:
   <<: *beest
   <<: *beest_create
-  <<: *beest_k8s_1_29_containerd_variables
+  <<: *beest_k8s_1_30_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
@@ -1056,18 +1056,18 @@ beest_k8s_1_26_containerd_test:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_k8s_1_29_containerd_test:
+beest_k8s_1_30_containerd_test:
   <<: *beest
   <<: *beest_test
-  <<: *beest_k8s_1_29_containerd_variables
+  <<: *beest_k8s_1_30_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_29_containerd_create
+    - beest_k8s_1_30_containerd_create
   needs:
-    - beest_k8s_1_29_containerd_create
+    - beest_k8s_1_30_containerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
@@ -1107,41 +1107,41 @@ beest_k8s_1_26_containerd_success_cleanup:
     - beest_k8s_1_26_containerd_test
     - beest_k8s_1_26_containerd_create
 
-beest_k8s_1_29_containerd_manual_cleanup:
+beest_k8s_1_30_containerd_manual_cleanup:
   <<: *beest
   <<: *beest_destroy_manual
-  <<: *beest_k8s_1_29_containerd_variables
+  <<: *beest_k8s_1_30_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always_manual
     - when: never
 
-beest_k8s_1_29_containerd_failure_cleanup:
+beest_k8s_1_30_containerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_29_containerd_variables
+  <<: *beest_k8s_1_30_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_1_29_containerd_test
-    - beest_k8s_1_29_containerd_create
+    - beest_k8s_1_30_containerd_test
+    - beest_k8s_1_30_containerd_create
 
-beest_k8s_1_29_containerd_success_cleanup:
+beest_k8s_1_30_containerd_success_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_29_containerd_variables
+  <<: *beest_k8s_1_30_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_29_containerd_test
-    - beest_k8s_1_29_containerd_create
+    - beest_k8s_1_30_containerd_test
+    - beest_k8s_1_30_containerd_create
   needs:
-    - beest_k8s_1_29_containerd_test
-    - beest_k8s_1_29_containerd_create
+    - beest_k8s_1_30_containerd_test
+    - beest_k8s_1_30_containerd_create
 
 # Job Seq: Molecule
 # Type: localinstall
