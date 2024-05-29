@@ -149,9 +149,15 @@
       pause:
         minutes: 5
 
+#    - name: Copy kube config for local tests
+#      copy:
+#        src: "~/.kube/config"
+#        dest: "{{ playbook_dir }}/config"
+#        mode: '0777'
+
     - name: Copy kube config for local tests
       copy:
-        src: "~/.kube/config"
+        src: "/builds/stackvista/agent/stackstate-agent.tmp/KUBECONFIG"
         dest: "{{ playbook_dir }}/config"
         mode: '0777'
 
