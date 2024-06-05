@@ -399,6 +399,8 @@ build_deb:
   interruptible: true
   needs:
     - deps_deb
+  variables:
+    LD_LIBRARY_PATH: "opt/stackstate-agent/embedded/lib/python3.11/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
   tags:
     - sts-k8s-xl-no-docker-runner
   cache:
