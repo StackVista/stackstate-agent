@@ -429,7 +429,7 @@ build_deb:
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
     - cp -r $OMNIBUS_BASE_DIR/pkg $CI_PROJECT_DIR/outcomes
     - cp -r $CI_PROJECT_DIR/Dockerfiles $CI_PROJECT_DIR/outcomes
-    - cp -r /opt/stackstate-agent/embedded/bin/trace-agent  $CI_PROJECT_DIR/outcomes/binary/
+#    - cp -r /opt/stackstate-agent/embedded/bin/trace-agent  $CI_PROJECT_DIR/outcomes/binary/
 
     - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles
 
