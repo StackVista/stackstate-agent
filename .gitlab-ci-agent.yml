@@ -1,6 +1,5 @@
 #image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
-#image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:8292f573
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:475e442b
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:8292f573
 
 stages:
   - manual
@@ -591,6 +590,7 @@ test_rpm_renaming:
 
 
 pre_release_deb:
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
   stage: pre_release
   interruptible: true
   needs:
