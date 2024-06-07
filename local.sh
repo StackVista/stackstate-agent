@@ -129,6 +129,23 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_DEB" ]; then
     export OMNIBUS_BASE_DIR="/.omnibus"
     inv -e agent.omnibus-build --gem-path $SRC_PATH/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $SRC_PATH/vendor --skip-deps --skip-sign --major-version 3 --python-runtimes 3
 
+        # Prepare outputs
+    mkdir -p $SRC_PATH/outcomes/pkg && mkdir -p $SRC_PATH/outcomes/dockerfiles && mkdir -p $SRC_PATH/outcomes/binary
+    cp -r $OMNIBUS_BASE_DIR/pkg $SRC_PATH/outcomes
+    cp -r $SRC_PATH/Dockerfiles $SRC_PATH/outcomes
+#    - cp -r /opt/stackstate-agent/embedded/bin/trace-agent  $SRC_PATH/outcomes/binary/
+
+    ls -la $SRC_PATH/outcomes/Dockerfiles
+
+        # Prepare cache
+        # Drop packages for cache
+    rm -rf /omnibus/pkg
+        # Drop agent for cache (will be resynced anyway)
+    rm -rf /omnibus/src/datadog-agent
+        # Drop symlink because it will fail the build when coming from a cache
+    rm /omnibus/src/datadog-agent/src/github.com/StackVista/stackstate-agent/vendor/github.com/coreos/etcd/cmd/etcd || echo "Not found"
+    mv /omnibus $SRC_PATH/.omnibus
+
     cd "$CI_PROJECT_DIR" || exit
 fi
 
