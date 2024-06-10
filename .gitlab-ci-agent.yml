@@ -424,7 +424,7 @@ build_deb:
     - source ./.gitlab-scripts/setup_artifactory.sh
     - export LD_LIBRARY_PATH="/opt/stackstate-agent/embedded/lib/python3.11/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
     - echo ${LD_LIBRARY_PATH}
-    - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    - GIT_CURL_VERBOSE=1 GIT_TRACE=1 inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
 
     # Prepare outputs
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
