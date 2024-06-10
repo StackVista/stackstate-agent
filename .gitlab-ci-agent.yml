@@ -453,7 +453,6 @@ build_deb:
       - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
       - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
       - $CI_PROJECT_DIR/version.txt
-      - $CI_PROJECT_DIR/outcomes/binary/trace-agent
     <<: *artifacts_expire_in
   retry:
     max: 2
@@ -604,6 +603,16 @@ sign_deb:
     - source /usr/local/rvm/scripts/rvm
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/outcomes/pkg/*.deb
+      - $CI_PROJECT_DIR/outcomes/pkg/*.json
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/cluster-agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
+      - $CI_PROJECT_DIR/version.txt
+    <<: *artifacts_expire_in
   retry:
     max: 2
     when:
