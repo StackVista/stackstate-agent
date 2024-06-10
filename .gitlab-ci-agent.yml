@@ -1,5 +1,6 @@
 #image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
 image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:8292f573
+#image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:bf5231e2
 
 stages:
   - manual
@@ -425,7 +426,7 @@ build_deb:
     - source ./.gitlab-scripts/setup_artifactory.sh
     - export LD_LIBRARY_PATH="/opt/stackstate-agent/embedded/lib/python3.11/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
     - echo ${LD_LIBRARY_PATH}
-    - GIT_CURL_VERBOSE=1 GIT_TRACE=1 inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
 
     # Prepare outputs
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
@@ -592,11 +593,10 @@ test_rpm_renaming:
   rules:
     - when: on_success
 
-
-pre_release_deb:
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
+sign_deb:
   stage: pre_release
   interruptible: true
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
   needs:
     - deps_deb
     - build_deb
@@ -604,6 +604,24 @@ pre_release_deb:
     - source /usr/local/rvm/scripts/rvm
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+pre_release_deb:
+  stage: pre_release
+  interruptible: true
+  needs:
+    - deps_deb
+    - build_deb
+    - sign_deb
+  script:
+    - source /usr/local/rvm/scripts/rvm
+#    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
+#    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
     - cd $CI_PROJECT_DIR && inv release.generate-install -t
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
   retry:
