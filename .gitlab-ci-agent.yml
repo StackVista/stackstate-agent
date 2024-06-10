@@ -37,8 +37,8 @@ stages:
   ./fix_package_paths.sh
 
 .configure_debian_env_script: &configure_debian_env_script |
-  out=$(. /root/miniforge3/etc/profile.d/conda.sh || echo "no dice") # TODO: check possibility to use bash from the start
-  if [ $out == "no dice" ]; then . /root/miniconda3/etc/profile.d/conda.sh ; fi
+  . /root/miniforge3/etc/profile.d/conda.sh || true # TODO: check possibility to use bash from the start
+  . /root/miniconda3/etc/profile.d/conda.sh || true
   conda activate $CONDA_ENV
   mkdir -p /go/src/github.com/StackVista
   rm -rf /go/src/github.com/StackVista/stackstate-agent || true
