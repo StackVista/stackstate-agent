@@ -61,7 +61,7 @@ func TestListMap_JSONSchema(t *testing.T) {
 
 	expectedSchema := `
 {
-  "$id": "https://github.com/DataDog/datadog-agent/pkg/networkdevice/profile/profiledefinition/example-struct",
+  "$id": "https://github.com/StackVista/stackstate-agent/pkg/networkdevice/profile/profiledefinition/example-struct",
   "$ref": "#/$defs/ExampleStruct",
   "$defs": {
     "ExampleStruct": {

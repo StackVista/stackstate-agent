@@ -17,7 +17,7 @@ import (
 func TestGenerateJSONSchemaIsInSync(t *testing.T) {
 	schemaJSON, err := GenerateJSONSchema()
 	require.NoError(t, err)
-	moduleName := fmt.Sprintf("%s/%s", getEnv("AGENT_GITHUB_ORG", "DataDog"), getEnv("AGENT_REPO_NAME", "datadog-agent"))
+	moduleName := fmt.Sprintf("%s/%s", getEnv("AGENT_GITHUB_ORG", "StackVista"), getEnv("AGENT_REPO_NAME", "stackstate-agent"))
 	schemaWithModule := strings.ReplaceAll(string(GetDeviceProfileRcConfigJsonschema()), "DataDog/datadog-agent", moduleName)
 	assert.JSONEq(t, schemaWithModule, string(schemaJSON))
 }

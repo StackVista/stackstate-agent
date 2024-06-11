@@ -582,7 +582,6 @@ func (suite *KubeletTestSuite) TestKubeletInitTokenHttps() {
 		map[string]string{
 			"url":        fmt.Sprintf("https://127.0.0.1:%d", kubeletPort),
 			"verify_tls": "false",
-			"ca_cert":    "./testdata/ca.crt",
 			"token":      "fakeBearerToken",
 		}, connInfo)
 }

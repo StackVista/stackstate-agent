@@ -14,6 +14,8 @@ else
     export AGENT_REPO_NAME=stackstate-agent
 fi
 
+export PYTHON_RUNTIMES="3"
+
 WHAT=$1
 
 if [ -z "${WHAT}" ]; then
@@ -145,6 +147,27 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_DEB" ]; then
         # Drop symlink because it will fail the build when coming from a cache
     rm /omnibus/src/datadog-agent/src/github.com/StackVista/stackstate-agent/vendor/github.com/coreos/etcd/cmd/etcd || echo "Not found"
     mv /omnibus $SRC_PATH/.omnibus
+
+    cd "$CI_PROJECT_DIR" || exit
+fi
+
+if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "UNIT_TESTS" ]; then
+    prepare
+
+    cd $SRC_PATH || exit
+
+    echo "          ---                      ---"
+    echo "          --- Running Unit Tests   ---"
+    echo "          ---                      ---"
+
+    inv -e agent.build --race --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    # TODO: check why formatting rules differ from previous step
+    # - gofmt -l -w -s ./pkg ./cmd
+    inv -e rtloader.test
+    invoke install-tools
+    echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES"
+    inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    inv -e lint-go
 
     cd "$CI_PROJECT_DIR" || exit
 fi

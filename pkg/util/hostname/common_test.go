@@ -32,7 +32,10 @@ func TestFromConfig(t *testing.T) {
 
 func TestFromConfigInvalid(t *testing.T) {
 	config.Mock(t)
-	config.Datadog.SetWithoutSource("hostname", "hostname_with_underscore")
+	// [sts] we specifically allow hostnames with underscores, as we disabled Rfc1123 verification
+	// [sts] so we cannot use this test case, we need to use something else that WILL fail
+	//config.Datadog.SetWithoutSource("hostname", "hostname_with_underscore")
+	config.Datadog.SetWithoutSource("hostname", "hostname..with..dots")
 
 	_, err := fromConfig(context.TODO(), "")
 	assert.Error(t, err)
