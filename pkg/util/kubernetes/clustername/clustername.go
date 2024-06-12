@@ -89,6 +89,7 @@ func getClusterName(ctx context.Context, data *clusterNameData, hostname string)
 						"exceed 255 chars", data.clusterName, hostAlias)
 					log.Errorf("As a consequence, the cluster name provided by the config will be ignored")
 					data.clusterName = ""
+					return data.clusterName
 				}
 			}
 		}
