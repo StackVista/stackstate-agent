@@ -409,8 +409,15 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./cmd/agent")
     do_go_rename(ctx, '"\\"path to directory containing datadog.yaml\\" -> \\"path to directory containing stackstate.yaml\\""', "./cmd")
-    do_go_rename(ctx, '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""', "./cmd/agent/common")
-    do_go_rename(ctx, '"\\"unable to load Datadog config file: %w\\" -> \\"unable to load StackState config file: %w\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"Datadog config file: %s\\" -> \\"StackState config file: %s\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"Datadog config file: %w\\" -> \\"StackState config file: %w\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"Datadog config file: %s\\" -> \\"StackState config file: %s\\""', "./cmd/system-probe/config")
+    do_go_rename(ctx, '"\\"Datadog config file: %w\\" -> \\"StackState config file: %w\\""', "./cmd/system-probe/config")
+    do_go_rename(ctx, '"\\"Datadog config file: %s\\" -> \\"StackState config file: %s\\""', "./comp/core/config")
+    do_go_rename(ctx, '"\\"Datadog config file: %w\\" -> \\"StackState config file: %w\\""', "./comp/core/config")
+    do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./cmd/system-probe/config")
+    do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./comp/core/config")
 #     do_go_rename(ctx, '"\\"Starting Datadog Agent v%v\\" -> \\"Starting StackState Agent v%v\\""', "./cmd/agent/app")
 
     # Dist config templates
