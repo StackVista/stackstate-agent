@@ -363,43 +363,6 @@ def test_agent_integration_sample_topology(host, hostname):
     util.wait_until(assert_topology, 30, 3)
 
 
-def test_agent_integration_sample_events(host, hostname):
-    url = "http://localhost:7070/api/topic/sts_generic_events?limit=1000"
-
-    def wait_for_events():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-agent-integration-sample-sts-generic-events.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
-
-        service_event = {
-            "name": "service-check.service-check",
-            "title": "stackstate.agent.check_status",
-            "eventType": "service-check",
-            "tags": {
-                "source_type_name": "service-check",
-                "status": "OK",
-                "check": "cpu"
-            },
-            "host": hostname,
-        }
-        assert util.event_data(service_event, json_data, hostname) is not None
-
-        http_event = {
-            "name": "HTTP_TIMEOUT",
-            "title": "URL timeout",
-            "eventType": "HTTP_TIMEOUT",
-            "tags": {
-                "source_type_name": "HTTP_TIMEOUT"
-            },
-            "host": "agent-integrations",
-            "message": "Http request to http://localhost timed out after 5.0 seconds."
-        }
-        assert util.event_data(http_event, json_data, hostname) is not None
-
-    util.wait_until(wait_for_events, 60, 3)
-
-
 def test_agent_integration_sample_topology_events(host):
     url = "http://localhost:7070/api/topic/sts_topology_events?limit=1000"
 

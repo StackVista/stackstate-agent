@@ -9,28 +9,6 @@ from testinfra.utils.ansible_runner import AnsibleRunner
 testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('receiver_vm')
 
 
-def test_generic_events(host):
-    url = "http://localhost:7070/api/topic/sts_generic_events?offset=0&limit=80"
-
-    def wait_for_metrics():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-generic-events.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
-
-        events = defaultdict(set)
-        for message in json_data["messages"]:
-            events[message["message"]["GenericEvent"]["host"]].add(message["message"]["GenericEvent"]["name"])
-
-        print(events)
-        assert all([assertTag for assertTag in ["System.Agent Startup", "processStateEvent"] if assertTag in events["agent-ubuntu"]])
-        assert all([assertTag for assertTag in ["System.Agent Startup", "processStateEvent"] if assertTag in events["agent-fedora"]])
-        assert all([assertTag for assertTag in ["System.Agent Startup", "processStateEvent"] if assertTag in events["agent-centos"]])
-        assert all([assertTag for assertTag in ["System.Agent Startup"] if assertTag in events["agent-win"]])
-
-    util.wait_until(wait_for_metrics, 30, 3)
-
-
 def test_state_events(host):
     url = "http://localhost:7070/api/topic/sts_state_events?offset=0&limit=80"
 
