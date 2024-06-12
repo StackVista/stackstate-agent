@@ -1108,7 +1108,7 @@ beest_k8s_1_26_containerd_success_cleanup:
   <<: *beest_k8s_1_26_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_k8s_1_26_containerd_test
