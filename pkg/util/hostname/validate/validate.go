@@ -17,9 +17,7 @@ import (
 const maxLength = 255
 
 var (
-	// sts - Disable Rfc1123 validation
-	//validHostnameRfc1123 = regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
-	validHostnameSts     = regexp.MustCompile(`^[\w_]([\w_.-]*[\w_])?$`) // sts - same as cluster name
+	validHostnameRfc1123 = regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
 	localhostIdentifiers = []string{
 		"localhost",
 		"localhost.localdomain",
@@ -38,7 +36,7 @@ func ValidHostname(hostname string) error {
 	} else if len(hostname) > maxLength {
 		log.Errorf("ValidHostname: name exceeded the maximum length of %d characters", maxLength)
 		return fmt.Errorf("name exceeded the maximum length of %d characters", maxLength)
-	} else if !validHostnameSts.MatchString(hostname) {
+	} else if !validHostnameRfc1123.MatchString(hostname) {
 		log.Errorf("ValidHostname: %s is not RFC1123 compliant", hostname)
 		return fmt.Errorf("%s is not RFC1123 compliant", hostname)
 	}
