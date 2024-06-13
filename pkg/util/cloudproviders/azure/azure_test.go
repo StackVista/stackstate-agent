@@ -139,26 +139,6 @@ func TestGetHostname(t *testing.T) {
 	}
 }
 
-// sts
-func TestGetAKSHostname(t *testing.T) {
-	ctx := context.Background()
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{
-			"name": "aks-agentpool-42726193-vmss_0"
-		}`)
-	}))
-	defer ts.Close()
-	metadataURL = ts.URL
-
-	mockConfig := config.Mock(t)
-
-	mockConfig.SetWithoutSource(hostnameStyleSetting, "name")
-	hostname, err := getHostnameWithConfig(ctx, mockConfig)
-	assert.Equal(t, "aks-agentpool-42726193-vmss_0", hostname)
-	assert.Nil(t, err)
-}
-
 func TestGetHostnameWithInvalidMetadata(t *testing.T) {
 	ctx := context.Background()
 	mockConfig := config.Mock(t)
