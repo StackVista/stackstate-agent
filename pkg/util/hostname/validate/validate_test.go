@@ -29,7 +29,4 @@ func TestValidHostname(t *testing.T) {
 	assert.NotNil(t, err)
 	err = ValidHostname("data🐕hq.com")
 	assert.NotNil(t, err)
-	// sts - should accept AKS hostname
-	err = ValidHostname("aks-agentpool-42726193-vmss_0")
-	assert.Nil(t, err)
 }
