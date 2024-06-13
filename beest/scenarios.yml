@@ -1,5 +1,5 @@
 scenarios:
-  - name: contd-eks-1-26
+  - name: contd-eks-1-27
     description: |
       Same as dockerd-eks scenario, but the EKS cluster is configured to use Containerd as container runtime.
     yard:
@@ -8,7 +8,7 @@ scenarios:
       group: k8s
     variables:
       agent_eks_runtime: containerd
-      agent_eks_version: "1.26"
+      agent_eks_version: "1.27"
   - name: contd-eks-1-30
     description: |
       Same as dockerd-eks scenario, but the EKS cluster is configured to use Containerd as container runtime.
