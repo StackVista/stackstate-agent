@@ -18,6 +18,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	k "github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 type kubeUtilMock struct {
@@ -45,6 +46,11 @@ func TestHostnameProvider(t *testing.T) {
 	kubeUtilGet = func() (k.KubeUtilInterface, error) {
 		return ku, nil
 	}
+
+	_ = log.Warnf("This test creates a mock kubeUtilGet function. It contains the following: %v", kubeUtilGet)
+	testKu, err := kubeUtilGet()
+	_ = log.Warnf("When calling the mock kubeUtilGet function, it returns the following: %v, %v", testKu, err)
+	_ = log.Warnf("The original ku contains the following: %v", ku)
 
 	hostName, err := GetHostname(ctx)
 	assert.NoError(t, err)

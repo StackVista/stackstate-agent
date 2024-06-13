@@ -28,6 +28,10 @@ func GetHostname(ctx context.Context) (string, error) {
 	}
 
 	ku, err := kubeUtilGet()
+
+	_ = log.Warnf("This function calls a kubeUtilGet function. It contains the following: %v", kubeUtilGet)
+	_ = log.Warnf("When calling the kubeUtilGet function, it returns the following: %v, %v", ku, err)
+
 	if err != nil {
 		return "", err
 	}
