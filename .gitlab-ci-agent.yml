@@ -1014,9 +1014,9 @@ molecule_integrations_success_cleanup:
     if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
     when: never
 
-.beest_k8s_1_26_containerd_variables: &beest_k8s_1_26_containerd_variables
+.beest_k8s_1_27_containerd_variables: &beest_k8s_1_27_containerd_variables
   variables:
-    BEEST_SCENARIO: contd-eks-1-26
+    BEEST_SCENARIO: contd-eks-1-27
     BEEST_TEST_GROUP: k8s
 
 .beest_k8s_1_30_containerd_variables: &beest_k8s_1_30_containerd_variables
@@ -1024,10 +1024,10 @@ molecule_integrations_success_cleanup:
     BEEST_SCENARIO: contd-eks-1-30
     BEEST_TEST_GROUP: k8s
 
-beest_k8s_1_26_containerd_create:
+beest_k8s_1_27_containerd_create:
   <<: *beest
   <<: *beest_create
-  <<: *beest_k8s_1_26_containerd_variables
+  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always_on_tag
@@ -1041,18 +1041,18 @@ beest_k8s_1_30_containerd_create:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
 
-beest_k8s_1_26_containerd_test:
+beest_k8s_1_27_containerd_test:
   <<: *beest
   <<: *beest_test
-  <<: *beest_k8s_1_26_containerd_variables
+  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_26_containerd_create
+    - beest_k8s_1_27_containerd_create
   needs:
-    - beest_k8s_1_26_containerd_create
+    - beest_k8s_1_27_containerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
@@ -1071,41 +1071,41 @@ beest_k8s_1_30_containerd_test:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_k8s_1_26_containerd_manual_cleanup:
+beest_k8s_1_27_containerd_manual_cleanup:
   <<: *beest
   <<: *beest_destroy_manual
-  <<: *beest_k8s_1_26_containerd_variables
+  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always_manual
     - when: never
 
-beest_k8s_1_26_containerd_failure_cleanup:
+beest_k8s_1_27_containerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_26_containerd_variables
+  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_1_26_containerd_test
-    - beest_k8s_1_26_containerd_create
+    - beest_k8s_1_27_containerd_test
+    - beest_k8s_1_27_containerd_create
 
-beest_k8s_1_26_containerd_success_cleanup:
+beest_k8s_1_27_containerd_success_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_26_containerd_variables
+  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_26_containerd_test
-    - beest_k8s_1_26_containerd_create
+    - beest_k8s_1_27_containerd_test
+    - beest_k8s_1_27_containerd_create
   needs:
-    - beest_k8s_1_26_containerd_test
-    - beest_k8s_1_26_containerd_create
+    - beest_k8s_1_27_containerd_test
+    - beest_k8s_1_27_containerd_create
 
 beest_k8s_1_30_containerd_manual_cleanup:
   <<: *beest
