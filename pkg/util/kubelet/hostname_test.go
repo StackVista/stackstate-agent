@@ -46,6 +46,9 @@ func TestHostnameProvider(t *testing.T) {
 		return ku, nil
 	}
 
+	clustername.ResetClusterName()
+	mockConfig.SetWithoutSource("cluster_name", "")
+
 	hostName, err := GetHostname(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, "node-name", hostName)
