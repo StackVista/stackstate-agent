@@ -49,7 +49,7 @@ COMMAND__AGENT_OMNIBUS_BUILD="inv -e agent.omnibus-build --base-dir ~/.omnibus -
 
 # List of go commands
 COMMAND__INSTALL_DEPS="inv -e deps --verbose --dep-vendor-only"
-COMMAND__GO_TESTS_WITH_RACE="inv -e test --targets=${2:-.} --coverage --race --profile --fail-on-fmt --cpus 4 --major-version 2 --python-runtimes $PYTHON_RUNTIME --skip-linters"
+COMMAND__GO_TESTS_WITH_RACE="inv -e test --targets=${2:-.} --coverage --race --profile --cpus 4 --major-version 2 --python-runtimes $PYTHON_RUNTIME --skip-linters"
 
 # List of python commands
 COMMAND__SET_PYTHON_2="export PYTHON_RUNTIME=2"

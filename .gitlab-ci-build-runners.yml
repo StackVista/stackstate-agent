@@ -112,7 +112,7 @@ build-centos7-base:
   script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # get the current date as the base image version
-    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-${RUNNER_PATCH_TAG}-patched-$(date +%Y%m%d)"
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-${RUNNER_PATCH_TAG}-patched-$(date +%Y%m%d%H%M%S)"
     - docker build -f Dockerfile.patch --build-arg BASE_IMAGE=${RUNNER_DIR}-${RUNNER_PATCH_TAG} -t "${BUILD_TAG}" .
     # tag the image, push to quay
     - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"

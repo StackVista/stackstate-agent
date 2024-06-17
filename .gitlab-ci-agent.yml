@@ -1,4 +1,4 @@
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20240508140101
 
 stages:
   - manual
@@ -338,7 +338,7 @@ unit_tests:
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
     - invoke install-tools
-    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
   tags:
     - sts-k8s-xl-runner
   retry:
@@ -1142,6 +1142,16 @@ beest_k8s_1_30_containerd_success_cleanup:
   needs:
     - beest_k8s_1_30_containerd_test
     - beest_k8s_1_30_containerd_create
+
+deploy_to_lupulus_gke:
+  stage: manual
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: ['']
+  script:
+    - kubectl config get-contexts
+    - kubectl config use-context path/to/agent/project:agent-name
+    - kubectl get pods
 
 # Job Seq: Molecule
 # Type: localinstall

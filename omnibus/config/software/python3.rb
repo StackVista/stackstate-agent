@@ -1,7 +1,7 @@
 name "python3"
 
 if ohai["platform"] != "windows"
-  default_version "3.8.11"
+  default_version "3.8.18"
   dependency "libffi"
   dependency "ncurses"
   dependency "zlib"
@@ -13,7 +13,7 @@ if ohai["platform"] != "windows"
   dependency "libyaml"
 
   source :url => "https://python.org/ftp/python/#{version}/Python-#{version}.tgz",
-         :sha256 => "b77464ea80cec14581b86aeb7fb2ff02830e0abc7bcdc752b7b4bdfcd8f3e393"
+         :sha256 => "7c5df68bab1be81a52dea0cc2e2705ea00553b67107a301188383d7b57320b16"
 
   relative_path "Python-#{version}"
 
@@ -63,7 +63,7 @@ if ohai["platform"] != "windows"
   end
 
 else
-  default_version "3.8.11-v3.8.11"
+  default_version "3.8.18-v3.8.18"
   dependency "vc_redist_14"
 
   if windows_arch_i386?
