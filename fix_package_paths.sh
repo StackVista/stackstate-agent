@@ -16,7 +16,8 @@ find "$DIR" -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/\/
 # But as it turns out, there is a protocol buffer that is depended on by an external package that still references the old path.
 # We need to fix this for github.com/DataDog/datadog-agent/pkg/proto/pbgo/trace
 # This line is used to fix the package import paths in golang files in the agent codebase, rename github.com/StackVista/stackstate-agentpkg/proto/pbgo/trace back to github.com/DataDog/datadog-agent/pkg/proto/pbgo/trace.
-find "$DIR" -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/\"github.com\/StackVista\/stackstate-agent\/pkg\/proto\/pbgo\/trace/\"github.com\/DataDog\/datadog-agent\/pkg\/proto\/pbgo\/trace/g' {} +
+find "$DIR" -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/\"github.com\/StackVista\/stackstate-agent\/pkg\/proto/\"github.com\/DataDog\/datadog-agent\/pkg\/proto/g' {} +
+find "$DIR" -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/StackVista\/stackstate-agent\/pkg\/proto/DataDog\/datadog-agent\/pkg\/proto/g' {} +
 
 
 # The following lines are used to fix ad hoc references in python files in the tasks folder.
