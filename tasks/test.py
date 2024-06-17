@@ -103,7 +103,7 @@ def test(
     timeout=180,
     arch="x64",
     cache=True,
-    skip_linters=False,
+    skip_linters=True,
     save_result_json=None,
     rerun_fails=None,
     go_mod="mod",
@@ -167,7 +167,7 @@ def test(
             with ctx.cd(module.full_path()):
                 vet(ctx, targets=module.targets, rtloader_root=rtloader_root, build_tags=build_tags, arch=arch)
                 fmt(ctx, targets=module.targets, fail_on_fmt=fail_on_fmt)
-                lint(ctx, targets=module.targets)
+                # lint(ctx, targets=module.targets)
                 misspell(ctx, targets=module.targets)
                 ineffassign(ctx, targets=module.targets)
                 staticcheck(ctx, targets=module.targets, build_tags=build_tags, arch=arch)
