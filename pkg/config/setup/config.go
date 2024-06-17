@@ -686,14 +686,22 @@ func InitConfig(config pkgconfigmodel.Config) {
 	config.BindEnvAndSetDefault("podman_db_path", "/var/lib/containers/storage/libpod/bolt_state.db")
 
 	// Kubernetes
-	config.BindEnvAndSetDefault("kubernetes_kubelet_host", "")
+	config.BindEnvAndSetDefault("kubernetes_kubelet_host", os.Getenv("STS_KUBERNETES_KUBELET_HOST")) // sts
 	config.BindEnvAndSetDefault("kubernetes_kubelet_nodename", "")
 	config.BindEnvAndSetDefault("eks_fargate", false)
 	config.BindEnvAndSetDefault("kubernetes_http_kubelet_port", 10255)
 	config.BindEnvAndSetDefault("kubernetes_https_kubelet_port", 10250)
 
 	config.BindEnvAndSetDefault("kubelet_tls_verify", true)
+	config.BindEnvAndSetDefault("kubelet_fallback_to_unverified_tls", true) // sts
+	config.BindEnvAndSetDefault("kubelet_fallback_to_insecure", true)       // sts
 	config.BindEnvAndSetDefault("collect_kubernetes_events", false)
+	config.BindEnvAndSetDefault("collect_kubernetes_metrics", false)          // sts
+	config.BindEnvAndSetDefault("collect_kubernetes_topology", false)         // sts
+	config.BindEnvAndSetDefault("collect_kubernetes_timeout", 10)             // sts
+	config.BindEnvAndSetDefault("configmap_max_datasize", 0)                  // sts
+	config.BindEnvAndSetDefault("kubernetes_source_properties_enabled", true) // sts
+	config.BindEnvAndSetDefault("kubernetes_csi_pv_mapper_enabled", false)    // sts
 	config.BindEnvAndSetDefault("kubelet_client_ca", "")
 
 	config.BindEnvAndSetDefault("kubelet_auth_token_path", "")
