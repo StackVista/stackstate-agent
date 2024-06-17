@@ -47,6 +47,7 @@ func TestHostnameProvider(t *testing.T) {
 	}
 
 	clustername.ResetClusterName()
+	clustername.SetClusterNameState()
 	config.Datadog.SetWithoutSource("cluster_name", "")
 	mockConfig.SetWithoutSource("cluster_name", "")
 

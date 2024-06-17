@@ -183,9 +183,20 @@ func resetClusterName(data *clusterNameData) {
 	data.initDone = false
 }
 
+func setClusterNameState(data *clusterNameData) {
+	data.mutex.Lock()
+	defer data.mutex.Unlock()
+	data.initDone = true
+}
+
 // ResetClusterName resets the clustername, which allows it to be detected again. Used for tests
 func ResetClusterName() {
 	resetClusterName(defaultClusterNameData)
+}
+
+// SetClusterNameState sets the clustername state to initialized. Used for tests
+func SetClusterNameState() {
+	setClusterNameState(defaultClusterNameData)
 }
 
 // GetClusterID looks for an env variable which should contain the cluster ID.
