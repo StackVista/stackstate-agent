@@ -1152,6 +1152,8 @@ deploy_to_lupulus_gke:
     - kubectl config get-contexts
     - kubectl config use-context path/to/agent/project:agent-name
     - kubectl get pods
+  rules:
+    - *v2_merge_train_always_manual
 
 # Job Seq: Molecule
 # Type: localinstall
