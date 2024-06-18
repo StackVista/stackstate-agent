@@ -647,7 +647,7 @@ func testConfigureDeprecated(t *testing.T) {
 
 	assert.Equal(t, c.class, C.get_check_deprecated_py_class)
 	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_deprecated_init_config))
-	assert.Equal(t, "collection_interval: 25\nval: 21\n", C.GoString(C.get_check_deprecated_instance))
+	assert.Equal(t, "collection_interval: 40\nval: 21\n", C.GoString(C.get_check_deprecated_instance))
 	assert.Equal(t, string(c.id), C.GoString(C.get_check_deprecated_check_id))
 	assert.Equal(t, "fake_check", C.GoString(C.get_check_deprecated_check_name))
 	require.NotNil(t, C.get_check_deprecated_agent_config)
