@@ -319,12 +319,14 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 										"backend": map[string]interface{}{
 											"serviceName": "test-service-1",
 											"servicePort": float64(0)},
-										"path": "host-1-path-1"},
+										"path":     "host-1-path-1",
+										"pathType": interface{}(nil)},
 									map[string]interface{}{
 										"backend": map[string]interface{}{
 											"serviceName": "test-service-2",
 											"servicePort": float64(0)},
-										"path": "host-1-path-2"}}}},
+										"path":     "host-1-path-2",
+										"pathType": interface{}(nil)}}}},
 						map[string]interface{}{
 							"host": "host-2",
 							"http": map[string]interface{}{
@@ -333,7 +335,8 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 										"backend": map[string]interface{}{
 											"serviceName": "test-service-3",
 											"servicePort": float64(0)},
-										"path": "host-2-path-1"}}}}}},
+										"path":     "host-2-path-1",
+										"pathType": interface{}(nil)}}}}}},
 			},
 		},
 		&topology.Component{
@@ -373,12 +376,14 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 										"backend": map[string]interface{}{
 											"serviceName": "test-service-1",
 											"servicePort": float64(0)},
-										"path": "host-1-path-1"},
+										"path":     "host-1-path-1",
+										"pathType": interface{}(nil)},
 									map[string]interface{}{
 										"backend": map[string]interface{}{
 											"serviceName": "test-service-2",
 											"servicePort": float64(0)},
-										"path": "host-1-path-2"}}}},
+										"path":     "host-1-path-2",
+										"pathType": interface{}(nil)}}}},
 						map[string]interface{}{
 							"host": "host-2",
 							"http": map[string]interface{}{
@@ -387,7 +392,8 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 										"backend": map[string]interface{}{
 											"serviceName": "test-service-3",
 											"servicePort": float64(0)},
-										"path": "host-2-path-1"}}}}}},
+										"path":     "host-2-path-1",
+										"pathType": interface{}(nil)}}}}}},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
 						"ingress": []interface{}{
@@ -880,7 +886,8 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 							"http": map[string]interface{}{
 								"paths": []interface{}{
 									map[string]interface{}{
-										"path": "host-1-path-1",
+										"path":     "host-1-path-1",
+										"pathType": interface{}(nil),
 										"backend": map[string]interface{}{
 											"service": map[string]interface{}{
 												"name": "test-service22-1",
@@ -894,13 +901,15 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 												"port": map[string]interface{}{},
 											},
 										},
-										"path": "host-1-path-2"}}}},
+										"path":     "host-1-path-2",
+										"pathType": interface{}(nil)}}}},
 						map[string]interface{}{
 							"host": "host22-2",
 							"http": map[string]interface{}{
 								"paths": []interface{}{
 									map[string]interface{}{
-										"path": "host-2-path-1",
+										"path":     "host-2-path-1",
+										"pathType": interface{}(nil),
 										"backend": map[string]interface{}{
 											"service": map[string]interface{}{
 												"name": "test-service22-3",
@@ -943,7 +952,8 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 							"http": map[string]interface{}{
 								"paths": []interface{}{
 									map[string]interface{}{
-										"path": "host-1-path-1",
+										"path":     "host-1-path-1",
+										"pathType": interface{}(nil),
 										"backend": map[string]interface{}{
 											"service": map[string]interface{}{
 												"name": "test-service22-1",
@@ -957,13 +967,15 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 												"port": map[string]interface{}{},
 											},
 										},
-										"path": "host-1-path-2"}}}},
+										"path":     "host-1-path-2",
+										"pathType": interface{}(nil)}}}},
 						map[string]interface{}{
 							"host": "host22-2",
 							"http": map[string]interface{}{
 								"paths": []interface{}{
 									map[string]interface{}{
-										"path": "host-2-path-1",
+										"path":     "host-2-path-1",
+										"pathType": interface{}(nil),
 										"backend": map[string]interface{}{
 											"service": map[string]interface{}{
 												"name": "test-service22-3",
