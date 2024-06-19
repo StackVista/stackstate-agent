@@ -59,7 +59,9 @@ function prepare() {
 }
 
 if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS_DEB" ]; then
-    prepare
+    if [ "${WHAT}" = "DEPS_DEB" ]; then
+        prepare
+    fi
 
     cd $SRC_PATH || exit
 
@@ -83,7 +85,9 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS_DEB" ]; then
 fi
 
 if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_BINARIES" ]; then
-    prepare
+    if [ "${WHAT}" = "BUILD_BINARIES" ]; then
+        prepare
+    fi
 
     cd $SRC_PATH || exit
 
@@ -104,7 +108,9 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_BINARIES" ]; then
 fi
 
 if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_CLUSTER_AGENT" ]; then
-    prepare
+    if [ "${WHAT}" = "BUILD_CLUSTER_AGENT" ]; then
+        prepare
+    fi
 
     cd $SRC_PATH || exit
 
@@ -117,7 +123,9 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_CLUSTER_AGENT" ]; then
 fi
 
 if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_DEB" ]; then
-    prepare
+    if [ "${WHAT}" = "BUILD_DEB" ]; then
+        prepare
+    fi
 
     cd $SRC_PATH || exit
 
@@ -152,7 +160,9 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_DEB" ]; then
 fi
 
 if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "UNIT_TESTS" ]; then
-    prepare
+    if [ "${WHAT}" = "UNIT_TESTS" ]; then
+        prepare
+    fi
 
     cd $SRC_PATH || exit
 
