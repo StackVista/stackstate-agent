@@ -634,6 +634,7 @@ pre_release_deb:
   artifacts:
     paths:
       - $CI_PROJECT_DIR/outcomes/pkg/*.deb
+    <<: *artifacts_expire_in
 
 pre_release_win:
   stage: pre_release
