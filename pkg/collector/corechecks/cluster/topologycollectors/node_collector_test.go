@@ -110,7 +110,6 @@ func TestNodeCollector(t *testing.T) {
 											"apiVersion": "v1",
 											"kind":       "Node",
 											"metadata": map[string]interface{}{
-												"clusterName":       "mycluster",
 												"creationTimestamp": creationTimeFormatted,
 												"labels":            map[string]interface{}{"test": "label"},
 												"name":              "test-node-1",
@@ -163,7 +162,6 @@ func TestNodeCollector(t *testing.T) {
 											"apiVersion": "v1",
 											"kind":       "Node",
 											"metadata": map[string]interface{}{
-												"clusterName":       "mycluster",
 												"creationTimestamp": creationTimeFormatted,
 												"labels":            map[string]interface{}{"test": "label"},
 												"name":              "test-node-1",
@@ -292,7 +290,7 @@ func TestNodeCollector(t *testing.T) {
 												"apiVersion": "v1",
 												"kind":       "Node",
 												"metadata": map[string]interface{}{
-													"clusterName":       "mycluster",
+
 													"creationTimestamp": creationTimeFormatted,
 													"labels":            map[string]interface{}{"test": "label"},
 													"name":              "test-node-2",
@@ -347,7 +345,6 @@ func TestNodeCollector(t *testing.T) {
 												"apiVersion": "v1",
 												"kind":       "Node",
 												"metadata": map[string]interface{}{
-													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
 													"labels":            map[string]interface{}{"test": "label"},
 													"name":              "test-node-2",
@@ -485,7 +482,6 @@ func TestNodeCollector(t *testing.T) {
 												"apiVersion": "v1",
 												"kind":       "Node",
 												"metadata": map[string]interface{}{
-													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
 													"labels":            map[string]interface{}{"test": "label"},
 													"name":              "test-node-3",
@@ -544,7 +540,6 @@ func TestNodeCollector(t *testing.T) {
 												"apiVersion": "v1",
 												"kind":       "Node",
 												"metadata": map[string]interface{}{
-													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
 													"labels":            map[string]interface{}{"test": "label"},
 													"name":              "test-node-3",
