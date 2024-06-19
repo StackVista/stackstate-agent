@@ -631,6 +631,9 @@ pre_release_deb:
       - always
   rules:
     - when: on_success
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/outcomes/pkg/*.deb
 
 pre_release_win:
   stage: pre_release
