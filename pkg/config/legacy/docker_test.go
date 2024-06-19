@@ -77,6 +77,7 @@ instances:
   - exec_start
   - exec_create
   collected_event_types: []
+  collect_container_topology: true
 `
 )
 
