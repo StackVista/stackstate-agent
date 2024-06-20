@@ -548,8 +548,7 @@ func TestExtraTags(t *testing.T) {
 	}{
 		{nil, "testing", "cluster_name", []string{"cluster_name:testing", "kube_cluster_name:testing"}},
 		{nil, "mycluster", "custom_name", []string{"custom_name:mycluster", "kube_cluster_name:mycluster"}},
-		// TODO: fix once we understand the issue. Temp fix, hard-code tooling cluster data.
-		{nil, "", "cluster_name", []string{"cluster_name:tooling-main.tooling.stackstate.io", "kube_cluster_name:tooling-main.tooling.stackstate.io"}},
+		{nil, "", "cluster_name", nil},
 		{nil, "testing", "", []string{"kube_cluster_name:testing"}},
 		// TODO: fix once we understand the issue. Temp fix, hard-code tooling cluster data.
 		{[]string{"one", "two"}, "", "", []string{"one", "two", "kube_cluster_name:tooling-main.tooling.stackstate.io"}},
