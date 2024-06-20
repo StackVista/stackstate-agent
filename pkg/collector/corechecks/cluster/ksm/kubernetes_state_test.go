@@ -119,11 +119,8 @@ func TestProcessMetrics(t *testing.T) {
 					val:  1,
 					tags: []string{
 						"kube_container_name:kube-state-metrics",
-						"container:kube-state-metrics",
 						"kube_namespace:default",
-						"namespace:default",
 						"pod_name:kube-state-metrics-b7fbc487d-4phhj",
-						"pod:kube-state-metrics-b7fbc487d-4phhj",
 						"node:minikube"},
 					hostname:      "minikube",
 					numberOfCalls: 1,
@@ -181,9 +178,7 @@ func TestProcessMetrics(t *testing.T) {
 					val:  1,
 					tags: []string{
 						"kube_namespace:default",
-						"namespace:default",
 						"kube_deployment:redis",
-						"deployment:redis",
 						"env:dev",
 						"service:redis",
 						"version:v1"},
@@ -279,9 +274,7 @@ func TestProcessMetrics(t *testing.T) {
 					val:  1,
 					tags: []string{
 						"kube_namespace:default",
-						"namespace:default",
 						"kube_stateful_set:redis",
-						"statefulset:redis",
 						"env:dev",
 						"service:redis",
 						"version:v1"},
@@ -320,9 +313,7 @@ func TestProcessMetrics(t *testing.T) {
 					val:  1,
 					tags: []string{
 						"kube_namespace:default",
-						"namespace:default",
 						"kube_deployment:redis",
-						"deployment:redis",
 						"env:dev"},
 					hostname:      "",
 					numberOfCalls: 1,
@@ -496,9 +487,7 @@ func TestProcessMetrics(t *testing.T) {
 					val:  1,
 					tags: []string{
 						"kube_namespace:default",
-						"namespace:default",
 						"pod_name:redis",
-						"pod:redis",
 						"pod_phase:Running"},
 					hostname:      "",
 					numberOfCalls: 1,
@@ -530,7 +519,6 @@ func TestProcessMetrics(t *testing.T) {
 					val:  1,
 					tags: []string{
 						"kube_namespace:default",
-						"namespace:default",
 						"persistentvolumeclaim:pvc",
 						"phase:Bound"},
 					hostname:      "",

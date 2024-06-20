@@ -58,6 +58,10 @@ function prepare() {
     cd "$CI_PROJECT_DIR" || exit
 }
 
+if [ "${WHAT}" = "ALL" ]; then
+    prepare
+fi
+
 if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS_DEB" ]; then
     if [ "${WHAT}" = "DEPS_DEB" ]; then
         prepare
