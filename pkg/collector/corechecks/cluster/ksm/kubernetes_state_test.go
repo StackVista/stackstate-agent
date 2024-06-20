@@ -1666,7 +1666,7 @@ func TestKSMCheckInitTags(t *testing.T) {
 				instance:    &KSMConfig{},
 				clusterName: "clustername",
 			},
-			expected: []string{"cluster_name:clustername", "kube_cluster_name:clustername"},
+			expected: []string{"kube_cluster_name:clustername"},
 		},
 		{
 			name:         "with global tags",
@@ -1681,7 +1681,7 @@ func TestKSMCheckInitTags(t *testing.T) {
 				instance:    &KSMConfig{Tags: []string{"check:tag1", "check:tag2"}},
 				clusterName: "clustername",
 			},
-			expected: []string{"check:tag1", "check:tag2", "cluster_name:clustername", "kube_cluster_name:clustername",
+			expected: []string{"check:tag1", "check:tag2", "kube_cluster_name:clustername",
 				"global:tag1", "global:tag2"},
 		},
 		{
@@ -1691,7 +1691,7 @@ func TestKSMCheckInitTags(t *testing.T) {
 				instance:    &KSMConfig{Tags: []string{"check:tag1", "check:tag2"}, DisableGlobalTags: true},
 				clusterName: "clustername",
 			},
-			expected: []string{"check:tag1", "check:tag2", "cluster_name:clustername", "kube_cluster_name:clustername"},
+			expected: []string{"check:tag1", "check:tag2", "kube_cluster_name:clustername"},
 		},
 	}
 
