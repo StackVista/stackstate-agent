@@ -302,7 +302,15 @@ func TestSeriesTooManyTags(t *testing.T) {
 			}
 			AddRecurrentSeries(ser)
 
-			s.On("SendServiceChecks", mock.Anything).Return(nil).Times(1)
+			//s.On("SendServiceChecks", mock.Anything).Return(nil).Times(1)
+
+			// Mock expectations with a custom argument matcher
+			s.On("SendServiceChecks", mock.MatchedBy(func(sc servicecheck.ServiceChecks) bool {
+				// Add any specific logic to match the expected service checks
+				// For simplicity, we assume any service checks are acceptable here
+				return true
+			})).Return(nil).Once()
+
 			s.On("SendIterableSeries", mock.Anything).Return(nil).Times(1)
 
 			demux.ForceFlushToSerializer(start, true)
