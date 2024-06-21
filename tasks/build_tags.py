@@ -66,7 +66,7 @@ AGENT_TAGS = {
     "netcgo",
     "oracle",
     "orchestrator",
-#     "otlp",
+    "otlp",
     "podman",
     "process",
     "python",
