@@ -550,18 +550,17 @@ func TestExtraTags(t *testing.T) {
 		{nil, "mycluster", "custom_name", []string{"custom_name:mycluster", "kube_cluster_name:mycluster"}},
 		{nil, "", "cluster_name", nil},
 		{nil, "testing", "", []string{"kube_cluster_name:testing"}},
-		// TODO: fix once we understand the issue. Temp fix, hard-code tooling cluster data.
 		{[]string{"one", "two"}, "", "", []string{"one", "two"}},
 		{[]string{"one", "two"}, "mycluster", "custom_name", []string{"one", "two", "custom_name:mycluster", "kube_cluster_name:mycluster"}},
 	} {
 		t.Run("", func(t *testing.T) {
-			clustername.ResetClusterName()
-			clustername.SetClusterNameState()
 			mockConfig := config.Mock(t)
 			mockConfig.SetWithoutSource("cluster_checks.extra_tags", tc.extraTagsConfig)
 			mockConfig.SetWithoutSource("cluster_name", tc.clusterNameConfig)
+			config.Datadog.SetWithoutSource("cluster_name", tc.clusterNameConfig)
 			mockConfig.SetWithoutSource("cluster_checks.cluster_tag_name", tc.tagNameConfig)
 
+			clustername.ResetClusterName()
 			//mockConfig.SetWithoutSource("cluster_name", "")
 			dispatcher := newDispatcher()
 			assert.EqualValues(t, tc.expected, dispatcher.extraTags)
