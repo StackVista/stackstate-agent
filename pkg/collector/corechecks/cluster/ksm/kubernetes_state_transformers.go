@@ -284,16 +284,9 @@ var allowedTerminatedReasons = map[string]struct{}{
 //nolint:revive // TODO(CINT) Fix revive linter
 func containerTerminatedReasonTransformer(s sender.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string, _ time.Time) {
 	if reason, found := metric.Labels["reason"]; found {
-		lcReason := strings.ToLower(reason)
-
 		// Filtering according to the reason here is paramount to limit cardinality
-		if _, allowed := allowedWaitingReasons[lcReason]; allowed {
-			s.Gauge(ksmMetricPrefix+"waiting", metric.Val, hostname, tags)
-		}
-
-		// Filtering according to the reason here is paramount to limit cardinality
-		if _, allowed := allowedTerminatedReasons[lcReason]; allowed {
-			s.Gauge(ksmMetricPrefix+"terminated", metric.Val, hostname, tags)
+		if _, allowed := allowedTerminatedReasons[strings.ToLower(reason)]; allowed {
+			s.Gauge(ksmMetricPrefix+"container.status_report.count.terminated", metric.Val, hostname, tags)
 		}
 	}
 }
