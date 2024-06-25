@@ -557,13 +557,13 @@ func TestExtraTags(t *testing.T) {
 			mockConfig := config.Mock(t)
 			mockConfig.SetWithoutSource("cluster_checks.extra_tags", tc.extraTagsConfig)
 			mockConfig.SetWithoutSource("cluster_name", tc.clusterNameConfig)
-			config.Datadog.SetWithoutSource("cluster_name", tc.clusterNameConfig)
 			mockConfig.SetWithoutSource("cluster_checks.cluster_tag_name", tc.tagNameConfig)
 
 			clustername.ResetClusterName()
-			//mockConfig.SetWithoutSource("cluster_name", "")
+			clustername.FlushProviderCatalog()
 			dispatcher := newDispatcher()
 			assert.EqualValues(t, tc.expected, dispatcher.extraTags)
+			clustername.PopulateProviderCatalog()
 		})
 	}
 }

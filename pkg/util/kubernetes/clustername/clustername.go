@@ -55,13 +55,23 @@ func newClusterNameData() *clusterNameData {
 
 var defaultClusterNameData *clusterNameData
 
-func init() {
-	defaultClusterNameData = newClusterNameData()
+// FlushProviderCatalog clears the ProviderCatalog
+func FlushProviderCatalog() {
+	ProviderCatalog = map[string]Provider{}
+}
+
+// PopulateProviderCatalog fills the ProviderCatalog with the available providers
+func PopulateProviderCatalog() {
 	ProviderCatalog = map[string]Provider{
 		"gce":   gce.GetClusterName,
 		"azure": azure.GetClusterName,
 		"ec2":   ec2.GetClusterName,
 	}
+}
+
+func init() {
+	defaultClusterNameData = newClusterNameData()
+	PopulateProviderCatalog()
 }
 
 func getClusterName(ctx context.Context, data *clusterNameData, hostname string) string {
@@ -89,7 +99,6 @@ func getClusterName(ctx context.Context, data *clusterNameData, hostname string)
 						"exceed 255 chars", data.clusterName, hostAlias)
 					log.Errorf("As a consequence, the cluster name provided by the config will be ignored")
 					data.clusterName = ""
-					return data.clusterName
 				}
 			}
 		}
