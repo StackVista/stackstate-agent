@@ -7,7 +7,6 @@ package clustername
 
 import (
 	"context"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
