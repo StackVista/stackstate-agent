@@ -47,12 +47,11 @@ func TestHostnameProvider(t *testing.T) {
 	}
 
 	clustername.ResetClusterName()
-
-	config.Datadog.SetWithoutSource("cluster_name", "")
-
+	clustername.FlushProviderCatalog()
 	hostName, err := GetHostname(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, "node-name", hostName)
+	clustername.PopulateProviderCatalog()
 
 	testClusterName := "laika"
 	mockConfig.SetWithoutSource("cluster_name", testClusterName)
@@ -93,11 +92,13 @@ func TestHostnameProviderInvalid(t *testing.T) {
 	testClusterName := "laika_invalid"
 	mockConfig.SetWithoutSource("cluster_name", testClusterName)
 	clustername.ResetClusterName() // reset state as clustername was already read
+	clustername.FlushProviderCatalog()
 
 	hostName, err := GetHostname(ctx)
 	assert.NoError(t, err)
 	// We won't use the clustername if its invalid RFC, we log an error and continue without the clustername and only hostname
 	assert.Equal(t, "node-name", hostName)
+	clustername.PopulateProviderCatalog()
 }
 
 func Test_makeClusterNameRFC1123Compliant(t *testing.T) {

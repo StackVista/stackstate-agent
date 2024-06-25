@@ -7,6 +7,7 @@ package clustername
 
 import (
 	"context"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,8 +57,11 @@ func TestGetClusterName(t *testing.T) {
 		"mx.gmail.com.",
 	} {
 		mockConfig.SetWithoutSource("cluster_name", invalidClusterName)
+		clustername.ResetClusterName()
+		clustername.FlushProviderCatalog()
 		freshData = newClusterNameData()
 		assert.Equal(t, "", getClusterName(ctx, freshData, "hostname"))
+		clustername.PopulateProviderCatalog()
 	}
 
 	mockConfig.SetWithoutSource("cluster_name", "")
