@@ -1,1 +1,0 @@
-../../../../../../cmd/agent/sts_install_script.sh

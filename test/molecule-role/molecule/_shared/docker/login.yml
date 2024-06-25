@@ -1,7 +1,0 @@
----
-- name: Docker login
-  docker_login:
-    registry: quay.io
-    username: "{{ quay_user }}"
-    password: "{{ quay_password }}"
-    reauthorize: yes

@@ -1,8 +1,0 @@
----
-- include_tasks: ../_shared/docker/login.yml
-- include_tasks: ../_shared/copy/copy-configuration-files.yml
-- include_tasks: ../_shared/docker/copy-docker-base.yml
-- include_tasks: ../_shared/copy/copy-verify-and-create-script-file.yml
-- include_tasks: ../_shared/process/gather-facts.yml
-- include_tasks: ../_shared/env/agent-host-branch-env.yml
-- include_tasks: ../_shared/copy/copy-docker-log-backup-script.yml
