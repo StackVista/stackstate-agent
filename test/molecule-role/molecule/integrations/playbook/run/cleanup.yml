@@ -1,6 +1,0 @@
----
-- name: Cleanup
-  hosts: agent-integrations
-  gather_facts: true
-  tasks:
-    - include_tasks: ./cleanup.tasks.yml

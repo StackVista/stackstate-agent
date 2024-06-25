@@ -1,6 +1,0 @@
----
-- name: Prepare Integrations and Dependencies
-  hosts: agent-integrations
-  gather_facts: false
-  tasks:
-    - include_tasks: ./prepare.tasks.yml

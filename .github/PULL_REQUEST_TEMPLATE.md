@@ -7,7 +7,7 @@
 ### Step 3: Did you add / update tests for your changes in the right area?
 - [ ] Unit/Component test
 - [ ] Integration test
-- [ ] E2E/Molecule test
+- [ ] E2E test
 
 
 ### Step 4: I'm confident that everything is properly tested:

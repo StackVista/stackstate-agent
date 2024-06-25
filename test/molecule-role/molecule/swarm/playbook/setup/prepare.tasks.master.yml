@@ -1,4 +1,0 @@
----
-- include_tasks: ../_shared/docker/docker-node-ls.yml
-- include_tasks: ../_shared/docker/docker-swam-init.yml
-- include_tasks: ../_shared/docker/docker-swam-join-token.yml
