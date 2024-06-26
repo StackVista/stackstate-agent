@@ -162,5 +162,12 @@ func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigD
 	if err != nil {
 		return err
 	}
+
+	// sts init topology collector
+	if /*c.instance.CollectSwarmTopology && */ c.topologyCollector == nil {
+		topologyCollector := MakeTopologyCollector()
+		c.topologyCollector = topologyCollector
+	}
+
 	return c.instanceConfigure(data)
 }
