@@ -56,11 +56,11 @@ func TestGetClusterName(t *testing.T) {
 		"mx.gmail.com.",
 	} {
 		mockConfig.SetWithoutSource("cluster_name", invalidClusterName)
-		clustername.ResetClusterName()
-		clustername.FlushProviderCatalog()
+		ResetClusterName()
+		FlushProviderCatalog()
 		freshData = newClusterNameData()
 		assert.Equal(t, "", getClusterName(ctx, freshData, "hostname"))
-		clustername.PopulateProviderCatalog()
+		PopulateProviderCatalog()
 	}
 
 	mockConfig.SetWithoutSource("cluster_name", "")
