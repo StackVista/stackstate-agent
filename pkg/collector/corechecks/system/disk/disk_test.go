@@ -139,7 +139,7 @@ func TestDiskCheck(t *testing.T) {
 	mock.On("Rate", "system.disk.write_time_pct", 41860.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 
 	mock.On("Commit").Return().Times(1)
-	err := diskCheck.Run()
+	err := diskCheck.Run() // [sts] - added error handling for better logging when things fail
 
 	assert.NoError(t, err)
 

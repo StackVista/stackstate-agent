@@ -133,8 +133,9 @@ func (h Data) FromFargate() bool {
 
 func saveHostname(cacheHostnameKey string, hostname string, providerName string) Data {
 	data := Data{
-		Hostname: hostname,
-		Provider: providerName,
+		Hostname:    hostname,
+		Provider:    providerName,
+		Identifiers: make([]string, 0),
 	}
 
 	cache.Cache.Set(cacheHostnameKey, data, cache.NoExpiration)
