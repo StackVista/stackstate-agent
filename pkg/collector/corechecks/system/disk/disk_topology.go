@@ -32,7 +32,6 @@ func MakeTopologyCollector() *TopologyCollector {
 
 // BuildTopology creates / collects and produces disk topology
 func (dtc *TopologyCollector) BuildTopology(partitions []disk.PartitionStat) error {
-	//ctx := context.TODO()
 	sender := batcher.GetBatcher()
 
 	// try to get the agent hostname to use in the host component
@@ -41,16 +40,6 @@ func (dtc *TopologyCollector) BuildTopology(partitions []disk.PartitionStat) err
 		log.Warnf("Can't get hostname for host running the disk integration, not reporting a host: %s", err)
 		return err
 	}
-
-	// If Azure, populate identifiers
-	//if hostnameData.Provider == "azure" {
-	//	azureIdentifiers, idsErr := azure.HostnameIdentifiers(ctx)
-	//	if idsErr != nil {
-	//		log.Warnf("Failed to get Azure host identifiers: %v", idsErr)
-	//	} else {
-	//		hostnameData.Identifiers = azureIdentifiers
-	//	}
-	//}
 
 	// produce a host component with all the disk devices as metadata
 	diskComponent := dtc.createDiskComponent(hostnameData.Hostname, hostnameData.Identifiers, partitions)

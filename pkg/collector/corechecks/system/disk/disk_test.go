@@ -139,7 +139,9 @@ func TestDiskCheck(t *testing.T) {
 	mock.On("Rate", "system.disk.write_time_pct", 41860.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 
 	mock.On("Commit").Return().Times(1)
-	diskCheck.Run()
+	err := diskCheck.Run()
+
+	assert.NoError(t, err)
 
 	mock.AssertExpectations(t)
 	mock.AssertNumberOfCalls(t, "MonotonicCount", expectedMonoCounts)
