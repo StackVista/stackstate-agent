@@ -7,9 +7,9 @@
 package topologycollectors
 
 import (
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/stretchr/testify/assert"

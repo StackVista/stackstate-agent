@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/util/hostname"
 	"strings"
 	"time"
@@ -104,8 +105,8 @@ func KubernetesAPIEventsFactory() check.Check {
 }
 
 // Configure parses the check configuration and init the check.
-func (k *EventsCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
-	err := k.ConfigureKubeAPICheck(senderManager, integrationConfigDigest, config, initConfig, source)
+func (k *EventsCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+	err := k.ConfigureKubeAPICheck(senderManager, checkManager, integrationConfigDigest, config, initConfig, source)
 	if err != nil {
 		return err
 	}

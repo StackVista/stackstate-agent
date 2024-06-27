@@ -2,10 +2,10 @@ package testtransaction
 
 import (
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
 	"io/ioutil"
 	"log"
 	"os"

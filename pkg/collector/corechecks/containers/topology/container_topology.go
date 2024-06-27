@@ -4,15 +4,13 @@ package topology
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/batcher"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/spec"
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/hostname"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 )
 
 const (
@@ -41,30 +39,6 @@ func MakeContainerTopologyCollector(runtime string) *ContainerTopologyCollector 
 		Hostname: hostname,
 		Runtime:  runtime,
 	}
-}
-
-// BuildContainerTopology collects all docker container topology
-func (ctc *ContainerTopologyCollector) BuildContainerTopology(containerUtil spec.ContainerUtil) error {
-	log.Infof("Running container topology collector for '%s' runtime", ctc.Runtime)
-	sender := batcher.GetBatcher()
-	if sender == nil {
-		return errors.New("no batcher instance available, skipping BuildContainerTopology")
-	}
-
-	// collect all containers as topology components
-	containerComponents, err := ctc.collectContainers(containerUtil)
-	if err != nil {
-		return err
-	}
-
-	// submit all collected topology components
-	for _, component := range containerComponents {
-		sender.SubmitComponent(ctc.CheckID, ctc.TopologyInstance, *component)
-	}
-
-	sender.SubmitComplete(ctc.CheckID)
-
-	return nil
 }
 
 // MapContainerDataToTopologyData takes a spec.Container as input and outputs topology.Data

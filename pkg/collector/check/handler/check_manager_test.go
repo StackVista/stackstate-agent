@@ -2,25 +2,17 @@ package handler
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionmanager"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestMakeCheckManager(t *testing.T) {
-	checkManager := newCheckManager()
-	expected := &CheckManager{
-		checkHandlers: make(map[string]CheckHandler),
-		config:        GetCheckManagerConfig(),
-	}
-
-	assert.EqualValues(t, expected, checkManager)
-}
-
 func TestCheckManagerSubscription(t *testing.T) {
-	checkManager := newCheckManager()
-	testCheck := &check.STSTestCheck{Name: "test-check-1"}
+	checkManager := NewCheckManager(batcher.NewMockBatcher(), transactionbatcher.NewMockTransactionalBatcher(), transactionmanager.NewMockTransactionManager())
+	testCheck := &test.STSTestCheck{Name: "test-check-1"}
 
 	// assert that we start at an empty state
 	assert.EqualValues(t, checkManager.checkHandlers, map[string]CheckHandler{})
@@ -37,7 +29,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	assert.Equal(t, "NonTransactionalCheckHandler", ch.Name())
 
 	// subscribe another check handler and assert it
-	testCheck2 := &check.STSTestCheck{Name: "test-check-2"}
+	testCheck2 := &test.STSTestCheck{Name: "test-check-2"}
 	checkManager.RegisterCheckHandler(testCheck2, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	_, found = checkManager.checkHandlers[testCheck.String()]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
@@ -66,28 +58,4 @@ func TestCheckManagerSubscription(t *testing.T) {
 	checkManager.Stop()
 	assert.Equal(t, 0, len(checkManager.checkHandlers))
 
-}
-
-func TestCheckManagerSubscriptionTransactionalityDisabled(t *testing.T) {
-	config.Datadog.SetWithoutSource("check_transactionality_enabled", false)
-
-	checkManager := newCheckManager()
-	testCheck := &check.STSTestCheck{Name: "test-check"}
-	nCH := MakeNonTransactionalCheckHandler(testCheck, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
-
-	ch := checkManager.RegisterCheckHandler(testCheck, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
-	// assert that the test check didn't register a transactional check handler and defaults to a non-transactional check handler
-	assert.Equal(t, nCH, ch)
-
-	checkManager.GetCheckHandler(testCheck.ID())
-	// assert that we get the registered non-transactional check handler
-	assert.Equal(t, nCH, ch)
-
-	nonRegisteredCheck := &check.STSTestCheck{Name: "non-registered-check"}
-	actualCH := checkManager.GetCheckHandler(nonRegisteredCheck.ID())
-	expectedCH := MakeNonTransactionalCheckHandler(NewCheckIdentifier(nonRegisteredCheck.ID()), nil, nil)
-	assert.Equal(t, expectedCH, actualCH)
-
-	// default to true again
-	config.Datadog.SetWithoutSource("check_transactionality_enabled", true)
 }

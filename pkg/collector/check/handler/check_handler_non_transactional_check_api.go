@@ -2,19 +2,17 @@ package handler
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/batcher"
-	checkState "github.com/DataDog/datadog-agent/pkg/collector/check/state"
-	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 )
 
 // StartTransaction "upgrades" the non-transactional check handler to a transactional check handler, registers it in the
-// check manager and calls StartTransaction on the newly created transactional check handler.
+// check transactionalManager and calls StartTransaction on the newly created transactional check handler.
 func (ch *NonTransactionalCheckHandler) StartTransaction() string {
-	transactionalCheckHandler := GetCheckManager().MakeCheckHandlerTransactional(ch.ID())
+	transactionalCheckHandler := ch.manager.MakeCheckHandlerTransactional(ch.ID())
 	if transactionalCheckHandler != nil {
 		return transactionalCheckHandler.StartTransaction()
 	}
@@ -38,7 +36,7 @@ func (ch *NonTransactionalCheckHandler) SetTransactionState(string, string) {
 
 // SetState is used to commit state for a given state key and CheckState
 func (ch *NonTransactionalCheckHandler) SetState(key string, state string) {
-	err := checkState.GetCheckStateManager().SetState(key, state)
+	err := ch.stateManager.SetState(key, state)
 	if err != nil {
 		_ = log.Errorf("error occurred when setting state for check %s with value %s->%s, %s", ch.ID(), key, state, err)
 	}
@@ -46,7 +44,7 @@ func (ch *NonTransactionalCheckHandler) SetState(key string, state string) {
 
 // GetState returns a CheckState for a given key
 func (ch *NonTransactionalCheckHandler) GetState(key string) string {
-	s, err := checkState.GetCheckStateManager().GetState(key)
+	s, err := ch.stateManager.GetState(key)
 	if err != nil {
 		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
 	}
@@ -56,51 +54,52 @@ func (ch *NonTransactionalCheckHandler) GetState(key string) string {
 
 // SubmitComponent submits a component to the Global Batcher to be batched.
 func (ch *NonTransactionalCheckHandler) SubmitComponent(instance topology.Instance, component topology.Component) {
-	batcher.GetBatcher().SubmitComponent(ch.ID(), instance, component)
+	ch.batcher.SubmitComponent(ch.ID(), instance, component)
 }
 
 // SubmitRelation submits a relation to the Global Batcher to be batched.
 func (ch *NonTransactionalCheckHandler) SubmitRelation(instance topology.Instance, relation topology.Relation) {
-	batcher.GetBatcher().SubmitRelation(ch.ID(), instance, relation)
+	ch.batcher.SubmitRelation(ch.ID(), instance, relation)
 }
 
 // SubmitStartSnapshot submits a start snapshot to the Global Batcher to be batched.
 func (ch *NonTransactionalCheckHandler) SubmitStartSnapshot(instance topology.Instance) {
-	batcher.GetBatcher().SubmitStartSnapshot(ch.ID(), instance)
+	ch.batcher.SubmitStartSnapshot(ch.ID(), instance)
 }
 
 // SubmitStopSnapshot submits a stop snapshot to the Global Batcher to be batched.
 func (ch *NonTransactionalCheckHandler) SubmitStopSnapshot(instance topology.Instance) {
-	batcher.GetBatcher().SubmitStopSnapshot(ch.ID(), instance)
+	ch.batcher.SubmitStopSnapshot(ch.ID(), instance)
 }
 
 // SubmitDelete submits a topology element delete to the Global Batcher to be batched.
 func (ch *NonTransactionalCheckHandler) SubmitDelete(instance topology.Instance, topologyElementID string) {
-	batcher.GetBatcher().SubmitDelete(ch.ID(), instance, topologyElementID)
+	ch.batcher.SubmitDelete(ch.ID(), instance, topologyElementID)
 }
 
 // SubmitHealthCheckData submits health check data to the Global Batcher to be batched.
 func (ch *NonTransactionalCheckHandler) SubmitHealthCheckData(stream health.Stream, data health.CheckData) {
-	batcher.GetBatcher().SubmitHealthCheckData(ch.ID(), stream, data)
+	ch.batcher.SubmitHealthCheckData(ch.ID(), stream, data)
 }
 
 // SubmitHealthStartSnapshot submits a health start snapshot to the Global Batcher to be batched.
 func (ch *NonTransactionalCheckHandler) SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int) {
-	batcher.GetBatcher().SubmitHealthStartSnapshot(ch.ID(), stream, intervalSeconds, expirySeconds)
+	ch.batcher.SubmitHealthStartSnapshot(ch.ID(), stream, intervalSeconds, expirySeconds)
 }
 
 // SubmitHealthStopSnapshot submits a health stop snapshot to the Global Batcher to be batched.
 func (ch *NonTransactionalCheckHandler) SubmitHealthStopSnapshot(stream health.Stream) {
-	batcher.GetBatcher().SubmitHealthStopSnapshot(ch.ID(), stream)
+	ch.batcher.SubmitHealthStopSnapshot(ch.ID(), stream)
 }
 
 // SubmitRawMetricsData submits a raw metric value to the Global Batcher to be batched.
-func (ch *NonTransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
-	batcher.GetBatcher().SubmitRawMetricsData(ch.ID(), data)
+func (ch *NonTransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawMetric) {
+	ch.batcher.SubmitRawMetricsData(ch.ID(), data)
 }
 
 // SubmitEvent submits an event to the forwarder.
 func (ch *NonTransactionalCheckHandler) SubmitEvent(event event.Event) {
+	// STS When the senders are not global anymore, we should also inject this.
 	sender, err := aggregator.Senders.GetSender(ch.ID())
 	if err != nil || sender == nil {
 		_ = log.Errorf("Error submitting metric to the Sender: %v", err)
@@ -111,5 +110,5 @@ func (ch *NonTransactionalCheckHandler) SubmitEvent(event event.Event) {
 
 // SubmitComplete submits a complete to the Global Batcher.
 func (ch *NonTransactionalCheckHandler) SubmitComplete() {
-	batcher.GetBatcher().SubmitComplete(ch.ID())
+	ch.batcher.SubmitComplete(ch.ID())
 }

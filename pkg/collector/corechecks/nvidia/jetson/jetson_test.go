@@ -8,6 +8,7 @@
 package nvidia
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ const (
 func TestNano(t *testing.T) {
 	tegraCheck := new(JetsonCheck)
 	mock := mocksender.NewMockSender(tegraCheck.ID())
-	tegraCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	tegraCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	assert.Equal(t, tegraCheck.tegraStatsPath, "/usr/bin/tegrastats")
 
@@ -81,7 +82,7 @@ func TestNano(t *testing.T) {
 func TestTX1(t *testing.T) {
 	tegraCheck := new(JetsonCheck)
 	mock := mocksender.NewMockSender(tegraCheck.ID())
-	tegraCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	tegraCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	assert.Equal(t, tegraCheck.tegraStatsPath, "/usr/bin/tegrastats")
 
@@ -134,7 +135,7 @@ func TestTX1(t *testing.T) {
 func TestTX2(t *testing.T) {
 	tegraCheck := new(JetsonCheck)
 	mock := mocksender.NewMockSender(tegraCheck.ID())
-	tegraCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	tegraCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	assert.Equal(t, tegraCheck.tegraStatsPath, "/usr/bin/tegrastats")
 
@@ -197,7 +198,7 @@ func TestTX2(t *testing.T) {
 func TestAgxXavier(t *testing.T) {
 	tegraCheck := new(JetsonCheck)
 	mock := mocksender.NewMockSender(tegraCheck.ID())
-	tegraCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	tegraCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	assert.Equal(t, tegraCheck.tegraStatsPath, "/usr/bin/tegrastats")
 	mock.On("Gauge", "nvidia.jetson.mem.used", 721.0*mb, "", []string(nil)).Return().Times(1)
@@ -264,7 +265,7 @@ func TestAgxXavier(t *testing.T) {
 func TestXavierNx(t *testing.T) {
 	tegraCheck := new(JetsonCheck)
 	mock := mocksender.NewMockSender(tegraCheck.ID())
-	tegraCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	tegraCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	assert.Equal(t, tegraCheck.tegraStatsPath, "/usr/bin/tegrastats")
 	mock.On("Gauge", "nvidia.jetson.mem.used", 4412.0*mb, "", []string(nil)).Return().Times(1)

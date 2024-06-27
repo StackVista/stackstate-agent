@@ -372,9 +372,6 @@ func InitConfig(config pkgconfigmodel.Config) {
 	config.BindEnvAndSetDefault("check_state_expiration_duration", DefaultCheckStateExpirationDuration)
 	config.BindEnvAndSetDefault("check_state_purge_duration", DefaultCheckStatePurgeDuration)
 
-	// [sts] check manager environment variables
-	config.BindEnvAndSetDefault("check_transactionality_enabled", true)
-
 	// [sts] retryable http client environment variables
 	config.BindEnvAndSetDefault("transactional_forwarder_retry_min", 1*time.Second)
 	config.BindEnvAndSetDefault("transactional_forwarder_retry_max", 10*time.Second)
@@ -1361,11 +1358,11 @@ func GetTxManagerConfig() (int, time.Duration, time.Duration, time.Duration) {
 	txBufferSize := Datadog.GetInt("transaction_manager_channel_buffer_size")
 	// get the checkmanager duration and convert it to duration in seconds. Both transaction_timeout_duration_seconds and
 	// transaction_eviction_duration_seconds have default values.
+	txTickerInterval := time.Second * time.Duration(Datadog.GetInt("transaction_ticket_interval_seconds"))
 	txTimeoutDuration := time.Second * time.Duration(Datadog.GetInt("transaction_timeout_duration_seconds"))
 	txEvictionDuration := time.Second * time.Duration(Datadog.GetInt("transaction_eviction_duration_seconds"))
-	txTickerInterval := time.Second * time.Duration(Datadog.GetInt("transaction_ticket_interval_seconds"))
 
-	return txBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval
+	return txBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration
 }
 
 // LoadProxyFromEnv overrides the proxy settings with environment variables

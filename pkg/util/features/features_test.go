@@ -2,12 +2,12 @@ package features
 
 import (
 	"errors"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/httpclient"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/httpclient"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,6 +66,9 @@ func newRetryableHTTPClientStub(response *httpclient.HTTPResponse) RetryableHTTP
 
 func (h RetryableHTTPClientStub) Get(path string) *httpclient.HTTPResponse {
 	return h.response
+}
+func (h RetryableHTTPClientStub) GetClient() *http.Client {
+	return nil
 }
 func (h RetryableHTTPClientStub) Put(path string, body []byte) *httpclient.HTTPResponse {
 	return h.response

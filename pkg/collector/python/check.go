@@ -52,6 +52,7 @@ const (
 //nolint:revive // TODO(AML) Fix revive linter
 type PythonCheck struct {
 	senderManager  sender.SenderManager
+	checkManager   handler.CheckManager
 	id             checkid.ID
 	version        string
 	instance       *C.rtloader_pyobject_t
@@ -67,7 +68,7 @@ type PythonCheck struct {
 }
 
 // NewPythonCheck conveniently creates a PythonCheck instance
-func NewPythonCheck(senderManager sender.SenderManager, name string, class *C.rtloader_pyobject_t) (*PythonCheck, error) {
+func NewPythonCheck(senderManager sender.SenderManager, checkManager handler.CheckManager, name string, class *C.rtloader_pyobject_t) (*PythonCheck, error) {
 	glock, err := newStickyLock()
 	if err != nil {
 		return nil, err
@@ -78,6 +79,7 @@ func NewPythonCheck(senderManager sender.SenderManager, name string, class *C.rt
 
 	pyCheck := &PythonCheck{
 		senderManager: senderManager,
+		checkManager:  checkManager,
 		ModuleName:    name,
 		class:         class,
 		interval:      defaults.DefaultCheckInterval,
@@ -108,7 +110,7 @@ func (c *PythonCheck) runCheck(commitMetrics bool) error {
 	}
 	defer C.rtloader_free(rtloader, unsafe.Pointer(cResult))
 
-	handler.GetCheckManager().GetCheckHandler(c.ID()).SubmitComplete() // [sts]
+	c.checkManager.GetCheckHandler(c.ID()).SubmitComplete() // [sts]
 
 	if commitMetrics {
 		s, err := c.senderManager.GetSender(c.ID())
@@ -244,7 +246,7 @@ func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data)
 // Configure the Python check from YAML data
 //
 //nolint:revive // TODO(AML) Fix revive linter
-func (c *PythonCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
+func (c *PythonCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
 	// Generate check ID
 	c.id = checkid.BuildID(c.String(), integrationConfigDigest, data, initConfig)
 

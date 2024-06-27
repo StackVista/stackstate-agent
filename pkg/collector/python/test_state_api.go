@@ -4,8 +4,7 @@ package python
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"log"
@@ -32,12 +31,12 @@ func testSetAndGetState(t *testing.T) {
 	mockConfig.SetWithoutSource("run_path", path)
 	mockConfig.SetWithoutSource("check_state_root_path", path)
 
-	SetupTransactionalComponents()
-	testCheck := &check.STSTestCheck{
+	_, _, _, checkManager := SetupTransactionalComponents()
+	testCheck := &test.STSTestCheck{
 		Name: "check-id-set-state",
 	}
 
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(string(testCheck.ID()))
 	stateKey := C.CString("random-state-id")

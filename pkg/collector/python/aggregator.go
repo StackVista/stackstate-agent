@@ -14,7 +14,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	metricsevent "github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/metrics/servicecheck"
@@ -154,7 +153,7 @@ func SubmitEvent(checkID *C.char, event *C.event_t) {
 	}
 
 	// [sts] send events via die check handler
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitEvent(_event)
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitEvent(_event)
 
 	return
 }

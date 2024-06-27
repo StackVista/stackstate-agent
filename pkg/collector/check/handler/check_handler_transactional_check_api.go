@@ -2,12 +2,12 @@ package handler
 
 import (
 	"fmt"
-	checkState "github.com/DataDog/datadog-agent/pkg/collector/check/state"
-	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"github.com/google/uuid"
 )
 
@@ -16,7 +16,7 @@ import (
 func (ch *TransactionalCheckHandler) StartTransaction() string {
 	transactionID := uuid.New().String()
 	ch.transactionChannel <- StartTransaction{
-		CheckID:       ch.ID(),
+		CheckID: check.CheckID(ch.ID()),
 		TransactionID: transactionID,
 	}
 	return transactionID
@@ -46,7 +46,7 @@ func (ch *TransactionalCheckHandler) SetTransactionState(key string, state strin
 
 // SetState is used to commit state for a given state key and CheckState
 func (ch *TransactionalCheckHandler) SetState(key string, state string) {
-	err := checkState.GetCheckStateManager().SetState(key, state)
+	err := ch.stateManager.SetState(key, state)
 	if err != nil {
 		reason := fmt.Sprintf("error occurred when setting state for %s->%s, %s", key, state, err)
 		// trigger cancel transaction, check reload
@@ -56,7 +56,7 @@ func (ch *TransactionalCheckHandler) SetState(key string, state string) {
 
 // GetState returns a CheckState for a given key
 func (ch *TransactionalCheckHandler) GetState(key string) string {
-	s, err := checkState.GetCheckStateManager().GetState(key)
+	s, err := ch.stateManager.GetState(key)
 	if err != nil {
 		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
 	}
@@ -125,7 +125,7 @@ func (ch *TransactionalCheckHandler) SubmitHealthStopSnapshot(stream health.Stre
 }
 
 // SubmitRawMetricsData submits a raw metric value to the current transaction channel to be forwarded.
-func (ch *TransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
+func (ch *TransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawMetric) {
 	ch.currentTransactionChannel <- SubmitRawMetric{
 		Value: data,
 	}

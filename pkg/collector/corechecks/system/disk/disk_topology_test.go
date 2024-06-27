@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/batcher"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
+	"github.com/DataDog/datadog-agent/pkg/collector/python"
 	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -59,7 +60,7 @@ func TestDiskTopologyCollector_createComponent(t *testing.T) {
 
 func TestDiskTopologyCollector_BuildTopology(t *testing.T) {
 	// set up the mock batcher
-	mockBatcher := batcher.NewMockBatcher()
+	mockBatcher, _, _, checkManager := python.SetupTransactionalComponents()
 	// set mock hostname
 	testHostname := "test-hostname"
 	config.Datadog.SetWithoutSource("hostname", testHostname)
@@ -86,7 +87,7 @@ func TestDiskTopologyCollector_BuildTopology(t *testing.T) {
 		},
 	}
 
-	err := dtc.BuildTopology(partitions)
+	err := dtc.BuildTopology(partitions, checkManager.GetCheckHandler(diskCheckID))
 	assert.NoError(t, err)
 
 	producedTopology := mockBatcher.CollectedTopology.Flush()

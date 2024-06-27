@@ -2,15 +2,14 @@ package batcher
 
 import (
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
-	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 )
 
 // MockBatcher mocks implementation of a batcher
 type MockBatcher struct {
 	CollectedTopology BatchBuilder
-	Errors            []error
 }
 
 func createMockBatcher() *MockBatcher {
@@ -62,7 +61,7 @@ func (batcher *MockBatcher) SubmitHealthStopSnapshot(checkID checkid.ID, stream 
 }
 
 // SubmitRawMetricsData mock
-func (batcher *MockBatcher) SubmitRawMetricsData(checkID checkid.ID, rawMetric telemetry.RawMetrics) {
+func (batcher *MockBatcher) SubmitRawMetricsData(checkID checkid.ID, rawMetric telemetry.RawMetric) {
 	batcher.CollectedTopology.AddRawMetricsData(checkID, rawMetric)
 }
 
@@ -73,8 +72,3 @@ func (batcher *MockBatcher) SubmitComplete(checkID checkid.ID) {
 
 // Shutdown mock
 func (batcher *MockBatcher) Shutdown() {}
-
-// SubmitError keeps track of thrown errors
-func (batcher *MockBatcher) SubmitError(checkID checkid.ID, err error) {
-	batcher.Errors = append(batcher.Errors, err)
-}

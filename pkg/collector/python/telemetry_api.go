@@ -9,11 +9,10 @@ package python
 
 import (
 	"encoding/json"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
 )
 
 /*
@@ -37,13 +36,19 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 
 	var err error
 
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	var topologyEvent event.Event
 	rawEvent := C.GoString(data)
 	err = json.Unmarshal([]byte(rawEvent), &topologyEvent)
 
 	if err == nil {
 		// [sts] send events via die check handler
-		handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitEvent(topologyEvent)
+		checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitEvent(topologyEvent)
 	} else {
 		_ = log.Errorf("Empty topology event not sent. Raw: %v, Json: %v, Error: %v", rawEvent,
 			topologyEvent.String(), err)
@@ -55,13 +60,19 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 //export SubmitRawMetricsData
 func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C.char, hostname *C.char, timestamp C.longlong) {
 	goCheckID := C.GoString(checkID)
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	rawName := C.GoString(name)
 	rawHostname := C.GoString(hostname)
 	rawValue := float64(value)
 	rawTimestamp := int64(timestamp)
 	rawTags := cStringArrayToSlice(tags)
 
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetrics{
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetric{
 		Name:      rawName,
 		Timestamp: rawTimestamp,
 		HostName:  rawHostname,

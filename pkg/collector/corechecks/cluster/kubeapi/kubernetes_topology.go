@@ -8,7 +8,9 @@ package kubeapi
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"sync"
 	"time"
 
@@ -18,7 +20,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	collectors "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/topologycollectors"
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
@@ -46,8 +47,8 @@ func warnDisabledResource(name string, additionalWarning string, isEnabled bool)
 }
 
 // Configure parses the check configuration and init the check.
-func (t *TopologyCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
-	err := t.ConfigureKubeAPICheck(senderManager, integrationConfigDigest, config, initConfig, source)
+func (t *TopologyCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+	err := t.ConfigureKubeAPICheck(senderManager, checkManager, integrationConfigDigest, config, initConfig, source)
 	if err != nil {
 		return err
 	}
@@ -83,11 +84,6 @@ func (t *TopologyCheck) getKubernetesVersion() *version.Info {
 	}
 	log.Debugf("Kubernetes version: %+v", info)
 	return info
-}
-
-// SetSubmitter sets the topology submitter for the Topology Check
-func (t *TopologyCheck) SetSubmitter(submitter TopologySubmitter) {
-	t.submitter = submitter
 }
 
 /*
@@ -128,7 +124,7 @@ func (t *TopologyCheck) Run() error {
 	t.instance.Instance = topology.Instance{Type: string(collectors.Kubernetes), URL: t.instance.ClusterName}
 
 	// set up the batcher for this instance
-	t.submitter = NewBatchTopologySubmitter(t.instance.CheckID, t.instance.Instance)
+	t.submitter = NewBatchTopologySubmitter(t.GetCheckHandler(), t.instance.Instance)
 
 	// start the topology snapshot with the batch-er
 	t.submitter.SubmitStartSnapshot()

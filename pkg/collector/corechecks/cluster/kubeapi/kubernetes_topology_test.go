@@ -10,15 +10,15 @@ import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"strconv"
 	"sync"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/batcher"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	collectors "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/topologycollectors"
 	agentConfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +45,6 @@ var optionalRules = []string{
 
 func TestDisablingAnyResourceWithoutDisablingCollectorCauseAnError(t *testing.T) {
 	for _, rule := range optionalRules {
-		mBatcher := batcher.NewMockBatcher()
 		check := KubernetesAPITopologyFactory().(*TopologyCheck)
 		check.ac = MockAPIClient([]Rule{parseRule(rule)})
 
@@ -54,19 +53,18 @@ cluster_name: mycluster
 collect_topology: true
 csi_pv_mapper_enabled: true
 `
-		err := check.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, []byte(nothingIsDisabledConfig), nil, "")
+		err := check.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(nothingIsDisabledConfig), nil, "")
 		check.SetFeatures(features.All())
 		assert.NoError(t, err)
 
 		err = check.Run()
 		assert.NoError(t, err, "check itself should succeed despite failures of a particular collector")
 
-		assert.NotEmpty(t, mBatcher.Errors, "Disabling %v should cause an error", rule)
+		assert.NotEmpty(t, check.submitter.GetErrors(), "Disabling %v should cause an error", rule)
 	}
 }
 
 func TestDisablingAllPossibleCollectorsKeepErrorsOff(t *testing.T) {
-	mBatcher := batcher.NewMockBatcher()
 	check := KubernetesAPITopologyFactory().(*TopologyCheck)
 	check.ac = MockAPIClient(parseRules(optionalRules))
 	allResourcesAreDisabledConfig := `
@@ -88,14 +86,14 @@ resources:
   cronjobs: false
   secrets: false
 `
-	err := check.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, []byte(allResourcesAreDisabledConfig), nil, "")
+	err := check.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(allResourcesAreDisabledConfig), nil, "")
 	check.SetFeatures(features.All())
 	assert.NoError(t, err)
 
 	err = check.Run()
 	assert.NoError(t, err, "check should succeed")
 
-	assert.Empty(t, mBatcher.Errors, "No errors are expected because all resources are disabled in config")
+	assert.Empty(t, check.submitter.GetErrors(), "No errors are expected because all resources are disabled in config")
 }
 
 func TestRunClusterCollectors(t *testing.T) {
@@ -115,7 +113,7 @@ func TestRunClusterCollectors(t *testing.T) {
 
 func testConfigParsed(t *testing.T, input string, expected TopologyConfig) {
 	check := KubernetesAPITopologyFactory().(*TopologyCheck)
-	err := check.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, []byte(input), []byte(""), "whatever")
+	err := check.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(input), []byte(""), "whatever")
 	assert.NoError(t, err)
 	assert.EqualValues(t, &expected, check.instance)
 }
@@ -219,6 +217,7 @@ func NewTestTopologySubmitter(t *testing.T, checkID checkid.ID, instance topolog
 		t:        t,
 		CheckID:  checkID,
 		Instance: instance,
+		Errors:   make([]error, 0, 0),
 	}
 }
 
@@ -227,6 +226,7 @@ type TestTopologySubmitter struct {
 	t        *testing.T
 	CheckID  checkid.ID
 	Instance topology.Instance
+	Errors   []error
 }
 
 func (b *TestTopologySubmitter) SubmitStartSnapshot() {}
@@ -251,6 +251,14 @@ func (b *TestTopologySubmitter) SubmitRelation(relation *topology.Relation) {
 func (b *TestTopologySubmitter) HandleError(err error) {
 	// match the error message
 	assert.Equal(b.t, "ErrorTestCollector", err.Error())
+	b.Errors = append(b.Errors, err)
+}
+
+// HandleError handles any errors during topology gathering
+func (b *TestTopologySubmitter) GetErrors() []error {
+	err := b.Errors
+	b.Errors = make([]error, 0, 0)
+	return err
 }
 
 // TestCollector implements the ClusterTopologyCollector interface.

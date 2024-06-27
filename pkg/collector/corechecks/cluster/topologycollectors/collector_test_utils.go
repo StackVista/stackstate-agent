@@ -7,9 +7,9 @@
 package topologycollectors
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/version"
 	"testing"

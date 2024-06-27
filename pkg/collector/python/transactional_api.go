@@ -8,8 +8,8 @@
 package python
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 /*
@@ -30,7 +30,14 @@ import "C"
 //export StartTransaction
 func StartTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).StartTransaction()
+
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).StartTransaction()
 }
 
 // StopTransaction stops a transaction
@@ -38,7 +45,14 @@ func StartTransaction(id *C.char) {
 //export StopTransaction
 func StopTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).StopTransaction()
+
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).StopTransaction()
 }
 
 // DiscardTransaction cancels a transaction
@@ -46,8 +60,16 @@ func StopTransaction(id *C.char) {
 //export DiscardTransaction
 func DiscardTransaction(id *C.char, reason *C.char) {
 	goCheckID := C.GoString(id)
+
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	goReason := C.GoString(reason)
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).DiscardTransaction(goReason)
+
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).DiscardTransaction(goReason)
 }
 
 // SetTransactionState sets a state for a transaction
@@ -55,8 +77,15 @@ func DiscardTransaction(id *C.char, reason *C.char) {
 //export SetTransactionState
 func SetTransactionState(id *C.char, key *C.char, state *C.char) {
 	goCheckID := C.GoString(id)
+
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	keyValue := C.GoString(key)
 	stateValue := C.GoString(state)
 
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SetTransactionState(keyValue, stateValue)
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SetTransactionState(keyValue, stateValue)
 }

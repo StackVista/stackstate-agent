@@ -3,7 +3,7 @@ package testhealth
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
 	"io/ioutil"
 	"log"
 	"os"

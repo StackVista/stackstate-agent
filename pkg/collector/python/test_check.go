@@ -205,14 +205,13 @@ import "C"
 func testRunCheck(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	// sts
+	_, _, _, checkManager := SetupTransactionalComponents()
+
+	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
-
-	// sts
-	SetupTransactionalComponents()
-	batcher.NewMockBatcher()
 
 	check.instance = newMockPyObjectPtr()
 
@@ -236,7 +235,9 @@ func testRunCheck(t *testing.T) {
 func testRunCheckWithRuntimeNotInitializedError(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+
+	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -261,7 +262,10 @@ func testInitiCheckWithRuntimeNotInitialized(t *testing.T) {
 	rtloader = nil
 
 	C.reset_check_mock()
-	_, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+
+	_, _, _, checkManager := SetupTransactionalComponents()
+
+	_, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.NotNil(t, err) {
 		return
 	}
@@ -283,7 +287,9 @@ func testInitiCheckWithRuntimeNotInitialized(t *testing.T) {
 func testCheckCancel(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+
+	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -320,7 +326,9 @@ func testCheckCancelWhenRuntimeUnloaded(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+
+	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -360,7 +368,8 @@ func testFinalizer(t *testing.T) {
 		pyDestroyLock.Unlock()
 	}()
 
-	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -404,7 +413,8 @@ func testFinalizerWhenRuntimeUnloaded(t *testing.T) {
 		pyDestroyLock.Unlock()
 	}()
 
-	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -444,7 +454,8 @@ func testRunErrorNil(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -452,9 +463,8 @@ func testRunErrorNil(t *testing.T) {
 	check.instance = newMockPyObjectPtr()
 
 	// sts
-	SetupTransactionalComponents()
 	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-error-nil"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	C.reset_check_mock()
 	C.run_check_return = nil
@@ -477,17 +487,17 @@ func testRunErrorReturn(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	// sts
+	_, _, _, checkManager := SetupTransactionalComponents()
+	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
 
 	check.instance = newMockPyObjectPtr()
 
-	// sts
-	SetupTransactionalComponents()
 	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-error"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	C.reset_check_mock()
 	C.run_check_return = C.CString("not OK")
@@ -513,14 +523,13 @@ func testRun(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	c, err := NewPythonFakeCheck(sender.GetSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+	c, err := NewPythonFakeCheck(sender.GetSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
 
-	// sts
-	SetupTransactionalComponents()
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c.instance = newMockPyObjectPtr()
 	c.id = testCheck.ID() // sts
@@ -552,13 +561,14 @@ func testRunSimple(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	c, err := NewPythonFakeCheck(sender.GetSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+	c, err := NewPythonFakeCheck(sender.GetSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
 
 	// sts
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c.instance = newMockPyObjectPtr()
 	c.id = testCheck.ID()
@@ -586,7 +596,8 @@ func testConfigure(t *testing.T) {
 	defer func() { rtloader = nil }()
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	c, err := NewPythonFakeCheck(senderManager)
+	_, _, _, checkManager := SetupTransactionalComponents()
+	c, err := NewPythonFakeCheck(senderManager, checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -597,7 +608,7 @@ func testConfigure(t *testing.T) {
 
 	C.get_check_return = 1
 	C.get_check_check = newMockPyObjectPtr()
-	err = c.Configure(senderManager, integration.FakeConfigHash, integration.Data("{\"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
+	err = c.Configure(senderManager, checkManager, integration.FakeConfigHash, integration.Data("{\"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
 	assert.Nil(t, err)
 
 	assert.Equal(t, 40*time.Second, c.interval)
@@ -622,7 +633,8 @@ func testConfigureDeprecated(t *testing.T) {
 	defer func() { rtloader = nil }()
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	c, err := NewPythonFakeCheck(senderManager)
+	_, _, _, checkManager := SetupTransactionalComponents()
+	c, err := NewPythonFakeCheck(senderManager, checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -634,7 +646,7 @@ func testConfigureDeprecated(t *testing.T) {
 	C.get_check_return = 0
 	C.get_check_deprecated_check = newMockPyObjectPtr()
 	C.get_check_deprecated_return = 1
-	err = c.Configure(senderManager, integration.FakeConfigHash, integration.Data("{\"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
+	err = c.Configure(senderManager, checkManager, integration.FakeConfigHash, integration.Data("{\"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
 	assert.Nil(t, err)
 
 	assert.Equal(t, 40*time.Second, c.interval)
@@ -659,7 +671,8 @@ func testConfigureDeprecated(t *testing.T) {
 func testSetCollectionIntervalToInstanceData(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	c, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+	c, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -671,7 +684,8 @@ func testSetCollectionIntervalToInstanceData(t *testing.T) {
 func testSetCollectionIntervalToInvalidDataWithInvalidData(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	c, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+	c, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -688,7 +702,8 @@ func testGetDiagnoses(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager())
+	_, _, _, checkManager := SetupTransactionalComponents()
+	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -738,8 +753,8 @@ func testGetDiagnoses(t *testing.T) {
 }
 
 // NewPythonFakeCheck create a fake PythonCheck
-func NewPythonFakeCheck(senderManager sender.SenderManager) (*PythonCheck, error) {
-	c, err := NewPythonCheck(senderManager, "fake_check", nil)
+func NewPythonFakeCheck(senderManager sender.SenderManager, checkManager handler.CheckManager) (*PythonCheck, error) {
+	c, err := NewPythonCheck(senderManager, checkManager, "fake_check", nil)
 
 	// Remove check finalizer that may trigger race condition while testing
 	if err == nil {

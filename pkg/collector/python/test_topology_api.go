@@ -5,11 +5,11 @@ package python
 import (
 	"encoding/json"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
+	check2 "github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -19,11 +19,10 @@ import (
 import "C"
 
 func testComponentTopology(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-component-test"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-component-test"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &topology.Component{
 		ExternalID: "external-id",
@@ -52,7 +51,7 @@ func testComponentTopology(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
@@ -74,15 +73,14 @@ func testComponentTopology(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testRelationTopology(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-relation-test"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-relation-test"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &topology.Relation{
 		SourceID: "source-id",
@@ -112,7 +110,7 @@ func testRelationTopology(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
@@ -136,15 +134,14 @@ func testRelationTopology(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testStartSnapshotCheck(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-start-snapshot"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-start-snapshot"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
@@ -156,7 +153,7 @@ func testStartSnapshotCheck(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
 	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
@@ -172,15 +169,14 @@ func testStartSnapshotCheck(t *testing.T) {
 		Health: map[string]health.Health{},
 	}, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testStopSnapshotCheck(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-stop-snapshot"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-stop-snapshot"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
@@ -192,7 +188,7 @@ func testStopSnapshotCheck(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
@@ -210,15 +206,14 @@ func testStopSnapshotCheck(t *testing.T) {
 
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testDeleteTopologyElement(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-delete-element"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-delete-element"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkID := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
@@ -236,7 +231,7 @@ func testDeleteTopologyElement(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
@@ -252,5 +247,5 @@ func testDeleteTopologyElement(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }

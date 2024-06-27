@@ -9,10 +9,10 @@ package topologycollectors
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"

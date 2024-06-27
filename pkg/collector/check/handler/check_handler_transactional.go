@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	checkState "github.com/DataDog/datadog-agent/pkg/collector/check/state"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionmanager"
 	"sync"
 )
 
@@ -18,20 +21,25 @@ type TransactionalCheckHandler struct {
 	transactionChannel        chan StartTransaction
 	currentTransactionChannel chan interface{}
 	currentTransaction        string
+	transactionalBatcher      transactionbatcher.TransactionalBatcher
+	transactionalManager      transactionmanager.TransactionManager
 	mux                       sync.RWMutex
 }
 
 // NewTransactionalCheckHandler creates a new check handler for a given check, check loader and configuration
-func NewTransactionalCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
+func NewTransactionalCheckHandler(stateManager checkState.CheckStateAPI, transactionalBatcher transactionbatcher.TransactionalBatcher, transactionalManager transactionmanager.TransactionManager, check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
 	ch := &TransactionalCheckHandler{
 		CheckHandlerBase: CheckHandlerBase{
 			CheckIdentifier: check,
 			config:          config,
 			initConfig:      initConfig,
+			stateManager:    stateManager,
 		},
 		shutdownChannel:           make(chan bool, 1),
 		transactionChannel:        make(chan StartTransaction, 1),
 		currentTransactionChannel: make(chan interface{}, 100),
+		transactionalBatcher:      transactionalBatcher,
+		transactionalManager:      transactionalManager,
 	}
 
 	go ch.Start()
@@ -56,11 +64,11 @@ txReceiverHandler:
 			ch.currentTransaction = transaction.TransactionID
 			ch.mux.Unlock()
 
-			// create a new transaction in the transaction manager and wait for responses
-			transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.GetCurrentTransaction(), ch.currentTransactionChannel)
+			// create a new transaction in the transaction transactionalManager and wait for responses
+			ch.transactionalManager.StartTransaction(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), ch.currentTransactionChannel)
 
-			// create a new batch transaction in the transaction batcher
-			transactionbatcher.GetTransactionalBatcher().StartTransaction(ch.ID(), ch.GetCurrentTransaction())
+			// create a new batch transaction in the transaction transactionalBatcher
+			ch.transactionalBatcher.StartTransaction(check.CheckID(ch.ID()), ch.GetCurrentTransaction())
 
 			// this is a blocking function. Will continue when a transaction succeeds, fails or times out making it
 			// ready to handle the next transaction in the ch.transactionChannel.
@@ -102,47 +110,47 @@ currentTxHandler:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Stopping current transaction", logPrefix)
 				}
-				transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
+				ch.transactionalBatcher.SubmitCompleteTransaction(check.CheckID(ch.ID()), ch.GetCurrentTransaction())
 
 			case DiscardTransaction:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Discarding current transaction", logPrefix)
 				}
 				// trigger failed transaction
-				transactionmanager.GetTransactionManager().DiscardTransaction(ch.GetCurrentTransaction(), msg.Reason)
+				ch.transactionalManager.DiscardTransaction(ch.GetCurrentTransaction(), msg.Reason)
 
 			case SubmitSetTransactionState:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting set transaction state: %s -> %s", logPrefix, msg.Key, msg.State)
 				}
-				transactionmanager.GetTransactionManager().SetState(ch.GetCurrentTransaction(), msg.Key, msg.State)
+				ch.transactionalManager.SetState(ch.GetCurrentTransaction(), msg.Key, msg.State)
 
 			// Topology Operations for the current transaction
 			case SubmitStartSnapshot:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting topology start snapshot for instance: %s", logPrefix, msg.Instance.GoString())
 				}
-				transactionbatcher.GetTransactionalBatcher().SubmitStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Instance)
+				ch.transactionalBatcher.SubmitStartSnapshot(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), msg.Instance)
 			case SubmitComponent:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting topology component for instance: %s. %s", logPrefix, msg.Instance.GoString(), msg.Component.JSONString())
 				}
-				transactionbatcher.GetTransactionalBatcher().SubmitComponent(ch.ID(), ch.GetCurrentTransaction(), msg.Instance, msg.Component)
+				ch.transactionalBatcher.SubmitComponent(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), msg.Instance, msg.Component)
 			case SubmitRelation:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting topology relation for instance: %s. %s", logPrefix, msg.Instance.GoString(), msg.Relation.JSONString())
 				}
-				transactionbatcher.GetTransactionalBatcher().SubmitRelation(ch.ID(), ch.GetCurrentTransaction(), msg.Instance, msg.Relation)
+				ch.transactionalBatcher.SubmitRelation(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), msg.Instance, msg.Relation)
 			case SubmitStopSnapshot:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting topology stop snapshot for instance: %s", logPrefix, msg.Instance.GoString())
 				}
-				transactionbatcher.GetTransactionalBatcher().SubmitStopSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Instance)
+				ch.transactionalBatcher.SubmitStopSnapshot(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), msg.Instance)
 			case SubmitDelete:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting topology delete for instance: %s, externalID: %s", logPrefix, msg.Instance.GoString(), msg.TopologyElementID)
 				}
-				transactionbatcher.GetTransactionalBatcher().SubmitDelete(ch.ID(), ch.GetCurrentTransaction(), msg.Instance, msg.TopologyElementID)
+				ch.transactionalBatcher.SubmitDelete(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), msg.Instance, msg.TopologyElementID)
 
 			// Health Operations for the current transaction
 			case SubmitHealthStartSnapshot:
@@ -150,21 +158,21 @@ currentTxHandler:
 					log.Debugf("%s. Submitting health start snapshot for stream: %s with interval %ds and expiry %ds", logPrefix, msg.Stream.GoString(), msg.IntervalSeconds, msg.ExpirySeconds)
 				}
 
-				transactionbatcher.GetTransactionalBatcher().SubmitHealthStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Stream,
+				ch.transactionalBatcher.SubmitHealthStartSnapshot(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), msg.Stream,
 					msg.IntervalSeconds, msg.ExpirySeconds)
 
 			case SubmitHealthCheckData:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting health check data for stream %s. %s", logPrefix, msg.Stream.GoString(), msg.Data.JSONString())
 				}
-				transactionbatcher.GetTransactionalBatcher().SubmitHealthCheckData(ch.ID(), ch.GetCurrentTransaction(), msg.Stream, msg.Data)
+				ch.transactionalBatcher.SubmitHealthCheckData(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), msg.Stream, msg.Data)
 
 			case SubmitHealthStopSnapshot:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting health stop snapshot for stream: %s", logPrefix, msg.Stream.GoString())
 				}
 
-				transactionbatcher.GetTransactionalBatcher().SubmitHealthStopSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Stream)
+				ch.transactionalBatcher.SubmitHealthStopSnapshot(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), msg.Stream)
 
 			// Telemetry Operations for the current transaction
 			case SubmitRawMetric:
@@ -172,20 +180,20 @@ currentTxHandler:
 					log.Debugf("%s. Submitting raw metric: %s", logPrefix, msg.Value.JSONString())
 				}
 
-				transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.GetCurrentTransaction(), msg.Value)
+				ch.transactionalBatcher.SubmitRawMetricsData(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), msg.Value)
 			case SubmitEvent:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting event: %s", logPrefix, msg.Event.String())
 				}
 
-				transactionbatcher.GetTransactionalBatcher().SubmitEvent(ch.ID(), ch.GetCurrentTransaction(), msg.Event)
+				ch.transactionalBatcher.SubmitEvent(check.CheckID(ch.ID()), ch.GetCurrentTransaction(), ConvertToStsEvent(msg.Event))
 			// Lifecycle operations for the current transaction
 			case SubmitComplete:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting complete for check run", logPrefix)
 				}
 
-			// Notifications from the transaction manager
+			// Notifications from the transaction transactionalManager
 			case transactionmanager.DiscardTransaction:
 				if msg.TransactionID != ch.GetCurrentTransaction() {
 					_ = log.Warnf("Attempting to discard transaction that is not the current transaction for this"+
@@ -197,8 +205,8 @@ currentTxHandler:
 				log.Debugf("Discarding failed transaction %s for check %s. Reason %s", msg.TransactionID, ch.ID(),
 					msg.Reason)
 
-				// empty batcher state
-				transactionbatcher.GetTransactionalBatcher().SubmitClearState(ch.ID())
+				// empty transactionalBatcher state
+				ch.transactionalBatcher.SubmitClearState(check.CheckID(ch.ID()))
 
 				// clear current transaction
 				ch.clearCurrentTransaction()
@@ -215,8 +223,8 @@ currentTxHandler:
 
 				log.Debugf("Evicted failed transaction %s for check %s", msg.TransactionID, ch.ID())
 
-				// empty batcher state
-				transactionbatcher.GetTransactionalBatcher().SubmitClearState(ch.ID())
+				// empty transactionalBatcher state
+				ch.transactionalBatcher.SubmitClearState(check.CheckID(ch.ID()))
 
 				// clear current transaction
 				ch.clearCurrentTransaction()
@@ -236,7 +244,7 @@ currentTxHandler:
 				if msg.State != nil {
 					log.Debugf("Committing state for transaction: %s for check %s: %s", msg.TransactionID, ch.ID(),
 						msg.State)
-					err := checkState.GetCheckStateManager().SetState(msg.State.Key, msg.State.State)
+					err := ch.stateManager.SetState(msg.State.Key, msg.State.State)
 					if err != nil {
 						errorReason := fmt.Sprintf("Error while updating state for transaction: %s for check %s: %s. %s",
 							msg.TransactionID, ch.ID(), msg.State, err)
@@ -261,6 +269,53 @@ func (ch *TransactionalCheckHandler) clearCurrentTransaction() {
 	ch.mux.Lock()
 	ch.currentTransaction = ""
 	ch.mux.Unlock()
+}
+
+//	Convert datadog event type to STS event type. These are pretty much equal but we want to start
+//
+// decoupling from the datadog api, this is the way we do. We copied their datastructures that we are compatible with,
+// brought them to the receiver-go-client and transform in our agent fork.
+func ConvertToStsEvent(event event.Event) telemetry.Event {
+	//  Convert datadog event type to STS event type. These are pretty much equal but we want to start
+	// decoupling from the datadog api, this is the way we do. We copied their datastructures that we are compatible with,
+	// brought them to the receiver-go-client and transform in our agent fork.
+	var stsEventCtx *telemetry.EventContext
+
+	if event.EventContext != nil {
+		var stsSourceLinks = make([]telemetry.SourceLink, 0, 0)
+		for _, v := range event.EventContext.SourceLinks {
+			stsSourceLinks = append(stsSourceLinks, telemetry.SourceLink{
+				Title: v.Title,
+				URL:   v.URL,
+			})
+		}
+
+		stsEventCtx = &telemetry.EventContext{
+			SourceIdentifier:   event.EventContext.SourceIdentifier,
+			ElementIdentifiers: event.EventContext.ElementIdentifiers,
+			Source:             event.EventContext.Source,
+			Category:           event.EventContext.Category,
+			Data:               event.EventContext.Data,
+			SourceLinks:        stsSourceLinks,
+		}
+	}
+
+	return telemetry.Event{
+		Title:          event.Title,
+		Text:           event.Text,
+		Ts:             event.Ts,
+		Priority:       telemetry.EventPriority(event.Priority),
+		Host:           event.Host,
+		Tags:           event.Tags,
+		AlertType:      telemetry.EventAlertType(event.AlertType),
+		AggregationKey: event.AggregationKey,
+		SourceTypeName: event.SourceTypeName,
+		EventType:      event.EventType,
+		OriginID:       "",
+		K8sOriginID:    "",
+		Cardinality:    event.Cardinality,
+		EventContext:   stsEventCtx,
+	}
 }
 
 // safeCloseTransactionChannel closes the tx channel that can potentially already be closed. It handles the panic and does a no-op.

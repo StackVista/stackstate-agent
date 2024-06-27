@@ -10,6 +10,7 @@ package jmx
 import (
 	"context"
 	"errors"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -57,7 +58,7 @@ func TestLoadCheckConfig(t *testing.T) {
 
 	for _, cfg := range cfgs {
 		for _, instance := range cfg.Instances {
-			if loadedCheck, err := jl.Load(aggregator.NewNoOpSenderManager(), cfg, instance); err == nil {
+			if loadedCheck, err := jl.Load(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), cfg, instance); err == nil {
 				checks = append(checks, loadedCheck)
 			} else {
 				numOtherInstances++

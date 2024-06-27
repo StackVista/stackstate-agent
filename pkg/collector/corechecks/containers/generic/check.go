@@ -7,6 +7,7 @@
 package generic
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -52,8 +53,8 @@ func ContainerCheckFactory() check.Check {
 }
 
 // Configure parses the check configuration and init the check
-func (c *ContainerCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
-	err := c.CommonConfigure(senderManager, integrationConfigDigest, initConfig, config, source)
+func (c *ContainerCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+	err := c.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, config, source)
 	if err != nil {
 		return err
 	}

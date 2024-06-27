@@ -10,6 +10,7 @@ import (
 	"errors"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
@@ -23,8 +24,8 @@ type CommonCheck struct {
 	ac                    *apiserver.APIClient
 }
 
-func (k *CommonCheck) ConfigureKubeAPICheck(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
-	return k.CommonConfigure(senderManager, integrationConfigDigest, initConfig, config, source)
+func (k *CommonCheck) ConfigureKubeAPICheck(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+	return k.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, config, source)
 }
 
 func (k *CommonCheck) InitKubeAPICheck() error {

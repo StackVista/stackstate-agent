@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/DataDog/datadog-agent/pkg/health"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	check2 "github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -21,11 +22,10 @@ import (
 import "C"
 
 func testTopologyEvent(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-topology-event-test"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-topology-event-test"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &event.Event{
 		Title:          "ev_title",
@@ -110,25 +110,24 @@ func testTopologyEvent(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Health:      map[string]health.Health{},
-		Events:      &event.IntakeEvents{Events: []event.Event{expectedEvent}},
+		Events:      &telemetry.IntakeEvents{Events: []telemetry.Event{handler.ConvertToStsEvent(expectedEvent)}},
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testTopologyEventMissingFields(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-topology-event-missing-fields-test"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-topology-event-missing-fields-test"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &event.Event{
 		Title: "ev_title",
@@ -155,25 +154,24 @@ func testTopologyEventMissingFields(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Health:      map[string]health.Health{},
-		Events:      &event.IntakeEvents{Events: []event.Event{expectedEvent}},
+		Events:      &telemetry.IntakeEvents{Events: []telemetry.Event{handler.ConvertToStsEvent(expectedEvent)}},
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testTopologyEventWrongFieldType(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-topology-event-wrong-field-type-test"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-topology-event-wrong-field-type-test"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	sender := mocksender.NewMockSender("testID")
 	sender.SetupAcceptAll()
@@ -187,7 +185,7 @@ func testTopologyEventWrongFieldType(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
@@ -197,10 +195,10 @@ func testTopologyEventWrongFieldType(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
-var expectedRawMetricsData = telemetry.RawMetrics{
+var expectedRawMetricsData = telemetry.RawMetric{
 	Name:      "name",
 	Timestamp: 123456,
 	HostName:  "hostname",
@@ -212,11 +210,10 @@ var expectedRawMetricsData = telemetry.RawMetrics{
 }
 
 func testRawMetricsData(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-raw-metrics"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-raw-metrics"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	name := C.CString(expectedRawMetricsData.Name)
@@ -230,14 +227,14 @@ func testRawMetricsData(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
 	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
-		Metrics:     &telemetry.Metrics{Values: []telemetry.RawMetrics{expectedRawMetricsData}},
+		Metrics:     &telemetry.Metrics{Values: []telemetry.RawMetric{expectedRawMetricsData}},
 		Health:      map[string]health.Health{},
 	}, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }

@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"strings"
 	"time"
 
@@ -136,8 +137,8 @@ func KubernetesASFactory() check.Check {
 }
 
 // Configure parses the check configuration and init the check.
-func (k *KubeASCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
-	err := k.CommonConfigure(senderManager, integrationConfigDigest, initConfig, config, source)
+func (k *KubeASCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+	err := k.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, config, source)
 	if err != nil {
 		return err
 	}

@@ -8,11 +8,11 @@
 package python
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/batcher"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/state"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionmanager"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,14 +20,15 @@ import (
 
 import "C"
 
-func SetupTransactionalComponents() {
+func SetupTransactionalComponents() (*batcher.MockBatcher, *transactionbatcher.MockTransactionalBatcher, *transactionmanager.MockTransactionManager, handler.CheckManager) {
 	// Set storage root for tests
 	config.Datadog.SetWithoutSource("check_state_root_path", "/tmp/fake-datadog-run")
 
-	handler.InitCheckManager()
-	state.InitCheckStateManager()
-	transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+	batcher := batcher.NewMockBatcher()
+	transactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	transactionalManager := transactionmanager.NewMockTransactionManager()
+
+	return batcher, transactionalBatcher, transactionalManager, handler.NewCheckManager(batcher, transactionalBatcher, transactionalManager)
 }
 
 func testGetSubprocessOutputEmptyArgs(t *testing.T) {

@@ -3,7 +3,7 @@ package testtopology
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"io/ioutil"
 	"log"
 	"os"

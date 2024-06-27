@@ -5,11 +5,11 @@ package disk
 import (
 	"context"
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/hostname"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"github.com/shirou/gopsutil/v3/disk"
 )
 
@@ -31,9 +31,7 @@ func MakeTopologyCollector() *TopologyCollector {
 }
 
 // BuildTopology creates / collects and produces disk topology
-func (dtc *TopologyCollector) BuildTopology(partitions []disk.PartitionStat) error {
-	sender := batcher.GetBatcher()
-
+func (dtc *TopologyCollector) BuildTopology(partitions []disk.PartitionStat, checkApi handler.CheckAPI) error {
 	// try to get the agent hostname to use in the host component
 	hostnameData, err := hostname.GetWithProvider(context.TODO())
 	if err != nil {
@@ -43,9 +41,9 @@ func (dtc *TopologyCollector) BuildTopology(partitions []disk.PartitionStat) err
 
 	// produce a host component with all the disk devices as metadata
 	diskComponent := dtc.createDiskComponent(hostnameData.Hostname, hostnameData.Identifiers, partitions)
-	sender.SubmitComponent(dtc.CheckID, dtc.TopologyInstance, diskComponent)
+	checkApi.SubmitComponent(dtc.TopologyInstance, diskComponent)
 
-	sender.SubmitComplete(dtc.CheckID)
+	checkApi.SubmitComplete()
 
 	return nil
 }

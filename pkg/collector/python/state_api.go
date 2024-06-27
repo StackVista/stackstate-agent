@@ -16,8 +16,8 @@ package python
 */
 import "C"
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // NOTE
@@ -29,10 +29,17 @@ import (
 //export SetState
 func SetState(id *C.char, key *C.char, state *C.char) {
 	goCheckID := C.GoString(id)
+
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	stateKey := C.GoString(key)
 	stateValue := C.GoString(state)
 
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SetState(stateKey, stateValue)
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SetState(stateKey, stateValue)
 }
 
 // GetState get the current state
@@ -42,7 +49,13 @@ func GetState(id *C.char, key *C.char) *C.char {
 	goCheckID := C.GoString(id)
 	stateKey := C.GoString(key)
 
-	getStateResult := handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).GetState(stateKey)
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return nil
+	}
+
+	getStateResult := checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).GetState(stateKey)
 
 	return C.CString(getStateResult)
 }

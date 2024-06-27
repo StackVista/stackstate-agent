@@ -5,10 +5,10 @@ package python
 import (
 	"encoding/json"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/DataDog/datadog-agent/pkg/health"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
+	check2 "github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -37,11 +37,10 @@ var expectedCheckData = health.CheckData{
 }
 
 func testHealthCheckData(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-health-check-data"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-health-check-data"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &health.Payload{
 		Stream: health.Stream{
@@ -67,7 +66,7 @@ func testHealthCheckData(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
@@ -85,15 +84,14 @@ func testHealthCheckData(t *testing.T) {
 		},
 	}, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testHealthStartSnapshot(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-health-start-snapshot"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-health-start-snapshot"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
@@ -105,7 +103,7 @@ func testHealthStartSnapshot(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
@@ -120,15 +118,14 @@ func testHealthStartSnapshot(t *testing.T) {
 		},
 	}, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testHealthStopSnapshot(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-health-stop-snapshot"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-health-stop-snapshot"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
@@ -139,7 +136,7 @@ func testHealthStopSnapshot(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
@@ -154,15 +151,14 @@ func testHealthStopSnapshot(t *testing.T) {
 		},
 	}, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testNoSubStream(t *testing.T) {
-	SetupTransactionalComponents()
-	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-health-no-sub-stream"}
-	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	testCheck := &test.STSTestCheck{Name: "check-id-health-no-sub-stream"}
+	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
@@ -174,7 +170,7 @@ func testNoSubStream(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn"}
 
@@ -189,5 +185,5 @@ func testNoSubStream(t *testing.T) {
 		},
 	}, actualTopology)
 
-	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkManager.UnsubscribeCheckHandler(testCheck.ID())
 }

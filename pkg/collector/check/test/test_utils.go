@@ -1,4 +1,4 @@
-package check
+package test
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"

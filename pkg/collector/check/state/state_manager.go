@@ -8,27 +8,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 )
 
 var (
 	// Invalid characters to clean up
 	invalidChars = regexp.MustCompile("[^a-zA-Z0-9_-]")
-	csmInstance  CheckStateAPI
-	csmInit      sync.Once
 )
-
-// InitCheckStateManager initialized the default implementation of the CheckStateAPI
-func InitCheckStateManager() {
-	csmInit.Do(func() {
-		csmInstance = NewCheckStateManager()
-	})
-}
-
-// GetCheckStateManager returns a handle on the global check checkmanager Instance
-func GetCheckStateManager() CheckStateAPI {
-	return csmInstance
-}
 
 // CheckStateAPI contains all the functions for setting and getting state from disk / memory
 type CheckStateAPI interface {

@@ -2,15 +2,15 @@ package batcher
 
 import (
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
-	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 )
 
 // CheckInstanceBatchState is the type representing batched data per check instance
 type CheckInstanceBatchState struct {
 	Topology *topology.Topology
-	Metrics  *[]telemetry.RawMetrics
+	Metrics  *[]telemetry.RawMetric
 	Health   map[string]health.Health
 }
 
@@ -96,7 +96,7 @@ func (builder *BatchBuilder) getOrCreateHealth(checkID checkid.ID, stream health
 	return builder.states[checkID].Health[stream.GoString()]
 }
 
-func (builder *BatchBuilder) getOrCreateRawMetrics(checkID checkid.ID) *[]telemetry.RawMetrics {
+func (builder *BatchBuilder) getOrCreateRawMetrics(checkID checkid.ID) *[]telemetry.RawMetric {
 	state := builder.getOrCreateState(checkID)
 
 	if state.Metrics != nil {
@@ -106,7 +106,7 @@ func (builder *BatchBuilder) getOrCreateRawMetrics(checkID checkid.ID) *[]teleme
 	builder.states[checkID] = CheckInstanceBatchState{
 		Topology: state.Topology,
 		Health:   state.Health,
-		Metrics:  &[]telemetry.RawMetrics{},
+		Metrics:  &[]telemetry.RawMetric{},
 	}
 
 	return builder.states[checkID].Metrics
@@ -183,7 +183,7 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID checkid.ID, stream healt
 }
 
 // AddRawMetricsData adds raw metric data
-func (builder *BatchBuilder) AddRawMetricsData(checkID checkid.ID, rawMetric telemetry.RawMetrics) CheckInstanceBatchStates {
+func (builder *BatchBuilder) AddRawMetricsData(checkID checkid.ID, rawMetric telemetry.RawMetric) CheckInstanceBatchStates {
 	rawMetricsData := builder.getOrCreateRawMetrics(checkID)
 	*rawMetricsData = append(*rawMetricsData, rawMetric)
 	return builder.incrementAndTryFlush()

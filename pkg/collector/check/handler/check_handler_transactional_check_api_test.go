@@ -2,13 +2,15 @@ package handler
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/DataDog/datadog-agent/pkg/health"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/state"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	check2 "github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionmanager"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -40,7 +42,7 @@ var (
 	testStopSnapshot  = &health.StopSnapshotMetadata{}
 	testCheckData     = health.CheckData{Unstructured: map[string]interface{}{}}
 
-	testRawMetricsData = telemetry.RawMetrics{
+	testRawMetricsData = telemetry.RawMetric{
 		Name:      "name",
 		Timestamp: 1400000,
 		HostName:  "Hostname",
@@ -51,7 +53,7 @@ var (
 		},
 	}
 
-	testRawMetricsData2 = telemetry.RawMetrics{
+	testRawMetricsData2 = telemetry.RawMetric{
 		Name:      "name",
 		Timestamp: 1500000,
 		HostName:  "hostname",
@@ -89,11 +91,13 @@ var (
 // Each table test mutates the shared checkInstanceBatchState, so running individual table tests will not produce the
 // expected result. This should be run as a single test with a sequence of steps.
 func TestCheckHandlerAPI(t *testing.T) {
-	// init global transactionbatcher used by the check no handler
-	mockBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	mockTM := transactionmanager.NewMockTransactionManager()
+	stateManager := state.NewCheckStateManager()
+	batcher := transactionbatcher.NewMockTransactionalBatcher()
+	manager := transactionmanager.NewMockTransactionManager()
 
-	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-api-test-check"},
+	checkHandler := NewTransactionalCheckHandler(
+		stateManager, batcher, manager,
+		&test.STSTestCheck{Name: "my-check-handler-api-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 	var transactionID string
 	checkInstanceBatchState := &transactionbatcher.TransactionCheckInstanceBatchState{}
@@ -210,7 +214,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 				handler.SubmitRawMetricsData(testRawMetricsData)
 			},
 			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
-				state.Metrics = &telemetry.Metrics{Values: []telemetry.RawMetrics{testRawMetricsData}}
+				state.Metrics = &telemetry.Metrics{Values: []telemetry.RawMetric{testRawMetricsData}}
 			},
 		},
 		{
@@ -219,7 +223,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 				handler.SubmitEvent(testEvent)
 			},
 			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
-				state.Events = &event.IntakeEvents{Events: []event.Event{testEvent}}
+				state.Events = &telemetry.IntakeEvents{Events: []telemetry.Event{ConvertToStsEvent(testEvent)}}
 			},
 		}, {
 			testCase: "Submit topology event should produce an event in the TransactionCheckInstanceBatchState",
@@ -227,7 +231,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 				handler.SubmitEvent(testEvent2)
 			},
 			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
-				state.Events.Events = append(state.Events.Events, testEvent2)
+				state.Events.Events = append(state.Events.Events, ConvertToStsEvent(testEvent2))
 			},
 		},
 		{
@@ -246,7 +250,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 
 			time.Sleep(100 * time.Millisecond)
 
-			actualState, found := mockBatcher.GetCheckState(checkHandler.ID())
+			actualState, found := batcher.GetCheckState(check2.CheckID(checkHandler.ID()))
 			assert.True(t, found, "check state for %s was not found", checkHandler.ID())
 			assert.EqualValues(t, *checkInstanceBatchState, actualState)
 		})
@@ -254,7 +258,9 @@ func TestCheckHandlerAPI(t *testing.T) {
 
 	// test check handler discard transaction
 	t.Run("check handler discard transaction", func(t *testing.T) {
-		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-discard-transaction"},
+		ch := NewTransactionalCheckHandler(
+			stateManager, batcher, manager,
+			&test.STSTestCheck{Name: "my-check-handler-discard-transaction"},
 			integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 		txID := ch.StartTransaction()
@@ -278,14 +284,14 @@ func TestCheckHandlerAPI(t *testing.T) {
 
 		time.Sleep(100 * time.Millisecond)
 
-		actualState, found := mockBatcher.GetCheckState(ch.ID())
+		actualState, found := batcher.GetCheckState(check2.CheckID(ch.ID()))
 		assert.True(t, found, "check state for %s was not found", ch.ID())
 		assert.EqualValues(t, batchState, actualState)
 
 		ch.DiscardTransaction("test cancel transaction")
 
 		select {
-		case input := <-mockTM.TransactionActions:
+		case input := <-manager.TransactionActions:
 			switch msg := input.(type) {
 			case transactionmanager.DiscardTransaction:
 				assert.IsType(t, transactionmanager.DiscardTransaction{}, msg)
@@ -296,7 +302,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 		}
 
 		assert.Eventually(t, func() bool {
-			s, hasState := mockBatcher.GetCheckState(ch.ID())
+			s, hasState := batcher.GetCheckState(check2.CheckID(ch.ID()))
 			println(s.JSONString())
 			return !hasState
 		}, 150*time.Millisecond, 15*time.Millisecond)
@@ -304,7 +310,9 @@ func TestCheckHandlerAPI(t *testing.T) {
 
 	// test check handler submit complete
 	t.Run("check handler submit complete", func(t *testing.T) {
-		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-submit-complete"},
+		ch := NewTransactionalCheckHandler(
+			stateManager, batcher, manager,
+			&test.STSTestCheck{Name: "my-check-handler-submit-complete"},
 			integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 		txID := ch.StartTransaction()
@@ -329,7 +337,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 
 		time.Sleep(100 * time.Millisecond)
 
-		actualState, found := mockBatcher.GetCheckState(ch.ID())
+		actualState, found := batcher.GetCheckState(check2.CheckID(ch.ID()))
 		assert.True(t, found, "check state for %s was not found", ch.ID())
 		assert.EqualValues(t, batchState, actualState)
 	})

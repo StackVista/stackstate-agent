@@ -1,27 +1,26 @@
 package batcher
 
 import (
+	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/comp/aggregator/demultiplexer"
+	"github.com/DataDog/datadog-agent/comp/core/hostname"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"sync"
-)
-
-var (
-	batcherInstance Batcher
-	batcherInit     sync.Once
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
+	"go.uber.org/fx"
 )
 
 // Batcher interface can receive data for sending to the intake and will accumulate the data in batches. This does
 // not work on a fixed schedule like the aggregator but flushes either when data exceeds a threshold, when
 // data is complete.
-type Batcher interface {
+type Component interface {
 	// Topology
 	SubmitComponent(checkID checkid.ID, instance topology.Instance, component topology.Component)
 	SubmitRelation(checkID checkid.ID, instance topology.Instance, relation topology.Relation)
@@ -33,28 +32,38 @@ type Batcher interface {
 	SubmitHealthCheckData(checkID checkid.ID, stream health.Stream, data health.CheckData)
 	SubmitHealthStartSnapshot(checkID checkid.ID, stream health.Stream, intervalSeconds int, expirySeconds int)
 	SubmitHealthStopSnapshot(checkID checkid.ID, stream health.Stream)
-	SubmitError(checkID checkid.ID, err error)
 
 	// Raw Metrics
-	SubmitRawMetricsData(checkID checkid.ID, data telemetry.RawMetrics)
+	SubmitRawMetricsData(checkID checkid.ID, data telemetry.RawMetric)
 
 	// lifecycle
 	SubmitComplete(checkID checkid.ID)
 	Shutdown()
 }
 
-// InitBatcher initializes the global batcher instance
-func InitBatcher(serializer serializer.AgentV1Serializer, hostname, agentName string, maxCapacity int) {
-	batcherInit.Do(func() {
-		batcherInstance = newAsynchronousBatcher(serializer, hostname, agentName, maxCapacity)
-	})
+// Module defines the fx options for this component.
+func Module() fxutil.Module {
+	return fxutil.Component(
+		fx.Provide(newAsynchronousBatcher))
 }
 
-func newAsynchronousBatcher(serializer serializer.AgentV1Serializer, hostname, agentName string, maxCapacity int) AsynchronousBatcher {
+type dependencies struct {
+	fx.In
+	demultiplexer demultiplexer.Component
+	hname         hostname.Component
+
+	Params Params
+}
+
+type provides struct {
+	fx.Out
+	Batcher Component
+}
+
+func MakeAsynchronousBatcher(serializer serializer.AgentV1Serializer, hostname string, maxCapacity int) Component {
 	batcher := AsynchronousBatcher{
 		builder:    NewBatchBuilder(maxCapacity),
 		hostname:   hostname,
-		agentName:  agentName,
 		input:      make(chan interface{}),
 		serializer: serializer,
 	}
@@ -62,16 +71,20 @@ func newAsynchronousBatcher(serializer serializer.AgentV1Serializer, hostname, a
 	return batcher
 }
 
-// GetBatcher returns a handle on the global batcher instance
-func GetBatcher() Batcher {
-	return batcherInstance
+func newAsynchronousBatcher(deps dependencies) (provides, error) {
+	hname, err := deps.hname.Get(context.TODO())
+	if err != nil {
+		return provides{}, err
+	}
+
+	return provides{
+		Batcher: MakeAsynchronousBatcher(deps.demultiplexer.Serializer(), hname, deps.Params.maxCapacity),
+	}, nil
 }
 
 // NewMockBatcher initializes the global batcher with a mock version, intended for testing
 func NewMockBatcher() *MockBatcher {
-	batcher := createMockBatcher()
-	batcherInstance = batcher
-	return batcher
+	return createMockBatcher()
 }
 
 // AsynchronousBatcher is the implementation of the batcher. Works asynchronous. Publishes data to the serializer
@@ -130,7 +143,7 @@ type submitHealthStopSnapshot struct {
 
 type submitRawMetricsData struct {
 	checkID   checkid.ID
-	rawMetric telemetry.RawMetrics
+	rawMetric telemetry.RawMetric
 }
 
 type submitComplete struct {
@@ -314,7 +327,7 @@ func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID checkid.ID, 
 }
 
 // SubmitRawMetricsData submits a raw metrics data record to the batch
-func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID checkid.ID, rawMetric telemetry.RawMetrics) {
+func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID checkid.ID, rawMetric telemetry.RawMetric) {
 	if rawMetric.HostName == "" {
 		rawMetric.HostName = batcher.hostname
 	}
@@ -336,8 +349,4 @@ func (batcher AsynchronousBatcher) SubmitComplete(checkID checkid.ID) {
 // Shutdown shuts down the batcher
 func (batcher AsynchronousBatcher) Shutdown() {
 	batcher.input <- submitShutdown{}
-}
-
-// SubmitError takes error in the testing code, not yet accounted for health or anything else
-func (batcher AsynchronousBatcher) SubmitError(checkID checkid.ID, err error) {
 }

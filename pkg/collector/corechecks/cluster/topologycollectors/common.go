@@ -5,13 +5,13 @@ package topologycollectors
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"k8s.io/apimachinery/pkg/runtime"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/urn"
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

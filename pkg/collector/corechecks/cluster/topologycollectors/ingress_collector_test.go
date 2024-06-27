@@ -8,13 +8,13 @@ package topologycollectors
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"testing"
 	"time"
 
 	netV1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/version"
 
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/extensions/v1beta1"

@@ -9,6 +9,7 @@ package disk
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"path/filepath"
 
 	"github.com/shirou/gopsutil/v3/disk"
@@ -53,7 +54,7 @@ func (c *Check) Run() error {
 
 	//sts
 	// produce disk topology
-	err = c.topologyCollector.BuildTopology(partitions)
+	err = c.topologyCollector.BuildTopology(partitions, c.GetCheckHandler())
 	if err != nil {
 		return err
 	}
@@ -157,8 +158,8 @@ func (c *Check) sendDiskMetrics(sender sender.Sender, ioCounter disk.IOCountersS
 }
 
 // Configure the disk check
-func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
-	err := c.CommonConfigure(senderManager, integrationConfigDigest, initConfig, data, source)
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
+	err := c.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, data, source)
 	if err != nil {
 		return err
 	}

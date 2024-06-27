@@ -6,6 +6,7 @@
 package corechecks
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 	"time"
 
@@ -53,13 +54,13 @@ func TestCommonConfigure(t *testing.T) {
 	}
 	mockSender := mocksender.NewMockSender(mycheck.ID())
 
-	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), integration.FakeConfigHash, nil, []byte(defaultsInstance), "test")
+	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, []byte(defaultsInstance), "test")
 	assert.NoError(t, err)
 	assert.Equal(t, defaults.DefaultCheckInterval, mycheck.Interval())
 	mockSender.AssertNumberOfCalls(t, "DisableDefaultHostname", 0)
 
 	mockSender.On("DisableDefaultHostname", true).Return().Once()
-	err = mycheck.CommonConfigure(mockSender.GetSenderManager(), integration.FakeConfigHash, nil, []byte(customInstance), "test")
+	err = mycheck.CommonConfigure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, []byte(customInstance), "test")
 	assert.NoError(t, err)
 	assert.Equal(t, 60*time.Second, mycheck.Interval())
 	mycheck.BuildID(1, []byte(customInstance), []byte(initConfig))
@@ -77,7 +78,7 @@ func TestCommonConfigureCustomID(t *testing.T) {
 	mockSender := mocksender.NewMockSender(mycheck.ID())
 
 	mockSender.On("DisableDefaultHostname", true).Return().Once()
-	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), integration.FakeConfigHash, nil, []byte(customInstance), "test")
+	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, []byte(customInstance), "test")
 	assert.NoError(t, err)
 	assert.Equal(t, 60*time.Second, mycheck.Interval())
 	mycheck.BuildID(1, []byte(customInstance), []byte(initConfig))
@@ -96,7 +97,7 @@ func TestCommonConfigureMinCollectionInterval(t *testing.T) {
 	mockSender := mocksender.NewMockSender(mycheck.ID())
 
 	mockSender.On("DisableDefaultHostname", true).Return().Once()
-	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), integration.FakeConfigHash, nil, []byte(legacyInstance), "test")
+	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, []byte(legacyInstance), "test")
 	assert.NoError(t, err)
 	assert.Equal(t, 60*time.Second, mycheck.Interval())
 }
@@ -112,7 +113,7 @@ func TestCommonConfigureClashMinCollectionInterval(t *testing.T) {
 	mockSender := mocksender.NewMockSender(mycheck.ID())
 
 	mockSender.On("DisableDefaultHostname", true).Return().Once()
-	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), integration.FakeConfigHash, nil, []byte(legacyInstanceClash), "test")
+	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, []byte(legacyInstanceClash), "test")
 	assert.NoError(t, err)
 	assert.Equal(t, 30*time.Second, mycheck.Interval())
 }

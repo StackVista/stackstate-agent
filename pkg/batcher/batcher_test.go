@@ -3,10 +3,10 @@ package batcher
 import (
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/config/setup"
-	"github.com/DataDog/datadog-agent/pkg/health"
 	serializer2 "github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -43,7 +43,7 @@ var (
 	testStopSnapshot  = &health.StopSnapshotMetadata{}
 	testCheckData     = health.CheckData{Unstructured: map[string]interface{}{}}
 
-	testRawMetricsData = telemetry.RawMetrics{
+	testRawMetricsData = telemetry.RawMetric{
 		Name:      "name",
 		Timestamp: 1400000,
 		HostName:  "hostname",
@@ -53,7 +53,7 @@ var (
 			"bar",
 		},
 	}
-	testRawMetricsData2 = telemetry.RawMetrics{
+	testRawMetricsData2 = telemetry.RawMetric{
 		Name:      "name",
 		Timestamp: 1500000,
 		HostName:  "hostname",
@@ -70,7 +70,7 @@ var (
 
 func TestBatchFlushOnStopSnapshot(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 100)
 
 	batcher.SubmitStopSnapshot(testID, testInstance)
 
@@ -98,7 +98,7 @@ func TestBatchFlushOnStopSnapshot(t *testing.T) {
 
 func TestBatchFlushOnStopHealthSnapshot(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 100)
 
 	batcher.SubmitHealthStopSnapshot(testID, testStream)
 
@@ -123,7 +123,7 @@ func TestBatchFlushOnStopHealthSnapshot(t *testing.T) {
 
 func TestBatchFlushOnComplete(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 100)
 
 	batcher.SubmitComponent(testID, testInstance, testComponent)
 	batcher.SubmitHealthCheckData(testID, testStream, testCheckData)
@@ -160,7 +160,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 
 func TestBatchNoDataNoComplete(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 100)
 
 	batcher.SubmitComponent(testID, testInstance, testComponent)
 
@@ -193,7 +193,7 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 
 func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 100)
 
 	batcher.SubmitStartSnapshot(testID, testInstance)
 	batcher.SubmitComponent(testID, testInstance, testComponent)
@@ -256,7 +256,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 
 func TestBatchFlushOnMaxElements(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 2)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 2)
 
 	batcher.SubmitComponent(testID, testInstance, testComponent)
 	batcher.SubmitComponent(testID, testInstance, testComponent2)
@@ -285,7 +285,7 @@ func TestBatchFlushOnMaxElements(t *testing.T) {
 
 func TestBatchFlushOnMaxHealthElements(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 2)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 2)
 
 	batcher.SubmitHealthCheckData(testID, testStream, testCheckData)
 	batcher.SubmitHealthCheckData(testID, testStream, testCheckData)
@@ -310,7 +310,7 @@ func TestBatchFlushOnMaxHealthElements(t *testing.T) {
 
 func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 2)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 2)
 
 	batcher.SubmitRawMetricsData(testID, testRawMetricsData)
 	batcher.SubmitRawMetricsData(testID, testRawMetricsData2)
@@ -334,8 +334,7 @@ func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 
 	// set batcher max capacity via ENV var
 	os.Setenv("DD_BATCHER_CAPACITY", "1")
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, setup.GetMaxCapacity())
-	assert.Equal(t, 1, batcher.builder.maxCapacity)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, setup.GetMaxCapacity())
 	batcher.SubmitComponent(testID, testInstance, testComponent)
 
 	message := serializer.GetJSONToV1IntakeMessage()
@@ -362,7 +361,7 @@ func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 
 func TestBatcherStartSnapshot(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 100)
 
 	batcher.SubmitStartSnapshot(testID, testInstance)
 	batcher.SubmitComplete(testID)
@@ -391,7 +390,7 @@ func TestBatcherStartSnapshot(t *testing.T) {
 
 func TestBatcherRelation(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 100)
 
 	batcher.SubmitRelation(testID, testInstance, testRelation)
 	batcher.SubmitComplete(testID)
@@ -420,7 +419,7 @@ func TestBatcherRelation(t *testing.T) {
 
 func TestBatcherHealthStartSnapshot(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 100)
 
 	batcher.SubmitHealthStartSnapshot(testID, testStream, 1, 0)
 	batcher.SubmitComplete(testID)
@@ -446,7 +445,7 @@ func TestBatcherHealthStartSnapshot(t *testing.T) {
 
 func TestBatchMultipleHealthStreams(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
-	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+	batcher := MakeAsynchronousBatcher(serializer, testHost, 100)
 
 	batcher.SubmitHealthStartSnapshot(testID, testStream, 1, 0)
 	batcher.SubmitHealthStartSnapshot(testID, testStream2, 1, 0)

@@ -2,7 +2,7 @@ package corechecks
 
 import (
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -10,10 +10,9 @@ package python
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
-	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 )
 
 /*
@@ -35,6 +34,12 @@ import "C"
 func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternalID *C.char, _ignoredComponentType *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	_instance := topology.Instance{
 		Type: C.GoString(instanceKey.type_),
 		URL:  C.GoString(instanceKey.url),
@@ -42,10 +47,10 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternal
 
 	component := topology.Component{}
 	rawComponent := C.GoString(data)
-	err := json.Unmarshal([]byte(rawComponent), &component)
+	err = json.Unmarshal([]byte(rawComponent), &component)
 
 	if err == nil {
-		handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitComponent(_instance, component)
+		checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitComponent(_instance, component)
 	} else {
 		_ = log.Errorf("Empty topology component not sent. Raw: %v, Json: %v, Error: %v", rawComponent,
 			component.JSONString(), err)
@@ -58,6 +63,12 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternal
 func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID *C.char, _ignoredTargetID *C.char, _ignoredRelationType *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	_instance := topology.Instance{
 		Type: C.GoString(instanceKey.type_),
 		URL:  C.GoString(instanceKey.url),
@@ -65,11 +76,11 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID 
 
 	relation := topology.Relation{}
 	rawRelation := C.GoString(data)
-	err := json.Unmarshal([]byte(rawRelation), &relation)
+	err = json.Unmarshal([]byte(rawRelation), &relation)
 
 	if err == nil {
 		relation.ExternalID = fmt.Sprintf("%s-%s-%s", relation.SourceID, relation.Type.Name, relation.TargetID)
-		handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitRelation(_instance, relation)
+		checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitRelation(_instance, relation)
 	} else {
 		_ = log.Errorf("Empty topology relation not sent. Raw: %v, Json: %v, Error: %v", rawRelation,
 			relation.JSONString(), err)
@@ -82,12 +93,18 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID 
 func SubmitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 	goCheckID := C.GoString(id)
 
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	_instance := topology.Instance{
 		Type: C.GoString(instanceKey.type_),
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitStartSnapshot(_instance)
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitStartSnapshot(_instance)
 }
 
 // SubmitStopSnapshot stops a snapshot
@@ -96,12 +113,18 @@ func SubmitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 func SubmitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 	goCheckID := C.GoString(id)
 
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	_instance := topology.Instance{
 		Type: C.GoString(instanceKey.type_),
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitStopSnapshot(_instance)
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitStopSnapshot(_instance)
 }
 
 // SubmitDelete deletes a topology element
@@ -109,6 +132,13 @@ func SubmitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 //export SubmitDelete
 func SubmitDelete(id *C.char, instanceKey *C.instance_key_t, topoElementID *C.char) {
 	goCheckID := C.GoString(id)
+
+	checkContext, err := getCheckContext()
+	if err != nil {
+		log.Errorf("Python check context: %v", err)
+		return
+	}
+
 	topologyElementID := C.GoString(topoElementID)
 
 	_instance := topology.Instance{
@@ -116,5 +146,5 @@ func SubmitDelete(id *C.char, instanceKey *C.instance_key_t, topoElementID *C.ch
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	handler.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitDelete(_instance, topologyElementID)
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitDelete(_instance, topologyElementID)
 }

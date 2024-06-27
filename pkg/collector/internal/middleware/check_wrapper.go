@@ -7,6 +7,7 @@
 package middleware
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"sync"
 	"time"
@@ -75,11 +76,11 @@ func (c *CheckWrapper) String() string {
 }
 
 // Configure implements Check#Configure
-func (c *CheckWrapper) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+func (c *CheckWrapper) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
 	if c.senderManager == nil {
 		c.senderManager = senderManager
 	}
-	return c.inner.Configure(c.senderManager, integrationConfigDigest, config, initConfig, source)
+	return c.inner.Configure(c.senderManager, checkManager, integrationConfigDigest, config, initConfig, source)
 }
 
 // Interval implements Check#Interval

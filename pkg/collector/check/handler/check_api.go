@@ -1,11 +1,11 @@
 package handler
 
 import (
-	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
-	"github.com/DataDog/datadog-agent/pkg/health"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 )
 
 // CheckAPI contains all the operations that can be done by an Agent Check. This acts as a proxy to forward data
@@ -29,7 +29,7 @@ type CheckTransactionalAPI interface {
 
 // StartTransaction is used to start a transaction to the input channel
 type StartTransaction struct {
-	CheckID       checkid.ID
+	CheckID       check.CheckID
 	TransactionID string
 }
 
@@ -115,13 +115,13 @@ type SubmitHealthStopSnapshot struct {
 
 // CheckTelemetryAPI contains all the telemetry operations for a check
 type CheckTelemetryAPI interface {
-	SubmitRawMetricsData(data telemetry.RawMetrics)
+	SubmitRawMetricsData(data telemetry.RawMetric)
 	SubmitEvent(event event.Event)
 }
 
 // SubmitRawMetric is used to submit a raw metric value for the current transaction
 type SubmitRawMetric struct {
-	Value telemetry.RawMetrics
+	Value telemetry.RawMetric
 }
 
 // SubmitEvent is used to submit an event for the current transaction

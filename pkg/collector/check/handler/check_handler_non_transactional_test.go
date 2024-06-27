@@ -5,14 +5,14 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/batcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/state"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/DataDog/datadog-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionmanager"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"os"
@@ -21,8 +21,12 @@ import (
 )
 
 func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
-	testCheck := &check.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
-	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck,
+	testCheck := &test.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
+	mockBatcher := batcher.NewMockBatcher()
+
+	nonTransactionCH := MakeNonTransactionalCheckHandler(
+		nil, mockBatcher, state.NewCheckStateManager(),
+		testCheck,
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 	assert.Equal(t, "NonTransactionalCheckHandler", nonTransactionCH.Name())
@@ -31,7 +35,6 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 	nonTransactionCH.StopTransaction()
 	nonTransactionCH.SetTransactionState("", "")
 
-	mockBatcher := batcher.NewMockBatcher()
 	// sender for non-transactional events
 	sender := mocksender.NewMockSender(testCheck.ID())
 	sender.On("Event", mock.AnythingOfType("event.Event"))
@@ -63,7 +66,7 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 				Relations:     []topology.Relation{testRelation},
 				DeleteIDs:     []string{deleteID},
 			},
-			Metrics: &[]telemetry.RawMetrics{
+			Metrics: &[]telemetry.RawMetric{
 				testRawMetricsData,
 				testRawMetricsData2,
 			},
@@ -87,14 +90,12 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 }
 
 func TestNonTransactionalCheckHandler_StartTransaction(t *testing.T) {
-	InitCheckManager()
-	transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+	manager := NewCheckManager(batcher.NewMockBatcher(), transactionbatcher.NewMockTransactionalBatcher(), transactionmanager.NewMockTransactionManager())
 
-	testCheck := &check.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
-	GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+	testCheck := &test.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
+	manager.RegisterCheckHandler(testCheck, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
-	checkHandler := GetCheckManager().GetCheckHandler(testCheck.ID())
+	checkHandler := manager.GetCheckHandler(testCheck.ID())
 
 	assert.Equal(t, "NonTransactionalCheckHandler", checkHandler.Name())
 
@@ -102,19 +103,22 @@ func TestNonTransactionalCheckHandler_StartTransaction(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond) // sleep to give everything a bit of time to finish up
 
-	transactionalCheckHandler := GetCheckManager().GetCheckHandler(testCheck.ID()).(*TransactionalCheckHandler)
+	transactionalCheckHandler := manager.GetCheckHandler(testCheck.ID()).(*TransactionalCheckHandler)
 	assert.Equal(t, "TransactionalCheckHandler", transactionalCheckHandler.Name())
 	assert.Equal(t, transactionID, transactionalCheckHandler.GetCurrentTransaction())
 
-	GetCheckManager().Stop()
+	manager.Stop()
 }
 
 func TestNonTransactionalCheckHandler_State(t *testing.T) {
 	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
-	state.InitCheckStateManager()
 
-	testCheck := &check.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
-	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck,
+	testCheck := &test.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
+	mockBatcher := batcher.NewMockBatcher()
+	state := state.NewCheckStateManager()
+	nonTransactionCH := MakeNonTransactionalCheckHandler(
+		nil, mockBatcher, state,
+		testCheck,
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 	stateKey := fmt.Sprintf("%s:state", testCheck.Name)
@@ -123,14 +127,14 @@ func TestNonTransactionalCheckHandler_State(t *testing.T) {
 	expectedState := "{\"non\":\"transactional\"}"
 	assert.Equal(t, expectedState, actualState)
 
-	checkState, err := state.GetCheckStateManager().GetState(stateKey)
+	checkState, err := state.GetState(stateKey)
 	assert.NoError(t, err, "unexpected error occurred when trying to get state for", stateKey)
 	assert.Equal(t, expectedState, checkState)
 
 	updatedState := "{\"e\":\"f\"}"
 	nonTransactionCH.SetState(stateKey, updatedState)
 
-	checkState, err = state.GetCheckStateManager().GetState(stateKey)
+	checkState, err = state.GetState(stateKey)
 	assert.NoError(t, err, "unexpected error occurred when trying to get state for", stateKey)
 	assert.Equal(t, updatedState, checkState)
 

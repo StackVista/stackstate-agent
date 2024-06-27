@@ -9,10 +9,11 @@ package disk
 import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/health"
-	"github.com/DataDog/datadog-agent/pkg/topology"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
@@ -103,7 +104,7 @@ func TestDiskCheck(t *testing.T) {
 	ioCounters = diskIoSampler
 	diskCheck := new(Check)
 	mock := mocksender.NewMockSender(diskCheck.ID())
-	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 	// set up the mock batcher
 	mockBatcher := batcher.NewMockBatcher()
 	// set mock hostname
@@ -185,7 +186,7 @@ func TestDiskCheckExcludedDiskFilsystem(t *testing.T) {
 	ioCounters = diskIoSampler
 	diskCheck := new(Check)
 	mock := mocksender.NewMockSender(diskCheck.ID())
-	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 	diskCheck.cfg.excludedFilesystems = []string{"vfat"}
 	diskCheck.cfg.excludedDisks = []string{"/dev/sda2"}
 
@@ -216,7 +217,7 @@ func TestDiskCheckExcludedRe(t *testing.T) {
 	ioCounters = diskIoSampler
 	diskCheck := new(Check)
 	mock := mocksender.NewMockSender(diskCheck.ID())
-	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	diskCheck.cfg.excludedMountpointRe = regexp.MustCompile("/boot/efi")
 	diskCheck.cfg.excludedDiskRe = regexp.MustCompile("/dev/sda2")
@@ -251,7 +252,7 @@ func TestDiskCheckTags(t *testing.T) {
 	config := integration.Data([]byte("use_mount: true\ntag_by_filesystem: true\nall_partitions: true\ndevice_tag_re:\n  /boot/efi: role:esp\n  /dev/sda2: device_type:sata,disk_size:large"))
 
 	mock := mocksender.NewMockSender(diskCheck.ID())
-	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, config, nil, "test")
+	diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, config, nil, "test")
 	_ = batcher.NewMockBatcher()
 
 	expectedMonoCounts := 2
@@ -320,7 +321,7 @@ func TestExcludedDiskFSFromConfig(t *testing.T) {
 			diskPartitions = diskSampler
 			diskCheck := diskFactory().(*Check)
 			mock := mocksender.NewMockSender(diskCheck.ID())
-			err := diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, tc.config, nil, "test")
+			err := diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, tc.config, nil, "test")
 
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, diskCheck.cfg.excludedDisks, tc.excludedDisks)

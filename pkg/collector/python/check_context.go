@@ -9,6 +9,7 @@ package python
 
 import (
 	"errors"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"sync"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -23,6 +24,7 @@ var checkContextMutex = sync.Mutex{}
 // per dependency used inside SubmitMetric like methods.
 type checkContext struct {
 	senderManager sender.SenderManager
+	checkManager  handler.CheckManager
 }
 
 func getCheckContext() (*checkContext, error) {
@@ -35,16 +37,20 @@ func getCheckContext() (*checkContext, error) {
 	return checkCtx, nil
 }
 
-func initializeCheckContext(senderManager sender.SenderManager) {
+func initializeCheckContext(senderManager sender.SenderManager, checkManager handler.CheckManager) {
 	checkContextMutex.Lock()
 	if checkCtx == nil {
-		checkCtx = &checkContext{senderManager: senderManager}
+		checkCtx = &checkContext{senderManager: senderManager, checkManager: checkManager}
 	}
 	checkContextMutex.Unlock()
 }
 
 func releaseCheckContext() {
 	checkContextMutex.Lock()
+	if checkCtx != nil {
+		checkCtx.checkManager.Stop()
+	}
+
 	checkCtx = nil
 	checkContextMutex.Unlock()
 }

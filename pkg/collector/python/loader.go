@@ -59,8 +59,8 @@ const (
 )
 
 func init() {
-	factory := func(senderManager sender.SenderManager) (check.Loader, error) {
-		return NewPythonCheckLoader(senderManager)
+	factory := func(senderManager sender.SenderManager, checkManager handler.CheckManager) (check.Loader, error) {
+		return NewPythonCheckLoader(senderManager, checkManager)
 	}
 	loaders.RegisterLoader(20, factory)
 
@@ -87,8 +87,8 @@ func init() {
 type PythonCheckLoader struct{}
 
 // NewPythonCheckLoader creates an instance of the Python checks loader
-func NewPythonCheckLoader(senderManager sender.SenderManager) (*PythonCheckLoader, error) {
-	initializeCheckContext(senderManager)
+func NewPythonCheckLoader(senderManager sender.SenderManager, checkManager handler.CheckManager) (*PythonCheckLoader, error) {
+	initializeCheckContext(senderManager, checkManager)
 	return &PythonCheckLoader{}, nil
 }
 
@@ -109,7 +109,7 @@ func (cl *PythonCheckLoader) Name() string {
 
 // Load tries to import a Python module with the same name found in config.Name, searches for
 // subclasses of the AgentCheck class and returns the corresponding Check
-func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, config integration.Config, instance integration.Data) (check.Check, error) {
+func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, checkManager handler.CheckManager, config integration.Config, instance integration.Data) (check.Check, error) {
 	if rtloader == nil {
 		return nil, fmt.Errorf("python is not initialized")
 	}
@@ -202,13 +202,13 @@ func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, config int
 		go reportPy3Warnings(name, goCheckFilePath)
 	}
 
-	c, err := NewPythonCheck(senderManager, moduleName, checkClass)
+	c, err := NewPythonCheck(senderManager, checkManager, moduleName, checkClass)
 	if err != nil {
 		return c, err
 	}
 
 	// The GIL should be unlocked at this point, `check.Configure` uses its own stickyLock and stickyLocks must not be nested
-	if err := c.Configure(senderManager, configDigest, instance, config.InitConfig, config.Source); err != nil {
+	if err := c.Configure(senderManager, checkManager, configDigest, instance, config.InitConfig, config.Source); err != nil {
 		C.rtloader_decref(rtloader, checkClass)
 		C.rtloader_decref(rtloader, checkModule)
 
@@ -227,7 +227,7 @@ func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, config int
 	log.Debugf("python loader: done loading check %s (version %s)", moduleName, wheelVersion)
 
 	// [sts] register check handler
-	handler.GetCheckManager().RegisterCheckHandler(c, config.InitConfig, instance)
+	checkManager.RegisterCheckHandler(c, config.InitConfig, instance)
 
 	return c, nil
 }

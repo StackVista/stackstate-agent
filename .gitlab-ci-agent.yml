@@ -715,30 +715,6 @@ pre_release_main_agent_image: &pre_release_image
   rules:
     - when: on_success
 
-pre_release_swarm_agent_image:
-  <<: *pre_release_image
-  needs:
-    - pre_release_main_agent_image
-  script:
-    - cd $CI_PROJECT_DIR
-    #                     script                           $IMAGE_TAG              $IMAGE_REPO              $EXTRA_TAG            $BASE_REPO           $BASE_TAG
-    - ./omnibus/package-scripts/publish_swarm_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_SWARM $CI_COMMIT_SHORT_SHA $STS_DOCKER_TEST_REPO $CI_COMMIT_SHORT_SHA
-  rules:
-    - *cluster_agent_manual
-    - *merge_train_always_manual
-
-pre_release_trace_agent_image:
-  <<: *pre_release_image
-  interruptible: true
-  script:
-    - cd $CI_PROJECT_DIR
-    - export VERSION=`cat version.txt`
-    - cp ./outcomes/binary/trace-agent Dockerfiles/trace-agent
-    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent $CI_COMMIT_SHORT_SHA "NOP"
-  rules:
-    - *cluster_agent_manual
-    - *merge_train_always_manual
-
 pre_release_cluster_agent_image:
   <<: *pre_release_image
   interruptible: true
@@ -981,70 +957,6 @@ beest_k8s_1_30_containerd_success_cleanup:
     - beest_k8s_1_30_containerd_create
 
 # Job Seq: Beest
-# Type: otel
-
-.beest_otel_rule:
-  # Currently we default to only running on Python2 build.
-  # TODO: Change this when V3 releases are finalized and the default.
-  - &beest_otel_ignore_rule
-    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-otel]/
-    when: never
-
-.beest_otel_variables: &beest_otel_variables
-  variables:
-    BEEST_SCENARIO: otel
-    BEEST_TEST_GROUP: otel
-
-beest_otel_create:
-  <<: *beest
-  <<: *beest_create
-  <<: *beest_otel_variables
-  rules:
-    - *beest_otel_ignore_rule
-    - *merge_train_always_manual
-
-beest_otel_test:
-  <<: *beest
-  <<: *beest_test
-  <<: *beest_otel_variables
-  rules:
-    - *beest_otel_ignore_rule
-    - *merge_train_on_success
-    - when: never
-  dependencies:
-    - beest_otel_create
-  needs:
-    - beest_otel_create
-    - pre_release_deb
-
-beest_otel_failure_cleanup:
-  <<: *beest
-  <<: *beest_destroy
-  <<: *beest_otel_variables
-  rules:
-    - *beest_otel_ignore_rule
-    - *merge_train_on_failure
-    - when: never
-  needs:
-    - beest_otel_test
-    - beest_otel_create
-
-beest_otel_success_cleanup:
-  <<: *beest
-  <<: *beest_destroy
-  <<: *beest_otel_variables
-  rules:
-    - *beest_otel_ignore_rule
-    - *merge_train_on_success
-    - when: never
-  dependencies:
-    - beest_otel_test
-    - beest_otel_create
-  needs:
-    - beest_otel_test
-    - beest_otel_create
-
-# Job Seq: Beest
 # Type: splunk
 
 .beest_splunk_rule:
@@ -1210,17 +1122,6 @@ release_main_agent_image:
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
 
-release_trace_agent_image:
-  <<: *base_release_image
-  interruptible: true
-  script:
-    - cd $CI_PROJECT_DIR
-    - export VERSION=`cat version.txt`
-    - cp ./outcomes/binary/trace-agent Dockerfiles/trace-agent
-    - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent latest
-  rules:
-    - *cluster_agent_release
-
 release_cluster_agent_image:
   <<: *base_release_image
   interruptible: true
@@ -1234,17 +1135,3 @@ release_cluster_agent_image:
   rules:
     - *cluster_agent_release
 
-release_swarm_agent_image:
-  <<: *base_release_image
-  interruptible: true
-  needs:
-    - build_deb
-    - release_main_agent_image
-  script:
-    - cd $CI_PROJECT_DIR
-    - export VERSION=`cat version.txt`
-    #                                                 $IMAGE_TAG          $IMAGE_REPO        $EXTRA_TAG      $BASE_REPO       $BASE_TAG
-    - ./omnibus/package-scripts/publish_swarm_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_SWARM latest $STS_DOCKER_RELEASE_REPO $VERSION
-  rules:
-    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
-      when: manual

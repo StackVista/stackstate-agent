@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/python"
 	"testing"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
@@ -24,7 +25,7 @@ type TestCheck struct {
 }
 
 //nolint:revive // TODO(AML) Fix revive linter
-func (c *TestCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initData integration.Data, source string) error {
+func (c *TestCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initData integration.Data, source string) error {
 	if string(data) == "err" {
 		return fmt.Errorf("testError")
 	}
@@ -60,10 +61,10 @@ func TestLoad(t *testing.T) {
 		integration.Data("foo: bar"),
 	}
 	cc := integration.Config{Name: "foo", Instances: i}
-	handler.InitCheckManager()
+	_, _, _, checkManager := python.SetupTransactionalComponents()
 	l, _ := NewGoCheckLoader()
 
-	_, err := l.Load(aggregator.NewNoOpSenderManager(), cc, i[0])
+	_, err := l.Load(aggregator.NewNoOpSenderManager(), checkManager, cc, i[0])
 	if err != nil {
 		t.Fatalf("Expected nil error, found: %v", err)
 	}
@@ -74,7 +75,7 @@ func TestLoad(t *testing.T) {
 	}
 	cc = integration.Config{Name: "foo", Instances: i}
 
-	_, err = l.Load(aggregator.NewNoOpSenderManager(), cc, i[0])
+	_, err = l.Load(aggregator.NewNoOpSenderManager(), checkManager, cc, i[0])
 
 	if err == nil {
 		t.Fatalf("Expected error, found: nil")
@@ -86,7 +87,7 @@ func TestLoad(t *testing.T) {
 	}
 	cc = integration.Config{Name: "foo", Instances: i}
 
-	_, err = l.Load(aggregator.NewNoOpSenderManager(), cc, i[0])
+	_, err = l.Load(aggregator.NewNoOpSenderManager(), checkManager, cc, i[0])
 
 	if !errors.Is(err, check.ErrSkipCheckInstance) {
 		t.Fatalf("Expected ErrSkipCheckInstance, found: %v", err)
@@ -98,7 +99,7 @@ func TestLoad(t *testing.T) {
 	}
 	cc = integration.Config{Name: "bar", Instances: i}
 
-	_, err = l.Load(aggregator.NewNoOpSenderManager(), cc, i[0])
+	_, err = l.Load(aggregator.NewNoOpSenderManager(), checkManager, cc, i[0])
 
 	if err == nil {
 		t.Fatal("Expected error, found: nil")

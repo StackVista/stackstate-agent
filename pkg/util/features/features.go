@@ -2,10 +2,11 @@ package features
 
 import (
 	"encoding/json"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/httpclient"
 	"io/ioutil"
 	"reflect"
 
-	"github.com/DataDog/datadog-agent/pkg/httpclient"
+	clientwrapper "github.com/DataDog/datadog-agent/pkg/httpclient"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
@@ -59,7 +60,7 @@ The trade-off is that an upgrade to StackState will only be recognized after an 
 func InitFeatures() *FetchFeatures {
 	features := &FetchFeatures{
 		features:  make(map[FeatureID]bool),
-		stsClient: httpclient.NewStackStateClient(),
+		stsClient: clientwrapper.NewStackStateClient(),
 	}
 
 	features.init()
