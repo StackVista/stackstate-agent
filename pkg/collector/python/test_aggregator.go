@@ -195,6 +195,12 @@ func testSubmitServiceCheckEmptyHostame(t *testing.T) {
 }
 
 func testSubmitEvent(t *testing.T) {
+	sender := mocksender.NewMockSender(checkid.ID("testID"))
+	release := scopeInitCheckContext(sender.GetSenderManager())
+	defer release()
+
+	sender.SetupAcceptAll()
+
 	SetupTransactionalComponents()
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
@@ -244,6 +250,8 @@ func testSubmitEvent(t *testing.T) {
 	assert.Equal(t, expectedTopology, actualTopology)
 
 	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+
+	sender.AssertEvent(t, expectedEvent, 0)
 }
 
 func testSubmitHistogramBucket(t *testing.T) {
