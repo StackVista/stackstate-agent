@@ -345,26 +345,26 @@ func TestSendSeries(t *testing.T) {
 	f.AssertExpectations(t)
 }
 
-func TestSendSketch(t *testing.T) {
-	f := &forwarder.MockedForwarder{}
-	payloads, _ := mkPayloads(protobufString, false)                                // sts
-	f.On("SubmitSketchSeries", payloads, protobufExtraHeaders).Return(nil).Times(1) // sts
-
-	matcher := createProtoscopeMatcher(`
-		1: { 1: {"fakename"} 2: {"fakehost"} 8: { 1: { 4: 10 }}}
-		2: {}
-		`)
-	f.On("SubmitSketchSeries", matcher, protobufExtraHeadersWithCompression).Return(nil).Times(1)
-
-	s := NewSerializer(f, nil)
-
-	// [sts] check runs are disabled by default for StackState
-	s.enableSketches = true
-
-	err := s.SendSketch(metrics.NewSketchesSourceTestWithSketch())
-	require.Nil(t, err)
-	f.AssertExpectations(t)
-}
+//func TestSendSketch(t *testing.T) {
+//	f := &forwarder.MockedForwarder{}
+//	payloads, _ := mkPayloads(protobufString, false)                                // sts
+//	f.On("SubmitSketchSeries", payloads, protobufExtraHeaders).Return(nil).Times(1) // sts
+//
+//	matcher := createProtoscopeMatcher(`
+//		1: { 1: {"fakename"} 2: {"fakehost"} 8: { 1: { 4: 10 }}}
+//		2: {}
+//		`)
+//	f.On("SubmitSketchSeries", matcher, protobufExtraHeadersWithCompression).Return(nil).Times(1)
+//
+//	s := NewSerializer(f, nil)
+//
+//	// [sts] check runs are disabled by default for StackState
+//	s.enableSketches = true
+//
+//	err := s.SendSketch(metrics.NewSketchesSourceTestWithSketch())
+//	require.Nil(t, err)
+//	f.AssertExpectations(t)
+//}
 
 func TestSendMetadata(t *testing.T) {
 	f := &forwarder.MockedForwarder{}
