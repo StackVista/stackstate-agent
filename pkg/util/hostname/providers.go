@@ -159,6 +159,7 @@ func GetWithProvider(ctx context.Context) (Data, error) {
 	var err error
 	var hostname string
 	var providerName string
+	var results []string
 
 	for _, p := range providerCatalog {
 		log.Debugf("trying to get hostname from '%s' provider", p.name)
@@ -169,10 +170,12 @@ func GetWithProvider(ctx context.Context) (Data, error) {
 			expErr.Set(err.Error())
 			hostnameErrors.Set(p.expvarName, expErr)
 			log.Debugf("unable to get the hostname from '%s' provider: %s", p.name, err)
+			results = append(results, fmt.Sprintf("'%s': %s", p.name, err))
 			continue
 		}
 
 		log.Debugf("hostname provider '%s' successfully found hostname '%s'", p.name, detectedHostname)
+		results = append(results, fmt.Sprintf("'%s': '%s' - p.stopIfSuccessful: %v", p.name, detectedHostname, p.stopIfSuccessful))
 		hostname = detectedHostname
 		providerName = p.name
 
@@ -188,7 +191,8 @@ func GetWithProvider(ctx context.Context) (Data, error) {
 		return saveHostname(cacheHostnameKey, hostname, providerName), nil
 	}
 
-	err = fmt.Errorf("unable to reliably determine the host name. You can define one in the agent config file or in your hosts file")
+	//err = fmt.Errorf("unable to reliably determine the host name. You can define one in the agent config file or in your hosts file")
+	err = fmt.Errorf("unable to reliably determine the host name. Results: %v", results)
 	expErr := new(expvar.String)
 	expErr.Set(err.Error())
 	hostnameErrors.Set("all", expErr)
