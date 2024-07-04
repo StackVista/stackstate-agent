@@ -236,6 +236,7 @@ func testSubmitEvent(t *testing.T) {
 		AggregationKey: "aggregation_key",
 		SourceTypeName: "source_type",
 	}
+	sender.AssertEvent(t, expectedEvent, 0)
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
@@ -250,8 +251,6 @@ func testSubmitEvent(t *testing.T) {
 	assert.Equal(t, expectedTopology, actualTopology)
 
 	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
-
-	sender.AssertEvent(t, expectedEvent, 0)
 }
 
 func testSubmitHistogramBucket(t *testing.T) {
