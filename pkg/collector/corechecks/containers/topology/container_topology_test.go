@@ -5,10 +5,12 @@ import (
 	"context"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	cspec "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/spec"
+	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/topology"
 	"github.com/DataDog/datadog-agent/pkg/util/hostname"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 )
 
@@ -42,7 +44,25 @@ func (m MockUtil) GetContainers(ctx context.Context) ([]*cspec.Container, error)
 	}, nil
 }
 
-func TestMakeContainerTopologyCollector(t *testing.T) {
+func TestMakeNodeAgentContainerTopologyCollector(t *testing.T) {
+	// Let configIsFeaturePresent(config.Kubernetes) return true
+	os.Setenv("DOCKER_DD_AGENT", "true")
+	config.SetFeatures(t, config.Docker)
+	hostname, err := hostname.Get(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, &ContainerTopologyCollector{
+		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("container_topology", topology.Instance{
+			Type: "container",
+			URL:  "agents",
+		}),
+		Hostname: hostname,
+		Runtime:  "test",
+	}, MakeContainerTopologyCollector("test"))
+}
+
+func TestMakeClusterAgentContainerTopologyCollector(t *testing.T) {
+	os.Setenv("DOCKER_DD_AGENT", "true")
+	config.SetFeatures(t, config.Kubernetes)
 	hostname, err := hostname.Get(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, &ContainerTopologyCollector{
