@@ -58,6 +58,7 @@ func TestMakeNodeAgentContainerTopologyCollector(t *testing.T) {
 		Hostname: hostname,
 		Runtime:  "test",
 	}, MakeContainerTopologyCollector("test"))
+	os.Unsetenv("DOCKER_DD_AGENT")
 }
 
 func TestMakeClusterAgentContainerTopologyCollector(t *testing.T) {
@@ -73,6 +74,7 @@ func TestMakeClusterAgentContainerTopologyCollector(t *testing.T) {
 		Hostname: hostname,
 		Runtime:  "test",
 	}, MakeContainerTopologyCollector("test"))
+	os.Unsetenv("DOCKER_DD_AGENT")
 }
 
 func TestBuildContainerTopology(t *testing.T) {

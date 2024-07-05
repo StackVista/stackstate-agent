@@ -303,8 +303,6 @@ unit_tests:
   rules:
     - when: on_success
   timeout: 120 minutes
-  variables:
-    DOCKER_DD_AGENT: "yes" # Trying something to fix TestMakeContainerTopologyCollector and MakeContainerTopologyCollector
 
 filename_linting:
   stage: test
