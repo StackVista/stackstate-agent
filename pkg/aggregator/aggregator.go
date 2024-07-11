@@ -939,11 +939,13 @@ func (agg *BufferedAggregator) handleRegisterSampler(id checkid.ID) {
 		log.Debugf("Sampler with ID '%s' has already been registered, will use existing sampler", id)
 		return
 	}
+	copyOfConfig := config.Datadog
+
 	agg.checkSamplers[id] = newCheckSampler(
-		config.Datadog.GetInt("check_sampler_bucket_commits_count_expiry"),
-		config.Datadog.GetBool("check_sampler_expire_metrics"),
-		config.Datadog.GetBool("check_sampler_context_metrics"),
-		config.Datadog.GetDuration("check_sampler_stateful_metric_expiration_time"),
+		copyOfConfig.GetInt("check_sampler_bucket_commits_count_expiry"),
+		copyOfConfig.GetBool("check_sampler_expire_metrics"),
+		copyOfConfig.GetBool("check_sampler_context_metrics"),
+		copyOfConfig.GetDuration("check_sampler_stateful_metric_expiration_time"),
 		agg.tagsStore,
 		id,
 	)
