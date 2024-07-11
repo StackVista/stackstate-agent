@@ -939,7 +939,7 @@ func (agg *BufferedAggregator) handleRegisterSampler(id checkid.ID) {
 		log.Debugf("Sampler with ID '%s' has already been registered, will use existing sampler", id)
 		return
 	}
-	copyOfConfig := config.Datadog
+	copyOfConfig := config.GetDatadogConfig()
 
 	agg.checkSamplers[id] = newCheckSampler(
 		copyOfConfig.GetInt("check_sampler_bucket_commits_count_expiry"),
