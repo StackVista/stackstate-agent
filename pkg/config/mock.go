@@ -42,9 +42,9 @@ func Mock(t testing.TB) *MockConfig {
 	// Mock.
 	if t != nil {
 		m.Lock()
+		defer m.Unlock()
 		if isConfigMocked {
 			// The configuration is already mocked.
-			m.Unlock()
 			return &MockConfig{Datadog}
 		}
 
@@ -52,11 +52,10 @@ func Mock(t testing.TB) *MockConfig {
 		originalDatadogConfig := Datadog
 		t.Cleanup(func() {
 			m.Lock()
+			defer m.Unlock()
 			isConfigMocked = false
 			Datadog = originalDatadogConfig
-			m.Unlock()
 		})
-		m.Unlock()
 	}
 
 	// Configure Datadog global configuration
