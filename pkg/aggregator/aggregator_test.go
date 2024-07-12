@@ -228,7 +228,8 @@ func TestDefaultData(t *testing.T) {
 	// Check only the name for `datadog.agent.up` as the timestamp may not be the same.
 	agentUpMatcher := mock.MatchedBy(func(m servicecheck.ServiceChecks) bool {
 		require.Equal(t, 1, len(m))
-		require.Equal(t, "datadog.agent.up", m[0].CheckName)
+		//require.Equal(t, "datadog.agent.up", m[0].CheckName)
+		require.Equal(t, "stackstate.agent.up", m[0].CheckName)
 		require.Equal(t, servicecheck.ServiceCheckOK, m[0].Status)
 		require.Equal(t, []string{}, m[0].Tags)
 		require.Equal(t, agg.hostname, m[0].Host)
@@ -464,7 +465,8 @@ func TestRecurrentSeries(t *testing.T) {
 	// Check only the name for `datadog.agent.up` as the timestamp may not be the same.
 	agentUpMatcher := mock.MatchedBy(func(m servicecheck.ServiceChecks) bool {
 		require.Equal(t, 1, len(m))
-		require.Equal(t, "datadog.agent.up", m[0].CheckName)
+		//require.Equal(t, "datadog.agent.up", m[0].CheckName)
+		require.Equal(t, "stackstate.agent.up", m[0].CheckName)
 		require.Equal(t, servicecheck.ServiceCheckOK, m[0].Status)
 		require.Equal(t, []string{}, m[0].Tags)
 		require.Equal(t, demux.Aggregator().hostname, m[0].Host)
