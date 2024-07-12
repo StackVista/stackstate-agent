@@ -236,19 +236,18 @@ func testSubmitEvent(t *testing.T) {
 		AggregationKey: "aggregation_key",
 		SourceTypeName: "source_type",
 	}
-	//sender.AssertEvent(t, expectedEvent, 0) // [sts] Not sure if this call is required, given that StackState sends via the transactional batcher
 
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	currentCheckState, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
-	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
-		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
+	expectedCheckState := transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: currentCheckState.Transaction, // not asserting this specifically, it just needs to be present
 		Health:      map[string]health.Health{},
 		Events:      &event.IntakeEvents{Events: []event.Event{expectedEvent}},
 	}
-	assert.Equal(t, expectedTopology, actualTopology)
+	assert.Equal(t, expectedCheckState, currentCheckState)
 
 	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
