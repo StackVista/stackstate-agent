@@ -11,7 +11,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/hostname"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 )
 
@@ -47,7 +46,6 @@ func (m MockUtil) GetContainers(ctx context.Context) ([]*cspec.Container, error)
 
 func TestMakeNodeAgentContainerTopologyCollector(t *testing.T) {
 	// Let configIsFeaturePresent(config.Kubernetes) return true
-	os.Setenv("DOCKER_DD_AGENT", "true")
 	config.SetFeatures(t, config.Docker)
 	config.Datadog.Set("hostname", "host", model.SourceDefault)
 	hostname, err := hostname.Get(context.TODO())
@@ -60,7 +58,6 @@ func TestMakeNodeAgentContainerTopologyCollector(t *testing.T) {
 		Hostname: hostname,
 		Runtime:  "test",
 	}, MakeContainerTopologyCollector("test"))
-	os.Unsetenv("DOCKER_DD_AGENT")
 	config.Datadog.UnsetForSource("hostname", model.SourceDefault)
 }
 
