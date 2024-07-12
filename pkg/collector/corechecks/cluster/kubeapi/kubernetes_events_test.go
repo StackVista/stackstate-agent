@@ -146,6 +146,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	mockConfig := config.Mock(nil)
 	mockConfig.SetWithoutSource("cluster_name", testClusterName)
 	clustername.ResetClusterName() // reset state as clustername was already read
+	config.SetFeatures(t, config.Kubernetes)
 	// defer a reset of the state so that future hostname fetches are not impacted
 	defer mockConfig.SetWithoutSource("cluster_name", nil)
 	defer clustername.ResetClusterName()
