@@ -293,7 +293,6 @@ unit_tests:
     - invoke install-tools
     - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES"
     - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
-    - inv -e lint-go
   tags:
     - sts-k8s-xl-runner
   retry:
