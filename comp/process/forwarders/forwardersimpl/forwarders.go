@@ -44,7 +44,7 @@ func newForwarders(deps dependencies) (forwarders.Component, error) {
 	config := deps.Config
 	queueBytes := config.GetInt("process_config.process_queue_bytes")
 	if queueBytes <= 0 {
-		deps.Logger.Warnf("Invalid queue bytes size: %d. Using default value: %d", queueBytes, ddconfig.DefaultProcessQueueBytes)
+		_ = deps.Logger.Warnf("Invalid queue bytes size: %d. Using default value: %d", queueBytes, ddconfig.DefaultProcessQueueBytes)
 		queueBytes = ddconfig.DefaultProcessQueueBytes
 	}
 

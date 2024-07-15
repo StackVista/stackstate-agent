@@ -31,11 +31,12 @@ func GetLogrusLevel(logger log.Component) *logrus.Logger {
 	// longer need to interact with logrus.
 	logLevel, err := ddlog.GetLogLevel()
 	if err != nil {
-		logger.Warnf("error getting log level")
+		_ = logger.Warnf("error getting log level")
+		logLevel = seelog.InfoLvl
 	}
 	logrusLevel, ok := ddLogToLogrusLevel[logLevel]
 	if !ok {
-		logger.Warnf("no matching logrus level for seelog level: %s", logLevel.String())
+		_ = logger.Warnf("no matching logrus level for seelog level: %s", logLevel.String())
 		logrusLevel = logrus.InfoLevel
 	}
 	logrusLogger := logrus.StandardLogger()

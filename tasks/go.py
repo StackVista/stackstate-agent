@@ -60,7 +60,7 @@ def run_golangci_lint(
     results = []
     for target in targets:
         print("running golangci on {}".format(target))
-        ctx.run(
+        result = ctx.run(
             "golangci-lint run -v --timeout 10m0s --build-tags '{}' {}".format(" ".join(tags), "{}/...".format(target)),
             env=env,
             warn=True,

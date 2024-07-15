@@ -72,7 +72,7 @@ func NewMultiFilesOIDResolver(confdPath string, logger log.Component) (*MultiFil
 	for _, fileName := range fileNames {
 		err := oidResolver.updateFromFile(filepath.Join(trapsDBRoot, fileName))
 		if err != nil {
-			logger.Warnf("unable to load trap db file %s: %s", fileName, err)
+			_ = logger.Warnf("unable to load trap db file %s: %s", fileName, err)
 		}
 	}
 	return oidResolver, nil
@@ -195,7 +195,7 @@ func (or *MultiFilesOIDResolver) updateResolverWithData(trapDB TrapDBFileContent
 	allOIDs := make([]string, 0, len(trapDB.Variables))
 	for variableOID := range trapDB.Variables {
 		if !IsValidOID(variableOID) {
-			or.logger.Warnf("trap variable OID %s does not look like a valid OID", variableOID)
+			_ = or.logger.Warnf("trap variable OID %s does not look like a valid OID", variableOID)
 			continue
 		}
 		allOIDs = append(allOIDs, NormalizeOID(variableOID))

@@ -690,7 +690,7 @@ func Warn(v ...interface{}) error {
 
 // Warnf logs with format at the warn level and returns an error containing the formated log message
 func Warnf(format string, params ...interface{}) error {
-	return logFormatWithError(seelog.WarnLvl, func() { Warnf(format, params...) }, logger.warnf, format, false, params...)
+	return logFormatWithError(seelog.WarnLvl, func() { _ = Warnf(format, params...) }, logger.warnf, format, false, params...)
 }
 
 // WarnfStackDepth logs with format at the warn level and the current stack depth plus the given depth

@@ -186,6 +186,22 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "UNIT_TESTS" ]; then
     cd "$CI_PROJECT_DIR" || exit
 fi
 
+if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "LINT" ]; then
+    if [ "${WHAT}" = "LINT" ]; then
+        prepare
+    fi
+
+    cd $SRC_PATH || exit
+
+    echo "          ---                      ---"
+    echo "          --- Running Lint         ---"
+    echo "          ---                      ---"
+
+    inv -e lint-go
+
+    cd "$CI_PROJECT_DIR" || exit
+fi
+
 if [ "${WHAT}" = "CMD" ]; then
     prepare
 
