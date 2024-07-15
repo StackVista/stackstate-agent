@@ -288,7 +288,7 @@ unit_tests:
     - inv deps
     - inv -e agent.build --race --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
     # TODO: check why formatting rules differ from previous step
-    # - gofmt -l -w -s ./pkg ./cmd
+    - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
     - invoke install-tools
     - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES"
