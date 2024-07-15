@@ -200,7 +200,7 @@ func enrichEnum(variable trapVariable, varMetadata oidresolver.VariableMetadata,
 	// if we find a mapping set it and return
 	i, ok := variable.Value.(int)
 	if !ok {
-		_ = logger.Warnf("unable to enrich variable %q %s with integer enum, received value was not int, was %T", varMetadata.Name, variable.OID, variable.Value)
+		logger.Warnf("unable to enrich variable %q %s with integer enum, received value was not int, was %T", varMetadata.Name, variable.OID, variable.Value)
 		return variable.Value
 	}
 	if value, ok := varMetadata.Enumeration[i]; ok {
@@ -218,7 +218,7 @@ func enrichBits(variable trapVariable, varMetadata oidresolver.VariableMetadata,
 	// do bitwise search
 	bytes, ok := variable.Value.([]byte)
 	if !ok {
-		_ = logger.Warnf("unable to enrich variable %q %s with BITS mapping, received value was not []byte, was %T", varMetadata.Name, variable.OID, variable.Value)
+		logger.Warnf("unable to enrich variable %q %s with BITS mapping, received value was not []byte, was %T", varMetadata.Name, variable.OID, variable.Value)
 		return variable.Value, ""
 	}
 	enabledValues := make([]interface{}, 0)

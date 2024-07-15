@@ -104,7 +104,7 @@ func (mainConfig *NetflowConfig) SetDefaults(namespace string, logger log.Compon
 			fieldType, ok := common.DefaultFieldTypes[mapping.Destination]
 
 			if ok && mapping.Type != fieldType {
-				_ = logger.Warnf("ignoring invalid mapping type %s for netflow field %s, type %s must be used for %s", mapping.Type, mapping.Destination, fieldType, mapping.Destination)
+				logger.Warnf("ignoring invalid mapping type %s for netflow field %s, type %s must be used for %s", mapping.Type, mapping.Destination, fieldType, mapping.Destination)
 				mapping.Type = fieldType
 			}
 		}

@@ -127,7 +127,7 @@ func (s *Server) Start() error {
 		s.logger.Infof("Starting Netflow listener for flow type %s on %s", listenerConfig.FlowType, listenerConfig.Addr())
 		listener, err := startFlowListener(listenerConfig, s.FlowAgg, s.logger)
 		if err != nil {
-			_ = s.logger.Warnf("Error starting listener for config (flow_type:%s, bind_Host:%s, port:%d): %s", listenerConfig.FlowType, listenerConfig.BindHost, listenerConfig.Port, err)
+			s.logger.Warnf("Error starting listener for config (flow_type:%s, bind_Host:%s, port:%d): %s", listenerConfig.FlowType, listenerConfig.BindHost, listenerConfig.Port, err)
 			continue
 		}
 		s.listeners = append(s.listeners, listener)

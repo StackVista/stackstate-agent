@@ -283,7 +283,7 @@ func (agg *FlowAggregator) flush() int {
 
 	err := agg.submitCollectorMetrics()
 	if err != nil {
-		_ = agg.logger.Warnf("error submitting collector metrics: %s", err)
+		agg.logger.Warnf("error submitting collector metrics: %s", err)
 	}
 
 	// We increase `flushedFlowCount` at the end to be sure that the metrics are submitted before hand.
