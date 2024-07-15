@@ -316,7 +316,7 @@ func (s *checkSender) ServiceCheck(checkName string, status servicecheck.Service
 		Status:    status,
 		Host:      hostname,
 		Ts:        time.Now().Unix(),
-		Tags:      append(tags, s.checkTags...),
+		Tags:      append(append(tags, s.checkTags...), fmt.Sprintf("status:%s", status)),
 		Message:   message,
 	}
 
