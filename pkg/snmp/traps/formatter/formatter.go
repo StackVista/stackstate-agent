@@ -301,7 +301,7 @@ func (f JSONFormatter) parseVariables(trapOID string, variables []gosnmp.SnmpPDU
 		}
 
 		if len(varMetadata.Enumeration) > 0 && len(varMetadata.Bits) > 0 {
-			f.logger.Errorf("Unable to enrich variable, trap variable %q has mappings for both integer enum and bits.", varMetadata.Name)
+			_ = f.logger.Errorf("Unable to enrich variable, trap variable %q has mappings for both integer enum and bits.", varMetadata.Name)
 		} else if len(varMetadata.Enumeration) > 0 {
 			enrichedValues[varMetadata.Name] = enrichEnum(tv, varMetadata, f.logger)
 		} else if len(varMetadata.Bits) > 0 {

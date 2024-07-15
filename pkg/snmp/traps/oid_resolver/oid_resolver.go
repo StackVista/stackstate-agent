@@ -227,7 +227,7 @@ func (or *MultiFilesOIDResolver) updateResolverWithData(trapDB TrapDBFileContent
 
 	for trapOID, trapData := range trapDB.Traps {
 		if !IsValidOID(trapOID) {
-			or.logger.Errorf("trap OID %s does not look like a valid OID", trapOID)
+			_ = or.logger.Errorf("trap OID %s does not look like a valid OID", trapOID)
 			continue
 		}
 		trapOID := NormalizeOID(trapOID)

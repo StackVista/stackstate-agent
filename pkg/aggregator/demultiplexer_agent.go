@@ -144,7 +144,7 @@ func initAgentDemultiplexer(log log.Component, sharedForwarder forwarder.Forward
 	}
 
 	if config.Datadog.GetBool("telemetry.enabled") && config.Datadog.GetBool("telemetry.dogstatsd_origin") && !config.Datadog.GetBool("aggregator_use_tags_store") {
-		log.Warn("DogStatsD origin telemetry is not supported when aggregator_use_tags_store is disabled.")
+		_ = log.Warn("DogStatsD origin telemetry is not supported when aggregator_use_tags_store is disabled.")
 		config.Datadog.Set("telemetry.dogstatsd_origin", false, model.SourceAgentRuntime)
 	}
 
@@ -285,7 +285,7 @@ func (d *AgentDemultiplexer) Run() {
 		// container lifecycle forwarder
 		if d.forwarders.containerLifecycle != nil {
 			if err := d.forwarders.containerLifecycle.Start(); err != nil {
-				d.log.Errorf("error starting container lifecycle forwarder: %v", err)
+				_ = d.log.Errorf("error starting container lifecycle forwarder: %v", err)
 			}
 		} else {
 			d.log.Debug("not starting the container lifecycle forwarder")
@@ -361,7 +361,7 @@ func (d *AgentDemultiplexer) Stop(flush bool) {
 		select {
 		case <-trigger.blockChan:
 		case <-time.After(timeout):
-			d.log.Errorf("flushing data on Stop() timed out")
+			_ = d.log.Errorf("flushing data on Stop() timed out")
 		}
 	}
 
