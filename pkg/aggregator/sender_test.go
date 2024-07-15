@@ -570,7 +570,7 @@ func TestCheckSenderInterface(t *testing.T) {
 	assert.Equal(t, "my_service.can_connect", serviceCheck.CheckName)
 	assert.Equal(t, servicecheck.ServiceCheckOK, serviceCheck.Status)
 	assert.Equal(t, "my-hostname", serviceCheck.Host)
-	assert.Equal(t, []string{"foo", "bar", fmt.Sprintf("status:%s", servicecheck.ServiceCheckOK.String())}, serviceCheck.Tags)
+	assert.Equal(t, []string{"foo", "bar"}, serviceCheck.Tags)
 	assert.Equal(t, "message", serviceCheck.Message)
 
 	event := <-s.eventChan
@@ -644,7 +644,7 @@ func TestCheckSenderHostname(t *testing.T) {
 			assert.Equal(t, "my_service.can_connect", serviceCheck.CheckName)
 			assert.Equal(t, servicecheck.ServiceCheckOK, serviceCheck.Status)
 			assert.Equal(t, tc.expectedHostname, serviceCheck.Host)
-			assert.Equal(t, []string{"foo", "bar", fmt.Sprintf("status:%s", servicecheck.ServiceCheckOK.String())}, serviceCheck.Tags)
+			assert.Equal(t, []string{"foo", "bar"}, serviceCheck.Tags)
 			assert.Equal(t, "message", serviceCheck.Message)
 
 			event := <-s.eventChan
