@@ -210,7 +210,7 @@ func (cb *CollectorBundle) importCRDCollectorsFromCheckConfig() bool {
 	crdCollectors := cb.check.instance.CRDCollectors
 	if len(cb.check.instance.CRDCollectors) > defaultMaximumCRDs {
 		crdCollectors = cb.check.instance.CRDCollectors[:defaultMaximumCRDs]
-		_ = cb.check.Warnf("Too many crd collectors are configured, will only collect the first %d collectors", defaultMaximumCRDs)
+		cb.check.Warnf("Too many crd collectors are configured, will only collect the first %d collectors", defaultMaximumCRDs)
 	}
 
 	for _, c := range crdCollectors {
@@ -361,7 +361,7 @@ func (cb *CollectorBundle) Run(sender sender.Sender) {
 
 func (cb *CollectorBundle) skipResources(groupVersion, resource string) bool {
 	if groupVersion == "v1" && (resource == "secrets" || resource == "configmaps") {
-		_ = cb.check.Warnf("Skipping collector: %s/%s, we don't support collecting it for now as it can contain sensitive data", groupVersion, resource)
+		cb.check.Warnf("Skipping collector: %s/%s, we don't support collecting it for now as it can contain sensitive data", groupVersion, resource)
 		return true
 	}
 	return false

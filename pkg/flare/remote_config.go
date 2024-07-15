@@ -63,7 +63,7 @@ func exportRemoteConfig(fb flaretypes.FlareBuilder) error {
 		return fmt.Errorf("Couldn't get the repositories state: %v", err)
 	}
 
-	_ = fb.AddFileFromFunc("remote-config-state.log", func() ([]byte, error) {
+	fb.AddFileFromFunc("remote-config-state.log", func() ([]byte, error) {
 		fct := func(w io.Writer) error {
 			PrintRemoteConfigState(w, s)
 

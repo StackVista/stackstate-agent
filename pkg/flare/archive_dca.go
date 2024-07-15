@@ -48,7 +48,7 @@ func CreateDCAArchive(local bool, distPath, logFilePath string, pdata ProfileDat
 func createDCAArchive(fb flaretypes.FlareBuilder, confSearchPaths map[string]string, logFilePath string, pdata ProfileData, senderManager sender.DiagnoseSenderManager) {
 	// If the request against the API does not go through we don't collect the status log.
 	if fb.IsLocal() {
-		_ = fb.AddFile("local", nil)
+		fb.AddFile("local", nil)
 	} else {
 		// The Status will be unavailable unless the agent is running.
 		// Only zip it up if the agent is running
@@ -67,12 +67,12 @@ func createDCAArchive(fb flaretypes.FlareBuilder, confSearchPaths map[string]str
 	getClusterAgentClusterChecks(fb)           //nolint:errcheck
 	getClusterAgentDiagnose(fb, senderManager) //nolint:errcheck
 	fb.AddFileFromFunc("agent-daemonset.yaml", getAgentDaemonSet)
-	_ = fb.AddFileFromFunc("cluster-agent-deployment.yaml", getClusterAgentDeployment)
-	_ = fb.AddFileFromFunc("helm-values.yaml", getHelmValues)
-	_ = fb.AddFileFromFunc("envvars.log", getEnvVars)
-	_ = fb.AddFileFromFunc("telemetry.log", QueryDCAMetrics)
-	_ = fb.AddFileFromFunc("tagger-list.json", getDCATaggerList)
-	_ = fb.AddFileFromFunc("workload-list.log", getDCAWorkloadList)
+	fb.AddFileFromFunc("cluster-agent-deployment.yaml", getClusterAgentDeployment)
+	fb.AddFileFromFunc("helm-values.yaml", getHelmValues)
+	fb.AddFileFromFunc("envvars.log", getEnvVars)
+	fb.AddFileFromFunc("telemetry.log", QueryDCAMetrics)
+	fb.AddFileFromFunc("tagger-list.json", getDCATaggerList)
+	fb.AddFileFromFunc("workload-list.log", getDCAWorkloadList)
 	getPerformanceProfileDCA(fb, pdata)
 
 	if config.Datadog.GetBool("external_metrics_provider.enabled") {
@@ -189,6 +189,6 @@ func getDCAWorkloadList() ([]byte, error) {
 
 func getPerformanceProfileDCA(fb flaretypes.FlareBuilder, pdata ProfileData) {
 	for name, data := range pdata {
-		_ = fb.AddFileWithoutScrubbing(filepath.Join("profiles", name), data)
+		fb.AddFileWithoutScrubbing(filepath.Join("profiles", name), data)
 	}
 }

@@ -89,13 +89,13 @@ type CheckSubmitter struct {
 func NewSubmitter(config config.Component, log log.Component, forwarders forwarders.Component, hostname string) (*CheckSubmitter, error) {
 	queueBytes := config.GetInt("process_config.process_queue_bytes")
 	if queueBytes <= 0 {
-		_ = log.Warnf("Invalid queue bytes size: %d. Using default value: %d", queueBytes, ddconfig.DefaultProcessQueueBytes)
+		log.Warnf("Invalid queue bytes size: %d. Using default value: %d", queueBytes, ddconfig.DefaultProcessQueueBytes)
 		queueBytes = ddconfig.DefaultProcessQueueBytes
 	}
 
 	queueSize := config.GetInt("process_config.queue_size")
 	if queueSize <= 0 {
-		_ = log.Warnf("Invalid check queue size: %d. Using default value: %d", queueSize, ddconfig.DefaultProcessQueueSize)
+		log.Warnf("Invalid check queue size: %d. Using default value: %d", queueSize, ddconfig.DefaultProcessQueueSize)
 		queueSize = ddconfig.DefaultProcessQueueSize
 	}
 	processResults := api.NewWeightedQueue(queueSize, int64(queueBytes))
@@ -103,7 +103,7 @@ func NewSubmitter(config config.Component, log log.Component, forwarders forward
 
 	rtQueueSize := config.GetInt("process_config.rt_queue_size")
 	if rtQueueSize <= 0 {
-		_ = log.Warnf("Invalid rt check queue size: %d. Using default value: %d", rtQueueSize, ddconfig.DefaultProcessRTQueueSize)
+		log.Warnf("Invalid rt check queue size: %d. Using default value: %d", rtQueueSize, ddconfig.DefaultProcessRTQueueSize)
 		rtQueueSize = ddconfig.DefaultProcessRTQueueSize
 	}
 	// reuse main queue's ProcessQueueBytes because it's unlikely that it'll reach to that size in bytes, so we don't need a separate config for it
@@ -382,7 +382,7 @@ func (s *CheckSubmitter) consumePayloads(results *api.WeightedQueue, fwd forward
 			}
 
 			if err != nil {
-				_ = s.log.Errorf("Unable to submit payload: %s", err)
+				s.log.Errorf("Unable to submit payload: %s", err)
 				continue
 			}
 
@@ -457,7 +457,7 @@ func (s *CheckSubmitter) messagesToCheckResult(start time.Time, name string, mes
 	for messageIndex, m := range messages {
 		body, err := api.EncodePayload(m)
 		if err != nil {
-			_ = s.log.Errorf("Unable to encode message: %s", err)
+			s.log.Errorf("Unable to encode message: %s", err)
 			continue
 		}
 

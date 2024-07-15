@@ -33,7 +33,7 @@ func CreateSecurityAgentArchive(local bool, logFilePath string, runtimeStatus, c
 func createSecurityAgentArchive(fb flaretypes.FlareBuilder, logFilePath string, runtimeStatus, complianceStatus map[string]interface{}) {
 	// If the request against the API does not go through we don't collect the status log.
 	if fb.IsLocal() {
-		_ = fb.AddFile("local", []byte(""))
+		fb.AddFile("local", []byte(""))
 	} else {
 		// The Status will be unavailable unless the agent is running.
 		// Only zip it up if the agent is running
@@ -51,7 +51,7 @@ func createSecurityAgentArchive(fb flaretypes.FlareBuilder, logFilePath string, 
 	getComplianceFiles(fb) //nolint:errcheck
 	getRuntimeFiles(fb)    //nolint:errcheck
 	getExpVar(fb)          //nolint:errcheck
-	_ = fb.AddFileFromFunc("envvars.log", getEnvVars)
+	fb.AddFileFromFunc("envvars.log", getEnvVars)
 	linuxKernelSymbols(fb)                      //nolint:errcheck
 	getLinuxPid1MountInfo(fb)                   //nolint:errcheck
 	getLinuxDmesg(fb)                           //nolint:errcheck

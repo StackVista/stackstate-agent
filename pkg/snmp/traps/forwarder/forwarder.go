@@ -51,7 +51,7 @@ func (tf *TrapForwarder) Stop() {
 	select {
 	case tf.stopChan <- struct{}{}:
 	default:
-		_ = tf.logger.Warn("TrapForwarder stopped twice.")
+		tf.logger.Warn("TrapForwarder stopped twice.")
 	}
 }
 
@@ -73,7 +73,7 @@ func (tf *TrapForwarder) run() {
 func (tf *TrapForwarder) sendTrap(packet *packet.SnmpPacket) {
 	data, err := tf.formatter.FormatPacket(packet)
 	if err != nil {
-		_ = tf.logger.Errorf("failed to format packet: %s", err)
+		tf.logger.Errorf("failed to format packet: %s", err)
 		return
 	}
 	tf.logger.Tracef("send trap payload: %s", string(data))

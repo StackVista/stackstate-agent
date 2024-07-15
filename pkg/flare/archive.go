@@ -62,11 +62,11 @@ func CompleteFlare(fb flaretypes.FlareBuilder, senderManager sender.DiagnoseSend
 		fb.AddFile("status.log", []byte("unable to get the status of the agent, is it running?"))
 		fb.AddFile("config-check.log", []byte("unable to get loaded checks config, is the agent running?"))
 	} else {
-		_ = fb.AddFileFromFunc("status.log", func() ([]byte, error) { return status.GetAndFormatStatus(invAgent) })
-		_ = fb.AddFileFromFunc("config-check.log", getConfigCheck)
-		_ = fb.AddFileFromFunc("tagger-list.json", getAgentTaggerList)
-		_ = fb.AddFileFromFunc("workload-list.log", getAgentWorkloadList)
-		_ = fb.AddFileFromFunc("process-agent_tagger-list.json", getProcessAgentTaggerList)
+		fb.AddFileFromFunc("status.log", func() ([]byte, error) { return status.GetAndFormatStatus(invAgent) })
+		fb.AddFileFromFunc("config-check.log", getConfigCheck)
+		fb.AddFileFromFunc("tagger-list.json", getAgentTaggerList)
+		fb.AddFileFromFunc("workload-list.log", getAgentWorkloadList)
+		fb.AddFileFromFunc("process-agent_tagger-list.json", getProcessAgentTaggerList)
 
 		getProcessChecks(fb, config.GetProcessAPIAddressPort)
 	}
@@ -80,32 +80,32 @@ func CompleteFlare(fb flaretypes.FlareBuilder, senderManager sender.DiagnoseSend
 	addSystemProbePlatformSpecificEntries(fb)
 
 	if config.SystemProbe.GetBool("system_probe_config.enabled") {
-		_ = fb.AddFileFromFunc(filepath.Join("expvar", "system-probe"), getSystemProbeStats)
+		fb.AddFileFromFunc(filepath.Join("expvar", "system-probe"), getSystemProbeStats)
 	}
 
 	pprofURL := fmt.Sprintf("http://127.0.0.1:%s/debug/pprof/goroutine?debug=2",
 		config.Datadog.GetString("expvar_port"))
 
-	_ = fb.AddFileFromFunc("process_agent_runtime_config_dump.yaml", getProcessAgentFullConfig)
-	_ = fb.AddFileFromFunc("runtime_config_dump.yaml", func() ([]byte, error) { return yaml.Marshal(config.Datadog.AllSettings()) })
-	_ = fb.AddFileFromFunc("system_probe_runtime_config_dump.yaml", func() ([]byte, error) { return yaml.Marshal(config.SystemProbe.AllSettings()) })
-	_ = fb.AddFileFromFunc("diagnose.log", getDiagnoses(fb.IsLocal(), senderManager))
-	_ = fb.AddFileFromFunc("envvars.log", getEnvVars)
-	_ = fb.AddFileFromFunc("health.yaml", getHealth)
-	_ = fb.AddFileFromFunc("go-routine-dump.log", func() ([]byte, error) { return getHTTPCallContent(pprofURL) })
-	_ = fb.AddFileFromFunc("docker_inspect.log", getDockerSelfInspect)
-	_ = fb.AddFileFromFunc("docker_ps.log", getDockerPs)
+	fb.AddFileFromFunc("process_agent_runtime_config_dump.yaml", getProcessAgentFullConfig)
+	fb.AddFileFromFunc("runtime_config_dump.yaml", func() ([]byte, error) { return yaml.Marshal(config.Datadog.AllSettings()) })
+	fb.AddFileFromFunc("system_probe_runtime_config_dump.yaml", func() ([]byte, error) { return yaml.Marshal(config.SystemProbe.AllSettings()) })
+	fb.AddFileFromFunc("diagnose.log", getDiagnoses(fb.IsLocal(), senderManager))
+	fb.AddFileFromFunc("envvars.log", getEnvVars)
+	fb.AddFileFromFunc("health.yaml", getHealth)
+	fb.AddFileFromFunc("go-routine-dump.log", func() ([]byte, error) { return getHTTPCallContent(pprofURL) })
+	fb.AddFileFromFunc("docker_inspect.log", getDockerSelfInspect)
+	fb.AddFileFromFunc("docker_ps.log", getDockerPs)
 
 	getRegistryJSON(fb)
 
 	getVersionHistory(fb)
-	_ = fb.CopyFile(installinfo.GetFilePath(config.Datadog))
+	fb.CopyFile(installinfo.GetFilePath(config.Datadog))
 
 	getExpVar(fb) //nolint:errcheck
 	getWindowsData(fb)
 
 	telemetryURL := fmt.Sprintf("http://127.0.0.1:%s/telemetry", config.Datadog.GetString("expvar_port"))
-	_ = fb.AddFileFromFunc("telemetry.log", func() ([]byte, error) { return getHTTPCallContent(telemetryURL) })
+	fb.AddFileFromFunc("telemetry.log", func() ([]byte, error) { return getHTTPCallContent(telemetryURL) })
 
 	if config.IsRemoteConfigEnabled(config.Datadog) {
 		if err := exportRemoteConfig(fb); err != nil {
@@ -116,17 +116,17 @@ func CompleteFlare(fb flaretypes.FlareBuilder, senderManager sender.DiagnoseSend
 }
 
 func getVersionHistory(fb flaretypes.FlareBuilder) {
-	_ = fb.CopyFile(filepath.Join(config.Datadog.GetString("run_path"), "version-history.json"))
+	fb.CopyFile(filepath.Join(config.Datadog.GetString("run_path"), "version-history.json"))
 }
 
 func getRegistryJSON(fb flaretypes.FlareBuilder) {
-	_ = fb.CopyFile(filepath.Join(config.Datadog.GetString("logs_config.run_path"), "registry.json"))
+	fb.CopyFile(filepath.Join(config.Datadog.GetString("logs_config.run_path"), "registry.json"))
 }
 
 func getLogFiles(fb flaretypes.FlareBuilder, logFileDir string) {
 	log.Flush()
 
-	_ = fb.CopyDirToWithoutScrubbing(filepath.Dir(logFileDir), "logs", func(path string) bool {
+	fb.CopyDirToWithoutScrubbing(filepath.Dir(logFileDir), "logs", func(path string) bool {
 		if filepath.Ext(path) == ".log" || getFirstSuffix(path) == ".log" {
 			return true
 		}
@@ -207,7 +207,7 @@ func getProcessAgentFullConfig() ([]byte, error) {
 
 func getConfigFiles(fb flaretypes.FlareBuilder, confSearchPaths map[string]string) {
 	for prefix, filePath := range confSearchPaths {
-		_ = fb.CopyDirTo(filePath, filepath.Join("etc", "confd", prefix), func(path string) bool {
+		fb.CopyDirTo(filePath, filepath.Join("etc", "confd", prefix), func(path string) bool {
 			// ignore .example file
 			if filepath.Ext(path) == ".example" {
 				return false
@@ -227,14 +227,14 @@ func getConfigFiles(fb flaretypes.FlareBuilder, confSearchPaths map[string]strin
 		confDir := filepath.Dir(mainConfpath)
 
 		// zip up the config file that was actually used, if one exists
-		_ = fb.CopyFileTo(mainConfpath, filepath.Join("etc", "datadog.yaml"))
+		fb.CopyFileTo(mainConfpath, filepath.Join("etc", "datadog.yaml"))
 
 		// figure out system-probe file path based on main config path, and use best effort to include
 		// system-probe.yaml to the flare
-		_ = fb.CopyFileTo(filepath.Join(confDir, "system-probe.yaml"), filepath.Join("etc", "system-probe.yaml"))
+		fb.CopyFileTo(filepath.Join(confDir, "system-probe.yaml"), filepath.Join("etc", "system-probe.yaml"))
 
 		// use best effort to include security-agent.yaml to the flare
-		_ = fb.CopyFileTo(filepath.Join(confDir, "security-agent.yaml"), filepath.Join("etc", "security-agent.yaml"))
+		fb.CopyFileTo(filepath.Join(confDir, "security-agent.yaml"), filepath.Join("etc", "security-agent.yaml"))
 	}
 }
 
@@ -250,13 +250,13 @@ func getProcessChecks(fb flaretypes.FlareBuilder, getAddressPort func() (url str
 		filename := fmt.Sprintf("%s_check_output.json", checkName)
 
 		if !config.Datadog.GetBool(setting) {
-			_ = fb.AddFile(filename, []byte(fmt.Sprintf("'%s' is disabled", setting)))
+			fb.AddFile(filename, []byte(fmt.Sprintf("'%s' is disabled", setting)))
 			return
 		}
 
 		err := fb.AddFileFromFunc(filename, func() ([]byte, error) { return getHTTPCallContent(checkURL + checkName) })
 		if err != nil {
-			_ = fb.AddFile(
+			fb.AddFile(
 				"process_check_output.json",
 				[]byte(fmt.Sprintf("error: process-agent is not running or is unreachable: %s", err.Error())),
 			)

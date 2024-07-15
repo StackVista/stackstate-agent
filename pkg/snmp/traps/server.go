@@ -131,7 +131,7 @@ func (s *TrapServer) Stop() {
 	select {
 	case <-stopped:
 	case <-time.After(time.Duration(s.config.StopTimeout) * time.Second):
-		_ = s.logger.Errorf("Stopping server. Timeout after %d seconds", s.config.StopTimeout)
+		s.logger.Errorf("Stopping server. Timeout after %d seconds", s.config.StopTimeout)
 	}
 }
 
