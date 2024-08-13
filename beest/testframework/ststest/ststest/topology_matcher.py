@@ -12,8 +12,8 @@ from .topology_matching_result import TopologyMatchingResult
 
 def get_common_relations(sources: list[ComponentWrapper], targets: list[ComponentWrapper]):
     # TODO consider BOTH_WAY type of relations
-    source_relations = set([id for source in sources for id in source.outgoing_relations])
-    target_relations = set([id for target in targets for id in target.incoming_relations])
+    source_relations = set([id for source in targets for id in source.outgoing_relations])
+    target_relations = set([id for target in sources for id in target.incoming_relations])
     return list(source_relations & target_relations)
 
 
