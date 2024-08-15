@@ -651,8 +651,16 @@ def test(
         "rerun_fails": f"--rerun-fails={rerun_fails}" if rerun_fails else "",
     }
 
+    print("- - - - - - - - - - - - - - - - - - - - - - - - - - -")
+    print(f"Unit Tests tags: {unit_tests_tags}")
+    print("- - - - - - - - - - - - - - - - - - - - - - - - - - -")
+
     # Test
     for flavor, build_tags in unit_tests_tags.items():
+        print("-----------------------------------------------------")
+        print(f"Running tests for flavor {flavor.name}")
+        print(f"Build tags: {build_tags}")
+        print("-----------------------------------------------------")
         build_stdlib(
             ctx,
             build_tags=build_tags,
