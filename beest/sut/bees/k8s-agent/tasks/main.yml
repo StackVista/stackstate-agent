@@ -122,10 +122,6 @@
           - "{{ role_path }}/files/agent-values.yml"
           - "{{ playbook_dir }}/agent-extra-values.yml"
 
-    - name: Wait a bit for all pods to become ready
-      pause:
-        seconds: 30
-
     - name: Attempt to verify cluster agent ready
       block:
         - name: Wait for the stackstate cluster agent to start doing it's thing
@@ -187,23 +183,19 @@
             var: cluster_check_agent_logs
           failed_when: true
 
-    - name: Attempt to verify kube state metrics ready
-      block:
-        - name: Wait for the kube state metrics to be ready
-          command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/name=kube-state-metrics pod
-      rescue:
-        - name: Describe kube state metrics pod
-          command: kubectl describe pods -l app.kubernetes.io/name=kube-state-metrics -n={{ monitoring_namespace }} --context={{ kubecontext }}
-          register: kube_state_metrics_describe
-        - debug:
-            var: kube_state_metrics_describe
+    - name: Give the agent 5 minutes to start up properly and get the process agent ready before starting the test workloads
+      pause:
+        minutes: 5
 
-        - name: Log kube state metrics pod
-          command: kubectl logs -l app.kubernetes.io/name=kube-state-metrics -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
-          register: kube_state_metrics_logs
-        - debug:
-            var: kube_state_metrics_logs
-          failed_when: true
+    - name: Set kubeconfig path from env if exists, otherwise use default
+      set_fact:
+        kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+
+    - name: Copy kube config for local tests
+      copy:
+        src: "{{ kubeconfig_path }}"
+        dest: "{{ playbook_dir }}/config"
+        mode: '0777'
 
     - include_tasks: pod-connections.yml
 
@@ -226,6 +218,16 @@
         state: absent
         wait: true
 
+    - name: Undeploy Ingress Nginx Helm chart
+      kubernetes.core.helm:
+        context: "{{ kubecontext }}"
+        chart_ref: "ingress-nginx/ingress-nginx"
+        release_name: "ingress-nginx"
+        release_namespace: "{{ test_namespace }}"
+        state: absent
+        wait: yes
+        wait_timeout: 15m
+
     - name: Delete namespaces
       kubernetes.core.k8s:
         context: "{{ kubecontext }}"
@@ -237,3 +239,8 @@
       with_items:
         - "{{ monitoring_namespace }}"
         - "{{ test_namespace }}"
+
+    - name: Remove agent-extra-values.yml file
+      file:
+        path: "{{ playbook_dir }}/agent-extra-values.yml"
+        state: absent
