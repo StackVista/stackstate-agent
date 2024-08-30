@@ -54,8 +54,8 @@ variables: &commonvariables
   # do jobs like these run on
   PRIMARY_MAJOR_VERSION: '3'
   PROCESS_AGENT_TEST_REPO: stackstate-process-agent-test
-  AGENT_HELM_CHART_VERSION: "3.4.1"
-  STACKSTATE_HELM_CHART_VERSION: ""
+  AGENT_HELM_CHART_VERSION: ""
+  STACKSTATE_HELM_CHART_VERSION: "5.1.12"
   RUNNERS_IP: $RUNNERS_IP # IP of NAT Gateway from tooling account (where kubernetes runners live)
   STS_DOCKER_K8S_REPO: stackstate-k8s-agent
   STS_DOCKER_K8S_REPO_CLUSTER: stackstate-k8s-cluster-agent
