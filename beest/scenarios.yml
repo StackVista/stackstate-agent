@@ -1,17 +1,6 @@
 scenarios:
   - name: contd-eks-1-28
     description: |
-      Provisions an EKS cluster with Dockerd as container runtime.
-      Deploys StackState in the sandbox cluster and the agents with sample workloads on EKS.
-    yard:
-      name: k8s
-    test:
-      group: k8s
-    variables:
-      agent_eks_runtime: dockerd
-      agent_eks_version: "1.24"
-  - name: contd-eks-1-24
-    description: |
       Same as dockerd-eks scenario, but the EKS cluster is configured to use Containerd as container runtime.
     yard:
       name: k8s
