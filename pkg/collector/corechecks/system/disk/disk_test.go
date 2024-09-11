@@ -104,9 +104,8 @@ func TestDiskCheck(t *testing.T) {
 	ioCounters = diskIoSampler
 	diskCheck := new(Check)
 	mock := mocksender.NewMockSender(diskCheck.ID())
-	diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
-	// set up the mock batcher
-	mockBatcher := batcher.NewMockBatcher()
+	mockBatcher, _, _, checkManager := handler.SetupMockTransactionalComponents()
+	diskCheck.Configure(mock.GetSenderManager(), checkManager, integration.FakeConfigHash, nil, nil, "test")
 	// set mock hostname
 	testHostname := "test-hostname"
 	config.Datadog.SetWithoutSource("hostname", testHostname)
@@ -152,7 +151,7 @@ func TestDiskCheck(t *testing.T) {
 
 	producedTopology := mockBatcher.CollectedTopology.Flush()
 	expectedTopology := batcher.CheckInstanceBatchStates(map[checkid.ID]batcher.CheckInstanceBatchState{
-		"disk_topology": {
+		"": {
 			Health: make(map[string]health.Health),
 			Topology: &topology.Topology{
 				StartSnapshot: false,

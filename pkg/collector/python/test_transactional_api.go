@@ -4,6 +4,7 @@ package python
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
 	check2 "github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
@@ -18,7 +19,7 @@ import (
 import "C"
 
 func testStartTransaction(t *testing.T) {
-	_, _, mockTransactionalManager, checkManager := SetupTransactionalComponents()
+	_, _, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
 	testCheck := &test.STSTestCheck{Name: "check-id-start-transaction"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(testCheck.String())
@@ -33,7 +34,7 @@ func testStartTransaction(t *testing.T) {
 }
 
 func testDiscardTransaction(t *testing.T) {
-	_, _, mockTransactionalManager, checkManager := SetupTransactionalComponents()
+	_, _, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
 	testCheck := &test.STSTestCheck{Name: "check-id-cancel-transaction"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
@@ -60,7 +61,7 @@ func testDiscardTransaction(t *testing.T) {
 }
 
 func testStopTransaction(t *testing.T) {
-	_, mockTransactionalBatcher, mockTransactionalManager, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
 	testCheck := &test.STSTestCheck{Name: "check-id-stop-transaction"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(testCheck.String())
@@ -90,7 +91,7 @@ func testStopTransaction(t *testing.T) {
 
 func testSetTransactionState(t *testing.T) {
 
-	_, _, mockTransactionalManager, checkManager := SetupTransactionalComponents()
+	_, _, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
 	testCheck := &test.STSTestCheck{Name: "check-id-set-transaction-state"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 

@@ -5,6 +5,7 @@ package python
 import (
 	"encoding/json"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
 	check2 "github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
@@ -19,7 +20,7 @@ import (
 import "C"
 
 func testComponentTopology(t *testing.T) {
-	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-component-test"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
@@ -77,7 +78,7 @@ func testComponentTopology(t *testing.T) {
 }
 
 func testRelationTopology(t *testing.T) {
-	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-relation-test"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
@@ -138,7 +139,7 @@ func testRelationTopology(t *testing.T) {
 }
 
 func testStartSnapshotCheck(t *testing.T) {
-	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-start-snapshot"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
@@ -173,7 +174,7 @@ func testStartSnapshotCheck(t *testing.T) {
 }
 
 func testStopSnapshotCheck(t *testing.T) {
-	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-stop-snapshot"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
@@ -210,7 +211,7 @@ func testStopSnapshotCheck(t *testing.T) {
 }
 
 func testDeleteTopologyElement(t *testing.T) {
-	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-delete-element"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})

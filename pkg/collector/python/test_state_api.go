@@ -4,6 +4,7 @@ package python
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,7 @@ func testSetAndGetState(t *testing.T) {
 	mockConfig.SetWithoutSource("run_path", path)
 	mockConfig.SetWithoutSource("check_state_root_path", path)
 
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	testCheck := &test.STSTestCheck{
 		Name: "check-id-set-state",
 	}

@@ -5,6 +5,7 @@ package python
 import (
 	"encoding/json"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
 	check2 "github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
@@ -37,7 +38,7 @@ var expectedCheckData = health.CheckData{
 }
 
 func testHealthCheckData(t *testing.T) {
-	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-health-check-data"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
@@ -88,7 +89,7 @@ func testHealthCheckData(t *testing.T) {
 }
 
 func testHealthStartSnapshot(t *testing.T) {
-	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-health-start-snapshot"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
@@ -122,7 +123,7 @@ func testHealthStartSnapshot(t *testing.T) {
 }
 
 func testHealthStopSnapshot(t *testing.T) {
-	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-health-stop-snapshot"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
@@ -155,7 +156,7 @@ func testHealthStopSnapshot(t *testing.T) {
 }
 
 func testNoSubStream(t *testing.T) {
-	_, mockTransactionalBatcher, _, checkManager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-health-no-sub-stream"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})

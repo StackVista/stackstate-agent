@@ -206,7 +206,7 @@ func testRunCheck(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 	// sts
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
@@ -235,7 +235,7 @@ func testRunCheck(t *testing.T) {
 func testRunCheckWithRuntimeNotInitializedError(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
@@ -263,7 +263,7 @@ func testInitiCheckWithRuntimeNotInitialized(t *testing.T) {
 
 	C.reset_check_mock()
 
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	_, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.NotNil(t, err) {
@@ -287,7 +287,7 @@ func testInitiCheckWithRuntimeNotInitialized(t *testing.T) {
 func testCheckCancel(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
@@ -326,7 +326,7 @@ func testCheckCancelWhenRuntimeUnloaded(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 
 	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
@@ -368,7 +368,7 @@ func testFinalizer(t *testing.T) {
 		pyDestroyLock.Unlock()
 	}()
 
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -413,7 +413,7 @@ func testFinalizerWhenRuntimeUnloaded(t *testing.T) {
 		pyDestroyLock.Unlock()
 	}()
 
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -454,7 +454,7 @@ func testRunErrorNil(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -488,7 +488,7 @@ func testRunErrorReturn(t *testing.T) {
 	defer func() { rtloader = nil }()
 
 	// sts
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -523,7 +523,7 @@ func testRun(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	c, err := NewPythonFakeCheck(sender.GetSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -561,7 +561,7 @@ func testRunSimple(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	c, err := NewPythonFakeCheck(sender.GetSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -596,7 +596,7 @@ func testConfigure(t *testing.T) {
 	defer func() { rtloader = nil }()
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	c, err := NewPythonFakeCheck(senderManager, checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -633,7 +633,7 @@ func testConfigureDeprecated(t *testing.T) {
 	defer func() { rtloader = nil }()
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	c, err := NewPythonFakeCheck(senderManager, checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -671,7 +671,7 @@ func testConfigureDeprecated(t *testing.T) {
 func testSetCollectionIntervalToInstanceData(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	c, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -684,7 +684,7 @@ func testSetCollectionIntervalToInstanceData(t *testing.T) {
 func testSetCollectionIntervalToInvalidDataWithInvalidData(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	c, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return
@@ -702,7 +702,7 @@ func testGetDiagnoses(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
-	_, _, _, checkManager := SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	check, err := NewPythonFakeCheck(aggregator.NewNoOpSenderManager(), checkManager)
 	if !assert.Nil(t, err) {
 		return

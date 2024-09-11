@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
-	"github.com/DataDog/datadog-agent/pkg/collector/python"
 	"testing"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
@@ -61,7 +60,7 @@ func TestLoad(t *testing.T) {
 		integration.Data("foo: bar"),
 	}
 	cc := integration.Config{Name: "foo", Instances: i}
-	_, _, _, checkManager := python.SetupTransactionalComponents()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	l, _ := NewGoCheckLoader()
 
 	_, err := l.Load(aggregator.NewNoOpSenderManager(), checkManager, cc, i[0])

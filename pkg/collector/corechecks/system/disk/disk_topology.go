@@ -13,8 +13,6 @@ import (
 	"github.com/shirou/gopsutil/v3/disk"
 )
 
-const diskCheckID = "disk_topology"
-
 // TopologyCollector contains all the metadata needed to produce disk topology
 type TopologyCollector struct {
 	corechecks.CheckTopologyCollector
@@ -23,7 +21,7 @@ type TopologyCollector struct {
 // MakeTopologyCollector returns an instance of the DiskTopologyCollector
 func MakeTopologyCollector() *TopologyCollector {
 	return &TopologyCollector{
-		corechecks.MakeCheckTopologyCollector(diskCheckID, topology.Instance{
+		corechecks.MakeCheckTopologyCollector(topology.Instance{
 			Type: "disk",
 			URL:  "agents",
 		}),

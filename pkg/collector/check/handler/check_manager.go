@@ -6,6 +6,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/batcher"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	checkState "github.com/DataDog/datadog-agent/pkg/collector/check/state"
+	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionmanager"
@@ -29,6 +30,17 @@ type checkManagerImpl struct {
 	transactionalBatcher transactionbatcher.TransactionalBatcher
 	transactionalManager transactionmanager.TransactionManager
 	batcher              batcher.Component
+}
+
+func SetupMockTransactionalComponents() (*batcher.MockBatcher, *transactionbatcher.MockTransactionalBatcher, *transactionmanager.MockTransactionManager, CheckManager) {
+	// Set storage root for tests
+	config.Datadog.SetWithoutSource("check_state_root_path", "/tmp/fake-datadog-run")
+
+	batcher := batcher.NewMockBatcher()
+	transactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	transactionalManager := transactionmanager.NewMockTransactionManager()
+
+	return batcher, transactionalBatcher, transactionalManager, NewCheckManager(batcher, transactionalBatcher, transactionalManager)
 }
 
 func NewMockCheckManager() *checkManagerImpl {

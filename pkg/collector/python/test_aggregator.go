@@ -205,7 +205,7 @@ func testSubmitEvent(t *testing.T) {
 
 	sender.SetupAcceptAll()
 
-	_, mockTransactionalBatcher, _, manager := SetupTransactionalComponents()
+	_, mockTransactionalBatcher, _, manager := handler.SetupMockTransactionalComponents()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-event-test"}
 	manager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
