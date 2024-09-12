@@ -106,6 +106,8 @@ func (ts *TerraformState) selectWorkspace() error {
 	log.Printf("Selecting workspace %s ...\n", ts.workspaceId)
 	// create and switches to the new workspace
 	if err := ts.tf.WorkspaceNew(context.Background(), ts.workspaceId); err != nil {
+		log.Printf("Could not create new workspace: %s\n", err)
+		log.Printf("Trying to use existing workspace")
 		// if new returns an error means that the workspace exists, so we select it
 		if err = ts.tf.WorkspaceSelect(context.Background(), ts.workspaceId); err != nil {
 			log.Printf("Error selecting workspace: %s\n", err)
