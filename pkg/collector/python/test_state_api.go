@@ -33,6 +33,10 @@ func testSetAndGetState(t *testing.T) {
 	mockConfig.SetWithoutSource("check_state_root_path", path)
 
 	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
 	testCheck := &test.STSTestCheck{
 		Name: "check-id-set-state",
 	}

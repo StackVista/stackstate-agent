@@ -140,7 +140,12 @@ func testLoadCustomCheck(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	loader, err := NewPythonCheckLoader(senderManager, handler.NewMockCheckManager())
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
+	loader, err := NewPythonCheckLoader(senderManager, checkManager)
 	assert.Nil(t, err)
 
 	// testing loading custom checks
@@ -177,7 +182,12 @@ func testLoadWheelCheck(t *testing.T) {
 	defer func() { rtloader = nil }()
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	loader, err := NewPythonCheckLoader(senderManager, handler.NewMockCheckManager())
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
+	loader, err := NewPythonCheckLoader(senderManager, checkManager)
 	assert.Nil(t, err)
 
 	// testing loading dd wheels

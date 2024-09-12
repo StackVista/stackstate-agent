@@ -199,13 +199,10 @@ func testSubmitServiceCheckEmptyHostame(t *testing.T) {
 }
 
 func testSubmitEvent(t *testing.T) {
-	sender := mocksender.NewMockSender(checkid.ID("testID"))
-	release := scopeInitCheckContext(sender.GetSenderManager())
-	defer release()
-
-	sender.SetupAcceptAll()
-
 	_, mockTransactionalBatcher, _, manager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(manager)
+	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-event-test"}
 	manager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
@@ -295,6 +292,6 @@ func testSubmitEventPlatformEvent(t *testing.T) {
 }
 
 func scopeInitCheckContext(senderManager sender.SenderManager) func() {
-	initializeCheckContext(senderManager, handler.NewCheckManager(batcher.NewMockBatcher(), transactionbatcher.NewMockTransactionalBatcher(), transactionmanager.NewMockTransactionManager()))
+	withLockedCheckContext(senderManager, handler.NewCheckManager(batcher.NewMockBatcher(), transactionbatcher.NewMockTransactionalBatcher(), transactionmanager.NewMockTransactionManager()))
 	return releaseCheckContext
 }

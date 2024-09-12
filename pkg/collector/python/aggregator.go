@@ -134,12 +134,6 @@ func SubmitEvent(checkID *C.char, event *C.event_t) {
 		return
 	}
 
-	sender, err := checkContext.senderManager.GetSender(checkid.ID(goCheckID))
-	if err != nil || sender == nil {
-		log.Errorf("Error submitting metric to the Sender: %v", err)
-		return
-	}
-
 	_event := metricsevent.Event{
 		Title:          eventParseString(event.title, "msg_title"),
 		Text:           eventParseString(event.text, "msg_text"),

@@ -20,6 +20,10 @@ import "C"
 
 func testStartTransaction(t *testing.T) {
 	_, _, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
 	testCheck := &test.STSTestCheck{Name: "check-id-start-transaction"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(testCheck.String())
@@ -35,6 +39,10 @@ func testStartTransaction(t *testing.T) {
 
 func testDiscardTransaction(t *testing.T) {
 	_, _, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
 	testCheck := &test.STSTestCheck{Name: "check-id-cancel-transaction"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
@@ -62,6 +70,10 @@ func testDiscardTransaction(t *testing.T) {
 
 func testStopTransaction(t *testing.T) {
 	_, mockTransactionalBatcher, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
 	testCheck := &test.STSTestCheck{Name: "check-id-stop-transaction"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(testCheck.String())
@@ -90,8 +102,11 @@ func testStopTransaction(t *testing.T) {
 }
 
 func testSetTransactionState(t *testing.T) {
-
 	_, _, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
 	testCheck := &test.STSTestCheck{Name: "check-id-set-transaction-state"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 

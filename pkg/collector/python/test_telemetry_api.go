@@ -24,6 +24,9 @@ import "C"
 func testTopologyEvent(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
 	testCheck := &test.STSTestCheck{Name: "check-id-topology-event-test"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
@@ -126,6 +129,9 @@ func testTopologyEvent(t *testing.T) {
 func testTopologyEventMissingFields(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
 	testCheck := &test.STSTestCheck{Name: "check-id-topology-event-missing-fields-test"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
@@ -170,6 +176,9 @@ func testTopologyEventMissingFields(t *testing.T) {
 func testTopologyEventWrongFieldType(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
 	testCheck := &test.STSTestCheck{Name: "check-id-topology-event-wrong-field-type-test"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
@@ -211,6 +220,9 @@ var expectedRawMetricsData = telemetry.RawMetric{
 
 func testRawMetricsData(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-raw-metrics"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})

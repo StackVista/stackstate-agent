@@ -45,6 +45,19 @@ func initializeCheckContext(senderManager sender.SenderManager, checkManager han
 	checkContextMutex.Unlock()
 }
 
+// Testing utilities
+var testMutex = sync.Mutex{}
+
+func withLockedCheckContext(senderManager sender.SenderManager, checkManager handler.CheckManager) {
+	testMutex.Lock()
+	checkContextMutex.Lock()
+	if checkCtx != nil {
+		panic("CheckContext was left initialized")
+	}
+	checkContextMutex.Unlock()
+	initializeCheckContext(senderManager, checkManager)
+}
+
 func releaseCheckContext() {
 	checkContextMutex.Lock()
 	if checkCtx != nil {
@@ -53,4 +66,5 @@ func releaseCheckContext() {
 
 	checkCtx = nil
 	checkContextMutex.Unlock()
+	testMutex.Unlock()
 }
