@@ -51,7 +51,7 @@ func TestMakeNodeAgentContainerTopologyCollector(t *testing.T) {
 	hostname, err := hostname.Get(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, &ContainerTopologyCollector{
-		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("container_topology", topology.Instance{
+		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector(topology.Instance{
 			Type: "container",
 			URL:  "agents",
 		}),
@@ -66,7 +66,7 @@ func TestMakeClusterAgentContainerTopologyCollector(t *testing.T) {
 	hostname, err := hostname.Get(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, &ContainerTopologyCollector{
-		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("container_topology", topology.Instance{
+		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector(topology.Instance{
 			Type: "container",
 			URL:  "agents",
 		}),
@@ -78,7 +78,7 @@ func TestMakeClusterAgentContainerTopologyCollector(t *testing.T) {
 
 func TestBuildContainerTopology(t *testing.T) {
 	collector := ContainerTopologyCollector{
-		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("checkName", topology.Instance{
+		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector(topology.Instance{
 			Type: "checkName",
 			URL:  "agents",
 		}),
