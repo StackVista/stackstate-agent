@@ -1,16 +1,46 @@
-package transactional
+package transactionalclientimpl
 
 import (
+	"context"
+	"github.com/DataDog/datadog-agent/comp/core/hostname"
+	"github.com/DataDog/datadog-agent/comp/core/log"
+	"github.com/DataDog/datadog-agent/comp/stackstate/transactionalclient"
 	"github.com/DataDog/datadog-agent/pkg/httpclient"
+	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionforwarder"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionmanager"
+	"go.uber.org/fx"
 )
 
-type Component interface {
-	GetBatcher() transactionbatcher.TransactionalBatcher
-	GetManager() transactionmanager.TransactionManager
-	Stop()
+// Module defines the fx options for this component.
+func Module() fxutil.Module {
+	return fxutil.Component(
+		fx.Provide(newTransactionalClient))
+}
+
+type dependencies struct {
+	fx.In
+	Log   log.Component
+	HName hostname.Component
+
+	Params Params
+}
+
+type provides struct {
+	fx.Out
+	TransactionalClient transactionalclient.Component
+}
+
+func newTransactionalClient(deps dependencies) (provides, error) {
+	hname, err := deps.HName.Get(context.TODO())
+	if err != nil {
+		return provides{}, err
+	}
+
+	return provides{
+		TransactionalClient: NewComponent(deps.Params, hname),
+	}, nil
 }
 
 type transactionalClient struct {
@@ -19,7 +49,7 @@ type transactionalClient struct {
 	forwarder transactionforwarder.TransactionalForwarder
 }
 
-func NewComponent(params Params, hostname string) Component {
+func NewComponent(params Params, hostname string) transactionalclient.Component {
 	manager := transactionmanager.NewTransactionManager(params.transactionChannelBufferSize, params.tickerInterval, params.transactionTimeoutDuration, params.transactionTimeoutDuration)
 	client := httpclient.NewStackStateClient()
 	forwarder := transactionforwarder.NewTransactionalForwarder(client, manager)

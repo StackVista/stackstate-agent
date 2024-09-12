@@ -11,6 +11,7 @@ package start
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/comp/stackstate"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"net/http"
 	"os"
@@ -111,7 +112,7 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 				}), // TODO(components): check what this must be for cluster-agent-cloudfoundry
 				fx.Supply(context.Background()),
 				workloadmeta.Module(),
-				handler.Bundle(),
+				stackstate.Bundle(),
 			)
 		},
 	}

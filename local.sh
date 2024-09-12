@@ -19,14 +19,14 @@ export PYTHON_RUNTIMES="3"
 WHAT=$1
 
 if [ -z "${WHAT}" ]; then
-	echo "Usage: $0 [shell | all | prep | deps_deb | build_binaries | build_cluster_agent | build_deb]"
+	echo "Usage: $0 [shell | all | prep | deps_deb | build_binaries | build_cluster_agent | build_deb | copy_rtloader]"
 	exit 1
 fi
 
 WHAT=$(echo "${WHAT}" | tr '[:lower:]' '[:upper:]')
 
 if [ "${WHAT}" = "SHELL" ]; then
-    docker run --rm -it -v ${PWD}:${PWD} -e MAJOR_VERSION="3" -e CI_PROJECT_DIR=${PWD} --workdir=${PWD} artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:8292f573 bash
+    docker run --rm -it -v ${PWD}:${PWD} -e MAJOR_VERSION="3" -e USER_ID="$(id -u)" -e GROUP_ID="$(id -g)" -e CI_PROJECT_DIR=${PWD} --workdir=${PWD} artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:8292f573 bash
 fi
 
 # Prepare a copy of the agent in the SRC_DIR to make sure that in a containerized environment the source directory
@@ -182,6 +182,28 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "UNIT_TESTS" ]; then
     echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES"
     inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
     inv -e lint-go
+
+    cd "$CI_PROJECT_DIR" || exit
+fi
+
+if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "COPY_RTLOADER" ]; then
+    if [ "${WHAT}" = "COPY_RTLOADER" ]; then
+        prepare
+    fi
+
+    rm -rf "$CI_PROJECT_DIR/rtloader/build" || true
+    rm -rf "$SRC_PATH/rtloader/build" || true
+
+    cd $SRC_PATH || exit
+
+    echo "          ---                              ---"
+    echo "          --- Copying Rtloader to source   ---"
+    echo "          ---                              ---"
+
+    inv -e rtloader.make
+
+    cp -a "$SRC_PATH"/rtloader/build "$CI_PROJECT_DIR"/rtloader/
+    chown "$USER_ID":"$GROUP_ID" -R "$CI_PROJECT_DIR"/rtloader/build
 
     cd "$CI_PROJECT_DIR" || exit
 fi

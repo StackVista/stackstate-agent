@@ -1,20 +1,15 @@
 package batcher
 
 import (
-	"context"
 	"fmt"
-	"github.com/DataDog/datadog-agent/comp/aggregator/demultiplexer"
-	"github.com/DataDog/datadog-agent/comp/core/hostname"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/serializer"
 	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
-	"go.uber.org/fx"
 )
 
 // Batcher interface can receive data for sending to the intake and will accumulate the data in batches. This does
@@ -41,24 +36,6 @@ type Component interface {
 	Shutdown()
 }
 
-// Module defines the fx options for this component.
-func Module() fxutil.Module {
-	return fxutil.Component(
-		fx.Provide(newAsynchronousBatcher))
-}
-
-type dependencies struct {
-	fx.In
-	demultiplexer demultiplexer.Component
-	hname         hostname.Component
-
-	Params Params
-}
-
-type provides struct {
-	fx.Out
-	Batcher Component
-}
 
 func MakeAsynchronousBatcher(serializer serializer.AgentV1Serializer, hostname string, maxCapacity int) Component {
 	batcher := AsynchronousBatcher{
@@ -69,17 +46,6 @@ func MakeAsynchronousBatcher(serializer serializer.AgentV1Serializer, hostname s
 	}
 	go batcher.run()
 	return batcher
-}
-
-func newAsynchronousBatcher(deps dependencies) (provides, error) {
-	hname, err := deps.hname.Get(context.TODO())
-	if err != nil {
-		return provides{}, err
-	}
-
-	return provides{
-		Batcher: MakeAsynchronousBatcher(deps.demultiplexer.Serializer(), hname, deps.Params.maxCapacity),
-	}, nil
 }
 
 // NewMockBatcher initializes the global batcher with a mock version, intended for testing

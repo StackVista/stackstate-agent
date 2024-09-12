@@ -1,4 +1,4 @@
-package batcher
+package batcherimpl
 
 import "github.com/DataDog/datadog-agent/pkg/config/setup"
 

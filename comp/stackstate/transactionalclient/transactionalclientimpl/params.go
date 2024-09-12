@@ -1,4 +1,4 @@
-package transactional
+package transactionalclientimpl
 
 import (
 	"github.com/DataDog/datadog-agent/pkg/config/setup"

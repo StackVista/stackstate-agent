@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/DataDog/datadog-agent/pkg/batcher"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
 	"runtime"
 	"testing"
 	"time"
@@ -22,7 +23,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	colCheck "github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
 )
 
@@ -463,7 +463,7 @@ func testRunErrorNil(t *testing.T) {
 	check.instance = newMockPyObjectPtr()
 
 	// sts
-	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-error-nil"}
+	testCheck := &test.STSTestCheck{Name: "check-id-test-run-error-nil"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	C.reset_check_mock()
@@ -496,7 +496,7 @@ func testRunErrorReturn(t *testing.T) {
 
 	check.instance = newMockPyObjectPtr()
 
-	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-error"}
+	testCheck := &test.STSTestCheck{Name: "check-id-test-run-error"}
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	C.reset_check_mock()
@@ -515,7 +515,7 @@ func testRunErrorReturn(t *testing.T) {
 }
 
 func testRun(t *testing.T) {
-	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-python"} // sts
+	testCheck := &test.STSTestCheck{Name: "check-id-test-run-python"} // sts
 	sender := mocksender.NewMockSender(testCheck.ID())
 	sender.SetupAcceptAll()
 	_ = batcher.NewMockBatcher()
@@ -553,7 +553,7 @@ func testRun(t *testing.T) {
 }
 
 func testRunSimple(t *testing.T) {
-	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-simple-python"} // sts
+	testCheck := &test.STSTestCheck{Name: "check-id-test-run-simple-python"} // sts
 
 	sender := mocksender.NewMockSender(testCheck.ID())
 	sender.SetupAcceptAll()

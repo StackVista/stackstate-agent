@@ -11,6 +11,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/comp/stackstate"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"os"
 	"os/signal"
@@ -84,7 +85,7 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 					InitHelper: common.GetWorkloadmetaInit(),
 				}), // TODO(components): check what this must be for cluster-agent-cloudfoundry
 				workloadmeta.Module(),
-				handler.Bundle(),
+				stackstate.Bundle(),
 			)
 		},
 	}

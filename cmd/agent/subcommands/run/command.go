@@ -11,6 +11,7 @@ import (
 	"errors"
 	_ "expvar" // Blank import used because this isn't directly used in this file
 	"fmt"
+	"github.com/DataDog/datadog-agent/comp/stackstate"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"net/http"
 	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
@@ -169,7 +170,7 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 			}),
 			getSharedFxOption(),
 			getPlatformModules(),
-			handler.Bundle(),
+			stackstate.Bundle(),
 		)
 	}
 
