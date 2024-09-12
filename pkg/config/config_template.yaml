@@ -3,15 +3,7 @@
 ## Basic Configuration ##
 #########################
 
-## @param api_key - string - required
-## @env DD_API_KEY - string - required
-## The Datadog API key used by your Agent to submit metrics and events to Datadog.
-## Create a new API key here: https://app.datadoghq.com/organization-settings/api-keys .
-## Read more about API keys here: https://docs.datadoghq.com/account_management/api-app-keys/#api-keys .
 ## @env STS_API_KEY - string - required
-## The Datadog API key to associate your Agent's data with your organization.
-## Create a new API key here: https://app.datadoghq.com/account/settings
-#
 api_key:
 
 ## @param app_key - string - optional
@@ -21,30 +13,11 @@ api_key:
 #
 # app_key:
 
-## @param site - string - optional - default: datadoghq.com
-## @env DD_SITE - string - optional - default: datadoghq.com
-## The site of the Datadog intake to send Agent data to.
-## Set to 'datadoghq.eu' to send data to the EU site.
-## Set to 'us3.datadoghq.com' to send data to the US3 site.
-## Set to 'us5.datadoghq.com' to send data to the US5 site.
-## Set to 'ap1.datadoghq.com' to send data to the AP1 site.
-## Set to 'ddog-gov.com' to send data to the US1-FED site.
 ## @param sts_url - string - required
 ## @env STS_URL - string - required
 ## The host of the StackState intake server to send data to
 #
 sts_url:
-
-## @param dd_url - string - optional - default: https://app.datadoghq.com
-## @env DD_DD_URL - string - optional - default: https://app.datadoghq.com
-## @env DD_URL - string - optional - default: https://app.datadoghq.com
-## The host of the Datadog intake server to send metrics to, only set this option
-## if you need the Agent to send metrics to a custom URL, it overrides the site
-## setting defined in "site". It does not affect APM, Logs or Live Process intake which have their
-## own "*_dd_url" settings.
-## If DD_DD_URL and DD_URL are both set, DD_DD_URL is used in priority.
-#
-# dd_url: https://app.datadoghq.com
 
 ## @param proxy - custom object - optional
 ## @env DD_PROXY_HTTP - string - optional
@@ -1596,17 +1569,17 @@ apm_config:
 
   ## @param trace_buffer - integer - optional - default: 0
   ## @env DD_APM_TRACE_BUFFER - integer - optional - default: 0
-  ## 
+  ##
   ## WARNING: Do not use this config. It is here for debugging and
   ## as a temporary fix in certain load scenarios. Setting this
   ## results in a performance deterioration and an increase in memory
   ## usage when the Trace Agent is under load. This config may be
   ## removed in a future version.
-  ## 
+  ##
   ## Specifies the number of trace payloads to buffer after decoding.
   ## Traces can be buffered when receiving traces faster than the
   ## processor can process them.
-  ## 
+  ##
   #
   # trace_buffer: 0
 
@@ -1657,23 +1630,10 @@ process_config:
 
   ## @param container_collection - custom object - optional
   ## Specifies settings for collecting containers.
-  # container_collection:
+  container_collection:
     ## @param enabled - boolean - optional - default: true
     ## Enables collection of information about running containers.
-    # enabled: true
-
-  ## Deprecated - use `process_collection.enabled` and `container_collection.enabled` instead
-  ## @param enabled - string - optional - default: "false"
-  ## @env DD_PROCESS_CONFIG_ENABLED - string - optional - default: "false"
-  ##  A string indicating the enabled state of the Process Agent:
-  ##    * "false"    : The Agent collects only containers information.
-  ##    * "true"     : The Agent collects containers and processes information.
-  ##    * "disabled" : The Agent process collection is disabled.
-  #
-  # [STS] default
-  enabled: "true"
-  process_sts_url:
-  # /[STS] default
+    enabled: false
 
   ## @param expvar_port - string - optional - default: 6062
   ## @env DD_PROCESS_CONFIG_EXPVAR_PORT - string - optional - default: 6062
@@ -1703,44 +1663,6 @@ process_config:
   #   container: 30
   #   process: 30
   #   connections: 30
-
-  ## @param relation_cache_duration_min - integer - optional - default: 5
-  ## [sts] Relation Cache is used to keep state of the known network relations for this agent, with items expiring after relation_cache_duration minutes. The default is 5 minutes.
-  #
-  # relation_cache_duration_min: 5
-
-  ## @param filters - custom object - optional
-  ## [sts] Filters are used to filter out processes or network connections based on some condition
-  #
-  #  filters:
-  ##   The Short-Lived Processes filter is used to filter out process that are observed for less than x seconds, with the default being 60 seconds.
-  #    short_lived_processes:
-  #      enabled: true
-  #      qualifier_secs: 60
-  ##   The Short-Lived Relations filter is used to filter out network relations that are observed for less than x seconds, with the default being 60 seconds.
-  ##   Short-Lived network relations are defined as network connections that do not occur frequently between processes / services. Multiple short-lived connections
-  ##   between the same processes / services are considered a Long-Lived network relation, while a once-off network connection is filtered out and not reported to StackState.
-  #    short_lived_network_relations:
-  #      enabled: true
-  #      qualifier_secs: 60
-
-  ## [STS] DEFAULTS for agent 2.6.0
-  ##  Process blacklisting is used to filter out unwanted processes and not report them to StackState.
-  process_blacklist:
-    #    patterns:
-    #      - "regex-pattern"
-    ##    Inclusions override the blacklist patterns, these are used to include process that consume a lot of resources.
-    ##    Each inclusion type: top_cpu, top_io_read, top_io_write and top_mem have an amount of processes that get's considered
-    ##    as the top x resource using processes. For top_cpu and top_mem there is a threshold that needs to be met first, meaning
-    ##    the process needs to consume more resource % than the threshold.
-    inclusions:
-      amount_top_cpu_pct_usage: 3
-      cpu_pct_usage_threshold: 20
-      amount_top_io_read_usage: 3
-      amount_top_io_write_usage: 3
-      amount_top_mem_usage: 3
-      mem_usage_threshold: 35
-      # /[STS] DEFAULTS
 
   ## @param process_discovery - custom object - optional
   ## Specifies custom settings for the `process_discovery` object.
@@ -3974,8 +3896,8 @@ skip_validate_clustername: true
 
     ## @param resource_attributes_as_tags - boolean - optional - default: false
     ## @env DD_OTLP_CONFIG_METRICS_RESOURCE_ATTRIBUTES_AS_TAGS - boolean - optional - default: false
-    ## Set to true to add resource attributes of a metric to its metric tags. Please note that any of 
-    ## the subset of resource attributes in this list https://docs.datadoghq.com/opentelemetry/guide/semantic_mapping/ 
+    ## Set to true to add resource attributes of a metric to its metric tags. Please note that any of
+    ## the subset of resource attributes in this list https://docs.datadoghq.com/opentelemetry/guide/semantic_mapping/
     ## are converted to Datadog conventions and set to to metric tags whether this option is enabled or not.
     #
     # resource_attributes_as_tags: false

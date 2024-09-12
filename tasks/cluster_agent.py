@@ -131,6 +131,7 @@ def build(
     # sts
     if BRANDED:
         apply_branding(ctx)
+
     build_common(
         ctx,
         BIN_PATH,

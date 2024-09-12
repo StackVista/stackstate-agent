@@ -42,6 +42,7 @@ function prepare() {
     echo "Syncing files to $SRC_PATH"
     rsync -au "$CI_PROJECT_DIR"/. $SRC_PATH
     chown -R root:root $SRC_PATH
+    rm -rf "$SRC_PATH/rtloader/build" || true
     cd "$SRC_PATH" || exit
 
     if [[ "${BRANDED}" != "false" ]]; then
@@ -88,8 +89,8 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS_DEB" ]; then
     cd "$CI_PROJECT_DIR" || exit
 fi
 
-if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_BINARIES" ]; then
-    if [ "${WHAT}" = "BUILD_BINARIES" ]; then
+if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_AGENT" ]; then
+    if [ "${WHAT}" = "BUILD_AGENT" ]; then
         prepare
     fi
 
@@ -181,7 +182,6 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "UNIT_TESTS" ]; then
     invoke install-tools
     echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES"
     inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
-    inv -e lint-go
 
     cd "$CI_PROJECT_DIR" || exit
 fi

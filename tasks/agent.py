@@ -127,6 +127,9 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"https://process.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config/setup")
     do_go_rename(ctx, '"\\"https://orchestrator.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config/setup")
 
+    do_go_rename(ctx, '"\\"DD_\\" -> \\"STS_\\""', "./pkg/config/setup")
+    do_go_rename(ctx, '"\\"datadoghq.com\\" -> \\"stackstate.io\\""', "./pkg/config/setup")
+
     # [sts] turn of the metadata collection, the receiver does not recognize these payloads
     do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g', "./pkg/config/setup/config.go")
     do_sed_rename(ctx, 's/"enable_gohai"\\, true/"enable_gohai"\\, false/g', "./pkg/config/setup/config.go")
@@ -678,6 +681,10 @@ def build(
         # in the embedded path folder because that's what is used in get_build_flags()
         rtloader_make(ctx, python_runtimes=python_runtimes, install_prefix=embedded_path, cmake_options=cmake_options)
         rtloader_install(ctx)
+
+    # sts
+    if BRANDED:
+        apply_branding(ctx)
 
     ldflags, gcflags, env = get_build_flags(
         ctx,

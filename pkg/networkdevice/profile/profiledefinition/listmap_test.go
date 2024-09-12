@@ -61,7 +61,7 @@ func TestListMap_JSONSchema(t *testing.T) {
 	schemaJSON, err := json.MarshalIndent(schema, "", "  ")
 	require.NoError(t, err)
 
-	moduleName := fmt.Sprintf("%s/%s", getEnv("AGENT_GITHUB_ORG", "DataDog"), getEnv("AGENT_REPO_NAME", "datadog-agent"))
+	moduleName := fmt.Sprintf("%s/%s", getEnv("AGENT_GITHUB_ORG", "StackVista"), getEnv("AGENT_REPO_NAME", "stackstate-agent"))
 
 	expectedSchema := fmt.Sprintf(`
 {
