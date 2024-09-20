@@ -286,7 +286,7 @@ unit_tests:
     - go mod vendor
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
     - inv deps
-    - inv -e agent.build --race --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    - BRANDED=false inv -e agent.build --race --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
     # TODO: check why formatting rules differ from previous step
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test

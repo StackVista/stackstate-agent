@@ -145,7 +145,7 @@
         kind: Pod
         namespace: "{{ namespace }}"
         label_selectors:
-          - "app.kubernetes.io/component = api"
+          - "app.kubernetes.io/component = server"
         wait: yes
         wait_timeout: 900 # in secs
 
