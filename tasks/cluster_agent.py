@@ -21,94 +21,13 @@ from .utils import (
     do_sed_rename,  # sts
     BRANDED,     # sts
 )
+from .agent import apply_branding
 
 # constants
 BIN_PATH = os.path.join(".", "bin", "stackstate-cluster-agent")
 AGENT_TAG = "stackstate/cluster_agent:master"
 POLICIES_REPO = "https://github.com/StackVista/security-agent-policies.git"
 CONTAINER_PLATFORM_MAPPING = {"aarch64": "arm64", "amd64": "amd64", "x86_64": "amd64"}
-
-
-# sts begin
-@task
-def apply_branding(ctx):
-    """
-    Apply stackstate branding
-    """
-    sts_lower_replace = 's/datadog/stackstate/g'
-    datadog_metrics_replace = 's/"datadog./"stackstate./g'
-
-    # Config
-    do_go_rename(ctx, '"\\"dd_url\\" -> \\"sts_url\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"https://app.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"DD_PROXY_HTTP\\" -> \\"STS_PROXY_HTTP\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"DD_PROXY_HTTPS\\" -> \\"STS_PROXY_HTTPS\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"DD_PROXY_NO_PROXY\\" -> \\"STS_PROXY_NO_PROXY\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"DOCKER_DD_AGENT\\" -> \\"DOCKER_STS_AGENT\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"DD\\" -> \\"STS\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/etc/stackstate-agent/conf.d\\" -> \\"/etc/stackstate-agent/conf.d\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/etc/stackstate-agent/checks.d\\" -> \\"/etc/stackstate-agent/checks.d\\""', "./pkg/config")
-    do_go_rename(ctx, '"\\"/opt/stackstate-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
-
-    # [sts] turn of the metadata collection, the receiver does not recognize these payloads
-    do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g',
-                  "./pkg/config/setup/config.go")
-    do_sed_rename(ctx, 's/"enable_gohai"\\, true/"enable_gohai"\\, false/g', "./pkg/config/setup/config.go")
-    do_sed_rename(ctx, 's/"inventories_enabled"\\, true/"inventories_enabled"\\, false/g', "./pkg/config/setup/config.go")
-
-    # Trace Agent Metrics
-    # do_sed_rename(ctx, datadog_metrics_replace, "./pkg/process/statsd/statsd.go")
-    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/v5/statsd/statsd.go")
-    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/v5/statsd/telemetry.go")
-
-    # Cluster Agent
-    cluster_agent_replace = '/www/! s/datadog/stackstate/g'
-    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/main.go")
-#     do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/app/*") # sts - might need similar later on, for now irrelevant due to dd upstream changes
-    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/command/*")
-#     do_sed_rename(ctx, cluster_agent_replace, "./cmd/agent/common/command/*.go") # sts - might need similar later on, for now irrelevant due to dd upstream changes
-    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/subcommands/*.go")
-    do_sed_rename(ctx, 's/Datadog Cluster/StackState Cluster/g', "./cmd/cluster-agent/command/*")
-    do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/cluster-agent/command/*")
-    do_sed_rename(ctx, 's/datadog-agent/stackstate-agent/g', "./cmd/cluster-agent/custommetrics/*.go")
-#     do_sed_rename(ctx, 's/to Datadog/to StackState/g', "./cmd/cluster-agent/app/*") # sts - might need similar later on, for now irrelevant due to dd upstream changes
-#     do_sed_rename(ctx, 's/"datadog-cluster"/"stackstate-cluster"/g', "./cmd/cluster-agent/app/*") # sts - might need similar later on, for now irrelevant due to dd upstream changes
-
-    # Cluster Agent - Kubernetes API client
-    do_go_rename(ctx, '"\\"datadogtoken\\" -> \\"stackstatetoken\\""', "./pkg/util/kubernetes/apiserver")
-
-    # Defaults
-    do_go_rename(ctx, '"\\"/etc/stackstate-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
-    do_go_rename(ctx, '"\\"/var/log/datadog/cluster-agent.log\\" -> \\"/var/log/stackstate-agent/cluster-agent.log\\""',
-                 "./cmd/agent/common")
-    do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./cmd/agent")
-    do_go_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./cmd/agent")
-    do_go_rename(ctx,
-                 '"\\"path to directory containing datadog.yaml\\" -> \\"path to directory containing stackstate.yaml\\""',
-                 "./cmd")
-    do_go_rename(ctx,
-                 '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""',
-                 "./comp/core/config")
-    do_go_rename(ctx,
-                 '"\\"unable to load Datadog config file: %w\\" -> \\"unable to load StackState config file: %w\\""',
-                 "./comp/core/config")
-    do_go_rename(ctx, '"\\"Datadog config file: %s\\" -> \\"StackState config file: %s\\""', "./cmd/agent/common")
-    do_go_rename(ctx, '"\\"Datadog config file: %w\\" -> \\"StackState config file: %w\\""', "./cmd/agent/common")
-    do_go_rename(ctx, '"\\"Datadog config file: %s\\" -> \\"StackState config file: %s\\""', "./cmd/system-probe/config")
-    do_go_rename(ctx, '"\\"Datadog config file: %w\\" -> \\"StackState config file: %w\\""', "./cmd/system-probe/config")
-    do_go_rename(ctx, '"\\"Datadog config file: %s\\" -> \\"StackState config file: %s\\""', "./comp/core/config")
-    do_go_rename(ctx, '"\\"Datadog config file: %w\\" -> \\"StackState config file: %w\\""', "./comp/core/config")
-    do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./cmd/agent/common")
-    do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./cmd/system-probe/config")
-    do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./comp/core/config")
-    do_go_rename(ctx, '"\\"datadog-cluster\\" -> \\"stackstate-cluster\\""', "./comp/core/config")
-
-    # Hardcoded checks and metrics
-    do_sed_rename(ctx, sts_lower_replace, "./pkg/aggregator/aggregator.go")
-
-
-# sts end
 
 @task
 def build(
