@@ -214,7 +214,7 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./cmd/system-probe/config")
     do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./comp/core/config")
-#     do_go_rename(ctx, '"\\"Starting Datadog Agent v%v\\" -> \\"Starting StackState Agent v%v\\""', "./cmd/agent/app")
+    do_go_rename(ctx, '"\\"datadog-cluster\\" -> \\"stackstate-cluster\\""', "./comp/core/config")
 
     # Dist config templates
     do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/dist/conf.d/go_expvar.d/agent_stats.yaml.example")
