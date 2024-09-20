@@ -24,7 +24,7 @@ if linux_target?
   # sts: not needed dependency 'msodbcsql18' # needed for SQL Server integration
   dependency 'nfsiostat'
   # add libkrb5 for all integrations supporting kerberos auth with `requests-kerberos`
-  dependency 'libkrb5'
+  # sts: not needed (used by hdfs) dependency 'libkrb5'
   # needed for glusterfs
   dependency 'gstatus'
 end

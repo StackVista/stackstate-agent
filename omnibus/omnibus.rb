@@ -41,3 +41,8 @@ if ENV["S3_OMNIBUS_CACHE_BUCKET"]
   end
 end
 use_git_caching false
+
+if ENV["OMNIBUS_CACHE_DIR"]
+  # The cache_dir is just a download cache so will hardly make an impact on CI, because it has to be downloaded as a cache anyway
+  cache_dir ENV["OMNIBUS_CACHE_DIR"]
+end

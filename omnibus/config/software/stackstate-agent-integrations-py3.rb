@@ -12,9 +12,6 @@ dependency 'datadog-agent'
 dependency 'pip3'
 
 if arm_target?
-  # psycopg2 doesn't come with pre-built wheel on the arm architecture.
-  # to compile from source, it requires the `pg_config` executable present on the $PATH
-  dependency 'postgresql'
   # same with libffi to build the cffi wheel
   dependency 'libffi'
   # same with libxml2 and libxslt to build the lxml wheel
@@ -28,23 +25,10 @@ end
 
 if linux?
   # add nfsiostat script
-  dependency 'unixodbc'
-  dependency 'freetds'  # needed for SQL Server integration
   dependency 'nfsiostat'
-
-  # [sts] we do not use the hdfs check
-  # need kerberos for hdfs
-  # dependency 'libkrb5'
-
-  # [sts] we do not use the aerospike check
-  # unless suse? || arm?
-  #   dependency 'aerospike-py3'
-  # end
 end
 
 relative_path 'integrations-core'
-whitelist_file "embedded/lib/python3.8/site-packages/psycopg2"
-whitelist_file "embedded/lib/python3.8/site-packages/pymqi"
 
 source git: 'https://github.com/StackVista/stackstate-agent-integrations.git'
 

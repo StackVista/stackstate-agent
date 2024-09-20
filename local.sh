@@ -26,7 +26,15 @@ fi
 WHAT=$(echo "${WHAT}" | tr '[:lower:]' '[:upper:]')
 
 if [ "${WHAT}" = "SHELL" ]; then
-    docker run --rm -it -v ${PWD}:${PWD} -e MAJOR_VERSION="3" -e USER_ID="$(id -u)" -e GROUP_ID="$(id -g)" -e CI_PROJECT_DIR=${PWD} --workdir=${PWD} artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:8292f573 bash
+    docker run --rm -it -v ${PWD}:${PWD} \
+        -e MAJOR_VERSION="3" \
+        -e USER_ID="$(id -u)" -e GROUP_ID="$(id -g)" \
+        -e CI_PROJECT_DIR=${PWD} \
+        -e artifactory_user="${artifactory_user}" \
+        -e artifactory_password="${artifactory_password}" \
+        -e ARTIFACTORY_PYPI_URL="${ARTIFACTORY_PYPI_URL}" \
+        --workdir=${PWD} \
+        artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:8292f573 bash
 fi
 
 # Prepare a copy of the agent in the SRC_DIR to make sure that in a containerized environment the source directory
