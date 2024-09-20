@@ -301,7 +301,7 @@ func InitConfig(config pkgconfigmodel.Config) {
 	config.BindEnvAndSetDefault("fips.tls_verify", true)
 
 	// Remote config
-	config.BindEnvAndSetDefault("remote_configuration.enabled", true)
+	config.BindEnvAndSetDefault("remote_configuration.enabled", false)
 	config.BindEnvAndSetDefault("remote_configuration.key", "")
 	config.BindEnv("remote_configuration.api_key")
 	config.BindEnv("remote_configuration.rc_dd_url")
@@ -1178,11 +1178,11 @@ func InitConfig(config pkgconfigmodel.Config) {
 	config.BindEnvAndSetDefault("orchestrator_explorer.run_on_node_agent", true)
 
 	// Container lifecycle configuration
-	config.BindEnvAndSetDefault("container_lifecycle.enabled", true)
+	config.BindEnvAndSetDefault("container_lifecycle.enabled", false)
 	bindEnvAndSetLogsConfigKeys(config, "container_lifecycle.")
 
 	// Container image configuration
-	config.BindEnvAndSetDefault("container_image.enabled", true)
+	config.BindEnvAndSetDefault("container_image.enabled", false)
 	bindEnvAndSetLogsConfigKeys(config, "container_image.")
 
 	// Remote process collector
