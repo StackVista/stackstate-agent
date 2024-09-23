@@ -1,4 +1,4 @@
-# Suse Observability Agent support
+# SUSE Observability Agent support
 
 The issue queue we have here on GitHub is primarily intended for tracking features,
 bugs and work items associated with the datadog-agent open source project.
@@ -6,4 +6,3 @@ bugs and work items associated with the datadog-agent open source project.
 For any other support request, please reach out through one of the following:
 
  * Contact [us](https://www.stackstate.com/company/contact-us/)
- * Join us [on Slack](http://datadoghq.slack.com)
