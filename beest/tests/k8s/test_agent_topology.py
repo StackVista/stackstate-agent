@@ -76,7 +76,6 @@ def test_node_agent_topology(ansible_var, cliv1):
             .component("node-agent-process-container", type="container", name="process-agent")
             .component("cgroups-vol", type="volume", name="cgroups")
             .component("node-agent-process-agent", type="stackstate-agent", name="process-agent")
-            .component("node-agent-trace-agent", type="stackstate-agent", name="trace-agent")
             .component("node-agent-main-agent", type="stackstate-agent", name="agent run")
             .one_way_direction("node-agent", "node", type="scheduled_on")
             .one_way_direction("node-agent-ds", "node-agent", type="controls")
@@ -90,7 +89,6 @@ def test_node_agent_topology(ansible_var, cliv1):
             .one_way_direction("node-agent-process-container", "cgroups-vol", type="mounts")
             .one_way_direction("node-agent", "node-agent-secret", type="uses_value")
             .one_way_direction("node-agent-process-container", "node-agent-process-agent", type="runs")
-            .one_way_direction("node-agent-main-container", "node-agent-trace-agent", type="runs")
             .one_way_direction("node-agent-main-container", "node-agent-main-agent", type="runs")
         )
 

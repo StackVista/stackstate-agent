@@ -288,7 +288,7 @@ func (k *kubernetesEventMapper) externalIdentifierForInvolvedObject(event *v1.Ev
 	urn, err := k.urn.BuildExternalID(obj.Kind, namespace, obj.Name)
 	identifiers = append(identifiers, urn)
 	if err != nil {
-		log.Warnf("Unknown InvolvedObject type '%s' for obj '%s/%s' in event '%s'", obj.Kind, namespace, obj.Name, event.Name)
+		log.Info("Unknown InvolvedObject type '%s' for obj '%s/%s' in event '%s'", obj.Kind, namespace, obj.Name, event.Name)
 		identifiers = append(identifiers, "")
 	}
 

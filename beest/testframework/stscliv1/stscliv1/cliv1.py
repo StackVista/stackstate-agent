@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Callable
 
 from testinfra.host import Host
+from json.decoder import JSONDecodeError
 
 from .models import *
 
@@ -191,7 +192,12 @@ Topology.query('__QUERY__')
                 pass
 
         executed = api_call()
-        json_data = json.loads(executed)
+        try:
+            json_data = json.loads(executed)
+        except json.decoder.JSONDecodeError:
+            log.error(f"Could not parse json, got: {executed}")
+            raise
+
         with open(cachefile, 'w') as f:
             log.info(f"Query result saved in file {cachefile}")
             f.write(executed)

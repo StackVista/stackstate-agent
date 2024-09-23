@@ -105,6 +105,8 @@ func (b *urnBuilder) BuildExternalID(kind, namespace, objName string) (string, e
 		urn = b.BuildPersistentVolumeClaimExternalID(namespace, objName)
 	case "Endpoint":
 		urn = b.BuildEndpointExternalID(objName)
+	case "HorizontalPodAutoscaler":
+		urn = b.BuildPodExternalID(namespace, objName)
 	}
 
 	if urn == "" {

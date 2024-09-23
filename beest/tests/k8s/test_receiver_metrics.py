@@ -97,7 +97,7 @@ def test_agent_kubernetes_metrics(cliv1):
         kubernetes_expected_metrics = ["kubernetes_state_pod_ready", "kubernetes_state_pod_scheduled"]
 
         for docker_expected_metric in docker_expected_metrics:
-            json_data_docker = cliv1.promql_script(f'Telemetry.instantPromql(\\\"{docker_expected_metric}\\\")',
+            json_data_docker = cliv1.promql_script(f'Telemetry.instantPromql\\(\\\"{docker_expected_metric}\\\"\\)',
                                                    docker_expected_metric)
             docker_metric_exists = _check_metric_exists(json_data_docker, "result")
             docker_contains_kcn = _check_contains_tag(json_data_docker, "result", "kube_cluster_name")
@@ -110,7 +110,7 @@ def test_agent_kubernetes_metrics(cliv1):
 
         for kubernetes_expected_metric in kubernetes_expected_metrics:
             json_data_kubernetes = cliv1.promql_script(
-                f'Telemetry.instantPromql(\\\"{kubernetes_expected_metric}\\\")', kubernetes_expected_metric)
+                f'Telemetry.instantPromql\\(\\\"{kubernetes_expected_metric}\\\"\\)', kubernetes_expected_metric)
             k8s_metric_exists = _check_metric_exists(json_data_kubernetes, "result")
             k8s_contains_kcn = _check_contains_tag(json_data_kubernetes, "result", "kube_cluster_name")
             k8s_contains_cn = _check_contains_tag(json_data_kubernetes, "result", "cluster_name")
@@ -135,7 +135,7 @@ def test_agent_kubelet_metrics(cliv1):
         contains_namespace = False
 
         for expected_metric in expected_metrics:
-            json_data = cliv1.promql_script(f'Telemetry.instantPromql(\\\"{expected_metric}\\\")',
+            json_data = cliv1.promql_script(f'Telemetry.instantPromql\\(\\\"{expected_metric}\\\"\\)',
                                             expected_metric)
             metric_exists = _check_metric_exists(json_data, "result") or metric_exists
             contains_namespace = _check_contains_tag(json_data, "result", "namespace") or contains_namespace
