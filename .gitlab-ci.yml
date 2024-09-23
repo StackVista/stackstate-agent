@@ -61,25 +61,25 @@ variables: &commonvariables
   STS_DOCKER_K8S_REPO_CLUSTER: stackstate-k8s-cluster-agent
   DD_KUBE_RESOURCES_NAMESPACE: "default" # this is here to make sure k8s based unit tests do not pick up namespaces from the environment when  running in k8s
 
-.agent2_variables: &agent2_variables
-  CONDA_ENV: ddpy2
-  PYTHON_RUNTIMES: '2'
-  MAJOR_VERSION: '2'
-  STS_VER: 'v2'
-  STS_AWS_RELEASE_BUCKET: stackstate-agent-2
-  STS_AWS_TEST_BUCKET: stackstate-agent-2-test
-  STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-2-rpm
-  STS_AWS_TEST_BUCKET_YUM: stackstate-agent-2-rpm-test
-  STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-2
-  STS_AWS_TEST_BUCKET_WIN: stackstate-agent-2-test
-  STS_DOCKER_RELEASE_REPO: stackstate-agent-2
-  STS_DOCKER_TEST_REPO: stackstate-agent-2-test
-  STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
-  STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
-  STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
-  STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
-  STS_DOCKER_RELEASE_REPO_SWARM: stackstate-swarm-agent
-  STS_DOCKER_TEST_REPO_SWARM: stackstate-swarm-agent-test
+#.agent2_variables: &agent2_variables
+#  CONDA_ENV: ddpy2
+#  PYTHON_RUNTIMES: '2'
+#  MAJOR_VERSION: '2'
+#  STS_VER: 'v2'
+#  STS_AWS_RELEASE_BUCKET: stackstate-agent-2
+#  STS_AWS_TEST_BUCKET: stackstate-agent-2-test
+#  STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-2-rpm
+#  STS_AWS_TEST_BUCKET_YUM: stackstate-agent-2-rpm-test
+#  STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-2
+#  STS_AWS_TEST_BUCKET_WIN: stackstate-agent-2-test
+#  STS_DOCKER_RELEASE_REPO: stackstate-agent-2
+#  STS_DOCKER_TEST_REPO: stackstate-agent-2-test
+#  STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
+#  STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
+#  STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
+#  STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
+#  STS_DOCKER_RELEASE_REPO_SWARM: stackstate-swarm-agent
+#  STS_DOCKER_TEST_REPO_SWARM: stackstate-swarm-agent-test
 
 .agent3_variables: &agent3_variables
   CONDA_ENV: ddpy3
