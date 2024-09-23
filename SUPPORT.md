@@ -5,5 +5,5 @@ bugs and work items associated with the datadog-agent open source project.
 
 For any other support request, please reach out through one of the following:
 
- * Contact our [support](https://docs.datadoghq.com/help/)
+ * Contact [us](https://www.stackstate.com/company/contact-us/)
  * Join us [on Slack](http://datadoghq.slack.com)
