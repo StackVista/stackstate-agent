@@ -197,20 +197,20 @@ func NewSerializer(forwarder forwarder.Forwarder, orchestratorForwarder orchestr
 		log.Warn("series payloads are disabled: all series will be dropped")
 	}
 	if !s.AreSketchesEnabled() {
-		log.Warn("service_checks payloads are disabled: all service_checks will be dropped")
+		log.Info("service_checks payloads are disabled: all service_checks will be dropped")
 	}
 	if !s.enableCheckRuns { // [sts]
-		log.Warn("check_runs payloads are disabled: all check_runs will be dropped")
+		log.Info("check_runs payloads are disabled: all check_runs will be dropped")
 	}
 	if !s.enableSketches {
-		log.Warn("sketches payloads are disabled: all sketches will be dropped")
+		log.Info("sketches payloads are disabled: all sketches will be dropped")
 	}
 	if !s.enableJSONToV1Intake {
 		log.Warn("JSON to V1 intake is disabled: all payloads to that endpoint will be dropped")
 	}
 
 	if !config.Datadog.GetBool("enable_sketch_stream_payload_serialization") {
-		log.Warn("'enable_sketch_stream_payload_serialization' is set to false which is not recommended. This option is deprecated and will removed in the future. If you need this option, please reach out to support")
+		log.Info("'enable_sketch_stream_payload_serialization' is set to false which is not recommended. This option is deprecated and will removed in the future. If you need this option, please reach out to support")
 	}
 
 	return s

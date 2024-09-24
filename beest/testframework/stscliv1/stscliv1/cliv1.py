@@ -192,15 +192,17 @@ Topology.query('__QUERY__')
                 pass
 
         executed = api_call()
-        try:
-            json_data = json.loads(executed)
-        except json.decoder.JSONDecodeError:
-            log.error(f"Could not parse json, got: {executed}")
-            raise
 
         with open(cachefile, 'w') as f:
             log.info(f"Query result saved in file {cachefile}")
             f.write(executed)
+
+        try:
+            json_data = json.loads(executed)
+        except json.decoder.JSONDecodeError:
+            log.warning(f"Could not parse json, got: '{executed}'")
+            raise
+
         return json_data
 
     @staticmethod

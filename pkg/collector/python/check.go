@@ -321,8 +321,8 @@ func (c *PythonCheck) Configure(senderManager sender.SenderManager, checkManager
 			return fmt.Errorf("%w: %w", checkbase.ErrSkipCheckInstance, rtLoaderError)
 		}
 
-		log.Warnf("could not get a '%s' check instance with the new api: %s", c.ModuleName, rtLoaderError)
-		log.Warn("trying to instantiate the check with the old api, passing agentConfig to the constructor")
+		log.Infof("could not get a '%s' check instance with the new api: %s", c.ModuleName, rtLoaderError)
+		log.Info("trying to instantiate the check with the old api, passing agentConfig to the constructor")
 
 		allSettings := config.Datadog.AllSettings()
 		agentConfig, err := yaml.Marshal(allSettings)
@@ -344,7 +344,7 @@ func (c *PythonCheck) Configure(senderManager sender.SenderManager, checkManager
 			}
 			return fmt.Errorf("could not invoke '%s' python check constructor: %w", c.ModuleName, rtLoaderDeprecatedCheckError)
 		}
-		log.Warnf("passing `agentConfig` to the constructor is deprecated, please use the `get_config` function from the 'datadog_agent' package (%s).", c.ModuleName)
+		log.Infof("passing `agentConfig` to the constructor is deprecated, please use the `get_config` function from the 'datadog_agent' package (%s).", c.ModuleName)
 	}
 	c.instance = check
 	c.source = source

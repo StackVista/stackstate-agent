@@ -60,27 +60,3 @@ def test_workload_topology(ansible_var, cliv1):
     possible_matches = expected_agent_topology.find(current_agent_topology)
     possible_matches.assert_exact_match()
 
-
-def test_container_runtime(ansible_var, cliv1):
-    runtime = ansible_var("agent_k8s_runtime")
-    if runtime == "dockerd":
-        runtime = "docker"
-
-    def wait_for_topology():
-        topo = cliv1.topology("type = 'container'",
-                              "container-runtime",
-                              config_location=STS_CONTEXT_FILE)
-
-        def find_runtime():
-            for c in topo.components:
-                # If there is at least one component with the runtime tag then things are working as expected.
-                # Noticed if the agent runs longer then it fails on these tests, might be something of interest to check
-                # out why. (Perhaps the topology query contains containers that do not produce this tag)
-                if f"runtime:{runtime}" in c.tags:
-                    return True
-            return False
-
-        if find_runtime() is False:
-            pytest.fail(f"No topology components found with the tag runtime:{runtime}")
-
-    util.wait_until(wait_for_topology, 90, 3)

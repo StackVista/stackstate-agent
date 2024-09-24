@@ -20,10 +20,6 @@ import (
 	dderrors "github.com/DataDog/datadog-agent/pkg/errors"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/util/retry"
-	"github.com/opencontainers/image-spec/identity"
-	"github.com/opencontainers/runtime-spec/specs-go"
-
-	cspec "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/spec" // sts
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
@@ -32,6 +28,7 @@ import (
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/opencontainers/image-spec/identity"
 )
 
 const (
@@ -200,72 +197,6 @@ func (c *ContainerdUtil) ContainerWithContext(ctx context.Context, namespace str
 	}
 
 	return ctn, err
-}
-
-// GetContainers interfaces with the containerd api to get the list of containers.
-func (c *ContainerdUtil) GetContainers(ctx context.Context) ([]*cspec.Container, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
-	defer cancel()
-
-	ns, err := namespaces.NamespaceRequired(ctx)
-	if err != nil {
-		ns = config.Datadog.GetString("containerd_namespace")
-		if ns == "" {
-			return []*cspec.Container{}, err
-		}
-	}
-
-	dContainers, err := c.Containers(ns)
-	if err != nil {
-		return nil, err
-	}
-
-	uContainers := make([]*cspec.Container, 0, len(dContainers))
-	for _, dContainer := range dContainers {
-		ctxNamespace := namespaces.WithNamespace(ctx, ns)
-
-		info, err := dContainer.Info(ctxNamespace)
-		if err != nil {
-			_ = log.Errorf("Could not extract containerd %s from container '%s'. Error: %v", "Info", dContainer.ID(), err)
-			continue
-		}
-		name := info.ID
-		if nameLabel, ok := info.Labels["io.kubernetes.container.name"]; ok {
-			name = nameLabel
-		}
-
-		var mounts []specs.Mount
-		spec, err := dContainer.Spec(ctxNamespace)
-		if err != nil {
-			logExtractionError("mounts (Spec)", dContainer, err)
-		} else {
-			mounts = spec.Mounts
-		}
-
-		state := ""
-		task, err := dContainer.Task(ctxNamespace, nil)
-		if err != nil {
-			logExtractionError("Task", dContainer, err)
-		} else {
-			status, err := task.Status(ctxNamespace)
-			if err != nil {
-				logExtractionError("Task Status", dContainer, err)
-			} else {
-				state = string(status.Status)
-			}
-		}
-
-		container := &cspec.Container{
-			Name:    name,
-			Runtime: "containerd",
-			ID:      dContainer.ID(),
-			Image:   info.Image,
-			Mounts:  mounts,
-			State:   state,
-		}
-		uContainers = append(uContainers, container)
-	}
-	return uContainers, nil
 }
 
 func logExtractionError(what string, container containerd.Container, err error) {
