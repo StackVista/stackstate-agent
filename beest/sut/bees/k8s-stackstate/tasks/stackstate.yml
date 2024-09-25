@@ -35,13 +35,13 @@
     - name: Use helm stackstate test repo
       when: stackstate_helm_chart_version | trim | length > 0
       set_fact:
-        stackstate_helm_chart_repo: stackstate-internal/stackstate-k8s
+        stackstate_helm_chart_repo: stackstate-internal/suse-observability
         stackstate_version: "{{ stackstate_helm_chart_version }}"
 
     - when: stackstate_helm_chart_version | trim | length == 0
       block:
       - name: Search last official stackstate version
-        command: helm search repo --regexp '\vstackstate-internal/stackstate-k8s\v' --devel -o yaml
+        command: helm search repo --regexp '\vstackstate-internal/suse-observability\v' --devel -o yaml
         register: stackstate_helm_search
 
       - name: Helm search result to yaml
@@ -51,7 +51,7 @@
       - name: Set stackstate helm version and repo
         set_fact:
           stackstate_version: "{{ stackstate_helm_search_yaml[0].version }}"
-          stackstate_helm_chart_repo: stackstate-internal/stackstate-k8s
+          stackstate_helm_chart_repo: stackstate-internal/suse-observability
 
     - name: Use master stackstate image tag
       when: stackstate_platform_version | trim | length == 0
