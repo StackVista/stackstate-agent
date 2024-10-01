@@ -31,7 +31,7 @@ def build(
     static=False,
     build_include=None,
     build_exclude=None,
-    major_version='7',
+    major_version='',
     arch="x64",
     go_mod="mod",
 ):
@@ -45,6 +45,9 @@ def build(
     )
     build_exclude = [] if build_exclude is None else build_exclude.split(",")
     build_tags = get_build_tags(build_include, build_exclude)
+    print("-------------------------------------------")
+    print(f"Building Dogstatsd with tags: {build_tags}")
+    print("-------------------------------------------")
     ldflags, gcflags, env = get_build_flags(ctx, static=static, major_version=major_version)
     bin_path = DOGSTATSD_BIN_PATH
 

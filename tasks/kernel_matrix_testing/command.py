@@ -54,10 +54,10 @@ def sync_source(ctx, source, target, instance_ip, ssh_key, ip, arch):
         )
     elif arch == "x86_64" or arch == "arm64":
         ctx.run(
-            f"rsync -e \"ssh -o StrictHostKeyChecking=no -i {ssh_key}\" -p --chown=root:root -rt --exclude='.git*' --filter=':- .gitignore' {source} ubuntu@{instance_ip}:/home/ubuntu/datadog-agent"
+            f"rsync -e \"ssh -o StrictHostKeyChecking=no -i {ssh_key}\" -p --chown=root:root -rt --exclude='.git*' --filter=':- .gitignore' {source} ubuntu@{instance_ip}:/home/ubuntu/stackstate-agent"
         )
         ctx.run(
-            f"ssh -i {ssh_key} -o StrictHostKeyChecking=no ubuntu@{instance_ip} \"cd /home/ubuntu/datadog-agent && {vm_copy}\""
+            f"ssh -i {ssh_key} -o StrictHostKeyChecking=no ubuntu@{instance_ip} \"cd /home/ubuntu/stackstate-agent && {vm_copy}\""
         )
     else:
         raise Exit(f"Unsupported arch {arch}")

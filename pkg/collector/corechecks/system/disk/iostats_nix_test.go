@@ -8,6 +8,7 @@
 package disk
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"math"
 	"testing"
 	"time"
@@ -85,7 +86,7 @@ func TestIncrementWithOverflow(t *testing.T) {
 func TestIoStatsOverflow(t *testing.T) {
 	ioCheck := new(IOCheck)
 	mock := mocksender.NewMockSender(ioCheck.ID())
-	ioCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	ioCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 	ioCheck.stats = lastStats
 	ioCheck.ts = 1000
 	ioCounters = func(names ...string) (map[string]disk.IOCountersStat, error) {

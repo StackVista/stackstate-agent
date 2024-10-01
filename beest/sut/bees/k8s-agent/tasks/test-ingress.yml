@@ -1,0 +1,44 @@
+---
+- name: Add Ingress Nginx Helm repo
+  kubernetes.core.helm_repository:
+    name: ingress-nginx
+    repo_url: "https://kubernetes.github.io/ingress-nginx"
+- name: Deploy Ingress Nginx Helm chart
+  kubernetes.core.helm:
+    context: "{{ kubecontext }}"
+    chart_ref: "ingress-nginx/ingress-nginx"
+    release_name: "ingress-nginx"
+    release_namespace: "{{ test_namespace }}"
+    update_repo_cache: true
+    wait: yes
+    wait_timeout: 30m
+- name: Wait for the nginx-controller to become ready
+  command: kubectl --context={{ kubecontext }} -n={{ test_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=controller pod
+- name: Grab and store the nginx-controller LoadBalancer external IP
+  command: kubectl --context={{ kubecontext }} -n={{ test_namespace }} get svc ingress-nginx-controller -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+  register: nginx_controller_external_ip_raw
+- name: set nginx_controller_external_ip fact
+  set_fact:
+    nginx_controller_external_ip: "{{ nginx_controller_external_ip_raw.stdout }}"
+- name: Print nginx controller external ip
+  debug:
+    var: nginx_controller_external_ip
+- name: Generate TLS secret
+  command: openssl req -x509 -nodes -days 1 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN={{ test_namespace }}/O={{ test_namespace }}"
+- name: Create TLS secret in Kubernetes
+  command: kubectl --context={{ kubecontext }} -n={{ test_namespace }} create secret tls tls-secret --key tls.key --cert tls.crt
+  ignore_errors: true
+- name: Generate Ingress template
+  ansible.builtin.template:
+    src: test_ingress_templates/apple-banana-nginx-ingress.j2.yml
+    dest: "{{ role_path }}/files/test_ingress/apple-banana-nginx-ingress.yaml"
+- name: Generate Ingress template
+  ansible.builtin.template:
+    src: test_ingress_templates/pod-http-via-ingress.j2.yml
+    dest: "{{ role_path }}/files/test_ingress/pod-http-via-ingress.yaml"
+- name: Apply manifests for ingress + pods
+  kubernetes.core.k8s:
+    context: "{{ kubecontext }}"
+    namespace: "{{ test_namespace }}"
+    definition: "{{ lookup('file', '{{ item }}') }}"
+  with_fileglob: "test_ingress/*.yaml"

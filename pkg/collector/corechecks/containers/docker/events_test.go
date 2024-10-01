@@ -3,7 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build docker
+//go:build docker && !darwin
 
 package docker
 
@@ -245,3 +245,31 @@ func TestAggregateEvents(t *testing.T) {
 		})
 	}
 }
+
+//func TestReportContainerRestart(t *testing.T) {
+//	dockerCheck := &DockerCheck{
+//		instance: &DockerConfig{},
+//	}
+//	mockSender := mocksender.NewMockSender(dockerCheck.ID())
+//
+//	events := make([]*docker.ContainerEvent, 0)
+//
+//	// Don't fail on empty event array
+//	err := reportContainerRestart(events, mockSender)
+//	assert.Nil(t, err)
+//	mockSender.AssertNumberOfCalls(t, "ServiceCheck", 0)
+//
+//	// Valid restart event
+//	events = append(events, &docker.ContainerEvent{
+//		Action:        "restart",
+//		ContainerID:   "fcc487ac70446287ae0dc79fb72368d824ff6198cd1166a405bc5a7fc111d3a8",
+//		ContainerName: "book-app",
+//	})
+//	mockSender.On("ServiceCheck", "docker.restart", metrics.ServiceCheckWarning, "",
+//		[]string{"event_name:docker.restart"}, "Container book-app restarted")
+//
+//	err = reportContainerRestart(events, mockSender)
+//	assert.Nil(t, err)
+//	mockSender.AssertExpectations(t)
+//	mockSender.AssertNumberOfCalls(t, "ServiceCheck", 1)
+//}

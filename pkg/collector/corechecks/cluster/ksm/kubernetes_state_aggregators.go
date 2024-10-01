@@ -97,6 +97,50 @@ func newSumValuesAggregator(ddMetricName, ksmMetricName string, allowedLabels []
 	}
 }
 
+// aggregateStatusReasonMetrics Generate additional metrics based on aggregating existing metrics to generate a new metric
+func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ksmstore.DDMetricsFam {
+	// Split this from the original metrics to merge it back in at the start
+	var zeroStateMetrics []ksmstore.DDMetric
+	var originalMetrics []ksmstore.DDMetric
+
+	for _, metricFamily := range metricFamilyList {
+		// Do not continue of there is no metrics to merge
+		if len(metricFamily.ListMetrics) == 0 {
+			continue
+		}
+
+		switch metricFamily.Name {
+		case "kube_pod_container_info":
+			var metricWithZeroValue []ksmstore.DDMetric
+			for _, metric := range metricFamily.ListMetrics {
+				metric.Labels["reason"] = "Unknown"
+				// Overwrite the default metric count of 1 with 0 for a zero state
+				metric.Val = 0
+				metricWithZeroValue = append(metricWithZeroValue, metric)
+			}
+			zeroStateMetrics = append(zeroStateMetrics, metricWithZeroValue...)
+
+		case "kube_pod_container_status_terminated_reason", "kube_pod_container_status_waiting_reason":
+			// Remap all the reason metrics to have a default count of 1
+			// This always guarantees a state if it is not a zero state
+			for _, metric := range metricFamily.ListMetrics {
+				metric.Val = 1
+			}
+
+			originalMetrics = append(originalMetrics, metricFamily.ListMetrics...)
+		}
+	}
+
+	// We are sending both zero state metrics and the original metrics to StackState
+	// What this means is that we will be sending a zero and non-zero state for the same metric but expect the agent to de-duplicate
+	// the metrics or at least on StackState's aggregation side. If this does become a problem then we need to map and look for every single
+	// possible reason type and build up separate metric groupings containing the zero state or the non-zero state, but this will add more weight on this aggregator
+	return append(metricFamilyList, ksmstore.DDMetricsFam{
+		Name:        "kube_pod_container_status_reasons",
+		ListMetrics: append(zeroStateMetrics, originalMetrics...),
+	})
+}
+
 func newCountObjectsAggregator(ddMetricName, ksmMetricName string, allowedLabels []string) metricAggregator {
 	if len(allowedLabels) > maxNumberOfAllowedLabels {
 		// `maxNumberOfAllowedLabels` is hardcoded to the maximum number of labels passed to this function from the metricsAggregators definition below.

@@ -8,6 +8,7 @@ package collector
 import (
 	"expvar"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"strings"
 	"sync"
 
@@ -20,6 +21,7 @@ import (
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/loaders"
 	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	yaml "gopkg.in/yaml.v2"
@@ -55,19 +57,24 @@ type CheckScheduler struct {
 	loaders        []check.Loader
 	collector      Collector
 	senderManager  sender.SenderManager
+	checkManager   handler.CheckManager
 	m              sync.RWMutex
+	features       features.Features // Features supported by StackState
 }
 
 // InitCheckScheduler creates and returns a check scheduler
-func InitCheckScheduler(collector Collector, senderManager sender.SenderManager) *CheckScheduler {
+func InitCheckScheduler(collector Collector, senderManager sender.SenderManager, checkManager handler.CheckManager) *CheckScheduler {
+	feats := features.InitFeatures()
 	checkScheduler = &CheckScheduler{
 		collector:      collector,
 		senderManager:  senderManager,
+		checkManager:   checkManager,
 		configToChecks: make(map[string][]checkid.ID),
-		loaders:        make([]check.Loader, 0, len(loaders.LoaderCatalog(senderManager))),
+		loaders:        make([]check.Loader, 0, len(loaders.LoaderCatalog(senderManager, checkManager))),
+		features:       feats,
 	}
 	// add the check loaders
-	for _, loader := range loaders.LoaderCatalog(senderManager) {
+	for _, loader := range loaders.LoaderCatalog(senderManager, checkManager) {
 		checkScheduler.AddLoader(loader)
 		log.Debugf("Added %s to Check Scheduler", loader)
 	}
@@ -184,10 +191,11 @@ func (s *CheckScheduler) getChecks(config integration.Config) ([]check.Check, er
 				log.Debugf("Loader name %v does not match, skip loader %v for check %v", selectedInstanceLoader, loader.Name(), config.Name)
 				continue
 			}
-			c, err := loader.Load(s.senderManager, config, instance)
+			c, err := loader.Load(s.senderManager, s.checkManager, config, instance)
 			if err == nil {
 				log.Debugf("%v: successfully loaded check '%s'", loader, config.Name)
 				errorStats.removeLoaderErrors(config.Name)
+				c.SetFeatures(s.features)
 				checks = append(checks, c)
 				break
 			} else if c != nil && check.IsJMXInstance(config.Name, instance, config.InitConfig) {

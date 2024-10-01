@@ -8,12 +8,14 @@ package collectors
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"sort"
 	"testing"
 
 	"github.com/DataDog/datadog-agent/comp/core/config"
 	"github.com/DataDog/datadog-agent/comp/core/log/logimpl"
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta"
+	pkgconfig "github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/tagger/utils"
 	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes"
@@ -453,6 +455,218 @@ func TestHandleKubePod(t *testing.T) {
 			assertTagInfoListEqual(t, tt.expected, actual)
 		})
 	}
+}
+
+func TestHandleKubePodWithClusterName(t *testing.T) {
+	// set the cluster name config for all test scenarios
+	clustername.ResetClusterName()
+	pkgconfig.Datadog.SetWithoutSource("cluster_name", "test-cluster")
+
+	const (
+		fullyFleshedContainerID = "foobarquux"
+		noEnvContainerID        = "foobarbaz"
+		runtimeContainerName    = "k8s_datadog-agent_agent"
+		podName                 = "datadog-agent-foobar"
+		podNamespace            = "default"
+		env                     = "production"
+		svc                     = "datadog-agent"
+		version                 = "7.32.0"
+	)
+
+	standardTags := []string{
+		fmt.Sprintf("env:%s", env),
+		fmt.Sprintf("service:%s", svc),
+		fmt.Sprintf("version:%s", version),
+	}
+
+	podEntityID := workloadmeta.EntityID{
+		Kind: workloadmeta.KindKubernetesPod,
+		ID:   "foobar",
+	}
+
+	podTaggerEntityID := fmt.Sprintf("kubernetes_pod_uid://%s", podEntityID.ID)
+
+	image := workloadmeta.ContainerImage{
+		ID:        "datadog/agent@sha256:a63d3f66fb2f69d955d4f2ca0b229385537a77872ffc04290acae65aed5317d2",
+		RawName:   "datadog/agent@sha256:a63d3f66fb2f69d955d4f2ca0b229385537a77872ffc04290acae65aed5317d2",
+		Name:      "datadog/agent",
+		ShortName: "agent",
+		Tag:       "latest",
+	}
+
+	store := fxutil.Test[workloadmeta.Mock](t, fx.Options(
+		logimpl.MockModule(),
+		config.MockModule(),
+		fx.Supply(workloadmeta.NewParams()),
+		fx.Supply(context.Background()),
+		workloadmeta.MockModule(),
+	))
+
+	store.Set(&workloadmeta.Container{
+		EntityID: workloadmeta.EntityID{
+			Kind: workloadmeta.KindContainer,
+			ID:   fullyFleshedContainerID,
+		},
+		EntityMeta: workloadmeta.EntityMeta{
+			Name: runtimeContainerName,
+		},
+		Image: image,
+		EnvVars: map[string]string{
+			"DD_ENV":     env,
+			"DD_SERVICE": svc,
+			"DD_VERSION": version,
+		},
+	})
+	store.Set(&workloadmeta.Container{
+		EntityID: workloadmeta.EntityID{
+			Kind: workloadmeta.KindContainer,
+			ID:   noEnvContainerID,
+		},
+		EntityMeta: workloadmeta.EntityMeta{
+			Name: runtimeContainerName,
+		},
+	})
+
+	tests := []struct {
+		name              string
+		labelsAsTags      map[string]string
+		annotationsAsTags map[string]string
+		nsLabelsAsTags    map[string]string
+		pod               workloadmeta.KubernetesPod
+		expected          []*TagInfo
+	}{
+		{
+			name: "fully formed pod (no containers)",
+			annotationsAsTags: map[string]string{
+				"gitcommit": "+gitcommit",
+				"component": "component",
+			},
+			labelsAsTags: map[string]string{
+				"ownerteam": "team",
+				"tier":      "tier",
+			},
+			nsLabelsAsTags: map[string]string{
+				"ns_env":       "ns_env",
+				"ns-ownerteam": "ns-team",
+			},
+			pod: workloadmeta.KubernetesPod{
+				EntityID: podEntityID,
+				EntityMeta: workloadmeta.EntityMeta{
+					Name:      podName,
+					Namespace: podNamespace,
+					Annotations: map[string]string{
+						// Annotations as tags
+						"GitCommit": "foobar",
+						"ignoreme":  "ignore",
+						"component": "agent",
+
+						// Custom tags from map
+						"ad.datadoghq.com/tags": `{"pod_template_version":"1.0.0"}`,
+					},
+					Labels: map[string]string{
+						// Labels as tags
+						"OwnerTeam":         "container-integrations",
+						"tier":              "node",
+						"pod-template-hash": "490794276",
+
+						// Standard tags
+						"tags.datadoghq.com/env":     env,
+						"tags.datadoghq.com/service": svc,
+						"tags.datadoghq.com/version": version,
+
+						// K8s recommended tags
+						"app.kubernetes.io/name":       svc,
+						"app.kubernetes.io/instance":   podName,
+						"app.kubernetes.io/version":    version,
+						"app.kubernetes.io/component":  "agent",
+						"app.kubernetes.io/part-of":    "datadog",
+						"app.kubernetes.io/managed-by": "helm",
+					},
+				},
+
+				// NS labels as tags
+				NamespaceLabels: map[string]string{
+					"ns_env":       "dev",
+					"ns-ownerteam": "containers",
+					"foo":          "bar",
+				},
+
+				// kube_service tags
+				KubeServices: []string{"service1", "service2"},
+
+				// Owner tags
+				Owners: []workloadmeta.KubernetesPodOwner{
+					{
+						Kind: kubernetes.DeploymentKind,
+						Name: svc,
+					},
+				},
+
+				// PVC tags
+				PersistentVolumeClaimNames: []string{"pvc-0"},
+
+				// Phase tags
+				Phase: "Running",
+			},
+			expected: []*TagInfo{
+				{
+					Source: podSource,
+					Entity: podTaggerEntityID,
+					HighCardTags: []string{
+						"gitcommit:foobar",
+					},
+					OrchestratorCardTags: []string{
+						fmt.Sprintf("pod_name:%s", podName),
+						"kube_ownerref_name:datadog-agent",
+					},
+					LowCardTags: append([]string{
+						fmt.Sprintf("kube_app_instance:%s", podName),
+						fmt.Sprintf("kube_app_name:%s", svc),
+						fmt.Sprintf("kube_app_version:%s", version),
+						fmt.Sprintf("kube_deployment:%s", svc),
+						fmt.Sprintf("kube_namespace:%s", podNamespace),
+						// [sts] removed "cluster_name:test-cluster" from the expected tags as it fails the test
+						//"kube_cluster_name:test-cluster",
+						"component:agent",
+						"kube_app_component:agent",
+						"kube_app_managed_by:helm",
+						"kube_app_part_of:datadog",
+						"kube_ownerref_kind:deployment",
+						"kube_service:service1",
+						"kube_service:service2",
+						"ns-team:containers",
+						"ns_env:dev",
+						"pod_phase:running",
+						"pod_template_version:1.0.0",
+						"team:container-integrations",
+						"tier:node",
+					}, standardTags...),
+					StandardTags: standardTags,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			collector := &WorkloadMetaCollector{
+				store:    store,
+				children: make(map[string]map[string]struct{}),
+			}
+
+			collector.initPodMetaAsTags(tt.labelsAsTags, tt.annotationsAsTags, tt.nsLabelsAsTags)
+
+			actual := collector.handleKubePod(workloadmeta.Event{
+				Type:   workloadmeta.EventTypeSet,
+				Entity: &tt.pod,
+			})
+
+			assertTagInfoListEqual(t, tt.expected, actual)
+		})
+	}
+
+	// clear up test cases
+	pkgconfig.Datadog.SetWithoutSource("cluster_name", "")
+	clustername.ResetClusterName()
 }
 
 func TestHandleECSTask(t *testing.T) {

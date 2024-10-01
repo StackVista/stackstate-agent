@@ -149,7 +149,7 @@ def _get_code_owners(root_folder):
             if len(line) > 0:
                 parts = line.split()
                 path = os.path.normpath(parts[0])
-                # example /tools/retry_file_dump ['@DataDog/agent-metrics-logs']
+                # example /tools/retry_file_dump ['@StackVista/agent-metrics-logs']
                 owners[path] = parts[1:]
     return owners
 
@@ -160,7 +160,7 @@ def get_milestone_id(_, milestone):
     # dependencies, and we don't want to propagate it to files importing this one
     from libs.common.github_api import GithubAPI
 
-    gh = GithubAPI('DataDog/datadog-agent')
+    gh = GithubAPI('StackVista/stackstate-agent')
     m = gh.get_milestone_by_name(milestone)
     if not m:
         raise Exit(f'Milestone {milestone} wasn\'t found in the repo', code=1)

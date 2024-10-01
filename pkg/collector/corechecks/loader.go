@@ -8,10 +8,10 @@ package corechecks
 import (
 	"errors"
 	"fmt"
-
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/loaders"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
@@ -51,7 +51,7 @@ func (gl *GoCheckLoader) Name() string {
 }
 
 // Load returns a Go check
-func (gl *GoCheckLoader) Load(senderManger sender.SenderManager, config integration.Config, instance integration.Data) (check.Check, error) {
+func (gl *GoCheckLoader) Load(senderManger sender.SenderManager, checkManager handler.CheckManager, config integration.Config, instance integration.Data) (check.Check, error) {
 	var c check.Check
 
 	factory, found := catalog[config.Name]
@@ -61,7 +61,7 @@ func (gl *GoCheckLoader) Load(senderManger sender.SenderManager, config integrat
 	}
 
 	c = factory()
-	if err := c.Configure(senderManger, config.FastDigest(), instance, config.InitConfig, config.Source); err != nil {
+	if err := c.Configure(senderManger, checkManager, config.FastDigest(), instance, config.InitConfig, config.Source); err != nil {
 		if errors.Is(err, check.ErrSkipCheckInstance) {
 			return c, err
 		}
@@ -78,7 +78,7 @@ func (gl *GoCheckLoader) String() string {
 }
 
 func init() {
-	factory := func(sender.SenderManager) (check.Loader, error) {
+	factory := func(sender.SenderManager, handler.CheckManager) (check.Loader, error) {
 		return NewGoCheckLoader()
 	}
 

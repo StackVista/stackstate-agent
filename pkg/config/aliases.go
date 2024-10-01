@@ -8,6 +8,7 @@ package config
 
 import (
 	"context"
+	"sync"
 
 	slog "github.com/cihub/seelog"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/config/env"
 	"github.com/DataDog/datadog-agent/pkg/config/logs"
 	"github.com/DataDog/datadog-agent/pkg/config/model"
+	pkgconfigmodel "github.com/DataDog/datadog-agent/pkg/config/model"
 	pkgconfigsetup "github.com/DataDog/datadog-agent/pkg/config/setup"
 	"github.com/DataDog/datadog-agent/pkg/util/optional"
 )
@@ -79,11 +81,26 @@ const (
 )
 
 var (
+	configMutex sync.RWMutex
 	// Datadog Alias
 	Datadog = pkgconfigsetup.Datadog
 	// SystemProbe Alias
 	SystemProbe = pkgconfigsetup.SystemProbe
 )
+
+// GetDatadogConfig safely reads the Datadog configuration
+func GetDatadogConfig() pkgconfigmodel.Config {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
+	return Datadog
+}
+
+// SetDatadogConfig safely writes the Datadog configuration
+func SetDatadogConfig(config pkgconfigmodel.Config) {
+	configMutex.Lock()
+	defer configMutex.Unlock()
+	Datadog = config
+}
 
 // IsAutoconfigEnabled is alias for model.IsAutoconfigEnabled
 func IsAutoconfigEnabled() bool {

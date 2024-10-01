@@ -18,6 +18,11 @@
 #include "stringutils.h"
 #include "tagger.h"
 #include "util.h"
+#include "topology.h"
+#include "telemetry.h"
+#include "health.h"
+#include "transaction.h"
+#include "state.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -138,6 +143,11 @@ bool Two::init()
     Py2_init_tagger();
     Py2_init_kubeutil();
     Py2_init_containers();
+    Py2_init_topology();
+    Py2_init_telemetry();
+    Py2_init_health();
+    Py2_init_state();
+    Py2_init_transaction();
 
     // import the base class
     _baseClass = _importFrom("datadog_checks.checks", "AgentCheck");
@@ -913,6 +923,16 @@ void Two::setGetClusternameCb(cb_get_clustername_t cb)
     _set_get_clustername_cb(cb);
 }
 
+void Two::setGetPidCb(cb_get_pid_t cb)
+{
+    _set_get_pid_cb(cb);
+}
+
+void Two::setGetCreateTimeCb(cb_get_create_time_t cb)
+{
+    _set_get_create_time_cb(cb);
+}
+
 void Two::setGetTracemallocEnabledCb(cb_tracemalloc_enabled_t cb)
 {
     _set_tracemalloc_enabled_cb(cb);
@@ -981,6 +1001,89 @@ void Two::setObfuscateSqlExecPlanCb(cb_obfuscate_sql_exec_plan_t cb)
 void Two::setGetProcessStartTimeCb(cb_get_process_start_time_t cb)
 {
     _set_get_process_start_time_cb(cb);
+}
+
+
+// [sts] topology
+void Two::setSubmitComponentCb(cb_submit_component_t cb)
+{
+    _set_submit_component_cb(cb);
+}
+
+void Two::setSubmitRelationCb(cb_submit_relation_t cb)
+{
+    _set_submit_relation_cb(cb);
+}
+
+void Two::setSubmitStartSnapshotCb(cb_submit_start_snapshot_t cb)
+{
+    _set_submit_start_snapshot_cb(cb);
+}
+
+void Two::setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t cb)
+{
+    _set_submit_stop_snapshot_cb(cb);
+}
+
+void Two::setSubmitDeleteCb(cb_submit_delete_t cb)
+{
+    _set_submit_delete_cb(cb);
+}
+
+// [sts] telemetry
+void Two::setSubmitTopologyEventCb(cb_submit_topology_event_t cb)
+{
+    _set_submit_topology_event_cb(cb);
+}
+
+// [sts] health
+void Two::setSubmitHealthCheckDataCb(cb_submit_health_check_data_t cb)
+{
+    _set_submit_health_check_data_cb(cb);
+}
+
+void Two::setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t cb)
+{
+    _set_submit_health_start_snapshot_cb(cb);
+}
+
+void Two::setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t cb)
+{
+    _set_submit_health_stop_snapshot_cb(cb);
+}
+
+// [sts] raw metrics
+void Two::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
+{
+    _set_submit_raw_metrics_data_cb(cb);
+}
+
+// [sts] transaction state
+void Two::setStartTransactionCb(cb_start_transaction_t cb)
+{
+    _set_start_transaction_cb(cb);
+}
+void Two::setStopTransactionCb(cb_stop_transaction_t cb)
+{
+    _set_stop_transaction_cb(cb);
+}
+void Two::setDiscardTransactionCb(cb_discard_transaction_t cb)
+{
+    _set_discard_transaction_cb(cb);
+}
+void Two::setTransactionStateCb(cb_set_transaction_state_t cb)
+{
+    _set_transaction_state_cb(cb);
+}
+
+// [sts] state state
+void Two::setStateCb(cb_set_state_t cb)
+{
+    _set_state_cb(cb);
+}
+char *Two::setGetStateCb(cb_get_state_t cb)
+{
+    _set_get_state_cb(cb);
 }
 
 // Python Helpers

@@ -1,0 +1,61 @@
+---
+- name: Splunk v1 to v2 pickle conversion
+  tags: prepare
+  become: yes
+  block:
+    - name: Copy pickle files
+      copy:
+        src: "../../../../tools/agent-v1-to-v2-pickle-conversion"
+        dest: "/home/ubuntu"
+        mode: '0777'
+
+    - name: Remove backups
+      file:
+        path: /home/ubuntu/agent-v1-to-v2-pickle-conversion/backups
+        state: absent
+
+    - name: Configure pickle conversion config
+      template:
+        src: "pickle-converter-config.j2.yaml"
+        dest: /home/ubuntu/agent-v1-to-v2-pickle-conversion/config.yaml
+        mode: '0644'
+
+    - name: Install APT packages
+      become: true
+      apt:
+        name: [build-essential, checkinstall, libreadline-gplv2-dev, libncursesw5-dev, libssl-dev, libsqlite3-dev, tk-dev, libgdbm-dev, libc6-dev, libbz2-dev]
+        state: present
+        update_cache: yes
+
+    - name: Download Python 2.7.18
+      get_url:
+        url: https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
+        dest: ~/Python-2.7.18.tgz
+        mode: '-x'
+
+    - name: Extract Python 2.7
+      become: true
+      shell: "tar xzf ~/Python-2.7.18.tgz"
+
+    - name: Install Python 2.7
+      become: true
+      shell: "cd Python-2.7.18; ./configure --enable-optimizations; make altinstall"
+
+    - name: Install APT packages
+      become: true
+      apt:
+        name: [python-pip]
+        state: present
+        update_cache: yes
+
+## Cleanup
+- name: Splunk v1 to v2 pickle conversion cleanup
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Remove pickle conversion project
+      become: true
+      file:
+        path: /home/ubuntu/agent-v1-to-v2-pickle-conversion
+        state: absent
+

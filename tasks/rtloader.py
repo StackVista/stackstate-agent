@@ -101,7 +101,7 @@ def make(ctx, install_prefix=None, python_runtimes='3', cmake_options='', arch="
 
 
 @task
-def clean(_):
+def clean(ctx):
     """
     Clean up CMake's cache.
     Necessary when the paths to some libraries found by CMake (for example Python) have changed on the system.
@@ -117,6 +117,11 @@ def clean(_):
             print(f"Successfully cleaned '{p}'")
         except FileNotFoundError:
             print(f"Nothing to clean up '{p}'")
+
+    # [sts] recursively delete Only ignored files
+    rtloader_path = get_rtloader_path()
+    ctx.run("cd {} && git clean -Xfd".format(rtloader_path))
+    print("Removed ignored files under '{}'".format(rtloader_path))
 
 
 @task

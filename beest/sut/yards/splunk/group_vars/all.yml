@@ -1,0 +1,41 @@
+---
+agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
+agent_repo_url: "https://{{ lookup('env', 'STS_AWS_TEST_BUCKET') or STS_AWS_TEST_BUCKET }}.s3.amazonaws.com"
+
+artifactory_user: "{{ lookup('env', 'artifactory_user') or ARTIFACTORY_USER }}"
+artifactory_password: "{{ lookup('env', 'artifactory_password') or ARTIFACTORY_PASSWORD }}"
+
+stackstate_helm_chart_version: "{{ lookup('env', 'STACKSTATE_HELM_CHART_VERSION') }}"
+stackstate_platform_version: "{{ lookup('env', 'STACKSTATE_PLATFORM_VERSION') }}"
+stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENSE }}"
+
+namespace: "{{ yard_id.replace('.','-').replace('_','-') | lower }}"
+cluster_name: "sandbox-main.sandbox.stackstate.io"
+
+kubecontext: "{{ cluster_name }}"
+
+sts_api_key: "{{ yard_id }}"
+sts_url: "https://{{ yard_id }}.{{ cluster_name }}"
+
+# Enable a StackState Receiver simulator. The data will still be forwarded to StackState but can be pulled from the
+# host machine. If this is enabled then the testing will automatically attempt to pull the Simulator logs on failure
+enable_sts_simulator: false
+
+# Splunk Versioning
+splunk_deb_download_version: 8.2.7
+splunk_deb_download_hash: 2e1fca123028
+
+# Username and password for Splunk Enterprise admin user
+#   (modified during initial install, not during upgrade)
+splunk_user: admin
+splunk_pass: splunk123
+
+# Username and password for Splunk Universal Forwarder admin user
+#   (modified during initial install, not during upgrade)
+splunk_uf_user: ufadmin
+splunk_uf_pass: splunk123
+
+# $SPLUNK_HOME path
+splunk_home: /opt/splunk
+splunk_uf_home: /opt/splunkforwarder
+splunk_base_path: /opt

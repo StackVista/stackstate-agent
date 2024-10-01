@@ -68,8 +68,8 @@ func (c *WinCrashConfig) Parse(data []byte) error {
 }
 
 // Configure accepts configuration
-func (wcd *WinCrashDetect) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
-	err := wcd.CommonConfigure(senderManager, integrationConfigDigest, initConfig, data, source)
+func (wcd *WinCrashDetect) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
+	err := wcd.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, data, source)
 	if err != nil {
 		return err
 	}

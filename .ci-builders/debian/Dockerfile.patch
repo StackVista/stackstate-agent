@@ -1,0 +1,9 @@
+ARG BASE_IMAGE=deb7_latest
+FROM artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:${BASE_IMAGE}
+
+RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list \
+    && sed -i 's|security.debian.org|archive.debian.org/|g' /etc/apt/sources.list \
+    && sed -i '/stretch-updates/d' /etc/apt/sources.list \
+    && apt-get update && apt-get install -y apt-utils libtool debsigs
+
+RUN /bin/bash -l -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3 -v 0.10.0"

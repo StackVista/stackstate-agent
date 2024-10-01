@@ -10,6 +10,7 @@ package jmx
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -19,6 +20,7 @@ import (
 	pkgConfig "github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/config/utils"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
@@ -32,9 +34,10 @@ type JMXCheck struct {
 	telemetry      bool
 	initConfig     string
 	instanceConfig string
+	features       features.Features
 }
 
-func newJMXCheck(senderManager sender.SenderManager, config integration.Config, source string) *JMXCheck {
+func newJMXCheck(senderManager sender.SenderManager, checkManager handler.CheckManager, config integration.Config, source string) *JMXCheck {
 	digest := config.IntDigest()
 	check := &JMXCheck{
 		config:    config,
@@ -44,7 +47,7 @@ func newJMXCheck(senderManager sender.SenderManager, config integration.Config, 
 		source:    source,
 		telemetry: utils.IsCheckTelemetryEnabled("jmx", pkgConfig.Datadog),
 	}
-	check.Configure(senderManager, digest, config.InitConfig, config.MetricConfig, source) //nolint:errcheck
+	check.Configure(senderManager, checkManager, digest, config.InitConfig, config.MetricConfig, source) //nolint:errcheck
 
 	return check
 }
@@ -102,7 +105,7 @@ func (c *JMXCheck) InstanceConfig() string {
 }
 
 // Configure configures this JMXCheck, setting InitConfig and InstanceConfig
-func (c *JMXCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config integration.Data, initConfig integration.Data, source string) error {
+func (c *JMXCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config integration.Data, initConfig integration.Data, source string) error {
 	c.initConfig = string(config)
 	c.instanceConfig = string(initConfig)
 	return nil
@@ -136,4 +139,14 @@ func (c *JMXCheck) GetSenderStats() (stats.SenderStats, error) {
 // GetDiagnoses returns the diagnoses cached in last run or diagnose explicitly
 func (c *JMXCheck) GetDiagnoses() ([]diagnosis.Diagnosis, error) {
 	return nil, nil
+}
+
+// GetFeatures returns the features supported by StackState
+func (c *JMXCheck) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *JMXCheck) SetFeatures(features features.Features) {
+	c.features = features
 }

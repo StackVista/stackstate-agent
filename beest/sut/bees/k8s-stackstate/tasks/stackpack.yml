@@ -1,0 +1,76 @@
+---
+- name: StackPack prepare tasks
+  tags: prepare
+  block:
+    - name: List installed StackPacks
+      command: sts stackpack list --installed
+      register: stackpack_list_raw
+
+    - name: set fact
+      set_fact:
+        stackpacklist: "{{ stackpack_list_raw.stdout }}"
+
+    - name: Print stackpack list
+      debug:
+        var: stackpacklist
+
+    - name: Install stackstate-k8s-agent-v2 StackPack
+      command: sts stackpack install --unlocked-strategy fail --name stackstate-k8s-agent-v2
+      when:
+        - stackstate_k8s_agent_v2 is defined
+        - stackpacklist.find('stackstate-k8s-agent-v2') == -1
+
+#    - name: Install kubernetes StackPack
+#      command: sts stackpack install --name kubernetes --parameter kubernetes_cluster_name="{{ kubernetes_integration.cluster_name }}"
+#      when:
+#        - kubernetes_integration is defined
+#        - stackpacklist.find('kubernetes') == -1
+
+    - name: Install kubernetes v2 StackPack
+      command: sts stackpack install --unlocked-strategy fail --name kubernetes-v2 --parameter kubernetes_cluster_name="{{ kubernetes_v2_integration.cluster_name }}"
+      when:
+        - kubernetes_v2_integration is defined
+        - stackpacklist.find('kubernetes-v2') == -1
+
+    - name: Install Splunk StackPack
+      command: sts stackpack install --unlocked-strategy fail --name splunk-topology --parameter splunk_instance_name="{{ yard_id }}" --parameter sts_instance_url="{{ splunk_integration.url }}"
+      when:
+        - splunk_integration is defined
+        - stackpacklist.find('splunk-topology') == -1
+
+#    - name: Install AWS-V2 StackPack
+#      command: sts stackpack install --name aws-v2 --parameter aws_external_id="{{ yard_id }}" --parameter aws_role_arn="{{ aws_integration.integration_iam_role }}" --parameter aws_access_key_id="{{ aws_integration.integration_access_key }}" --parameter aws_secret_access_key="{{ aws_integration.integration_secret_key }}"
+#      when:
+#        - aws_integration is defined
+#        - stackpacklist.find('aws-v2') == -1
+
+
+## Cleanup
+
+- name: StackPack cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  when: aws_integration is defined
+  block:
+    - name: Retrieve StsEventBridgeRule resource id
+      command: aws cloudformation describe-stack-resource --stack-name {{ aws_integration.cf_stack_name }} --logical-resource-id StsEventBridgeRule --query "StackResourceDetail.PhysicalResourceId" --output=text
+      register: sts_event_rule
+
+    - name: Disable StsEventBridgeRule
+      command: aws events disable-rule --name {{ sts_event_rule.stdout }}
+
+    - name: Retrieve StsLogsBucket resource id
+      command: aws cloudformation describe-stack-resource --stack-name {{ aws_integration.cf_stack_name }} --logical-resource-id StsLogsBucket --query "StackResourceDetail.PhysicalResourceId" --output=text
+      register: sts_logs_bucket
+
+    - name: Wait a bit for all objects to be saved to the bucket
+      pause:
+        seconds: 180
+
+    - name: Retrieve objects versions from StsLogsBucket
+      command: "aws s3api list-object-versions --bucket {{ sts_logs_bucket.stdout }} --output=json --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}'"
+      register: sts_logs_objects
+
+    - name: Empty StsLogsBucket
+      shell: aws s3api delete-objects --bucket {{ sts_logs_bucket.stdout }} --delete {{ sts_logs_objects.stdout | quote }} --output=text
+      when: sts_logs_objects.stdout.find('Key') != -1

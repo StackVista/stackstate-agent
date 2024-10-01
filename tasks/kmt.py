@@ -215,10 +215,10 @@ def sync(ctx, vms, stack=None, ssh_key="", verbose=False):
     info("[*] Beginning sync...")
 
     for d in domains:
-        d.runner.sync_source("./", "/datadog-agent")
+        d.runner.sync_source("./", "/stackstate-agent")
 
 
-TOOLS_PATH = '/datadog-agent/internal/tools'
+TOOLS_PATH = '/stackstate-agent/internal/tools'
 GOTESTSUM = "gotest.tools/gotestsum"
 
 
@@ -232,7 +232,7 @@ def download_gotestsum(ctx):
 
     docker_exec(
         ctx,
-        f"cd {TOOLS_PATH} && go install {GOTESTSUM} && cp /go/bin/gotestsum /datadog-agent/kmt-deps/tools/",
+        f"cd {TOOLS_PATH} && go install {GOTESTSUM} && cp /go/bin/gotestsum /stackstate-agent/kmt-deps/tools/",
     )
 
     ctx.run(f"cp kmt-deps/tools/gotestsum {fgotestsum}")
@@ -269,14 +269,14 @@ def prepare(ctx, vms, stack=None, arch=None, ssh_key="", rebuild_deps=False, pac
 
     docker_exec(
         ctx,
-        f"git config --global --add safe.directory /datadog-agent && inv -e system-probe.kitchen-prepare --ci {constrain_pkgs}",
-        run_dir="/datadog-agent",
+        f"git config --global --add safe.directory /stackstate-agent && inv -e system-probe.kitchen-prepare --ci {constrain_pkgs}",
+        run_dir="/stackstate-agent",
     )
     if rebuild_deps or not os.path.isfile(f"kmt-deps/{stack}/dependencies-{arch}.tar.gz"):
         docker_exec(
             ctx,
             f"./test/new-e2e/system-probe/test/setup-microvm-deps.sh {stack} {os.getuid()} {os.getgid()} {platform.machine()}",
-            run_dir="/datadog-agent",
+            run_dir="/stackstate-agent",
         )
         for d in domains:
             d.runner.copy_files(f"kmt-deps/{stack}/dependencies-{full_arch(d.arch)}.tar.gz")
@@ -343,16 +343,16 @@ def build(ctx, vms, stack=None, ssh_key="", rebuild_deps=False, verbose=False):
         docker_exec(
             ctx,
             f"./test/new-e2e/system-probe/test/setup-microvm-deps.sh {stack} {os.getuid()} {os.getgid()} {platform.machine()}",
-            run_dir="/datadog-agent",
+            run_dir="/stackstate-agent",
         )
         for d in domains:
             d.runner.copy_files(f"kmt-deps/{stack}/dependencies-{full_arch(d.arch)}.tar.gz")
             d.runner.run_cmd(f"/root/fetch_dependencies.sh {arch_mapping[platform.machine()]}")
 
     docker_exec(
-        ctx, "cd /datadog-agent && git config --global --add safe.directory /datadog-agent && inv -e system-probe.build"
+        ctx, "cd /stackstate-agent && git config --global --add safe.directory /stackstate-agent && inv -e system-probe.build"
     )
-    docker_exec(ctx, f"tar cf /datadog-agent/kmt-deps/{stack}/shared.tar {EMBEDDED_SHARE_DIR}")
+    docker_exec(ctx, f"tar cf /stackstate-agent/kmt-deps/{stack}/shared.tar {EMBEDDED_SHARE_DIR}")
     for d in domains:
         d.runner.sync_source("./bin/system-probe", "/root")
         d.runner.sync_source(f"kmt-deps/{stack}/shared.tar", "/")
@@ -366,7 +366,7 @@ def clean(ctx, stack=None, container=False, image=False):
     if not stacks.stack_exists(stack):
         raise Exit(f"Stack {stack} does not exist. Please create with 'inv kmt.stack-create --stack=<name>'")
 
-    docker_exec(ctx, "inv -e system-probe.clean", run_dir="/datadog-agent")
+    docker_exec(ctx, "inv -e system-probe.clean", run_dir="/stackstate-agent")
     ctx.run("rm -rf ./test/kitchen/site-cookbooks/dd-system-probe-check/files/default/tests/pkg")
     ctx.run(f"rm -rf kmt-deps/{stack}", warn=True)
     ctx.run(f"rm {get_kmt_os().shared_dir}/*.tar.gz", warn=True)

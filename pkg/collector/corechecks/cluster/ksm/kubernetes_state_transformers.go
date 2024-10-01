@@ -276,6 +276,7 @@ var allowedTerminatedReasons = map[string]struct{}{
 	"oomkilled":          {},
 	"containercannotrun": {},
 	"error":              {},
+	"unknown":            {},
 }
 
 // containerTerminatedReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_terminated_reason

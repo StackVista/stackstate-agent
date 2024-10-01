@@ -26,6 +26,7 @@ from .ssm import get_pfx_pass, get_signing_cert
 from .trace_agent import build as trace_agent_build
 from .utils import (
     REPO_PATH,
+    BRANDED,
     bin_name,
     cache_version,
     generate_config,
@@ -34,6 +35,10 @@ from .utils import (
     has_both_python,
     load_release_versions,
     timed,
+    do_go_rename,  # sts
+    do_sed_rename,  # sts
+    do_find_sed_rename,  # sts
+    do_find_sed_rename_pattern_multi_ignore,  # sts
 )
 from .windows_resources import build_messagetable, build_rc, versioninfo_vars
 
@@ -50,6 +55,7 @@ AGENT_CORECHECKS = [
     "cri",
     "snmp",
     "docker",
+    "disk",
     "file_handle",
     "go_expvar",
     "io",
@@ -95,6 +101,220 @@ CACHED_WHEEL_DIRECTORY_PATTERN = "integration-wheels/{branch}/{hash}/{python_ver
 CACHED_WHEEL_FULL_PATH_PATTERN = CACHED_WHEEL_DIRECTORY_PATTERN + CACHED_WHEEL_FILENAME_PATTERN
 LAST_DIRECTORY_COMMIT_PATTERN = "git -C {integrations_dir} rev-list -1 HEAD {integration}"
 
+@task
+def apply_branding(ctx):
+    """
+    Apply stackstate branding
+    """
+    sts_lower_replace = 's/datadog/stackstate/g'
+    datadog_metrics_replace = 's/"datadog./"stackstate./g'
+    datadog_checks_replace = 's/"datadog_checks./"stackstate_checks./g'
+
+    # Config
+    do_go_rename(ctx, '"\\"dd_url\\" -> \\"sts_url\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"DD_URL\\" -> \\"STS_URL\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"DD_DD_URL\\" -> \\"STS_STS_URL\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"https://app.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"DD_PROXY_HTTP\\" -> \\"STS_PROXY_HTTP\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"DD_PROXY_HTTPS\\" -> \\"STS_PROXY_HTTPS\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"DD_PROXY_NO_PROXY\\" -> \\"STS_PROXY_NO_PROXY\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"DOCKER_DD_AGENT\\" -> \\"DOCKER_STS_AGENT\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"DD\\" -> \\"STS\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/etc/datadog-agent/conf.d\\" -> \\"/etc/stackstate-agent/conf.d\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/etc/datadog-agent/checks.d\\" -> \\"/etc/stackstate-agent/checks.d\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"https://process.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config/setup")
+    do_go_rename(ctx, '"\\"https://orchestrator.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config/setup")
+
+    do_go_rename(ctx, '"\\"DD_\\" -> \\"STS_\\""', "./pkg/config/setup")
+    do_go_rename(ctx, '"\\"datadoghq.com\\" -> \\"stackstate.io\\""', "./pkg/config/setup")
+
+    # [sts] turn of the metadata collection, the receiver does not recognize these payloads
+    do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g', "./pkg/config/setup/config.go")
+    do_sed_rename(ctx, 's/"enable_gohai"\\, true/"enable_gohai"\\, false/g', "./pkg/config/setup/config.go")
+    do_sed_rename(ctx, 's/"inventories_enabled"\\, true/"inventories_enabled"\\, false/g', "./pkg/config/setup/config.go")
+
+    # [sts] switch DisableAPIKeyChecking to true to skip api key validation
+    do_sed_rename(ctx, 's/DisableAPIKeyChecking:    false/DisableAPIKeyChecking:    true/g', "./comp/forwarder/defaultforwarder/default_forwarder.go")
+
+    # Cluster Agent
+    cluster_agent_replace = '/www/! s/datadog/stackstate/g'
+    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/main.go")
+    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/command/*")
+    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/subcommands/*.go")
+    do_sed_rename(ctx, 's/Datadog Cluster/StackState Cluster/g', "./cmd/cluster-agent/command/*")
+    do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/cluster-agent/command/*")
+    do_sed_rename(ctx, 's/datadog-agent/stackstate-agent/g', "./cmd/cluster-agent/custommetrics/*.go")
+
+    # Cluster Agent - Kubernetes API client
+    do_go_rename(ctx, '"\\"datadogtoken\\" -> \\"stackstatetoken\\""', "./pkg/util/kubernetes/apiserver")
+
+    # DD 7.33 Upstream Merge changes
+    do_sed_rename(ctx, 's/"datadog.yaml"/"stackstate.yaml"/g',
+                       "./cmd/agent/common/import.go")
+    do_sed_rename(ctx, 's/"datadog.conf"/"stackstate.conf"/g',
+                       "./cmd/agent/common/import.go")
+
+    # ApiKeys
+    dd_api_key_repl = '"\\"DD-Api-Key\\" -> \\"sts-api-key\\""'
+    dd_api_key_repl_upper = '"\\"DD-API-KEY\\" -> \\"sts-api-key\\""'
+    do_go_rename(
+        ctx, dd_api_key_repl, "./cmd/process-agent")
+    do_go_rename(
+        ctx, dd_api_key_repl, "./comp/forwarder")
+    do_go_rename(
+        ctx, dd_api_key_repl, "./pkg/trace/api")
+    do_go_rename(
+        ctx, dd_api_key_repl, "./pkg/trace/writer")
+    do_go_rename(
+        ctx, dd_api_key_repl_upper, "./cmd/process-agent")
+    do_go_rename(
+        ctx, dd_api_key_repl_upper, "./comp/forwarder")
+    do_go_rename(
+        ctx, dd_api_key_repl_upper, "./pkg/trace/api")
+    do_go_rename(
+        ctx, dd_api_key_repl_upper, "./pkg/trace/writer")
+
+    # Commands
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/subcommands/integrations/command.go")
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/subcommands/run/dependent_services_windows.go")
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/subcommands/launchgui/command.go")
+    do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/agent/subcommands/launchgui/command.go")
+    do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/agent/subcommands/run/command.go")
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/command/command.go")
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/subcommands/integrations/command.go")
+    do_sed_rename(ctx, 's/Datadog integration/StackState integration/g', "./cmd/agent/subcommands/integrations/command.go")
+    do_go_rename(ctx, '"\\"Collect a flare and send it to Datadog\\" -> \\"Collect a flare and send it to StackState\\""', "./pkg/cli/subcommands/dcaflare")
+    do_go_rename(ctx, '"\\"Collect a flare and send it to Datadog\\" -> \\"Collect a flare and send it to StackState\\""', "./cmd/agent/subcommands/flare")
+    do_go_rename(ctx, '"\\"Collect a flare and send it to Datadog\\" -> \\"Collect a flare and send it to StackState\\""', "./cmd/security-agent/subcommands/flare")
+
+
+    # ntp core check with default hosts replacecment
+    do_go_rename(ctx, '"\\"0.datadog.pool.ntp.org\\" -> \\"0.stackstate.pool.ntp.org\\""', "./pkg/collector/corechecks/net/ntp.go")
+    do_go_rename(ctx, '"\\"1.datadog.pool.ntp.org\\" -> \\"1.stackstate.pool.ntp.org\\""', "./pkg/collector/corechecks/net/ntp.go")
+    do_go_rename(ctx, '"\\"2.datadog.pool.ntp.org\\" -> \\"2.stackstate.pool.ntp.org\\""', "./pkg/collector/corechecks/net/ntp.go")
+    do_go_rename(ctx, '"\\"3.datadog.pool.ntp.org\\" -> \\"3.stackstate.pool.ntp.org\\""', "./pkg/collector/corechecks/net/ntp.go")
+
+    # Defaults
+    do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"/var/log/datadog/agent.log\\" -> \\"/var/log/stackstate-agent/agent.log\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"/var/log/datadog/cluster-agent.log\\" -> \\"/var/log/stackstate-agent/cluster-agent.log\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./cmd/agent")
+    do_go_rename(ctx, '"\\"Datadog.yaml\\" -> \\"stackstate.yaml\\""', "./cmd/agent")
+    do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./pkg/config")
+    do_go_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./cmd/agent")
+    do_go_rename(ctx, '"\\"path to directory containing datadog.yaml\\" -> \\"path to directory containing stackstate.yaml\\""', "./cmd")
+    do_go_rename(ctx, '"\\"Datadog config file: %s\\" -> \\"StackState config file: %s\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"Datadog config file: %w\\" -> \\"StackState config file: %w\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"Datadog config file: %s\\" -> \\"StackState config file: %s\\""', "./cmd/system-probe/config")
+    do_go_rename(ctx, '"\\"Datadog config file: %w\\" -> \\"StackState config file: %w\\""', "./cmd/system-probe/config")
+    do_go_rename(ctx, '"\\"Datadog config file: %s\\" -> \\"StackState config file: %s\\""', "./comp/core/config")
+    do_go_rename(ctx, '"\\"Datadog config file: %w\\" -> \\"StackState config file: %w\\""', "./comp/core/config")
+    do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./cmd/system-probe/config")
+    do_go_rename(ctx, '"\\"cannot access the Datadog config file (%w); try running the command under the same user as the Datadog Agent\\" -> \\"cannot access the StackState config file (%w); try running the command under the same user as the StackState Agent\\""', "./comp/core/config")
+    do_go_rename(ctx, '"\\"datadog-cluster\\" -> \\"stackstate-cluster\\""', "./comp/core/config")
+
+    # Dist config templates
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/dist/conf.d/go_expvar.d/agent_stats.yaml.example")
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/dist/conf.d/apm.yaml.default")
+    do_sed_rename(ctx, 's/dd/sts/g', "./cmd/agent/dist/dd-agent")
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/dist/dd-agent")
+
+    # Hardcoded checks and metrics
+    do_sed_rename(ctx, sts_lower_replace, "./pkg/aggregator/aggregator.go")
+
+    # stackstate_checks
+    do_find_sed_rename_pattern_multi_ignore(ctx, "*.go", 's/datadog_checks/stackstate_checks/g',
+                                                ".", [".git", "vendor"])
+    do_go_rename(ctx, '"\\"An error occurred while grabbing the python datadog integration list\\" -> \\"An error occurred while grabbing the python StackState integration list\\""', "./pkg/collector/python")
+    do_sed_rename(ctx, datadog_metrics_replace, "./pkg/collector/runner/runner.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./pkg/collector/worker/worker.go")
+
+    # cluster agent client
+    do_go_rename(ctx, '"\\"datadog-cluster-agent\\" -> \\"stackstate-cluster-agent\\""', "./pkg/config")
+    do_sed_rename(ctx, 's/Datadog Cluster Agent/StackState Cluster Agent/g', "./pkg/util/clusteragent/clusteragent.go")
+    do_sed_rename(ctx, 's/Datadog Cluster Agent/StackState Cluster Agent/g', "./pkg/status/render/templates/clusteragent.tmpl")
+
+    # kubernetes openmetrics annotations
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/common/utils/kubelet.go")
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/listeners/kubelet.go")
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/listeners/kube_services.go")
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/listeners/kube_endpoints.go")
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/providers/kube_common.go")
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/providers/kube_services.go")
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/providers/kube_endpoints.go")
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/tagger/collectors/workloadmeta_extract.go")
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/util/kubernetes/kubelet/kubelet.go")
+
+    # docker/ecs openmetrics annotations
+    do_sed_rename(ctx, 's/com.datadoghq.ad/com.stackstate.ad/g', "./pkg/autodiscovery/listeners/common.go")
+    do_sed_rename(ctx, 's/com.datadoghq.ad/com.stackstate.ad/g', "./pkg/autodiscovery/providers/container.go")
+
+    # rtloader branding
+    do_sed_rename(ctx, datadog_checks_replace, "./rtloader/two/two.cpp")
+    do_sed_rename(ctx, datadog_checks_replace, "./rtloader/three/three.cpp")
+
+    # omnibus
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/agent.rb")
+    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\datadog-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
+                  "./omnibus/config/projects/agent.rb")
+    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\datadog-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
+                  "./omnibus/config/projects/agent-binaries.rb")
+    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\datadog-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
+                  "./omnibus/config/projects/iot-agent.rb")
+    do_sed_rename(ctx, 's/StackVista\\\\\\\\\\\\\\\\stackstate-agent/Stackvista\\\\\\\\\\\\\\\\stackstate-agent/g', "./omnibus/config/projects/agent.rb")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/iot-agent.rb")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/software/datadog-agent-finalize.rb")
+    do_sed_rename(ctx, 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g', "./omnibus/config/software/datadog-cf-finalize.rb")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/templates/datadog-agent/sysvinit_debian.erb")
+
+    do_find_sed_rename_pattern_multi_ignore(ctx, "*postinst", 's/\/opt\/datadog/\/opt\/stackstate/g',
+                                                    ".", [".git", "vendor"])
+    do_find_sed_rename_pattern_multi_ignore(ctx, "*posttrans", 's/\/opt\/datadog/\/opt\/stackstate/g',
+                                                    ".", [".git", "vendor"])
+    do_find_sed_rename_pattern_multi_ignore(ctx, "*preinst", 's/\/opt\/datadog/\/opt\/stackstate/g',
+                                                    ".", [".git", "vendor"])
+    do_find_sed_rename_pattern_multi_ignore(ctx, "*postrm", 's/\/opt\/datadog/\/opt\/stackstate/g',
+                                                    ".", [".git", "vendor"])
+
+    do_sed_rename(ctx, 's/datadog\.yaml/stackstate\.yaml/', "./omnibus/config/software/datadog-iot-agent.rb")
+
+    do_sed_rename(ctx, 's/datadog\.yaml/stackstate\.yaml/', "./omnibus/config/templates/datadog-agent/systemd.process.service.erb")
+    do_sed_rename(ctx, 's/datadog/stackstate/', "./omnibus/config/templates/datadog-agent/systemd.process.service.erb")
+
+    do_sed_rename(ctx, 's/datadog\.yaml/stackstate\.yaml/', "./omnibus/config/templates/datadog-agent/systemd.security.service.erb")
+    do_sed_rename(ctx, 's/datadog/stackstate/', "./omnibus/config/templates/datadog-agent/systemd.security.service.erb")
+
+    do_sed_rename(ctx, 's/datadog\.yaml/stackstate\.yaml/', "./omnibus/config/templates/datadog-agent/systemd.sysprobe.service.erb")
+    do_sed_rename(ctx, 's/datadog/stackstate/', "./omnibus/config/templates/datadog-agent/systemd.sysprobe.service.erb")
+
+    do_sed_rename(ctx, 's/datadog-agent/stackstate-agent/', "./omnibus/config/software/datadog-iot-agent.rb")
+    do_sed_rename(ctx, 's/StackVista/Stackvista/', "./omnibus/config/software/datadog-iot-agent.rb")
+    do_sed_rename(ctx, 's/\/var\/log\/datadog/\/var\/log\/stackstate/', "./omnibus/config/software/datadog-iot-agent.rb")
+    do_sed_rename(ctx, 's/datadog-iot-agent\/src/stackstate-iot-agent\/src/', "./omnibus/config/software/datadog-iot-agent.rb")
+    do_sed_rename(ctx, 's/DataDog\/datadog-agent\/tools\/windows\/decompress_merge_module.ps1/StackVista\/stackstate-agent\/tools\/windows\/decompress_merge_module.ps1/',
+                  "./omnibus/config/software/vc_redist_14.rb")
+    do_sed_rename(ctx, 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/',
+                  "./omnibus/config/software/vc_redist.rb")
+    do_sed_rename(ctx, 's/DataDog\/datadog-agent\/bin\/agent/StackVista\/stackstate-agent\/bin\/agent/',
+                  "./omnibus/config/software/datadog-agent.rb")
+    do_sed_rename(ctx, 's/\/etc\/datadog-agent/\/etc\/stackstate-agent/',
+                  "./omnibus/config/software/datadog-agent.rb")
+    do_sed_rename(ctx, 's/datadog-agent\/src\/github\.com\/DataDog\/datadog-agent\/rtloader/stackstate-agent\/src\/github\.com\/StackVista\/stackstate-agent\/rtloader/',
+                  "./omnibus/config/software/datadog-agent.rb")
+    do_sed_rename(ctx, 's/"datadog.yaml"/"stackstate.yaml"/g',
+                  "./omnibus/config/projects/agent.rb")
+    do_sed_rename(ctx, 's/opt\\\\datado-agent/opt\\\\stackstate-agent/',
+                  "./omnibus/resources/iot/msi/localbuild/rebuild.bat")
+    do_sed_rename(ctx, 's/opt\\\\datadog-agent/opt\\\\stackstate-agent/',
+                  "./omnibus/resources/agent/msi/localbuild/rebuild.bat")
+    do_sed_rename(ctx, 's/src\\\\etc\\\\datadog-agent/src\\\\etc\\\\stackstate-agent/',
+                  "./omnibus/resources/iot/msi/localbuild/rebuild.bat")
+    do_sed_rename(ctx, 's/src\\\\etc\\\\datadog-agent/src\\\\etc\\\\stackstate-agent/',
+                  "./omnibus/resources/agent/msi/localbuild/rebuild.bat")
+
 
 @task
 def build(
@@ -110,11 +330,11 @@ def build(
     rtloader_root=None,
     python_home_2=None,
     python_home_3=None,
-    major_version='7',
+    major_version='3',
     python_runtimes='3',
     arch='x64',
     exclude_rtloader=False,
-    go_mod="mod",
+    go_mod="readonly",
     windows_sysprobe=False,
     cmake_options='',
 ):
@@ -132,6 +352,10 @@ def build(
         # in the embedded path folder because that's what is used in get_build_flags()
         rtloader_make(ctx, python_runtimes=python_runtimes, install_prefix=embedded_path, cmake_options=cmake_options)
         rtloader_install(ctx)
+
+    # sts
+    if BRANDED:
+        apply_branding(ctx)
 
     ldflags, gcflags, env = get_build_flags(
         ctx,
@@ -171,6 +395,9 @@ def build(
         )
         build_exclude = [] if build_exclude is None else build_exclude.split(",")
         build_tags = get_build_tags(build_include, build_exclude)
+        print("-------------------------------------------")
+        print(f"Building Agent with tags: {build_tags}")
+        print("-------------------------------------------")
 
     cmd = "go build -mod={go_mod} {race_opt} {build_type} -tags \"{go_build_tags}\" "
 
@@ -186,6 +413,9 @@ def build(
         "REPO_PATH": REPO_PATH,
         "flavor": "iot-agent" if flavor.is_iot() else "agent",
     }
+    if sys.platform.startswith('win'):
+        ctx.run("echo %cd%", env=env)
+    print("cmd: %s" % cmd.format(**args))
     ctx.run(cmd.format(**args), env=env)
 
     # Remove cross-compiling bits to render config
@@ -198,7 +428,10 @@ def build(
     elif has_both_python(python_runtimes):
         build_type = "agent-py2py3"
 
-    generate_config(ctx, build_type=build_type, output_file="./cmd/agent/dist/datadog.yaml", env=env)
+    generate_config(ctx,
+                    build_type=build_type,
+                    output_file="./cmd/agent/dist/stackstate.yaml", # sts
+                    env=env)
 
     # On Linux and MacOS, render the system-probe configuration file template
     if sys.platform != 'win32' or windows_sysprobe:
@@ -230,13 +463,13 @@ def refresh_assets(_, build_tags, development=True, flavor=AgentFlavor.base.name
     if not flavor.is_iot():
         shutil.copy("./cmd/agent/dist/dd-agent", os.path.join(dist_folder, "dd-agent"))
         # copy the dd-agent placeholder to the bin folder
-        bin_ddagent = os.path.join(BIN_PATH, "dd-agent")
+        bin_ddagent = os.path.join(BIN_PATH, "sts-agent")  # sts
         shutil.move(os.path.join(dist_folder, "dd-agent"), bin_ddagent)
 
     # System probe not supported on windows
     if sys.platform.startswith('linux') or windows_sysprobe:
         shutil.copy("./cmd/agent/dist/system-probe.yaml", os.path.join(dist_folder, "system-probe.yaml"))
-    shutil.copy("./cmd/agent/dist/datadog.yaml", os.path.join(dist_folder, "datadog.yaml"))
+    shutil.copy("./cmd/agent/dist/stackstate.yaml", os.path.join(dist_folder, "stackstate.yaml"))
 
     for check in AGENT_CORECHECKS if not flavor.is_iot() else IOT_AGENT_CORECHECKS:
         check_dir = os.path.join(dist_folder, f"conf.d/{check}.d/")
@@ -325,7 +558,7 @@ def image_build(ctx, arch='amd64', base_dir="omnibus", python_version="2", skip_
     build_context = "Dockerfiles/agent"
     base_dir = base_dir or os.environ.get("OMNIBUS_BASE_DIR")
     pkg_dir = os.path.join(base_dir, 'pkg')
-    deb_glob = f'datadog-agent*_{arch}.deb'
+    deb_glob = f'stackstate-agent*_{arch}.deb'
     dockerfile_path = f"{build_context}/Dockerfile"
     list_of_files = glob.glob(os.path.join(pkg_dir, deb_glob))
     # get the last debian package built
@@ -386,19 +619,19 @@ def hacky_dev_image_build(
     # Extract the python library of the docker image
     with tempfile.TemporaryDirectory() as extracted_python_dir:
         ctx.run(
-            f"docker run --rm '{base_image}' bash -c 'tar --create /opt/datadog-agent/embedded/{{bin,lib,include}}/*python*' | tar --directory '{extracted_python_dir}' --extract"
+            f"docker run --rm '{base_image}' bash -c 'tar --create /opt/stackstate-agent/embedded/{{bin,lib,include}}/*python*' | tar --directory '{extracted_python_dir}' --extract"
         )
 
         os.environ["DELVE"] = "1"
         os.environ["LD_LIBRARY_PATH"] = (
-            os.environ.get("LD_LIBRARY_PATH", "") + f":{extracted_python_dir}/opt/datadog-agent/embedded/lib"
+            os.environ.get("LD_LIBRARY_PATH", "") + f":{extracted_python_dir}/opt/stackstate-agent/embedded/lib"
         )
         build(
             ctx,
-            cmake_options=f'-DPython3_ROOT_DIR={extracted_python_dir}/opt/datadog-agent/embedded -DPython3_FIND_STRATEGY=LOCATION',
+            cmake_options=f'-DPython3_ROOT_DIR={extracted_python_dir}/opt/stackstate-agent/embedded -DPython3_FIND_STRATEGY=LOCATION',
         )
         ctx.run(
-            f'perl -0777 -pe \'s|{extracted_python_dir}(/opt/datadog-agent/embedded/lib/python\\d+\\.\\d+/../..)|substr $1."\\0"x length$&,0,length$&|e or die "pattern not found"\' -i dev/lib/libdatadog-agent-three.so'
+            f'perl -0777 -pe \'s|{extracted_python_dir}(/opt/stackstate-agent/embedded/lib/python\\d+\\.\\d+/../..)|substr $1."\\0"x length$&,0,length$&|e or die "pattern not found"\' -i dev/lib/libdatadog-agent-three.so'
         )
         if process_agent:
             process_agent_build(ctx)
@@ -407,18 +640,18 @@ def hacky_dev_image_build(
 
     copy_extra_agents = ""
     if process_agent:
-        copy_extra_agents += "COPY bin/process-agent/process-agent /opt/datadog-agent/embedded/bin/process-agent\n"
+        copy_extra_agents += "COPY bin/process-agent/process-agent /opt/stackstate-agent/embedded/bin/process-agent\n"
     if trace_agent:
-        copy_extra_agents += "COPY bin/trace-agent/trace-agent /opt/datadog-agent/embedded/bin/trace-agent\n"
+        copy_extra_agents += "COPY bin/trace-agent/trace-agent /opt/stackstate-agent/embedded/bin/trace-agent\n"
 
     with tempfile.NamedTemporaryFile(mode='w') as dockerfile:
         dockerfile.write(
             f'''FROM ubuntu:latest AS src
 
-COPY . /usr/src/datadog-agent
+COPY . /usr/src/stackstate-agent
 
-RUN find /usr/src/datadog-agent -type f \\! -name \\*.go -print0 | xargs -0 rm
-RUN find /usr/src/datadog-agent -type d -empty -print0 | xargs -0 rmdir
+RUN find /usr/src/stackstate-agent -type f \\! -name \\*.go -print0 | xargs -0 rm
+RUN find /usr/src/stackstate-agent -type d -empty -print0 | xargs -0 rmdir
 
 FROM ubuntu:latest AS bin
 
@@ -426,13 +659,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y patchelf
 
-COPY bin/agent/agent                            /opt/datadog-agent/bin/agent/agent
-COPY dev/lib/libdatadog-agent-rtloader.so.0.1.0 /opt/datadog-agent/embedded/lib/libdatadog-agent-rtloader.so.0.1.0
-COPY dev/lib/libdatadog-agent-three.so          /opt/datadog-agent/embedded/lib/libdatadog-agent-three.so
+COPY bin/agent/agent                            /opt/stackstate-agent/bin/agent/agent
+COPY dev/lib/libdatadog-agent-rtloader.so.0.1.0 /opt/stackstate-agent/embedded/lib/libdatadog-agent-rtloader.so.0.1.0
+COPY dev/lib/libdatadog-agent-three.so          /opt/stackstate-agent/embedded/lib/libdatadog-agent-three.so
 
-RUN patchelf --set-rpath /opt/datadog-agent/embedded/lib /opt/datadog-agent/bin/agent/agent
-RUN patchelf --set-rpath /opt/datadog-agent/embedded/lib /opt/datadog-agent/embedded/lib/libdatadog-agent-rtloader.so.0.1.0
-RUN patchelf --set-rpath /opt/datadog-agent/embedded/lib /opt/datadog-agent/embedded/lib/libdatadog-agent-three.so
+RUN patchelf --set-rpath /opt/stackstate-agent/embedded/lib /opt/stackstate-agent/bin/agent/agent
+RUN patchelf --set-rpath /opt/stackstate-agent/embedded/lib /opt/stackstate-agent/embedded/lib/libdatadog-agent-rtloader.so.0.1.0
+RUN patchelf --set-rpath /opt/stackstate-agent/embedded/lib /opt/stackstate-agent/embedded/lib/libdatadog-agent-three.so
 
 FROM golang:latest AS dlv
 
@@ -448,10 +681,10 @@ RUN apt-get update && \
 ENV DELVE_PAGER=less
 
 COPY --from=dlv /go/bin/dlv /usr/local/bin/dlv
-COPY --from=src /usr/src/datadog-agent {os.getcwd()}
-COPY --from=bin /opt/datadog-agent/bin/agent/agent                                 /opt/datadog-agent/bin/agent/agent
-COPY --from=bin /opt/datadog-agent/embedded/lib/libdatadog-agent-rtloader.so.0.1.0 /opt/datadog-agent/embedded/lib/libdatadog-agent-rtloader.so.0.1.0
-COPY --from=bin /opt/datadog-agent/embedded/lib/libdatadog-agent-three.so          /opt/datadog-agent/embedded/lib/libdatadog-agent-three.so
+COPY --from=src /usr/src/stackstate-agent {os.getcwd()}
+COPY --from=bin /opt/stackstate-agent/bin/agent/agent                                 /opt/stackstate-agent/bin/agent/agent
+COPY --from=bin /opt/stackstate-agent/embedded/lib/libdatadog-agent-rtloader.so.0.1.0 /opt/stackstate-agent/embedded/lib/libdatadog-agent-rtloader.so.0.1.0
+COPY --from=bin /opt/stackstate-agent/embedded/lib/libdatadog-agent-three.so          /opt/stackstate-agent/embedded/lib/libdatadog-agent-three.so
 {copy_extra_agents}
 RUN agent completion bash > /usr/share/bash-completion/completions/agent
 
@@ -553,7 +786,7 @@ def get_omnibus_env(
     ctx,
     skip_sign=False,
     release_version="nightly",
-    major_version='7',
+    major_version='3',
     python_runtimes='3',
     hardened_runtime=False,
     system_probe_bin=None,
@@ -636,7 +869,7 @@ def omnibus_run_task(
             omnibus = "bundle exec omnibus.bat"
         elif sys.platform == 'darwin':
             # HACK: This is an ugly hack to fix another hack made by python3 on MacOS
-            # The full explanation is available on this PR: https://github.com/DataDog/datadog-agent/pull/5010.
+            # The full explanation is available on this PR: https://github.com/StackVista/stackstate-agent/pull/5010.
             omnibus = "unset __PYVENV_LAUNCHER__ && bundle exec omnibus"
 
         if omnibus_s3_cache:
@@ -722,6 +955,10 @@ def omnibus_build(
         with timed(quiet=True) as deps_elapsed:
             deps(ctx)
 
+    # sts
+    if BRANDED:
+        apply_branding(ctx)
+
     # base dir (can be overridden through env vars, command line takes precedence)
     base_dir = base_dir or os.environ.get("OMNIBUS_BASE_DIR")
 
@@ -750,10 +987,34 @@ def omnibus_build(
         target_project = "agent-binaries"
 
     # Get the python_mirror from the PIP_INDEX_URL environment variable if it is not passed in the args
-    python_mirror = python_mirror or os.environ.get("PIP_INDEX_URL")
+
+    python_extra_mirror = ""
+    if not python_mirror or python_mirror is None:
+        python_mirror = 'https://pypi.python.org/simple/'
+
+    artifactory_user = os.environ.get("artifactory_user")
+    if artifactory_user:
+        artifactory_password = os.environ.get("artifactory_password")
+        if artifactory_password:
+            artifactory_pypi_url = os.environ.get("ARTIFACTORY_PYPI_URL")
+            if artifactory_pypi_url:
+                python_extra_mirror = f'https://{artifactory_user}:{artifactory_password}@{artifactory_pypi_url}'
+            else:
+                print("ARTIFACTORY_PYPI_URL is not set")
+        else:
+            print("artifactory_password is not set")
+    else:
+        print("artifactory_user is not set")
 
     # If a python_mirror is set then use it for pip by adding it in the pip.conf file
     pip_index_url = f"[global]\nindex-url = {python_mirror}" if python_mirror else ""
+    if pip_index_url and python_extra_mirror:
+        pip_index_url += f"\nextra-index-url = {python_extra_mirror}"
+    elif not pip_index_url and python_extra_mirror:
+        pip_index_url = f"[global]\nextra-index-url = {python_extra_mirror}"
+    print("-------------------------------------------")
+    print(f"Building Agent with pip mirror: {pip_index_url}")
+    print("-------------------------------------------")
 
     # We're passing the --index-url arg through a pip.conf file so that omnibus doesn't leak the token
     with open(pip_config_file, 'w') as f:
@@ -968,7 +1229,7 @@ def version(
         include_pre=include_pre,
     )
     if omnibus_format:
-        # See: https://github.com/DataDog/omnibus-ruby/blob/datadog-5.5.0/lib/omnibus/packagers/deb.rb#L599
+        # See: https://github.com/StackVista/omnibus-ruby/blob/datadog-5.5.0/lib/omnibus/packagers/deb.rb#L599
         # In theory we'd need to have one format for each package type (deb, rpm, msi, pkg).
         # However, there are a few things that allow us in practice to have only one variable for everything:
         # - the deb and rpm safe version formats are identical (the only difference is an additional rule on Wind River Linux, which doesn't apply to us).

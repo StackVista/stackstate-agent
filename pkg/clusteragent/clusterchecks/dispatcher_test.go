@@ -560,8 +560,10 @@ func TestExtraTags(t *testing.T) {
 			mockConfig.SetWithoutSource("cluster_checks.cluster_tag_name", tc.tagNameConfig)
 
 			clustername.ResetClusterName()
+			clustername.FlushProviderCatalog()
 			dispatcher := newDispatcher()
 			assert.EqualValues(t, tc.expected, dispatcher.extraTags)
+			clustername.PopulateProviderCatalog()
 		})
 	}
 }

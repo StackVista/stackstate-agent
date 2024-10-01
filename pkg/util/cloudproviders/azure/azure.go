@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"strings"
 	"time"
 
@@ -130,8 +131,9 @@ var instanceMetaFetcher = cachedfetch.Fetcher{
 	},
 }
 
-func getHostnameWithConfig(ctx context.Context, config config.Config) (string, error) {
-	style := config.GetString(hostnameStyleSetting)
+// sts - renamed config variable to avoid conflicting with package
+func getHostnameWithConfig(ctx context.Context, conf config.Config) (string, error) {
+	style := conf.GetString(hostnameStyleSetting)
 
 	if style == "os" {
 		return "", fmt.Errorf("azure_hostname_style is set to 'os'")
@@ -208,4 +210,39 @@ func GetSubscriptionID(ctx context.Context) (string, error) {
 	}
 
 	return metadata.SubscriptionID, nil
+}
+
+type vmMetadata struct {
+	Name       string `json:"name"`
+	ResourceID string `json:"resourceId"`
+}
+
+func getMetadata(ctx context.Context) (*vmMetadata, error) {
+	metadataJSON, err := getResponse(ctx, metadataURL+"/metadata/instance/compute?api-version=2021-02-01")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Azure VM metadata: %s", err)
+	}
+	var metadata vmMetadata
+	if err := json.Unmarshal([]byte(metadataJSON), &metadata); err != nil {
+		return nil, fmt.Errorf("failed to parse Azure VM metadata: %s", err)
+	}
+	log.Infof("Azure VM metadata: %v", metadata)
+	return &metadata, nil
+}
+
+// HostnameIdentifiers returns list of Azure-specific identifiers for StackState topology
+func HostnameIdentifiers(ctx context.Context) ([]string, error) {
+	metadata, err := getMetadata(ctx)
+	if err != nil {
+		log.Warnf("Can't get Azure VM metadata: %v", err)
+		return []string{}, err
+	}
+
+	identifiers := make([]string, 0, 2)
+	if metadata.ResourceID != "" {
+		identifiers = append(identifiers, "urn:azure:"+metadata.ResourceID)
+		identifiers = append(identifiers, "urn:azure:"+strings.ToUpper(metadata.ResourceID))
+	}
+
+	return identifiers, nil
 }

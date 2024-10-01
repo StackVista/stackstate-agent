@@ -1,0 +1,207 @@
+---
+- name: StackState Agent prepare tasks
+  tags: prepare
+  block:
+    - name: Setup downscaler time limit
+      shell: 'date +"%Y-%m-%dT%H:%M:%SZ" -d "+3 hours"'
+      register: downscaler_time_limit
+
+    - name: Downscaler time limit is set to
+      debug:
+        msg: "{{ downscaler_time_limit.stdout }}"
+
+    - name: Create namespaces
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ item }}"
+            annotations:
+              "downscaler/exclude-until": "{{ downscaler_time_limit.stdout }}"
+        state: present
+      with_items:
+        - "{{ monitoring_namespace }}"
+        - "{{ test_namespace }}"
+
+    - include_tasks: add-eks-addon.yml
+      when: agent_k8s_version|float >= 1.23
+
+    - include_tasks: artifactory-registry-key.yml
+
+    - name: Add stackstate chart repo
+      kubernetes.core.helm_repository:
+        name: stackstate-test
+        repo_url: "https://helm-test.stackstate.io"
+
+    - name: Add stackstate-internal chart repo
+      kubernetes.core.helm_repository:
+        name: stackstate-internal
+        repo_url: "https://helm-internal.stackstate.io"
+
+    - include_tasks: test-workloads.yml
+    - include_tasks: test-ingress.yml
+
+    - name: Generate agent values
+      ansible.builtin.template:
+        src: agent-extra-values.j2.yml
+        dest: "{{ playbook_dir }}/agent-extra-values.yml"
+
+    # if agent chart version is passed, install from stackstate-test repo, otherwise use latest develop branch from stackstate-internal repo
+    - name: Use helm agent test repo
+      when: agent_helm_chart_version | trim | length > 0
+      set_fact:
+        agent_helm_chart_repo: stackstate-test/stackstate-k8s-agent
+        agent_version: "{{ agent_helm_chart_version }}"
+
+    - when: agent_helm_chart_version | trim | length == 0
+      block:
+        - name: Search last official cluster agent version
+          command: helm search repo --regexp '\vstackstate-internal/stackstate-k8s-agent\v' --devel -o yaml
+          register: agent_helm_search
+
+        - name: Helm search result to yaml
+          set_fact:
+            agent_helm_search_yaml: "{{ agent_helm_search.stdout | from_yaml }}"
+
+        - name: Set agent helm version and repo
+          set_fact:
+            agent_version: "{{ agent_helm_search_yaml[0].version }}"
+            agent_helm_chart_repo: stackstate-internal/stackstate-k8s-agent
+
+    - name: Deploy cluster agent chart '{{ agent_version }}' from '{{ agent_helm_chart_repo }}'
+      kubernetes.core.helm:
+        context: "{{ kubecontext }}"
+        chart_ref: "{{ agent_helm_chart_repo }}"
+        chart_version: "{{ agent_version }}"
+        release_name: "{{ agent_release_name }}"
+        release_namespace: "{{ monitoring_namespace }}"
+        create_namespace: false
+        update_repo_cache: true
+        wait: yes
+        wait_timeout: 15m
+        values_files:
+          - "{{ role_path }}/files/agent-values.yml"
+          - "{{ playbook_dir }}/agent-extra-values.yml"
+
+    - name: Attempt to verify cluster agent ready
+      block:
+        - name: Wait for the stackstate cluster agent to start doing it's thing
+          command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
+      rescue:
+        - name: Describe cluster agent pod
+          command: kubectl describe pods -l app.kubernetes.io/component=cluster-agent -n={{ monitoring_namespace }} --context={{ kubecontext }}
+          register: cluster_agent_describe
+        - debug:
+            var: cluster_agent_describe
+
+        - name: Log cluster agent pod
+          command: kubectl logs -l app.kubernetes.io/component=cluster-agent -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
+          register: cluster_agent_logs
+        - debug:
+            var: cluster_agent_logs
+
+        - debug:
+            msg: Cluster agent not ready yet
+          failed_when: true
+
+    - name: Attempt to verify node agents ready
+      block:
+        - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
+          command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=node-agent pod
+      rescue:
+        - name: Describe node agent pods
+          command: kubectl describe pods -l app.kubernetes.io/component=node-agent -n={{ monitoring_namespace }} --context={{ kubecontext }}
+          register: node_agent_describe
+        - debug:
+            var: node_agent_describe
+
+        - name: Log cluster agent pod
+          command: kubectl logs -l app.kubernetes.io/component=node-agent -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
+          register: node_agent_logs
+        - debug:
+            var: node_agent_logs
+
+        - debug:
+            msg: Node agents not ready yet
+          failed_when: true
+
+    - name: Attempt to verify cluster check agent ready
+      block:
+        - name: Wait for the stackstate cluster check agent to start
+          command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=checks-agent pod
+      rescue:
+        - name: Describe cluster check agent pod
+          command: kubectl describe pods -l app.kubernetes.io/component=checks-agent -n={{ monitoring_namespace }} --context={{ kubecontext }}
+          register: cluster_check_agent_describe
+        - debug:
+            var: cluster_check_agent_describe
+
+        - name: Log cluster check agent pod
+          command: kubectl logs -l app.kubernetes.io/component=checks-agent -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
+          register: cluster_check_agent_logs
+        - debug:
+            var: cluster_check_agent_logs
+          failed_when: true
+
+    - name: Give the agent 5 minutes to start up properly and get the process agent ready before starting the test workloads
+      pause:
+        minutes: 5
+
+    - name: Set kubeconfig path from env if exists, otherwise use default
+      set_fact:
+        kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+
+    - name: Copy kube config for local tests
+      copy:
+        src: "{{ kubeconfig_path }}"
+        dest: "{{ playbook_dir }}/config"
+        mode: '0777'
+
+    - include_tasks: pod-connections.yml
+
+    - name: Give the Test Workloads 5 minutes to start performing their actions and some http requests
+      pause:
+        minutes: 5
+
+## Cleanup
+
+- name: StackState Agent cleanup tasks
+  tags: cleanup
+  ignore_errors: true
+  block:
+    - name: Undeploy agent
+      kubernetes.core.helm:
+        context: "{{ kubecontext }}"
+        release_name: "{{ agent_release_name }}"
+        release_namespace: "{{ monitoring_namespace }}"
+        state: absent
+        wait: true
+
+    - name: Undeploy Ingress Nginx Helm chart
+      kubernetes.core.helm:
+        context: "{{ kubecontext }}"
+        chart_ref: "ingress-nginx/ingress-nginx"
+        release_name: "ingress-nginx"
+        release_namespace: "{{ test_namespace }}"
+        state: absent
+        wait: yes
+        wait_timeout: 15m
+
+    - name: Delete namespaces
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+        state: absent
+        wait: true
+      with_items:
+        - "{{ monitoring_namespace }}"
+        - "{{ test_namespace }}"
+
+    - name: Remove agent-extra-values.yml file
+      file:
+        path: "{{ playbook_dir }}/agent-extra-values.yml"
+        state: absent

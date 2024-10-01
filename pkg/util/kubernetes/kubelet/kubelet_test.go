@@ -574,13 +574,16 @@ func (suite *KubeletTestSuite) TestKubeletInitTokenHttps() {
 	r := <-k.Requests
 	assert.Equal(suite.T(), "Bearer fakeBearerToken", r.Header.Get(authorizationHeaderKey))
 
+	// STS: Drop ca_cert which gets picked up from the environment in k8s pods
+	connInfo := ku.GetRawConnectionInfo()
+	delete(connInfo, "ca_cert")
+
 	require.EqualValues(suite.T(),
 		map[string]string{
 			"url":        fmt.Sprintf("https://127.0.0.1:%d", kubeletPort),
 			"verify_tls": "false",
-			"ca_cert":    "./testdata/ca.crt",
 			"token":      "fakeBearerToken",
-		}, ku.GetRawConnectionInfo())
+		}, connInfo)
 }
 
 func (suite *KubeletTestSuite) TestKubeletInitHttpsCerts() {
@@ -626,6 +629,10 @@ func (suite *KubeletTestSuite) TestKubeletInitHttpsCerts() {
 		require.Equal(suite.T(), 1, len(clientCerts))
 		assert.Equal(suite.T(), clientCerts, s.TLS.Certificates)
 	}
+
+	// STS: Drop token which gets picked up from the environment in k8s pods
+	connInfo := ku.GetRawConnectionInfo()
+	delete(connInfo, "token")
 
 	require.EqualValues(suite.T(),
 		map[string]string{

@@ -8,8 +8,17 @@
 package python
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"os"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	// sts - start mock batcher
+	_ = batcher.NewMockBatcher()
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestRunCheck(t *testing.T) {
 	testRunCheck(t)
@@ -65,4 +74,12 @@ func TestConfigureDeprecated(t *testing.T) {
 
 func TestCheckDiagnosesDeserialization(t *testing.T) {
 	testGetDiagnoses(t)
+}
+
+func TestSetCollectionIntervalToInstanceData(t *testing.T) {
+	testSetCollectionIntervalToInstanceData(t)
+}
+
+func TestSetCollectionIntervalToInvalidInstanceData(t *testing.T) {
+	testSetCollectionIntervalToInvalidDataWithInvalidData(t)
 }

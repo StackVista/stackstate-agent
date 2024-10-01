@@ -1,0 +1,18 @@
+init_config:
+instances:
+  - collection_interval: 90
+    resources:
+      persistentvolumes: true
+      persistentvolumeclaims: true
+      endpoints: true
+      namespaces: true
+      configmaps: true
+      daemonsets: true
+      deployments: true
+      replicasets: true
+      statefulsets: true
+      ingresses: true
+      jobs: true
+      cronjobs: true
+      secrets: true
+      resourcequotas: true

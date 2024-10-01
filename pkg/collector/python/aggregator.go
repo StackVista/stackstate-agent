@@ -9,6 +9,9 @@
 package python
 
 import (
+	"context"
+	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"unsafe"
 
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
@@ -50,6 +53,13 @@ func SubmitMetric(checkID *C.char, metricType C.metric_type_t, metricName *C.cha
 	_tags := cStringArrayToSlice(tags)
 	_flushFirstValue := bool(flushFirstValue)
 
+	// Add cluster name tag to _tags only if it's not already present in _tags
+	clusterName := clustername.GetClusterName(context.TODO(), _hostname)
+	if clusterName != "" {
+		_tags = appendIfMissing(_tags, fmt.Sprintf("cluster_name:%s", clusterName))
+		_tags = appendIfMissing(_tags, fmt.Sprintf("kube_cluster_name:%s", clusterName))
+	}
+
 	switch metricType {
 	case C.DATADOG_AGENT_RTLOADER_GAUGE:
 		sender.Gauge(_name, _value, _hostname, _tags)
@@ -66,6 +76,15 @@ func SubmitMetric(checkID *C.char, metricType C.metric_type_t, metricName *C.cha
 	case C.DATADOG_AGENT_RTLOADER_HISTORATE:
 		sender.Historate(_name, _value, _hostname, _tags)
 	}
+}
+
+func appendIfMissing(tags []string, tagToAppend string) []string {
+	for _, existingTag := range tags {
+		if existingTag == tagToAppend {
+			return tags
+		}
+	}
+	return append(tags, tagToAppend)
 }
 
 // SubmitServiceCheck is the method exposed to Python scripts to submit service checks
@@ -115,12 +134,6 @@ func SubmitEvent(checkID *C.char, event *C.event_t) {
 		return
 	}
 
-	sender, err := checkContext.senderManager.GetSender(checkid.ID(goCheckID))
-	if err != nil || sender == nil {
-		log.Errorf("Error submitting metric to the Sender: %v", err)
-		return
-	}
-
 	_event := metricsevent.Event{
 		Title:          eventParseString(event.title, "msg_title"),
 		Text:           eventParseString(event.text, "msg_text"),
@@ -133,7 +146,10 @@ func SubmitEvent(checkID *C.char, event *C.event_t) {
 		Ts:             int64(event.ts),
 	}
 
-	sender.Event(_event)
+	// [sts] send events via die check handler
+	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitEvent(_event)
+
+	return
 }
 
 // SubmitHistogramBucket is the method exposed to Python scripts to submit metrics

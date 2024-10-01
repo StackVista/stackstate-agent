@@ -23,7 +23,7 @@ def build(
     build_exclude=None,
     flavor=AgentFlavor.base.name,
     incremental_build=False,
-    major_version='7',
+    major_version='3',
     python_runtimes='3',
     arch="x64",
     go_mod="mod",
@@ -97,7 +97,7 @@ class TempDir:
 @task
 def build_dev_image(ctx, image=None, push=False, base_image="datadog/agent:latest", include_agent_binary=False):
     """
-    Build a dev image of the process-agent based off an existing datadog-agent image
+    Build a dev image of the process-agent based off an existing stackstate-agent image
 
     image: the image name used to tag the image
     push: if true, run a docker push on the image
@@ -114,7 +114,7 @@ def build_dev_image(ctx, image=None, push=False, base_image="datadog/agent:lates
         ctx.run(f"cp bin/system-probe/system-probe {docker_context + '/system-probe'}")
         if include_agent_binary:
             ctx.run(f"cp bin/agent/agent {docker_context + '/agent'}")
-            core_agent_dest = "/opt/datadog-agent/bin/agent/agent"
+            core_agent_dest = "/opt/stackstate-agent/bin/agent/agent"
         else:
             # this is necessary so that the docker build doesn't fail while attempting to copy the agent binary
             ctx.run(f"touch {docker_context}/agent")
@@ -125,8 +125,8 @@ def build_dev_image(ctx, image=None, push=False, base_image="datadog/agent:lates
         ctx.run(f"cp pkg/ebpf/bytecode/build/co-re/*.o {docker_context}/co-re/")
         ctx.run(f"cp pkg/ebpf/bytecode/build/runtime/*.c {docker_context}")
         ctx.run(f"chmod 0444 {docker_context}/*.o {docker_context}/*.c {docker_context}/co-re/*.o")
-        ctx.run(f"cp /opt/datadog-agent/embedded/bin/clang-bpf {docker_context}")
-        ctx.run(f"cp /opt/datadog-agent/embedded/bin/llc-bpf {docker_context}")
+        ctx.run(f"cp /opt/stackstate-agent/embedded/bin/clang-bpf {docker_context}")
+        ctx.run(f"cp /opt/stackstate-agent/embedded/bin/llc-bpf {docker_context}")
         ctx.run(f"cp pkg/network/protocols/tls/java/agent-usm.jar {docker_context}")
 
         with ctx.cd(docker_context):

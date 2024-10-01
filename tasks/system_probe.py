@@ -40,8 +40,8 @@ TEST_TIMEOUTS = {
     "pkg/network/protocols": "5m",
 }
 CWS_PREBUILT_MINIMUM_KERNEL_VERSION = [5, 8, 0]
-EMBEDDED_SHARE_DIR = os.path.join("/opt", "datadog-agent", "embedded", "share", "system-probe", "ebpf")
-EMBEDDED_SHARE_JAVA_DIR = os.path.join("/opt", "datadog-agent", "embedded", "share", "system-probe", "java")
+EMBEDDED_SHARE_DIR = os.path.join("/opt", "stackstate-agent", "embedded", "share", "system-probe", "ebpf")
+EMBEDDED_SHARE_JAVA_DIR = os.path.join("/opt", "stackstate-agent", "embedded", "share", "system-probe", "java")
 
 is_windows = sys.platform == "win32"
 
@@ -483,8 +483,8 @@ def ninja_generate(
 def build(
     ctx,
     race=False,
-    incremental_build=True,
-    major_version='7',
+    incremental_build=False,
+    major_version='3',
     python_runtimes='3',
     go_mod="mod",
     windows=is_windows,
@@ -773,7 +773,7 @@ def kitchen_prepare(ctx, windows=is_windows, kernel_release=None, ci=False, pack
     # test/kitchen/site-cookbooks/dd-system-probe-check/files/default/tests/pkg/ebpf/testsuite
     # test/kitchen/site-cookbooks/dd-system-probe-check/files/default/tests/pkg/ebpf/bytecode/testsuite
     for i, pkg in enumerate(target_packages):
-        target_path = os.path.join(KITCHEN_ARTIFACT_DIR, re.sub("^.*datadog-agent.", "", pkg))
+        target_path = os.path.join(KITCHEN_ARTIFACT_DIR, re.sub("^.*stackstate-agent.", "", pkg))
         target_bin = "testsuite"
         if windows:
             target_bin = "testsuite.exe"
@@ -806,8 +806,8 @@ def kitchen_prepare(ctx, windows=is_windows, kernel_release=None, ci=False, pack
 
     gopath = os.getenv("GOPATH")
     copy_files = [
-        "/opt/datadog-agent/embedded/bin/clang-bpf",
-        "/opt/datadog-agent/embedded/bin/llc-bpf",
+        "/opt/stackstate-agent/embedded/bin/clang-bpf",
+        "/opt/stackstate-agent/embedded/bin/llc-bpf",
         f"{gopath}/bin/gotestsum",
     ]
 
@@ -1136,6 +1136,26 @@ def get_ebpf_build_flags(unit_test=False):
     flags.extend(["-Ipkg/ebpf/c"])
     return flags
 
+    flags = [
+        '-D__KERNEL__',
+        '-DCONFIG_64BIT',
+        '-D__BPF_TRACING__',
+        '-DKBUILD_MODNAME=\\"ddsysprobe\\"',
+        '-Wno-unused-value',
+        '-Wno-pointer-sign',
+        '-Wno-compare-distinct-pointer-types',
+        '-Wunused',
+        "-include {}".format(os.path.join(c_dir, "asm_goto_workaround.h")),
+        '-O2',
+        '-emit-llvm',
+        # Some linux distributions enable stack protector by default which is not available on eBPF
+        '-fno-stack-protector',
+        '-fno-color-diagnostics',
+        '-fno-unwind-tables',
+        '-fno-asynchronous-unwind-tables',
+        '-fno-jump-tables',
+        "-I{}".format(c_dir),
+    ]
 
 def get_co_re_build_flags():
     flags = get_ebpf_build_flags()
@@ -1207,13 +1227,13 @@ def run_ninja(
 def setup_runtime_clang(ctx):
     # check if correct version is already present
     sudo = "sudo" if not is_root() else ""
-    clang_res = ctx.run(f"{sudo} /opt/datadog-agent/embedded/bin/clang-bpf --version", warn=True)
-    llc_res = ctx.run(f"{sudo} /opt/datadog-agent/embedded/bin/llc-bpf --version", warn=True)
+    clang_res = ctx.run(f"{sudo} /opt/stackstate-agent/embedded/bin/clang-bpf --version", warn=True)
+    llc_res = ctx.run(f"{sudo} /opt/stackstate-agent/embedded/bin/llc-bpf --version", warn=True)
     clang_version_str = clang_res.stdout.split("\n")[0].split(" ")[2].strip() if clang_res.ok else ""
     llc_version_str = llc_res.stdout.split("\n")[1].strip().split(" ")[2].strip() if llc_res.ok else ""
 
-    if not os.path.exists("/opt/datadog-agent/embedded/bin"):
-        ctx.run(f"{sudo} mkdir -p /opt/datadog-agent/embedded/bin")
+    if not os.path.exists("/opt/stackstate-agent/embedded/bin"):
+        ctx.run(f"{sudo} mkdir -p /opt/stackstate-agent/embedded/bin")
 
     arch = arch_mapping.get(platform.machine())
     if arch == "x64":
@@ -1222,13 +1242,13 @@ def setup_runtime_clang(ctx):
     if clang_version_str != CLANG_VERSION_RUNTIME:
         # download correct version from dd-agent-omnibus S3 bucket
         clang_url = f"https://dd-agent-omnibus.s3.amazonaws.com/llvm/clang-{CLANG_VERSION_RUNTIME}.{arch}"
-        ctx.run(f"{sudo} wget -q {clang_url} -O /opt/datadog-agent/embedded/bin/clang-bpf")
-        ctx.run(f"{sudo} chmod 0755 /opt/datadog-agent/embedded/bin/clang-bpf")
+        ctx.run(f"{sudo} wget -q {clang_url} -O /opt/stackstate-agent/embedded/bin/clang-bpf")
+        ctx.run(f"{sudo} chmod 0755 /opt/stackstate-agent/embedded/bin/clang-bpf")
 
     if llc_version_str != CLANG_VERSION_RUNTIME:
         llc_url = f"https://dd-agent-omnibus.s3.amazonaws.com/llvm/llc-{CLANG_VERSION_RUNTIME}.{arch}"
-        ctx.run(f"{sudo} wget -q {llc_url} -O /opt/datadog-agent/embedded/bin/llc-bpf")
-        ctx.run(f"{sudo} chmod 0755 /opt/datadog-agent/embedded/bin/llc-bpf")
+        ctx.run(f"{sudo} wget -q {llc_url} -O /opt/stackstate-agent/embedded/bin/llc-bpf")
+        ctx.run(f"{sudo} chmod 0755 /opt/stackstate-agent/embedded/bin/llc-bpf")
 
 
 def verify_system_clang_version(ctx):
@@ -1405,7 +1425,7 @@ def tempdir():
 
 
 def kitchen_prepare_btfs(ctx, files_dir, arch=CURRENT_ARCH):
-    btf_dir = "/opt/datadog-agent/embedded/share/system-probe/ebpf/co-re/btf"
+    btf_dir = "/opt/stackstate-agent/embedded/share/system-probe/ebpf/co-re/btf"
 
     if arch == "x64":
         arch = "x86_64"
@@ -1432,7 +1452,7 @@ def kitchen_prepare_btfs(ctx, files_dir, arch=CURRENT_ARCH):
         can_minimize = False
 
     if can_minimize:
-        co_re_programs = " ".join(glob.glob("/opt/datadog-agent/embedded/share/system-probe/ebpf/co-re/*.o"))
+        co_re_programs = " ".join(glob.glob("/opt/stackstate-agent/embedded/share/system-probe/ebpf/co-re/*.o"))
         generate_minimized_btfs(
             ctx,
             source_dir=f"{btf_dir}/kitchen-btfs-{arch}",

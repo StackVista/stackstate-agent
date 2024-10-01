@@ -5,11 +5,11 @@ if [[ -z "${ECS_FARGATE}" ]]; then
 fi
 
 # Set a default config for ECS Fargate if found
-# Don't override /etc/datadog-agent/datadog.yaml if it exists
-if [[ ! -e /etc/datadog-agent/datadog.yaml ]]; then
-    ln -s  /etc/datadog-agent/datadog-ecs.yaml \
-           /etc/datadog-agent/datadog.yaml
+# Don't override /etc/stackstate-agent/stackstate.yaml if it exists
+if [[ ! -e /etc/stackstate-agent/stackstate.yaml ]]; then
+    ln -s  /etc/stackstate-agent/stackstate-ecs.yaml \
+           /etc/stackstate-agent/stackstate.yaml
 fi
 
 # Remove all default checks, AD will automatically enable fargate check
-find /etc/datadog-agent/conf.d/ -iname "*.yaml.default" | xargs grep -L 'ad_identifiers' | xargs rm -f
+find /etc/stackstate-agent/conf.d/ -iname "*.yaml.default" | xargs grep -L 'ad_identifiers' | xargs rm -f

@@ -172,7 +172,7 @@ func (r *configFilesReader) read(keep FilterFunc) ([]integration.Config, map[str
 
 		entries, err := os.ReadDir(path)
 		if err != nil {
-			log.Warnf("Skipping, %s", err)
+			log.Infof("Skipping, %s", err)
 			continue
 		}
 
