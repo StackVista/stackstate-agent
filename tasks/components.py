@@ -135,7 +135,7 @@ def get_components_and_bundles(ctx):
 
 
 def make_components_md(bundles):
-    pkg_root = 'github.com/DataDog/datadog-agent/'
+    pkg_root = 'github.com/StackVista/stackstate-agent/'
     yield '# Agent Components'
     yield '<!-- NOTE: this file is auto-generated; do not edit -->'
     yield ''
@@ -169,17 +169,17 @@ def make_codeowners(codeowners_lines, bundles):
     # codeowners is parsed in a last-match-wins fashion, so put more-specific values (components) after
     # less-specific (bundles).  We include only components with a team different from their bundle, to
     # keep the file short.
-    yield '/comp @DataDog/agent-shared-components'
+    yield '/comp @StackVista/agent-shared-components'
     different_components = []
     for b in bundles:
         if b.team:
-            yield f'/{b.path} @DataDog/{b.team}'
+            yield f'/{b.path} @StackVista/{b.team}'
         for c in b.components:
             if c.team != b.team:
                 different_components.append(c)
     for c in different_components:
         if c.team:
-            yield f'/{c.path} @DataDog/{c.team}'
+            yield f'/{c.path} @StackVista/{c.team}'
 
     # drop lines from the existing codeowners until "# END COMPONENTS"
     for line in codeowners_lines:
@@ -242,7 +242,7 @@ def new_bundle(_, bundle_path, overwrite=False, team="/* TODO: add team name */"
     Create a new bundle package with bundle.go and bundle_test.go files.
 
     Notes:
-        - This task must be called from the datadog-agent repository root folder.
+        - This task must be called from the stackstate-agent repository root folder.
         - 'bundle-path' is not modified by the task. You should explicitly set this to 'comp/...' if you want to create it in the right folder.
         - You can use the --team flag to set the team name for the new bundle.
 
@@ -263,7 +263,7 @@ def new_component(_, comp_path, overwrite=False, team="/* TODO: add team name */
     Create a new component package with default files.
 
     Notes:
-        - This task must be called from the datadog-agent repository root folder.
+        - This task must be called from the stackstate-agent repository root folder.
         - 'comp-path' is not modified by the task. You should explicitly set this to 'comp/...' if you want to create it in the right folder.
         - You can use the --team flag to set the team name for the new component/
 

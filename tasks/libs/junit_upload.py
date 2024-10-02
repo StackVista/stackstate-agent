@@ -13,8 +13,8 @@ from invoke.exceptions import Exit
 from ..flavor import AgentFlavor
 from .pipeline_notifications import DEFAULT_JIRA_PROJECT, DEFAULT_SLACK_CHANNEL, GITHUB_JIRA_MAP, GITHUB_SLACK_MAP
 
-CODEOWNERS_ORG_PREFIX = "@DataDog/"
-REPO_NAME_PREFIX = "github.com/DataDog/datadog-agent/"
+CODEOWNERS_ORG_PREFIX = "@StackVista/"
+REPO_NAME_PREFIX = "github.com/StackVista/stackstate-agent/"
 DATADOG_CI_COMMAND = ["datadog-ci", "junit", "upload"]
 JOB_URL_FILE_NAME = "job_url.txt"
 JOB_ENV_FILE_NAME = "job_env.txt"
@@ -91,7 +91,7 @@ def upload_junitxmls(output_dir, owners, flavor, xmlfile_name, process_env, addi
         jira_project = GITHUB_JIRA_MAP.get(codeowner.lower(), DEFAULT_JIRA_PROJECT)[0:]
         args = [
             "--service",
-            "datadog-agent",
+            "stackstate-agent",
             "--tags",
             f'test.codeowners:["{codeowner}"]',
             "--tags",

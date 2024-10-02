@@ -79,6 +79,9 @@ from .update_go import go_version, update_go
 from .utils import generate_config
 from .windows_resources import build_messagetable
 
+# [sts] Security agent
+enable_security_agent = False
+
 # the root namespace
 ns = Collection()
 

@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-headless-server
+  labels:
+    type: headless-server
+    test: pod-to-pod-headless
+spec:
+  containers:
+    - image: itsthenetwork/alpine-ncat
+      imagePullPolicy: IfNotPresent
+      name: headless-server
+      command: ["/bin/bash", "-c", "ncat -vv --broker --listen -p 543 > /dev/null"]
+      ports:
+        - containerPort: 543
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: headless-service
+  labels:
+    type: headless-service
+    test: pod-to-pod-headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 543
+      protocol: TCP
+  selector:
+    type: headless-server
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-headless-client
+  labels:
+    test: pod-to-pod-headless
+spec:
+  containers:
+    - image: jgkamat/netcat
+      imagePullPolicy: IfNotPresent
+      name: headless-client
+      command: ["/bin/bash", "-c", "while echo y; do sleep 0.1; done | nc -vv headless-service 543"]

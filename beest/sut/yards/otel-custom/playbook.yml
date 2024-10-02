@@ -1,0 +1,19 @@
+- name: Kubernetes Stackstate
+  hosts: local
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/k8s-stackstate"
+      vars:
+        sts_ingress: KOPS
+
+- name: Otel Lambda
+  hosts: local
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/otel-lambda"
+
+- name: VM Agent
+  hosts: agent
+  gather_facts: true
+  roles:
+    - role: "{{ bees_path }}/ec2-agent/v2"

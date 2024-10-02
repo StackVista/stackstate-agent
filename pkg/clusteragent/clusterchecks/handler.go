@@ -169,7 +169,8 @@ func (h *Handler) runDispatch(ctx context.Context) {
 func (h *Handler) leaderWatch(ctx context.Context) {
 	err := h.updateLeaderIP()
 	if err != nil {
-		log.Warnf("Could not refresh leadership status: %s", err)
+		// [STS] log this as a debug message instead.
+		log.Debugf("Could not refresh leadership status: %s", err)
 	}
 
 	healthProbe := health.RegisterLiveness("clusterchecks-leadership")
@@ -188,7 +189,8 @@ func (h *Handler) leaderWatch(ctx context.Context) {
 			if err != nil {
 				h.errCount++
 				if h.errCount == 1 {
-					log.Warnf("Could not refresh leadership status: %s, will only log every %d errors", err, logFrequency)
+				// [STS] log this as a debug message instead.
+				log.Debugf("Could not refresh leadership status: %s", err)
 				} else if h.errCount%logFrequency == 0 {
 					log.Warnf("Could not refresh leadership status after %d tries: %s", logFrequency, err)
 				}

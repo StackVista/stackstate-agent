@@ -1,0 +1,184 @@
+---
+- name: StackState prepare tasks
+  tags: prepare
+  block:
+    - name: Add stable chart repo
+      kubernetes.core.helm_repository:
+        name: stable
+        repo_url: "https://charts.helm.sh/stable"
+
+    - name: Add stackstate-internal chart repo
+      kubernetes.core.helm_repository:
+        name: stackstate-internal
+        repo_url: "https://helm-internal.stackstate.io"
+
+    - name: Add stackstate chart repo
+      kubernetes.core.helm_repository:
+        name: stackstate
+        repo_url: "https://helm.stackstate.io"
+
+
+    - name: Generate sts-toolbox config
+      ansible.builtin.template:
+        src: sts-toolbox-config.j2.yaml
+        dest: "{{ playbook_dir }}/sts-toolbox.yml"
+
+    - name: Generate StackState values
+      ansible.builtin.command:
+        cmd: sts-toolbox generate-values --config "{{ playbook_dir }}/sts-toolbox.yml" --output "{{ playbook_dir }}/stackstate-values.yml"
+
+    - name: StackState base url
+      debug:
+        var: sts_url
+
+    # if stackstate chart version is passed, install from stackstate-internal repo, otherwise use latest version from stackstate-internal repo
+    - name: Use helm stackstate test repo
+      when: stackstate_helm_chart_version | trim | length > 0
+      set_fact:
+        stackstate_helm_chart_repo: stackstate-internal/suse-observability
+        stackstate_version: "{{ stackstate_helm_chart_version }}"
+
+    - when: stackstate_helm_chart_version | trim | length == 0
+      block:
+      - name: Search last official stackstate version
+        command: helm search repo --regexp '\vstackstate-internal/suse-observability\v' --devel -o yaml
+        register: stackstate_helm_search
+
+      - name: Helm search result to yaml
+        set_fact:
+          stackstate_helm_search_yaml: "{{ stackstate_helm_search.stdout | from_yaml }}"
+
+      - name: Set stackstate helm version and repo
+        set_fact:
+          stackstate_version: "{{ stackstate_helm_search_yaml[0].version }}"
+          stackstate_helm_chart_repo: stackstate-internal/suse-observability
+
+    - name: Use master stackstate image tag
+      when: stackstate_platform_version | trim | length == 0
+      set_fact:
+        stackstate_pull_policy: Always
+        stackstate_image_tag: master
+
+    - name: Use specified image tag
+      when: stackstate_platform_version | trim | length > 0
+      set_fact:
+        stackstate_pull_policy: NotIfPresent
+        stackstate_image_tag: "{{ stackstate_platform_version }}"
+
+    - name: Setup downscaler time limit
+      shell: 'date +"%Y-%m-%dT%H:%M:%SZ" -d "+3 hours"'
+      register: downscaler_time_limit
+
+    - name: Downscaler time limit is set to
+      debug:
+        msg: "{{ downscaler_time_limit.stdout }}"
+
+    - name: Create namespace
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ item }}"
+            annotations:
+              "downscaler/exclude-until": "{{ downscaler_time_limit.stdout }}"
+        state: present
+      with_items:
+        - "{{ namespace }}"
+
+    - name: Deploy stackstate chart '{{ stackstate_version }}' from '{{ stackstate_helm_chart_repo }}', ignoring stackpack store uri
+      when: stackpack_store_uri is not defined
+      kubernetes.core.helm:
+        context: "{{ kubecontext }}"
+        chart_ref: "{{ stackstate_helm_chart_repo }}"
+        chart_version: "{{ stackstate_version }}"
+        release_name: stackstate
+        release_namespace: "{{ namespace }}"
+        create_namespace: false
+        update_repo_cache: true
+        wait: yes
+        wait_timeout: 20m
+        values_files:
+          - "{{ playbook_dir }}/stackstate-values.yml"
+        values:
+          global:
+            receiverApiKey: "{{ sts_api_key }}"
+
+    - name: Deploy stackstate chart '{{ stackstate_version }}' from '{{ stackstate_helm_chart_repo }}' with stackpacks store uri '{{ stackpack_store_uri }}'
+      when: stackpack_store_uri is defined
+      kubernetes.core.helm:
+        context: "{{ kubecontext }}"
+        chart_ref: "{{ stackstate_helm_chart_repo }}"
+        chart_version: "{{ stackstate_version }}"
+        release_name: stackstate
+        release_namespace: "{{ namespace }}"
+        create_namespace: false
+        update_repo_cache: true
+        wait: yes
+        wait_timeout: 20m
+        values_files:
+          - "{{ playbook_dir }}/stackstate-values.yml"
+        values:
+          stackstate:
+            components:
+              all:
+                extraEnv:
+                  open:
+                    # Automatically use the preprod stackpacks
+                    CONFIG_FORCE_stackstate_featureSwitches_monitorEnableExperimentalAPIs: "true"
+                    CONFIG_FORCE_stackstate_stackPacks_latestVersionsStackPackStoreUri: "{{ stackpack_store_uri }}"
+                    CONFIG_FORCE_stackstate_stackPacks_updateStackPacksInterval: "30 seconds"
+                    CONFIG_FORCE_stackstate_aws_s3_accesskey: ""
+                    CONFIG_FORCE_stackstate_aws_s3_secretkey: ""
+                    CONFIG_FORCE_stackstate_aws_s3_region: "eu-west-1"
+                image:
+                  tag: "{{ stackstate_image_tag }}"
+                  # Using pullPolicy always because we use the 'master' tag, which is a moving target.
+                  pullPolicy: "{{ stackstate_pull_policy }}"
+          global:
+            receiverApiKey: "{{ sts_api_key }}"
+
+    - name: Wait till StackState API is ready
+      kubernetes.core.k8s_info:
+        context: "{{ kubecontext }}"
+        kind: Pod
+        namespace: "{{ namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/component = server"
+        wait: yes
+        wait_timeout: 900 # in secs
+
+
+## Cleanup
+
+- name: StackState cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Undeploy stackstate
+      kubernetes.core.helm:
+        context: "{{ kubecontext }}"
+        release_name: stackstate
+        release_namespace: "{{ namespace }}"
+        state: absent
+        wait: true
+
+    - name: Delete namespace '{{namespace}}'
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        api_version: v1
+        kind: Namespace
+        name: "{{ namespace }}"
+        state: absent
+        wait: true
+
+    - name: Remove stackstate-values.yml file
+      file:
+        path: "{{ playbook_dir }}/stackstate-values.yml"
+        state: absent
+
+    - name: Remove sts-toolbox.yml file
+      file:
+        path: "{{ playbook_dir }}/sts-toolbox.yml"
+        state: absent

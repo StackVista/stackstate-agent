@@ -1,0 +1,114 @@
+package handler
+
+import (
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/metrics/event"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
+)
+
+// StartTransaction "upgrades" the non-transactional check handler to a transactional check handler, registers it in the
+// check transactionalManager and calls StartTransaction on the newly created transactional check handler.
+func (ch *NonTransactionalCheckHandler) StartTransaction() string {
+	transactionalCheckHandler := ch.manager.MakeCheckHandlerTransactional(ch.ID())
+	if transactionalCheckHandler != nil {
+		return transactionalCheckHandler.StartTransaction()
+	}
+	return ""
+}
+
+// DiscardTransaction logs a warning for the non-transactional check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) DiscardTransaction(string) {
+	_ = log.Warnf("DiscardTransaction called on NonTransactionalCheckHandler. This should never happen.")
+}
+
+// StopTransaction logs a warning for the non-transactional check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) StopTransaction() {
+	_ = log.Warnf("StopTransaction called on NonTransactionalCheckHandler. This should never happen.")
+}
+
+// SetTransactionState logs a warning for the non-transactional check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) SetTransactionState(string, string) {
+	_ = log.Warnf("SetTransactionState called on NonTransactionalCheckHandler. This should never happen.")
+}
+
+// SetState is used to commit state for a given state key and CheckState
+func (ch *NonTransactionalCheckHandler) SetState(key string, state string) {
+	err := ch.stateManager.SetState(key, state)
+	if err != nil {
+		_ = log.Errorf("error occurred when setting state for check %s with value %s->%s, %s", ch.ID(), key, state, err)
+	}
+}
+
+// GetState returns a CheckState for a given key
+func (ch *NonTransactionalCheckHandler) GetState(key string) string {
+	s, err := ch.stateManager.GetState(key)
+	if err != nil {
+		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
+	}
+	log.Infof("Retrieved state for check %s, state key: %s, value: %s", ch.ID(), key, s)
+	return s
+}
+
+// SubmitComponent submits a component to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitComponent(instance topology.Instance, component topology.Component) {
+	ch.batcher.SubmitComponent(ch.ID(), instance, component)
+}
+
+// SubmitRelation submits a relation to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitRelation(instance topology.Instance, relation topology.Relation) {
+	ch.batcher.SubmitRelation(ch.ID(), instance, relation)
+}
+
+// SubmitStartSnapshot submits a start snapshot to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitStartSnapshot(instance topology.Instance) {
+	ch.batcher.SubmitStartSnapshot(ch.ID(), instance)
+}
+
+// SubmitStopSnapshot submits a stop snapshot to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitStopSnapshot(instance topology.Instance) {
+	ch.batcher.SubmitStopSnapshot(ch.ID(), instance)
+}
+
+// SubmitDelete submits a topology element delete to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitDelete(instance topology.Instance, topologyElementID string) {
+	ch.batcher.SubmitDelete(ch.ID(), instance, topologyElementID)
+}
+
+// SubmitHealthCheckData submits health check data to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitHealthCheckData(stream health.Stream, data health.CheckData) {
+	ch.batcher.SubmitHealthCheckData(ch.ID(), stream, data)
+}
+
+// SubmitHealthStartSnapshot submits a health start snapshot to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int) {
+	ch.batcher.SubmitHealthStartSnapshot(ch.ID(), stream, intervalSeconds, expirySeconds)
+}
+
+// SubmitHealthStopSnapshot submits a health stop snapshot to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitHealthStopSnapshot(stream health.Stream) {
+	ch.batcher.SubmitHealthStopSnapshot(ch.ID(), stream)
+}
+
+// SubmitRawMetricsData submits a raw metric value to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawMetric) {
+	ch.batcher.SubmitRawMetricsData(ch.ID(), data)
+}
+
+// SubmitEvent submits an event to the forwarder.
+func (ch *NonTransactionalCheckHandler) SubmitEvent(event event.Event) {
+	// STS When the senders are not global anymore, we should also inject this.
+	sender, err := aggregator.Senders.GetSender(ch.ID())
+	if err != nil || sender == nil {
+		_ = log.Errorf("Error submitting metric to the Sender: %v", err)
+		return
+	}
+	sender.Event(event)
+}
+
+// SubmitComplete submits a complete to the Global Batcher.
+func (ch *NonTransactionalCheckHandler) SubmitComplete() {
+	ch.batcher.SubmitComplete(ch.ID())
+}

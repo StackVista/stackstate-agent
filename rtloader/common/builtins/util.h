@@ -11,7 +11,7 @@
     The prototypes here defined provide functions to initialize the python util
     builtin module, and set its relevant callbacks for the rtloader caller.
 */
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <rtloader_types.h>
 
@@ -20,6 +20,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+char **py_tag_to_c(PyObject *py_tags);
+void free_tags(char **tags);
 
 #ifdef DATADOG_AGENT_THREE
 

@@ -1,0 +1,40 @@
+# No need to disable the StackState instance if you enable the Simulator, The data will be forwarded form the Simulator
+- name: Kubernetes Stackstate
+  hosts: local
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/k8s-stackstate"
+      vars:
+        sts_ingress: KOPS
+
+# Do note ec2-splunk restarts the host machine to get rid of frontend-locks
+- name: VM Splunk
+  hosts: splunk
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/ec2-splunk"
+
+# We always run the ec2-simulator even if it is disabled to clean up if it goes from enabled to disabled
+# Always keep this after the ec2-splunk role as the ec2-splunk restarts the host machine to get rid of certain locks
+# (There is a restart always on the docker instance but to not wait for it to startup twice)
+# but keep it before the ec2-agent to prevent errors when the agent starts up before the receiver
+- name: StackState Simulator (Debugging)
+  hosts: splunk
+  gather_facts: true
+  roles:
+    - role: "{{ bees_path }}/ec2-simulator"
+
+# The Agent will automatically point to the simulator if it is enabled
+# Install Agent V2
+- name: VM Agent V2
+  hosts: splunk
+  gather_facts: true
+  roles:
+    - role: "{{ bees_path }}/ec2-agent/v2"
+
+# Install Agent V1 alongside Agent V2
+#- name: VM Agent V1
+#  hosts: splunk
+#  gather_facts: true
+#  roles:
+#    - role: "{{ bees_path }}/ec2-agent/v1"

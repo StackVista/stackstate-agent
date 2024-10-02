@@ -1,0 +1,36 @@
+---
+- name: "Splunk Health Saved Search Setup"
+  tags: [prepare, cleanup]
+  set_fact:
+    source_type: "sts_test_data"
+    saved_search_name: "health"
+    saved_search_format: "fields check_state_id, name, health, topology_element_identifier, message"
+
+- name: Splunk Health Prepare Tasks
+  tags: prepare
+  block:
+    - name: "V1 - Create Splunk Health Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_name }}-v1" \
+        --data-urlencode search="* version=\"v1\" | dedup check_state_id | sort - check_state_id | {{ saved_search_format }}"
+
+    - name: "V2 - Create Splunk Health Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_name }}-v2" \
+        --data-urlencode search="* version=\"v2\" | dedup check_state_id | sort - check_state_id | {{ saved_search_format }}"
+
+
+## Cleanup
+- name: Splunk Events cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: "V1 - Delete Splunk Health Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_name }}-v1
+
+    - name: "V2 - Delete Splunk Health Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_name }}-v2

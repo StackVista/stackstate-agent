@@ -8,6 +8,7 @@ package check
 
 import (
 	"errors"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -15,6 +16,7 @@ import (
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/stats"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 )
 
 // Check is an interface for types capable to run checks
@@ -30,7 +32,7 @@ type Check interface {
 	// String provides a printable version of the check name
 	String() string
 	// Configure configures the check
-	Configure(senderManger sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error
+	Configure(senderManger sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error
 	// Interval returns the interval time for the check
 	Interval() time.Duration
 	// ID provides a unique identifier for every check instance
@@ -51,6 +53,10 @@ type Check interface {
 	InstanceConfig() string
 	// GetDiagnoses returns the diagnoses cached in last run or diagnose explicitly
 	GetDiagnoses() ([]diagnosis.Diagnosis, error)
+	// SetFeatures Set the StackState features
+	SetFeatures(features features.Features)
+	// GetFeatures Get the StackState features
+	GetFeatures() features.Features
 }
 
 // Info is an interface to pull information from types capable to run checks. This is a subsection from the Check

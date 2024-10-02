@@ -1,0 +1,27 @@
+stackstate:
+  apiKey: {{ sts_api_key }}
+  url: {{ sts_url }}/receiver/stsAgent
+  cluster:
+    name: {{ cluster_name }}
+nodeAgent:
+  containers:
+    agent:
+      image:
+        tag: {{ agent_current_branch }}
+        repository: "stackstate/{{ agent_docker_repo }}"
+        pullPolicy: Always
+    processAgent:
+      image:
+        tag: {{ process_agent_branch }}
+        repository: "stackstate/{{ process_agent_repo }}"
+        pullPolicy: Always
+clusterAgent:
+  image:
+    tag: {{ agent_current_branch }}
+    repository: "stackstate/{{ cluster_agent_docker_repo }}"
+    pullPolicy: Always
+checksAgent:
+  image:
+    tag: {{ agent_current_branch }}
+    repository: "stackstate/{{ agent_docker_repo }}"
+    pullPolicy: Always

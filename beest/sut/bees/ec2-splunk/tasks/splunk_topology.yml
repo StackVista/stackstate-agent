@@ -1,0 +1,58 @@
+---
+- name: "Splunk Topology Saved Search Setup"
+  tags: [prepare, cleanup]
+  set_fact:
+    source_type: "sts_test_data"
+    saved_search_relations_name: "relations"
+    saved_search_components_name: "components"
+    saved_search_relations_format: "fields type, sourceId, targetId, description"
+    saved_search_components_format: "fields id, type, description, running"
+
+- name: Splunk Topology Prepare Tasks
+  tags: prepare
+  block:
+    - name: "V1 - Create Splunk Relations Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_relations_name }}-v1" \
+        --data-urlencode search="* topo_type=relation AND version=\"v1\" | dedup type, sourceId, targetId | {{ saved_search_relations_format }}"
+
+    - name: "V1 - Create Splunk Components Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_components_name }}-v1" \
+        --data-urlencode search="* topo_type=component AND version=\"v1\" | dedup id | sort - id | {{ saved_search_components_format }}"
+
+    - name: "V2 - Create Splunk Relations Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_relations_name }}-v2" \
+        --data-urlencode search="* topo_type=relation AND version=\"v2\" | dedup type, sourceId, targetId | {{ saved_search_relations_format }}"
+
+    - name: "V2 - Create Splunk Components Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_components_name }}-v2" \
+        --data-urlencode search="* topo_type=component AND version=\"v2\" | dedup id | sort - id | {{ saved_search_components_format }}"
+
+
+## Cleanup
+- name: Splunk Events cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: "V1 - Delete Splunk Relations Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_relations_name }}-v1
+
+    - name: "V1 - Delete Splunk Components Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_components_name }}-v1
+
+    - name: "V2 - Delete Splunk Relations Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_relations_name }}-v2
+
+    - name: "V2 - Delete Splunk Components Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_components_name }}-v2

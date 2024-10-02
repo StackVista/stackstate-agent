@@ -14,7 +14,7 @@ FORBIDDEN_CODECOV_FLAG_CHARS = re.compile(r'[^\w\.\-]')
 class GoModule:
     """
     A Go module abstraction.
-    independent specifies whether this modules is supposed to exist independently of the datadog-agent module.
+    independent specifies whether this modules is supposed to exist independently of the stackstate-agent module.
     If True, a check will run to ensure this is true.
     """
 
@@ -57,9 +57,9 @@ class GoModule:
 
     def __compute_dependencies(self):
         """
-        Computes the list of github.com/DataDog/datadog-agent/ dependencies of the module.
+        Computes the list of github.com/StackVista/stackstate-agent/ dependencies of the module.
         """
-        prefix = "github.com/DataDog/datadog-agent/"
+        prefix = "github.com/StackVista/stackstate-agent/"
         base_path = os.getcwd()
         mod_parser_path = os.path.join(base_path, "internal", "tools", "modparser")
 
@@ -75,7 +75,7 @@ class GoModule:
             print(f"Error while calling go.mod parser: {e.output}")
             raise e
 
-        # Remove github.com/DataDog/datadog-agent/ from each line
+        # Remove github.com/StackVista/stackstate-agent/ from each line
         return [line[len(prefix) :] for line in output.strip().splitlines()]
 
     # FIXME: Change when Agent 6 and Agent 7 releases are decoupled
@@ -119,9 +119,9 @@ class GoModule:
         """Return the Go import path of the Go module
         >>> mods = [GoModule("."), GoModule("pkg/util/log")]
         >>> [mod.import_path for mod in mods]
-        ["github.com/DataDog/datadog-agent", "github.com/DataDog/datadog-agent/pkg/util/log"]
+        ["github.com/StackVista/stackstate-agent", "github.com/StackVista/stackstate-agent/pkg/util/log"]
         """
-        path = "github.com/DataDog/datadog-agent"
+        path = "github.com/StackVista/stackstate-agent"
         if self.path != ".":
             path += "/" + self.path
         return path
@@ -130,7 +130,7 @@ class GoModule:
         """Return the versioned dependency path of the Go module
         >>> mods = [GoModule("."), GoModule("pkg/util/log")]
         >>> [mod.dependency_path("7.27.0") for mod in mods]
-        ["github.com/DataDog/datadog-agent@v7.27.0", "github.com/DataDog/datadog-agent/pkg/util/log@v0.27.0"]
+        ["github.com/StackVista/stackstate-agent@v7.27.0", "github.com/StackVista/stackstate-agent/pkg/util/log@v0.27.0"]
         """
         return f"{self.import_path}@{self.__version(agent_version)}"
 

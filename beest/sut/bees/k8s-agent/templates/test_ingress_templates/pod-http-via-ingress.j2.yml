@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-http-via-ingress-apple
+  labels:
+    test: pod-http-via-ingress-apple
+spec:
+  containers:
+    - name: pod-http-via-ingress-apple
+      image: julianosk/continuous-requests-py:1.2
+      env:
+        - name: URL
+          value: "http://{{nginx_controller_external_ip}}/apple"
+        - name: INTERVAL
+          value: "2"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-http-via-ingress-banana
+  labels:
+    test: pod-http-via-ingress-banana
+spec:
+  containers:
+    - name: pod-http-via-ingress-banana
+      image: julianosk/continuous-requests-py:1.2
+      env:
+        - name: URL
+          value: "http://{{nginx_controller_external_ip}}/banana"
+        - name: INTERVAL
+          value: "2"

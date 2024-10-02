@@ -92,7 +92,7 @@ def trigger_agent_pipeline(
     rc_k8s_deployments=False,
 ):
     """
-    Trigger a pipeline on the datadog-agent repositories. Multiple options are available:
+    Trigger a pipeline on the stackstate-agent repositories. Multiple options are available:
     - run a pipeline with all builds (by default, a pipeline only runs a subset of all available builds),
     - run a pipeline with all kitchen tests,
     - run a pipeline with all end-to-end tests,
@@ -135,7 +135,7 @@ def trigger_agent_pipeline(
         args["RC_K8S_DEPLOYMENTS"] = "true"
 
     print(
-        "Creating pipeline for datadog-agent on branch/tag {} with args:\n{}".format(  # noqa: FS002
+        "Creating pipeline for stackstate-agent on branch/tag {} with args:\n{}".format(  # noqa: FS002
             ref, "\n".join(f"  - {k}: {args[k]}" for k in args)
         )
     )

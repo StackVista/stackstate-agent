@@ -30,14 +30,24 @@ build do
             mkdir cf_bin_root_bin
             mkdir "#{cf_bin_root_bin}/agent"
 
-            copy "#{install_dir}/bin/agent/agent.exe", "#{cf_bin_root_bin}"
-            copy "#{install_dir}/bin/agent/libdatadog-agent-three.dll", "#{cf_bin_root_bin}"
+            copy "#{cf_source_root}/agent/agent.exe", "#{cf_bin_root_bin}"
+            if with_python_runtime? "3"
+                copy "#{cf_source_root}/agent/libdatadog-agent-three.dll", "#{cf_bin_root_bin}"
+            end
             if with_python_runtime? "2"
                 copy "#{install_dir}/bin/agent/libdatadog-agent-two.dll", "#{cf_bin_root_bin}"
             end
 
-            copy "#{install_dir}/bin/agent/process-agent.exe", "#{cf_bin_root_bin}/agent"
-            copy "#{install_dir}/bin/agent/trace-agent.exe", "#{cf_bin_root_bin}/agent"
+            unless windows_arch_i386?
+              copy "#{cf_source_root}/agent/install-cmd.exe", "#{cf_bin_root_bin}/agent"
+              copy "#{cf_source_root}/agent/uninstall-cmd.exe", "#{cf_bin_root_bin}/agent"
+            end
+
+            copy "#{cf_source_root}/agent/process-agent.exe", "#{cf_bin_root_bin}/agent"
+            copy "#{cf_source_root}/agent/trace-agent.exe", "#{cf_bin_root_bin}/agent"
+            if $enable_security_agent
+                copy "#{cf_source_root}/agent/security-agent.exe", "#{cf_bin_root_bin}/agent"
+            end
         end
     end
 end

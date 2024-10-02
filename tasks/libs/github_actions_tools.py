@@ -57,14 +57,14 @@ def trigger_macos_workflow(
     inputs["id"] = workflow_id
 
     print(
-        "Creating workflow on datadog-agent-macos-build on commit {} with args:\n{}".format(  # noqa: FS002
+        "Creating workflow on stackstate-agent-macos-build on commit {} with args:\n{}".format(  # noqa: FS002
             github_action_ref, "\n".join([f"  - {k}: {inputs[k]}" for k in inputs])
         )
     )
     # Hack: get current time to only fetch workflows that started after now.
     now = datetime.utcnow()
 
-    gh = GithubAPI('DataDog/datadog-agent-macos-build')
+    gh = GithubAPI('StackVista/stackstate-agent-macos-build')
     gh.trigger_workflow(workflow_name, github_action_ref, inputs)
 
     # Thus the following hack: Send an id as input when creating a workflow on Github. The worklow will use the id and put it in the name of one of its jobs.
@@ -105,7 +105,7 @@ def follow_workflow_run(run):
     while True:
         # Do not fail outright for temporary failures
         try:
-            github = GithubAPI('DataDog/datadog-agent-macos-build')
+            github = GithubAPI('StackVista/stackstate-agent-macos-build')
             run = github.workflow_run(run.id)
         except GithubException:
             failures += 1
@@ -207,7 +207,7 @@ def download_artifacts(run, destination="."):
 
     # Create temp directory to store the artifact zips
     with tempfile.TemporaryDirectory() as tmpdir:
-        workflow = GithubAPI('DataDog/datadog-agent-macos-build')
+        workflow = GithubAPI('StackVista/stackstate-agent-macos-build')
         for artifact in run_artifacts:
             # Download artifact
             print("Downloading artifact: ", artifact)
@@ -225,7 +225,7 @@ def download_logs(run, destination="."):
     print(color_message(f"Downloading logs for run {run.id}", "blue"))
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        workflow = GithubAPI('DataDog/datadog-agent-macos-build')
+        workflow = GithubAPI('StackVista/stackstate-agent-macos-build')
 
         zip_path = workflow.download_logs(run.id, tmpdir)
         # Unzip it in the target destination

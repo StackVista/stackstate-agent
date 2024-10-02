@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"runtime"
 	"strings"
 	"time"
@@ -27,6 +28,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/config/utils"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
@@ -50,6 +52,7 @@ const (
 //nolint:revive // TODO(AML) Fix revive linter
 type PythonCheck struct {
 	senderManager  sender.SenderManager
+	checkManager   handler.CheckManager
 	id             checkid.ID
 	version        string
 	instance       *C.rtloader_pyobject_t
@@ -61,10 +64,11 @@ type PythonCheck struct {
 	telemetry      bool // whether or not the telemetry is enabled for this check
 	initConfig     string
 	instanceConfig string
+	features       features.Features
 }
 
 // NewPythonCheck conveniently creates a PythonCheck instance
-func NewPythonCheck(senderManager sender.SenderManager, name string, class *C.rtloader_pyobject_t) (*PythonCheck, error) {
+func NewPythonCheck(senderManager sender.SenderManager, checkManager handler.CheckManager, name string, class *C.rtloader_pyobject_t) (*PythonCheck, error) {
 	glock, err := newStickyLock()
 	if err != nil {
 		return nil, err
@@ -75,6 +79,7 @@ func NewPythonCheck(senderManager sender.SenderManager, name string, class *C.rt
 
 	pyCheck := &PythonCheck{
 		senderManager: senderManager,
+		checkManager:  checkManager,
 		ModuleName:    name,
 		class:         class,
 		interval:      defaults.DefaultCheckInterval,
@@ -104,6 +109,8 @@ func (c *PythonCheck) runCheck(commitMetrics bool) error {
 		return fmt.Errorf("An error occurred while running python check %s", c.ModuleName)
 	}
 	defer C.rtloader_free(rtloader, unsafe.Pointer(cResult))
+
+	c.checkManager.GetCheckHandler(c.ID()).SubmitComplete() // [sts]
 
 	if commitMetrics {
 		s, err := c.senderManager.GetSender(c.ID())
@@ -221,10 +228,25 @@ func (c *PythonCheck) getPythonWarnings(gstate *stickyLock) []error {
 	return warnings
 }
 
+// [sts] Make sure collection_interval is always set
+func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data) (integration.Data, error) {
+	// make sure collection_interval is set within the instance data
+	rawInstance := make(integration.RawMap)
+
+	err := yaml.Unmarshal(data, &rawInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	rawInstance[string("collection_interval")] = int(c.interval.Seconds())
+
+	return yaml.Marshal(rawInstance)
+}
+
 // Configure the Python check from YAML data
 //
 //nolint:revive // TODO(AML) Fix revive linter
-func (c *PythonCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
+func (c *PythonCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
 	// Generate check ID
 	c.id = checkid.BuildID(c.String(), integrationConfigDigest, data, initConfig)
 
@@ -251,8 +273,8 @@ func (c *PythonCheck) Configure(senderManager sender.SenderManager, integrationC
 	}
 
 	// See if a collection interval was specified
-	if commonOptions.MinCollectionInterval > 0 {
-		c.interval = time.Duration(commonOptions.MinCollectionInterval) * time.Second
+	if commonOptions.GetCollectionInterval() > 0 {
+		c.interval = time.Duration(commonOptions.GetCollectionInterval()) * time.Second
 	}
 
 	// Disable default hostname if specified
@@ -275,8 +297,14 @@ func (c *PythonCheck) Configure(senderManager sender.SenderManager, integrationC
 		}
 	}
 
+	// [sts] Make sure collection_interval is always set
+	updatedInstanceData, err := c.setCollectionIntervalToInstanceData(data)
+	if err != nil {
+		return err
+	}
+
 	cInitConfig := TrackedCString(string(initConfig))
-	cInstance := TrackedCString(string(data))
+	cInstance := TrackedCString(string(updatedInstanceData))
 	cCheckID := TrackedCString(string(c.id))
 	cCheckName := TrackedCString(c.ModuleName)
 	defer C._free(unsafe.Pointer(cInitConfig))
@@ -293,8 +321,8 @@ func (c *PythonCheck) Configure(senderManager sender.SenderManager, integrationC
 			return fmt.Errorf("%w: %w", checkbase.ErrSkipCheckInstance, rtLoaderError)
 		}
 
-		log.Warnf("could not get a '%s' check instance with the new api: %s", c.ModuleName, rtLoaderError)
-		log.Warn("trying to instantiate the check with the old api, passing agentConfig to the constructor")
+		log.Infof("could not get a '%s' check instance with the new api: %s", c.ModuleName, rtLoaderError)
+		log.Info("trying to instantiate the check with the old api, passing agentConfig to the constructor")
 
 		allSettings := config.Datadog.AllSettings()
 		agentConfig, err := yaml.Marshal(allSettings)
@@ -316,7 +344,7 @@ func (c *PythonCheck) Configure(senderManager sender.SenderManager, integrationC
 			}
 			return fmt.Errorf("could not invoke '%s' python check constructor: %w", c.ModuleName, rtLoaderDeprecatedCheckError)
 		}
-		log.Warnf("passing `agentConfig` to the constructor is deprecated, please use the `get_config` function from the 'datadog_agent' package (%s).", c.ModuleName)
+		log.Infof("passing `agentConfig` to the constructor is deprecated, please use the `get_config` function from the 'datadog_agent' package (%s).", c.ModuleName)
 	}
 	c.instance = check
 	c.source = source
@@ -408,4 +436,14 @@ func pythonCheckFinalizer(c *PythonCheck) {
 			C.rtloader_decref(rtloader, c.instance)
 		}
 	}(c)
+}
+
+// GetFeatures returns the features supported by StackState
+func (c *PythonCheck) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *PythonCheck) SetFeatures(features features.Features) {
+	c.features = features
 }

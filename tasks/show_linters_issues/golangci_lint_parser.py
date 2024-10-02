@@ -14,7 +14,7 @@ from ..libs.pipeline_notifications import read_owners
 LINT_PATTERN = re.compile("^([^:]+):([0-9]+):([0-9]+): (([^:]+): )?(.+) \\((.+)\\)$")
 
 # Example module message
-# "Linters for module /Users/pierre.gimalac/go/src/github.com/DataDog/datadog-agent/pkg/remoteconfig/state failed (base flavor)"
+# "Linters for module /Users/pierre.gimalac/go/src/github.com/StackVista/stackstate-agent/pkg/remoteconfig/state failed (base flavor)"
 MODULE_PATTERN = re.compile("^.*Linters for module ([^ ]+) failed \\((.+)\\).*$")
 
 CODEOWNERS_FILE_PATH = ".github/CODEOWNERS"

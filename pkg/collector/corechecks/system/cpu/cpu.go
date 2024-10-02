@@ -9,6 +9,7 @@ package cpu
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 
@@ -92,8 +93,8 @@ func (c *Check) Run() error {
 }
 
 // Configure the CPU check
-func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
-	err := c.CommonConfigure(senderManager, integrationConfigDigest, initConfig, data, source)
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
+	err := c.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, data, source)
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,7 @@ import (
 func getDefaultProgramDataDir() (path string, err error) {
 	res, err := windows.KnownFolderPath(windows.FOLDERID_ProgramData, 0)
 	if err == nil {
-		path = filepath.Join(res, "Datadog")
+		path = filepath.Join(res, "StackState")
 	}
 	return
 }
@@ -26,13 +26,17 @@ func getDefaultProgramDataDir() (path string, err error) {
 // GetProgramDataDir returns the current programdatadir, usually
 // c:\programdata\Datadog
 func GetProgramDataDir() (path string, err error) {
-	return GetProgramDataDirForProduct("Datadog Agent")
+	// [sts] Datadog rename to StackState
+	return GetProgramDataDirForProduct("StackState Agent")
 }
 
 // GetProgramDataDirForProduct returns the current programdatadir, usually
 // c:\programdata\Datadog given a product key name
 func GetProgramDataDirForProduct(product string) (path string, err error) {
-	keyname := "SOFTWARE\\Datadog\\" + product
+	// Get-ItemProperty -Path "HKLM:\SOFTWARE\StackState\StackState Agent" -Name "ConfigRoot"
+	// "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" status
+	// [sts] Datadog rename to StackState
+	keyname := "SOFTWARE\\StackState\\" + product
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE,
 		keyname,
 		registry.ALL_ACCESS)
@@ -54,7 +58,8 @@ func GetProgramDataDirForProduct(product string) (path string, err error) {
 // GetProgramFilesDirForProduct returns the root of the installatoin directory,
 // usually c:\program files\datadog\datadog agent
 func GetProgramFilesDirForProduct(product string) (path string, err error) {
-	keyname := "SOFTWARE\\Datadog\\" + product
+	// [sts] Datadog rename to StackState
+	keyname := "SOFTWARE\\StackState\\" + product
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE,
 		keyname,
 		registry.ALL_ACCESS)
@@ -76,7 +81,8 @@ func GetProgramFilesDirForProduct(product string) (path string, err error) {
 func getDefaultProgramFilesDir() (path string, err error) {
 	res, err := windows.KnownFolderPath(windows.FOLDERID_ProgramFiles, 0)
 	if err == nil {
-		path = filepath.Join(res, "Datadog", "Datadog Agent")
+		// [sts] Datadog rename to StackState
+		path = filepath.Join(res, "StackState", "StackState Agent")
 	}
 	return
 }

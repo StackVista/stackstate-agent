@@ -1,0 +1,44 @@
+---
+- name: OpenTelemetry lambda prepare tasks
+  tags: prepare
+  block:
+    # TODO name: Create code zip bundle
+
+    - setup:
+        gather_subset:
+          - min
+
+    - name: Upload code zip bundle
+      community.aws.s3_sync:
+        bucket: '{{ bucket }}'
+        file_root: "{{ code_zip }}"
+        key_prefix: "{{ ansible_date_time.iso8601_basic }}"
+        permission: public-read
+        region: eu-west-1
+      register: find_output
+
+    - name: Lambda bundle s3 object
+      debug:
+        var: find_output.filelist_s3[0].s3_path
+
+    - name: Update lambda pointing to latest bundle
+      community.aws.lambda:
+        name: '{{ lambda_function_name }}'
+        state: present
+        s3_bucket: '{{ bucket }}'
+        s3_key: "{{ find_output.filelist_s3[0].s3_path }}"
+        handler : "hello.handler"
+        runtime : "nodejs12.x"
+        role: '{{ lambda_role_arn }}'
+
+## Cleanup
+
+- name: OpenTelemetry lambda cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Empty bucket
+      community.aws.s3_sync:
+        bucket: '{{ bucket }}'
+        file_root: "{{ code_zip }}"
+        delete: yes

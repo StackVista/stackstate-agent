@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"strings"
 	"time"
 
@@ -136,8 +137,8 @@ func KubernetesASFactory() check.Check {
 }
 
 // Configure parses the check configuration and init the check.
-func (k *KubeASCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
-	err := k.CommonConfigure(senderManager, integrationConfigDigest, initConfig, config, source)
+func (k *KubeASCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+	err := k.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, config, source)
 	if err != nil {
 		return err
 	}
@@ -234,7 +235,8 @@ func (k *KubeASCheck) Run() error {
 	if k.instance.CollectOShiftQuotas && k.oshiftAPILevel != apiserver.NotOpenShift {
 		quotas, err := k.retrieveOShiftClusterQuotas()
 		if err != nil {
-			k.Warnf("Could not collect OpenShift cluster quotas: %s", err.Error()) //nolint:errcheck
+			// [STS] log this as a debug message instead. TODO: make k.instance.CollectOShiftQuotas configurable in Helm.
+			log.Debugf("Could not collect OpenShift cluster quotas: %s", err.Error()) //nolint:errcheck
 		} else {
 			k.reportClusterQuotas(quotas, sender)
 		}

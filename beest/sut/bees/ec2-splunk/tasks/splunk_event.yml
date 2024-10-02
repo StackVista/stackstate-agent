@@ -1,0 +1,37 @@
+---
+- name: "Splunk Events Saved Search Setup"
+  tags: [prepare, cleanup]
+  set_fact:
+    source_type: "sts_test_data"
+    saved_search_name: "events"
+    saved_search_format: "table _time _bkt _cd host status description"
+
+
+- name: Splunk Events Prepare Tasks
+  tags: prepare
+  block:
+    - name: "V1 - Create Splunk Events Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_name }}-v1" \
+        --data-urlencode search="sourcetype=\"{{ source_type }}\" AND version=\"v1\" | eval status = upper(status) | search status=critical OR status=error OR status=warning OR status=ok | {{ saved_search_format }}"
+
+    - name: "V2 - Create Splunk Event Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_name }}-v2" \
+        --data-urlencode search="sourcetype=\"{{ source_type }}\" AND version=\"v2\" | eval status = upper(status) | search status=critical OR status=error OR status=warning OR status=ok | {{ saved_search_format }}"
+
+
+## Cleanup
+- name: Splunk Events cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: "V1 - Delete Splunk Events Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_name }}-v1
+
+    - name: "V2 - Delete Splunk Event Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_name }}-v2
