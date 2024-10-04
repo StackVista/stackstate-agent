@@ -2510,30 +2510,31 @@ metrics:
 	sender.AssertMetric(t, "Gauge", "snmp.discovered_devices_count", 4, "", networkTags)
 }
 
-func TestCheckCancel(t *testing.T) {
-	deps := createDeps(t)
-	profile.SetConfdPathAndCleanProfiles()
-	sess := session.CreateMockSession()
-	sessionFactory := func(*checkconfig.CheckConfig) (session.Session, error) {
-		return sess, nil
-	}
-	chk := Check{sessionFactory: sessionFactory}
-
-	senderManager := deps.Demultiplexer
-
-	// language=yaml
-	rawInstanceConfig := []byte(`
-ip_address: 1.2.3.4
-community_string: public
-`)
-
-	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, []byte(``), "test")
-	assert.Nil(t, err)
-
-	// check Cancel does not panic when called with single check
-	// it shouldn't try to stop discovery
-	chk.Cancel()
-}
+// STS: Not using functionality in stackstate-integration-core
+//func TestCheckCancel(t *testing.T) {
+//	deps := createDeps(t)
+//	profile.SetConfdPathAndCleanProfiles()
+//	sess := session.CreateMockSession()
+//	sessionFactory := func(*checkconfig.CheckConfig) (session.Session, error) {
+//		return sess, nil
+//	}
+//	chk := Check{sessionFactory: sessionFactory}
+//
+//	senderManager := deps.Demultiplexer
+//
+//	// language=yaml
+//	rawInstanceConfig := []byte(`
+//ip_address: 1.2.3.4
+//community_string: public
+//`)
+//
+//	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, []byte(``), "test")
+//	assert.Nil(t, err)
+//
+//	// check Cancel does not panic when called with single check
+//	// it shouldn't try to stop discovery
+//	chk.Cancel()
+//}
 
 // Wait for discovery to be completed
 func waitForDiscoveredDevices(discovery *discovery.Discovery, expectedDeviceCount int, timeout time.Duration) ([]*devicecheck.DeviceCheck, error) {
