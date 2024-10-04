@@ -146,17 +146,19 @@ func (c *PythonCheck) Stop() {}
 // Cancel signals to a python check that he can free all internal resources and
 // deregisters the sender
 func (c *PythonCheck) Cancel() {
-	gstate, err := newStickyLock()
-	if err != nil {
-		log.Warnf("failed to cancel check %s: %s", c.id, err)
-		return
-	}
-	defer gstate.unlock()
+	// STS: We do not support cancelling in our checks_base (not needed), so commenting it out here.
 
-	C.cancel_check(rtloader, c.instance)
-	if err := getRtLoaderError(); err != nil {
-		log.Warnf("failed to cancel check %s: %s", c.id, err)
-	}
+	//gstate, err := newStickyLock()
+	//if err != nil {
+	//	log.Warnf("failed to cancel check %s: %s", c.id, err)
+	//	return
+	//}
+	//defer gstate.unlock()
+	//
+	//C.cancel_check(rtloader, c.instance)
+	//if err := getRtLoaderError(); err != nil {
+	//	log.Warnf("failed to cancel check %s: %s", c.id, err)
+	//}
 }
 
 // String representation (for debug and logging)

@@ -36,13 +36,15 @@ func TestRunErrorNil(t *testing.T) {
 	testRunErrorNil(t)
 }
 
-func TestCheckCancel(t *testing.T) {
-	testCheckCancel(t)
-}
+// STS: Not using functionality in stackstate-integration-core
+//func TestCheckCancel(t *testing.T) {
+//	testCheckCancel(t)
+//}
 
-func TestCheckCancelWhenRuntimeUnloaded(t *testing.T) {
-	testCheckCancelWhenRuntimeUnloaded(t)
-}
+// STS: Not using functionality in stackstate-integration-core
+//func TestCheckCancelWhenRuntimeUnloaded(t *testing.T) {
+//	testCheckCancelWhenRuntimeUnloaded(t)
+//}
 
 func TestFinalizer(t *testing.T) {
 	testFinalizer(t)

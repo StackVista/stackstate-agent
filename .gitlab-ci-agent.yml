@@ -72,7 +72,7 @@ stages:
 # Merge train rules for agent v2
 .merge_train_always: &merge_train_always
   # If the major version is 2, and it is the master branch or a tag, always execute this step
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "stackstate-7.51.1")
     when: always
     allow_failure: false
   # Else, if the major version is 2, and it is a merge train job, always execute this step
@@ -97,7 +97,7 @@ stages:
     allow_failure: false
 
 .merge_train_always_manual: &merge_train_always_manual
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "stackstate-7.51.1")
     when: manual
     allow_failure: true
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
@@ -113,7 +113,7 @@ stages:
     allow_failure: true
 
 .merge_train_on_success: &merge_train_on_success
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "stackstate-7.51.1")
     when: on_success
     allow_failure: false
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
@@ -129,7 +129,7 @@ stages:
     allow_failure: false
 
 .merge_train_on_success_allow_failure: &merge_train_on_success_allow_failure
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "stackstate-7.51.1")
     when: on_success
     allow_failure: true
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
@@ -145,7 +145,7 @@ stages:
     allow_failure: true
 
 .merge_train_on_failure: &merge_train_on_failure
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "stackstate-7.51.1")
     when: on_failure
     allow_failure: false
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
