@@ -154,7 +154,6 @@ agent3:
   rules:
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v2 tag pipeline
-    - <<: *exclude_on_tag_v2
     - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
       when: never
     - <<: *scheduled_master_pipeline
