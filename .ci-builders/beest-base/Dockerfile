@@ -62,7 +62,7 @@ RUN curl -L "https://github.com/wercker/stern/releases/download/${STERN_V}/stern
     chmod +x ./stern && \
     mv ./stern /usr/local/bin/
 
-ARG HELM_V=3.9.4
+ARG HELM_V=3.13.3
 RUN curl -O "https://get.helm.sh/helm-v${HELM_V}-linux-amd64.tar.gz" && \
     tar xvzf helm-v${HELM_V}-linux-amd64.tar.gz && \
     mv ./linux-amd64/helm /usr/local/bin/ && \
