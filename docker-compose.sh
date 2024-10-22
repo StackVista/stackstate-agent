@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# This is a comment
 # Run the agent of the current branch in a docker compose
 # We then export the logs to a file
 
