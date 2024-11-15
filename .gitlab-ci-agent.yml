@@ -1,6 +1,5 @@
 #image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:8292f573
-#image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:bf5231e2
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:4f42c88f
 
 stages:
   - manual
