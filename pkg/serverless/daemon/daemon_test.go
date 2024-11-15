@@ -7,14 +7,13 @@ package daemon
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"os"
 	"reflect"
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 
 	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo/trace"
 	"github.com/DataDog/datadog-agent/pkg/serverless/random"
@@ -47,20 +46,15 @@ func TestWaitForDaemonBlocking(t *testing.T) {
 	assert.Equal(complete, true, "daemon didn't block until TellDaemonRuntimeDone")
 }
 
-// STS
 func GetValueSyncOnce(so *sync.Once) uint64 {
-	doneField := reflect.ValueOf(so).Elem().FieldByName("done")
-
-	// Ensure it’s of type atomic.Uint32
-	if doneField.Type().String() != "atomic.Uint32" {
-		panic("unexpected type for `done` field")
+	val := reflect.ValueOf(so).Elem().FieldByName("done")
+	if val.Kind() == reflect.Struct {
+		// Go >= 1.22 (sync/atomic.Uint32)
+		return val.FieldByName("v").Uint()
 	}
-
-	// Call Load() on atomic.Uint32
-	return uint64(doneField.MethodByName("Load").Call(nil)[0].Uint())
+	// Go <= 1.21 (uint32)
+	return val.Uint()
 }
-
-// - STS
 
 func TestTellDaemonRuntimeDoneOnceStartOnly(t *testing.T) {
 	assert := assert.New(t)
