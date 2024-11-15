@@ -47,9 +47,20 @@ func TestWaitForDaemonBlocking(t *testing.T) {
 	assert.Equal(complete, true, "daemon didn't block until TellDaemonRuntimeDone")
 }
 
+// STS
 func GetValueSyncOnce(so *sync.Once) uint64 {
-	return reflect.ValueOf(so).Elem().FieldByName("done").Uint()
+	doneField := reflect.ValueOf(so).Elem().FieldByName("done")
+
+	// Ensure it’s of type atomic.Uint32
+	if doneField.Type().String() != "atomic.Uint32" {
+		panic("unexpected type for `done` field")
+	}
+
+	// Call Load() on atomic.Uint32
+	return uint64(doneField.MethodByName("Load").Call(nil)[0].Uint())
 }
+
+// - STS
 
 func TestTellDaemonRuntimeDoneOnceStartOnly(t *testing.T) {
 	assert := assert.New(t)
