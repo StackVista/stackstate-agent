@@ -12,14 +12,14 @@ function Install-Service {
   } else {
       New-Service -Name $SvcName -StartupType Manual -BinaryPathName $BinPath
   }
-  $eventSourceData = new-object System.Diagnostics.EventSourceCreationData("$SvcName", "Application")
+  $eventSourceData = new-object System.Diagnostics.EventSourceCreationData("$SvcName", "Application")  
   $eventSourceData.CategoryResourceFile = $BinPath
   $eventSourceData.MessageResourceFile = $BinPath
 
   If (![System.Diagnostics.EventLog]::SourceExists($eventSourceData.Source))
-  {
-  [System.Diagnostics.EventLog]::CreateEventSource($eventSourceData)
-  }
+  {      
+  [System.Diagnostics.EventLog]::CreateEventSource($eventSourceData)  
+  } 
 }
 
 if ("$env:WITH_JMX" -ne "false") {
@@ -39,6 +39,7 @@ Move-Item "C:/Program Files/Datadog/Datadog Agent/EXAMPLECONFSLOCATION" "C:/Prog
 
 $services = [ordered]@{
   "datadogagent" = "C:\Program Files\Datadog\Datadog Agent\bin\agent.exe",@()
+  "datadog-process-agent" = "C:\Program Files\Datadog\Datadog Agent\bin\agent\process-agent.exe",@("datadogagent")
   "datadog-trace-agent" = "C:\Program Files\Datadog\Datadog Agent\bin\agent\trace-agent.exe",@("datadogagent")
 }
 
