@@ -1,6 +1,6 @@
 name "python3"
 
-default_version "3.11.8"
+default_version "3.11.10"
 
 if ohai["platform"] != "windows"
 
