@@ -24,7 +24,7 @@ dependency "zlib"
 dependency "cacerts"
 dependency "makedepend" unless aix? || windows?
 
-default_version "1.1.1u"
+default_version "1.1.1zb"
 
 # OpenSSL source ships with broken symlinks which windows doesn't allow.
 # Skip error checking.

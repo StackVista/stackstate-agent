@@ -2,7 +2,7 @@ name "setuptools3"
 
 # The version of setuptools used must be at least equal to the one bundled with the Python version we use
 # Python 3.8.16 bundles setuptools 56.0.0
-default_version "66.1.1"
+default_version "70.0.0"
 
 skip_transitive_dependency_licensing true
 
