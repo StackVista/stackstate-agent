@@ -77,7 +77,7 @@ func (d *DockerUtil) processContainerEvent(ctx context.Context, msg events.Messa
 		return nil, nil
 	}
 
-	action := msg.Action
+	action := string(msg.Action)
 
 	// Fix the "exec_start: /bin/sh -c true" case
 	if strings.Contains(action, ":") {
@@ -105,7 +105,7 @@ func (d *DockerUtil) processImageEvent(msg events.Message) *ImageEvent {
 
 	return &ImageEvent{
 		ImageID:   msg.Actor.ID,
-		Action:    msg.Action,
+		Action:    string(msg.Action),
 		Timestamp: timeFromMessage(msg),
 	}
 }
@@ -114,7 +114,7 @@ func (d *DockerUtil) processImageEvent(msg events.Message) *ImageEvent {
 // It returns the latest event timestamp in the slice for the user to store and pass again in the next call.
 func (d *DockerUtil) LatestContainerEvents(ctx context.Context, since time.Time, filter *containers.Filter) ([]*ContainerEvent, time.Time, error) {
 	var containerEvents []*ContainerEvent
-	filters := map[string]string{"type": events.ContainerEventType}
+	filters := map[string]string{"type": string(events.ContainerEventType)}
 
 	ctx, cancel := context.WithTimeout(ctx, d.queryTimeout)
 	defer cancel()
