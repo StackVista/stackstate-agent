@@ -115,7 +115,9 @@ RUN tar xzf s6.tgz -C / --exclude="./bin" \
  && chmod g+r,g+w,g+X -R /etc/stackstate-agent/ /etc/s6/ /var/run/s6/ /var/log/stackstate-agent/ \
  && chmod 755 /probe.sh /initlog.sh \
  && chown root:root /readsecret.py \
- && chmod 500 /readsecret.py
+ && chmod 500 /readsecret.py \
+# Remove the process-agent from the agent container, as it is not used and a source of vulnerabilities
+ && rm opt/stackstate-agent/embedded/bin/process-agent
 
 # Override the exit script by ours to fix --pid=host operations
 COPY init-stage3 /etc/s6/init/init-stage3

@@ -24,7 +24,12 @@ dependency "zlib"
 dependency "cacerts"
 dependency "makedepend" unless aix? || windows?
 
-default_version "1.1.1u"
+default_version "1.1.1w"
+# 1.1.1w was the last opensource version of 1.1.1 (it seems)
+# Released Sep 11, 2023 on github -> https://github.com/openssl/openssl/releases/tag/OpenSSL_1_1_1w
+# From 1.1.1x and later, it appears to be premium only.
+# See here -> https://openssl-library.org/news/vulnerabilities-1.1.1/index.html
+# and here -> https://openssl-corporation.org/support/?giturl=https://github.openssl.org/openssl/extended-releases/commit/5f8d25770ae6437db119dfc951e207271a326640%22
 
 # OpenSSL source ships with broken symlinks which windows doesn't allow.
 # Skip error checking.
@@ -37,6 +42,7 @@ default_version "1.1.1u"
 # https://www.openssl.org/source/old/<bugfix_version>/openssl-<full_version>.tar.gz
 source url: "https://www.openssl.org/source/openssl-#{version}.tar.gz", extract: :lax_tar
 
+version("1.1.1w") { source sha256: "cf3098950cb4d853ad95c0841f1f9c6d3dc102dccfcacd521d93925208b76ac8" }
 version("1.1.1u") { source sha256: "e2f8d84b523eecd06c7be7626830370300fbcc15386bf5142d72758f6963ebc6" }
 version("1.1.1t") { source sha256: "8dee9b24bdb1dcbf0c3d1e9b02fb8f6bf22165e807f45adeb7c9677536859d3b" }
 version("1.1.1q") { source sha256: "d7939ce614029cdff0b6c20f0e2e5703158a489a72b2507b8bd51bf8c8fd10ca" }
