@@ -21,7 +21,7 @@ name "cacerts_py2_local"
 default_version "latest"
 
 source url: "https://curl.se/ca/cacert.pem",
-       sha256: "189d3cf6d103185fba06d76c1af915263c6d42225481a1759e853b33ac857540",
+       sha256: "bb1782d281fe60d4a2dcf41bc229abe3e46c280212597d4abcc25bddf667739b",
        target_filename: "cacert.pem",
        options: {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE}  # Workaround LE root cert. Return back in 90 days
 
