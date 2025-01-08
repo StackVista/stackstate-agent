@@ -53,12 +53,6 @@
           stackstate_version: "{{ stackstate_helm_search_yaml[0].version }}"
           stackstate_helm_chart_repo: stackstate-internal/suse-observability
 
-    - name: Use master stackstate image tag
-      when: stackstate_platform_version | trim | length == 0
-      set_fact:
-        stackstate_pull_policy: Always
-        stackstate_image_tag: master
-
     - name: Use specified image tag
       when: stackstate_platform_version | trim | length > 0
       set_fact:
