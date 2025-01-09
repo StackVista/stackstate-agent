@@ -123,7 +123,7 @@
                 image:
                   # tag: "{{ stackstate_image_tag }}"
                   # Using pullPolicy always because we use the 'master' tag, which is a moving target.
-                  pullPolicy: "{{ stackstate_pull_policy }}"
+                  pullPolicy: Always
           global:
             receiverApiKey: "{{ sts_api_key }}"
 
