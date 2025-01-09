@@ -121,7 +121,7 @@
                     CONFIG_FORCE_stackstate_aws_s3_secretkey: ""
                     CONFIG_FORCE_stackstate_aws_s3_region: "eu-west-1"
                 image:
-                  tag: "{{ stackstate_image_tag }}"
+                  # tag: "{{ stackstate_image_tag }}"
                   # Using pullPolicy always because we use the 'master' tag, which is a moving target.
                   pullPolicy: "{{ stackstate_pull_policy }}"
           global:
