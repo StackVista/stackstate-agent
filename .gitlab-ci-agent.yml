@@ -812,6 +812,7 @@ pre_release_cluster_agent_image:
   script:
     - echo "-----"
     - aws dynamodb list-tables --output json | jq -r '.TableNames[] | select(contains("beest"))' | xargs -I {} aws dynamodb scan --table-name {} --output json | jq -r --arg ci_commit_ref_name "${CI_COMMIT_REF_NAME:0:17}" '.Items[] | select(.LockID.S | contains($ci_commit_ref_name)) | .LockID.S'
+    - echo "${CI_COMMIT_REF_NAME:0:17}"
     - echo "-----"
     - beest destroy $BEEST_SCENARIO -y
   retry:
