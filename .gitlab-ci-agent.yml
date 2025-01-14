@@ -811,12 +811,7 @@ pre_release_cluster_agent_image:
   resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO"
   script:
     - echo "-----"
-    - echo $CI_COMMIT_REF_NAME
-    - echo $AGENT_CURRENT_BRANCH
-    - echo $BEEST_TEST_GROUP
-    - echo $AGENT_HELM_CHART_VERSION
-    - echo $STACKSTATE_HELM_CHART_VERSION
-    - aws dynamodb list-tables --output json | jq -r '.TableNames[] | select(contains("beest"))' | xargs -I {} aws dynamodb scan --table-name {} --output json | jq -r --arg ci_commit_ref_name "$CI_COMMIT_REF_NAME" '.Items[] | select(.LockID.S | contains($ci_commit_ref_name)) | .LockID.S'
+    - aws dynamodb list-tables --output json | jq -r '.TableNames[] | select(contains("beest"))' | xargs -I {} aws dynamodb scan --table-name {} --output json | jq -r --arg ci_commit_ref_name "${CI_COMMIT_REF_NAME:0:18}" '.Items[] | select(.LockID.S | contains($ci_commit_ref_name)) | .LockID.S'
     - echo "-----"
     - beest destroy $BEEST_SCENARIO -y
   retry:
