@@ -811,7 +811,7 @@ pre_release_cluster_agent_image:
   resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO"
   script:
     - echo "Force environment cleanup"
-    - ./$CI_PROJECT_DIR/env_cleanup.sh
+    - .$CI_PROJECT_DIR/env_cleanup.sh
     - echo "-----"
     - beest destroy $BEEST_SCENARIO -y
   retry:
