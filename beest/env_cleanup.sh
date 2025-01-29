@@ -97,3 +97,11 @@ for ROLE_NAME in $ROLE_NAMES; do
     done
 done
 echo "END"
+
+echo "Start clearing instance profiles"
+INSTANCE_PROFILE_NAME=$(aws iam list-instance-profiles --query 'InstanceProfiles[*].InstanceProfileName' --output json | jq -r '.[] | select(contains("'"$REF_NAME_OBJECTS"'"))')
+if [[ -n "$INSTANCE_PROFILE_NAME" ]]; then
+  echo "Instance profile '$INSTANCE_PROFILE_NAME' exists. Deleting..."
+  aws iam delete-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" --query 'InstanceProfile.InstanceProfileName' --output json &> /dev/null
+fi
+echo "END"
