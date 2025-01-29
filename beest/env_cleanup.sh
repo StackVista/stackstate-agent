@@ -90,5 +90,10 @@ for ROLE_NAME in $ROLE_NAMES; do
 
     echo "Role - IA '$ROLE_NAME' exists. Deleting..."
     aws iam delete-role --role-name "$ROLE_NAME" --query 'Role.RoleName' --output json &> /dev/null
+
+    for INSTANCE_PROFILE_NAME in $INSTANCE_PROFILE_NAMES; do
+        echo "Removing instance profile '$INSTANCE_PROFILE_NAME'"
+        aws iam delete-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" &> /dev/null
+    done
 done
 echo "END"
