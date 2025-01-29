@@ -89,6 +89,6 @@ for ROLE_NAME in $ROLE_NAMES; do
     done
 
     echo "Role - IA '$ROLE_NAME' exists. Deleting..."
-    aws aws iam delete-role --role-name "$ROLE_NAME" --query 'Role.RoleName' --output json &> /dev/null
+    aws iam delete-role --role-name "$ROLE_NAME" --query 'Role.RoleName' --output json &> /dev/null
 done
 echo "END"
