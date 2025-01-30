@@ -7,7 +7,6 @@ fi
 
 CI_COMMIT_REF_NAME=$1
 REF_NAME_OBJECTS=$(echo "${CI_COMMIT_REF_NAME:0:18}" | tr '[:upper:]' '[:lower:]')
-echo $REF_NAME_OBJECTS
 
 # Function to wait for EKS cluster deletion
 function wait_for_cluster_deletion() {
@@ -30,7 +29,6 @@ function wait_for_cluster_deletion() {
 
 echo "Start removing terraformLock"
 TERRAFORM_TABLE_NAME=$(aws dynamodb list-tables --output json | jq -r '.TableNames[] | select(contains("beest"))')
-echo $TERRAFORM_TABLE_NAME
 TERRAFORM_LOCK_ID=$(aws dynamodb scan --table-name "$TERRAFORM_TABLE_NAME" --output json | jq -r --arg ref_name_objects "$REF_NAME_OBJECTS" '.Items[] | select(.LockID.S | contains($ref_name_objects)) | .LockID.S')
 if [[ -n "$TERRAFORM_LOCK_ID" ]]; then
   echo "Terraform lock '$TERRAFORM_LOCK_ID' exists. Deleting..."
