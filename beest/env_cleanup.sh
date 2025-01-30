@@ -105,3 +105,11 @@ if [[ -n "$INSTANCE_PROFILE_NAME" ]]; then
   aws iam delete-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" --query 'InstanceProfile.InstanceProfileName' --output json &> /dev/null
 fi
 echo "END"
+
+echo "Start clearing EC2 key pair"
+KEY_PAIR=$(aws ec2 describe-key-pairs --query 'KeyPairs[*].KeyName' --output json | jq -r '.[] | select(contains("'"$REF_NAME_OBJECTS"'"))')
+if [[ -n "$KEY_PAIR" ]]; then
+  echo "Ec2 - Key pair '$KEY_PAIR' exists. Deleting..."
+  aws ec2 delete-key-pair --key-name "$KEY_PAIR" &> /dev/null
+fi
+echo "END"
