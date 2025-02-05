@@ -13,6 +13,12 @@
 resource "aws_iam_role" "eks_node_role" {
   name = "eks-${var.k8s_cluster_name}-node-role"
 
+  tags = {
+    Name        = "beest-resource"
+    Environment = var.environment
+    ClusterName = var.k8s_cluster_name
+  }
+
   assume_role_policy = <<POLICY
 {
   "Version": "2012-10-17",
