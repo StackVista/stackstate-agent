@@ -9,16 +9,11 @@
 //It is used by Kubernetes to allow worker nodes to join the cluster.
 //
 //For the latest required policy, see the EKS User Guide.
-
 resource "aws_iam_role" "eks_node_role" {
   name = "eks-${var.k8s_cluster_name}-node-role"
-
   tags = {
-    Name        = "beest-resource"
-    Environment = var.environment
-    ClusterName = var.k8s_cluster_name
+    Name  = "beest-resource"
   }
-
   assume_role_policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -34,6 +29,26 @@ resource "aws_iam_role" "eks_node_role" {
 }
 POLICY
 
+}
+
+/*
+ Adding a policy to create tags
+*/
+resource "aws_iam_role_policy" "terraform_role_policy" {
+  role = aws_iam_role.eks_cluster_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:TagRole"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
@@ -127,3 +142,4 @@ resource "aws_security_group_rule" "nodes_internode_communications" {
   security_group_id = aws_security_group.eks_nodes_sg.id
   self              = true
 }
+
