@@ -8,7 +8,7 @@ REF_NAME_OBJECTS=$(echo "${INITIAL_REF_NAME:0:18}" | tr '[:upper:]' '[:lower:]')
 # Function to wait for EKS cluster deletion
 function wait_for_cluster_deletion() {
   local CLUSTER_NAME=$1
-  local MAX_ATTEMPTS=5  # Set a maximum number of attempts
+  local MAX_ATTEMPTS=10  # Set a maximum number of attempts
   local ATTEMPTS=0
 
   while true; do
@@ -36,19 +36,23 @@ function wait_for_cluster_deletion() {
 
 echo "Start removing terraformLock"
 TERRAFORM_TABLE_NAME=$(aws dynamodb list-tables --output json | jq -r '.TableNames[] | select(contains("beest"))') || true
-TERRAFORM_LOCK_ID=$(aws dynamodb scan --table-name "$TERRAFORM_TABLE_NAME" --output json | jq -r --arg ref_name_objects "$REF_NAME_OBJECTS" '.Items[] | select(.LockID.S | contains($ref_name_objects)) | .LockID.S') || true
-if [[ -n "$TERRAFORM_LOCK_ID" ]]; then
-  echo "Terraform lock '$TERRAFORM_LOCK_ID' exists. Deleting..."
-  aws dynamodb delete-item --table-name "$TERRAFORM_TABLE_NAME" --key '{"LockID"':' {"S"':' "'"$TERRAFORM_LOCK_ID"'"}}' || true
+TERRAFORM_LOCK_IDS=$(aws dynamodb scan --table-name "$TERRAFORM_TABLE_NAME" --output json | jq -r --arg ref_name_objects "$REF_NAME_OBJECTS" '.Items[] | select(.LockID.S | contains($ref_name_objects)) | .LockID.S') || true
+if [[ -n "$TERRAFORM_LOCK_IDS" ]]; then
+    for TERRAFORM_LOCK_ID in $TERRAFORM_LOCK_IDS; do
+        echo "Terraform lock '$TERRAFORM_LOCK_ID' exists. Deleting..."
+        aws dynamodb delete-item --table-name "$TERRAFORM_TABLE_NAME" --key '{"LockID"':' {"S"':' "'"$TERRAFORM_LOCK_ID"'"}}' || true
+    done
 fi
 echo "END"
 
 echo "Start clearing s3 bucket"
 S3_BUCKET_NAME=beest-terraform-state
-S3_BUCKET_OBJECT=$(aws s3api list-objects-v2 --bucket $S3_BUCKET_NAME | jq -r --arg ref_name_objects "$REF_NAME_OBJECTS" '.Contents[] | select(.Key | contains($ref_name_objects)) | .Key') || true
-if [[ -n "$S3_BUCKET_OBJECT" ]]; then
-  echo "S3 bucket '$S3_BUCKET_OBJECT' exists. Deleting..."
-  aws s3 rm s3://$S3_BUCKET_NAME/$S3_BUCKET_OBJECT || true
+S3_BUCKET_OBJECTS=$(aws s3api list-objects-v2 --bucket $S3_BUCKET_NAME | jq -r --arg ref_name_objects "$REF_NAME_OBJECTS" '.Contents[] | select(.Key | contains($ref_name_objects)) | .Key') || true
+if [[ -n "$S3_BUCKET_OBJECTS" ]]; then
+    for S3_BUCKET_OBJECT in $S3_BUCKET_OBJECTS; do
+        echo "S3 bucket '$S3_BUCKET_OBJECT' exists. Deleting..."
+        aws s3 rm s3://$S3_BUCKET_NAME/$S3_BUCKET_OBJECT || true
+  done
 fi
 echo "END"
 
