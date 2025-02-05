@@ -21,10 +21,7 @@ resource "aws_iam_role" "eks_cluster_role" {
          },
          "Action":"sts:AssumeRole"
       }
-   ],
-  "tags" : {
-    "Name": "beest-resource"
-  }
+   ]
 }
 POLICY
 }
