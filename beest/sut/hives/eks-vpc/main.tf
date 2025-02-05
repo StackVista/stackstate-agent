@@ -8,7 +8,7 @@ resource "aws_vpc" "cluster" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-vpc"
+      "Name" = "beest-resource"
     },
   )
 }
@@ -90,7 +90,7 @@ resource "aws_internet_gateway" "igw" {
 }
 
 
-# The "private" subnets below aren't actually private. 
+# The "private" subnets below aren't actually private.
 resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.cluster.id
 

@@ -77,7 +77,7 @@ resource "aws_security_group" "eks_nodes_sg" {
   }
 
   tags = {
-    "Name"                                          = "${var.k8s_cluster_name}-nodes-sg"
+    "Name"                                          = "beest-resource"
     "kubernetes.io/cluster/${var.k8s_cluster_name}" = "owned"
   }
 }

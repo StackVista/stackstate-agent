@@ -17,6 +17,7 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
   on_failure   = "DELETE"
   capabilities = ["CAPABILITY_NAMED_IAM"]
   tags = {
+    Name                  = "beest-resource"
     Environment           = var.environment
     VantaContainsUserData = false
     VantaDescription      = "AWS Integration resources used in acceptance pipeline"

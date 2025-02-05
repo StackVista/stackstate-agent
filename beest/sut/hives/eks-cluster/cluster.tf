@@ -19,6 +19,10 @@ resource "aws_eks_cluster" "cluster" {
     aws_iam_role_policy_attachment.eks_cluster_policy,
     aws_iam_role_policy_attachment.eks_service_policy,
   ]
+
+  tags = {
+    Name = "beest-resource"
+  }
 }
 
 data "aws_eks_cluster_auth" "cluster" {

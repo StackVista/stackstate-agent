@@ -84,6 +84,7 @@ resource "aws_autoscaling_group" "eks_autoscaling_group" {
     propagate_at_launch = true
   }
   tag {
+    Name                = "beest-resource"
     key                 = "kubernetes.io/cluster/${var.k8s_cluster_name}"
     value               = "owned"
     propagate_at_launch = true

@@ -82,7 +82,7 @@ resource "aws_instance" "agent" {
   iam_instance_profile        = var.integration_profile
 
   tags = {
-    Name                  = "${var.environment}-agent-v2"
+    Name                  = "beest-resource"
     Environment           = var.environment
     VantaContainsUserData = false
     VantaDescription      = "Machine used used in acceptance pipeline"
