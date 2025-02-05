@@ -24,9 +24,6 @@ resource "aws_iam_role" "eks_cluster_role" {
    ]
 }
 POLICY
-  tags = {
-    Name = "beest-resource"
-  }
 }
 
 //https://docs.aws.amazon.com/eks/latest/userguide/service_IAM_role.html
