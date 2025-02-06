@@ -21,7 +21,8 @@ resource "aws_eks_cluster" "cluster" {
   ]
 
   tags = {
-    Name = "beest-resource"
+    Name        = "beest-resource"
+    Environment = var.environment
   }
 }
 

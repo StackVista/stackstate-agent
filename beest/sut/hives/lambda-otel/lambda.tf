@@ -3,6 +3,7 @@ resource "aws_s3_bucket" "bucket" {
   force_destroy = true
 
   tags = {
+    Name                  = "beest-resource"
     Environment           = var.environment
     VantaContainsUserData = false
     VantaDescription      = "OpenTelemetry Integration resources used in acceptance pipeline"

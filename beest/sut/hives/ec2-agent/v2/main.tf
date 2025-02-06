@@ -8,6 +8,7 @@ resource "aws_key_pair" "agent_key_pair" {
   public_key = tls_private_key.rsa_key.public_key_openssh
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
   }
 }
@@ -52,6 +53,7 @@ resource "aws_security_group" "agent_group" {
   }
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
   }
 }

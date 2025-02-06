@@ -53,6 +53,7 @@ resource "aws_security_group" "agent_group" {
   }
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
   }
 }
@@ -83,7 +84,7 @@ resource "aws_instance" "agent" {
   iam_instance_profile        = var.integration_profile
 
   tags = {
-    Name                  = "${var.environment}-agent-v1"
+    Name                  = "beest-resource"
     Environment           = var.environment
     VantaContainsUserData = false
     VantaDescription      = "Machine used used in acceptance pipeline"

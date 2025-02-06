@@ -11,9 +11,6 @@
 //For the latest required policy, see the EKS User Guide.
 resource "aws_iam_role" "eks_node_role" {
   name = "eks-${var.k8s_cluster_name}-node-role"
-  tags = {
-    Name  = "beest-resource"
-  }
   assume_role_policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -98,7 +95,8 @@ resource "aws_security_group" "eks_nodes_sg" {
   }
 
   tags = {
-    "Name"                                          = "beest-resource"
+    Name                                            = "beest-resource"
+    Environment                                     = var.environment
     "kubernetes.io/cluster/${var.k8s_cluster_name}" = "owned"
   }
 }

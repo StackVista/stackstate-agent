@@ -15,7 +15,8 @@ resource "aws_security_group" "eks_control_plane_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   tags = {
-    "Name" = "beest-resource"
+    Name        = "beest-resource"
+    Environment = var.environment
   }
 }
 
