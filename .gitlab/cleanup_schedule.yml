@@ -1,0 +1,19 @@
+stages:
+  - schedule
+  - build
+
+schedule_pipeline:
+  stage: schedule
+  trigger:
+    schedule: "0 0 * * 0"
+  only:
+    - schedules
+
+cleanup_schedule:
+  stage: build
+  only:
+    - schedules
+  script:
+    - bash gitlab-scripts/env_cleanup_schedule.sh ${CI_JOB_TOKEN}
+  tags:
+    - sts-k8s-xl-runner
