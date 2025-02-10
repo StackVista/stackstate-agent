@@ -2,7 +2,11 @@ stages:
   - schedule
 
 schedule_pipeline:
-  stage: schedule
+  stage: manual
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    - allow_failure: true
   only:
     - schedules
   script:
