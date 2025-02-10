@@ -187,8 +187,7 @@ cleanup_job:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: always
   script:
-    - ls -la
-    - echo "${CI_JOB_TOKEN}"
-    - bash env_cleanup_schedule.sh ${CI_JOB_TOKEN}
+    - chmod +x env_cleanup_schedule.sh
+    - ./env_cleanup_schedule.sh ${CI_JOB_TOKEN}
   tags:
     - sts-k8s-xl-runner
