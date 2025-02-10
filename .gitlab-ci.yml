@@ -1,5 +1,6 @@
 stages:
   - triggers
+  - schedule
 
 # Gitlab CI Process:
 #   - Beest spins up a cluster
@@ -176,3 +177,16 @@ build_agent_runners:
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
     - if: $CI_COMMIT_BRANCH
+
+cleanup_job:
+  stage: schedule
+  variables:
+    <<: *commonvariables
+    <<: *agent_variables
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+  script:
+    - bash env_cleanup_schedule.sh ${CI_JOB_TOKEN}
+  tags:
+    - sts-k8s-xl-runner
