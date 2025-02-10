@@ -1,16 +1,8 @@
 stages:
   - schedule
-  - build
 
 schedule_pipeline:
   stage: schedule
-  trigger:
-    schedule: "0 0 * * 0"
-  only:
-    - schedules
-
-cleanup_schedule:
-  stage: build
   only:
     - schedules
   script:
