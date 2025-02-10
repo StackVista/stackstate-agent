@@ -188,8 +188,9 @@ cleanup_job:
       when: always
   script:
     - cd $CI_PROJECT_DIR
-    - ls -la
     - chmod +x env_cleanup_schedule.sh
+    - cat env_cleanup_schedule.sh
+    - ls env_cleanup_schedule.sh
     - ./env_cleanup_schedule.sh ${CI_JOB_TOKEN}
   tags:
     - sts-k8s-xl-runner
