@@ -187,6 +187,8 @@ cleanup_job:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: always
   script:
+    - cd $CI_PROJECT_DIR
+    - ls -la
     - chmod +x env_cleanup_schedule.sh
     - ./env_cleanup_schedule.sh ${CI_JOB_TOKEN}
   tags:
