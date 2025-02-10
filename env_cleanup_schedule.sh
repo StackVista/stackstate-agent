@@ -42,7 +42,7 @@ function wait_for_cluster_deletion() {
 
 while true; do
     url="$GITLAB_URL/projects/$PROJECT_ID/repository/branches?protected=false&per_page=100&page=$page"
-    branches_data=$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "$url")
+    branches_data=$(curl --header "JOB-TOKEN: $GITLAB_TOKEN" "$url")
     if [[ "[]" = "$branches_data" ]]; then
         echo "END"
         break
