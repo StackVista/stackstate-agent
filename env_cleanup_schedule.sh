@@ -2,7 +2,6 @@
 set -euo pipefail
 test -n "$1"
 GITLAB_TOKEN=$1
-GITLAB_TOKEN="${gitlab_api_scope_token}"
 
 PROJECT_ID="7831967"
 GITLAB_URL="https://gitlab.com/api/v4"
@@ -42,7 +41,6 @@ function wait_for_cluster_deletion() {
 }
 
 while true; do
-    set -x
 
     # Debug - check token not empty
     if [ -z "${gitlab_api_scope_token}" ]; then
@@ -73,7 +71,6 @@ while true; do
     done
 
     page=$((page + 1))
-    set +x
 done
 
 echo "Start removing old terraformLocks"
