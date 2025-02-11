@@ -29,7 +29,7 @@ resource "aws_subnet" "eks_public" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-public"
+      "Name" = "beest-resource"
     },
   )
 }
@@ -43,7 +43,7 @@ resource "aws_subnet" "eks_public_2" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-public-2"
+      "Name" = "beest-resource"
     },
   )
 }
@@ -58,7 +58,7 @@ resource "aws_subnet" "eks_private" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-private"
+      "Name" = "beest-resource"
       "Description" = "This is not a private subnet"
     },
   )
@@ -73,7 +73,7 @@ resource "aws_subnet" "eks_private_2" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-private-2"
+      "Name" = "beest-resource"
       "Description" = "This is not a private subnet"
     },
   )

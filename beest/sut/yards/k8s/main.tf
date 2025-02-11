@@ -19,4 +19,5 @@ module "eks_cluster" {
   k8s_runtime         = var.agent_eks_runtime
   k8s_node_type       = var.agent_eks_node_type
   k8s_size            = var.agent_eks_size
+  common_tags         = local.common_tags
 }

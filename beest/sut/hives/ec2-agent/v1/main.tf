@@ -1,6 +1,11 @@
 resource "tls_private_key" "rsa_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
+
+  tags = {
+      Name        = "beest-resource"
+      Environment = var.environment
+ }
 }
 
 resource "aws_key_pair" "agent_key_pair" {
