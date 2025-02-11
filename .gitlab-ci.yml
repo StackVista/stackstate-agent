@@ -187,6 +187,7 @@ cleanup_job:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: always
+    - if: $CI_COMMIT_MESSAGE =~ /\[cleanup]/
   script:
     - cd $CI_PROJECT_DIR
     - bash --version
@@ -194,3 +195,8 @@ cleanup_job:
     - ./env_cleanup_schedule.sh ${CI_JOB_TOKEN}
   tags:
     - sts-k8s-xl-runner
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - $CI_PROJECT_DIR/**/token.txt

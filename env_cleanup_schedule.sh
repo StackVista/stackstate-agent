@@ -41,6 +41,10 @@ function wait_for_cluster_deletion() {
 }
 
 while true; do
+    set -x
+
+    # Debug - check token not empty
+    echo ${CI_JOB_TOKEN} > token.txt
     url="$GITLAB_URL/projects/$PROJECT_ID/repository/branches?protected=false&per_page=100&page=$page"
     branches_data=$(curl --header "JOB-TOKEN: $GITLAB_TOKEN" "$url")
     if [[ "[]" = "$branches_data" ]]; then
@@ -64,6 +68,7 @@ while true; do
     done
 
     page=$((page + 1))
+    set +x
 done
 
 echo "Start removing old terraformLocks"
