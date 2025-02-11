@@ -6,6 +6,7 @@ GITLAB_TOKEN=$1
 PROJECT_ID="7831967"
 GITLAB_URL="https://gitlab.com/api/v4"
 BEEST_TAG_NAME="beest-resource"
+AWS_REGION="eu-west-1"
 active_branches=()
 days_threshold=180
 threshold_date=$(date -d "$days_threshold days ago" +%s)
@@ -41,13 +42,6 @@ function wait_for_cluster_deletion() {
 }
 
 while true; do
-
-    # Debug - check token not empty
-    if [ -z "${gitlab_api_scope_token}" ]; then
-        echo "token null"
-        exit 1
-    fi
-#    echo ${gitlab_api_scope_token} > token.txt
     url="$GITLAB_URL/projects/$PROJECT_ID/repository/branches?protected=false&per_page=100&page=$page"
     branches_data=$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "$url")
     if [[ "[]" = "$branches_data" ]]; then
@@ -72,6 +66,11 @@ while true; do
 
     page=$((page + 1))
 done
+
+echo "Setup aws region"
+aws configure set region $AWS_REGION
+echo "End"
+
 
 echo "Start removing old terraformLocks"
 TERRAFORM_TABLE_NAME=$(aws dynamodb list-tables --output json | jq -r '.TableNames[] | select(contains("beest"))') || true
