@@ -5,14 +5,14 @@ module "vpc" {
   environment = var.yard_id
   az1         = local.az1
   az2         = local.az2
-  common_tags = local.common_tags
+  tags        = local.common_tags
 }
 
 module "lambda_otel" {
   source = "../../hives/lambda-otel"
 
   environment = var.yard_id
-  common_tags = local.common_tags
+  tags        = local.common_tags
   // TODO pass vpc
 }
 
@@ -23,7 +23,7 @@ module "aws_stackpack_role" {
 
   environment = var.yard_id
   region      = var.aws_default_region
-  common_tags = local.common_tags
+  tags        = local.common_tags
 }
 
 module "ec2_agent" {
@@ -34,5 +34,5 @@ module "ec2_agent" {
   subnet_id           = module.vpc.private_subnet_1_id
   integration_profile = module.aws_stackpack_role.integration_profile
   runners_ip          = var.runners_ip
-  common_tags = local.common_tags
+  tags                = local.common_tags
 }

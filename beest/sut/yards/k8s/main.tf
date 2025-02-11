@@ -4,7 +4,7 @@ module "eks_vpc" {
   environment = var.yard_id
   az1         = local.az1
   az2         = local.az2
-  common_tags = local.common_tags
+  tags        = local.common_tags
 }
 
 module "eks_cluster" {
@@ -19,5 +19,5 @@ module "eks_cluster" {
   k8s_runtime         = var.agent_eks_runtime
   k8s_node_type       = var.agent_eks_node_type
   k8s_size            = var.agent_eks_size
-  common_tags         = local.common_tags
+  tags                = local.common_tags
 }
