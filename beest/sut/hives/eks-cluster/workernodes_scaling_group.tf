@@ -15,6 +15,10 @@ data "aws_ami" "eks_node_ami" {
 
   most_recent = true
   owners      = ["602401143452"] # Amazon Account ID
+  tags = {
+    Name        = "beest-resource"
+    Environment = var.environment
+  }
 }
 
 # EKS currently documents this required userdata for EKS worker nodes to

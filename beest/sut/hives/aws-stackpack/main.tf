@@ -86,6 +86,11 @@ resource "aws_iam_instance_profile" "integration_profile" {
   name       = "${var.environment}-instance-profile"
   role       = aws_iam_role.agent_ec2_role.name
   depends_on = [aws_iam_role_policy.integration_role_policy]
+
+  tags = {
+    Name        = "beest-resource"
+    Environment = var.environment
+  }
 }
 
 # After the create phase has ran let's stop the event bridge and remove any objects (if there was any generated in the

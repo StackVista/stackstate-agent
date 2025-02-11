@@ -11,6 +11,10 @@
 //For the latest required policy, see the EKS User Guide.
 resource "aws_iam_role" "eks_node_role" {
   name = "eks-${var.k8s_cluster_name}-node-role"
+  tags_all = {
+    Name        = "beest-resource"
+    Environment = var.environment
+  }
   assume_role_policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -77,6 +81,10 @@ resource "aws_iam_role_policy_attachment" "eks_cw_policy" {
 resource "aws_iam_instance_profile" "eks_node_instance_profile" {
   name = "${var.environment}-instance-profile"
   role = aws_iam_role.eks_node_role.name
+  tags = {
+    Name        = "beest-resource"
+    Environment = var.environment
+  }
 }
 
 //Worker Node Security Group
