@@ -81,10 +81,6 @@ resource "aws_iam_role_policy_attachment" "eks_cw_policy" {
 resource "aws_iam_instance_profile" "eks_node_instance_profile" {
   name = "${var.environment}-instance-profile"
   role = aws_iam_role.eks_node_role.name
-  tags = {
-    Name        = "beest-resource"
-    Environment = var.environment
-  }
 }
 
 //Worker Node Security Group
