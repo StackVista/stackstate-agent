@@ -116,10 +116,6 @@ resource "aws_security_group_rule" "https_nodes_to_plane" {
     aws_security_group.eks_nodes_sg,
     aws_security_group.eks_control_plane_sg,
   ]
-  tags = {
-      Name        = "beest-resource"
-      Environment = var.environment
-    }
 }
 
 resource "aws_security_group_rule" "communication_plane_to_nodes" {
@@ -133,10 +129,6 @@ resource "aws_security_group_rule" "communication_plane_to_nodes" {
     aws_security_group.eks_nodes_sg,
     aws_security_group.eks_control_plane_sg,
   ]
-  tags = {
-      Name        = "beest-resource"
-      Environment = var.environment
-    }
 }
 
 resource "aws_security_group_rule" "nodes_internode_communications" {
@@ -147,9 +139,5 @@ resource "aws_security_group_rule" "nodes_internode_communications" {
   description       = "allow nodes to communicate with each other"
   security_group_id = aws_security_group.eks_nodes_sg.id
   self              = true
-  tags = {
-      Name        = "beest-resource"
-      Environment = var.environment
-    }
 }
 

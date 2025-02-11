@@ -32,11 +32,6 @@ USERDATA
 resource "tls_private_key" "eks_rsa" {
   algorithm = "RSA"
   rsa_bits  = 4096
-
-  tags = {
-      Name        = "beest-resource"
-      Environment = var.environment
-    }
 }
 
 resource "aws_key_pair" "eks_node_key_pair" {
@@ -67,11 +62,6 @@ resource "aws_launch_configuration" "eks_launch_configuration" {
   lifecycle {
     create_before_destroy = true
   }
-
-  tags = {
-      Name        = "beest-resource"
-      Environment = var.environment
-    }
 }
 
 //Finally, we create an AutoScaling Group that actually launches EC2 instances based on the
