@@ -2,10 +2,10 @@
 set -euo pipefail
 test -n "$1"
 GITLAB_TOKEN=$1
+GITLAB_TOKEN="${gitlab_api_scope_token}"
 
 PROJECT_ID="7831967"
-GITLAB_SUFFIX="gitlab.com/api/v4"
-GITLAB_URL="https://gitlab-ci-token:${CI_JOB_TOKEN}@${GITLAB_SUFFIX}"
+GITLAB_URL="https://gitlab.com/api/v4"
 BEEST_TAG_NAME="beest-resource"
 active_branches=()
 days_threshold=180
@@ -45,11 +45,13 @@ while true; do
     set -x
 
     # Debug - check token not empty
-    echo ${CI_JOB_TOKEN} > token.txt
-    # https://gitlab-ci-token:${CI_JOB_TOKEN}@
+    if [ -z "${gitlab_api_scope_token}" ]; then
+        echo "token null"
+        exit 1
+    fi
+#    echo ${gitlab_api_scope_token} > token.txt
     url="$GITLAB_URL/projects/$PROJECT_ID/repository/branches?protected=false&per_page=100&page=$page"
-#    branches_data=$(curl --header "JOB-TOKEN: $GITLAB_TOKEN" "$url")
-    branches_data=$(curl -vv "$url")
+    branches_data=$(curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "$url")
     if [[ "[]" = "$branches_data" ]]; then
         echo "END"
         break
