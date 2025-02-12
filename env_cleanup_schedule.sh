@@ -193,3 +193,83 @@ for KEY_PAIR in "${KEY_PAIRS[@]}"; do
 done
 echo "END"
 
+echo "Start clearing Role - IAM"
+ROLE_NAMES=($(aws iam list-roles --query 'Roles[*].RoleName' --output json | jq -r '.[] | select(contains("'"beest"'"))')) || true
+
+for ROLE_NAME in "${ROLE_NAMES[@]}"; do
+    match_found=false
+
+    for branch in "${active_branches[@]}"; do
+      if [[ "$KEY_PAIR" == *"$branch"* ]]; then
+        match_found=true
+        break
+      fi
+    done
+
+    if ! $match_found; then
+        echo "Role - IA '$ROLE_NAME' exists. Checking the instance profiles..."
+        INSTANCE_PROFILE_NAMES=$(aws iam list-instance-profiles-for-role --role-name "$ROLE_NAME" --query 'InstanceProfiles[*].InstanceProfileName' --output json | jq -r '.[]') || true
+
+        for INSTANCE_PROFILE_NAME in $INSTANCE_PROFILE_NAMES; do
+            echo "Removing role '$ROLE_NAME' from instance profile '$INSTANCE_PROFILE_NAME'"
+            aws iam remove-role-from-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" --role-name "$ROLE_NAME" &> /dev/null
+        done
+
+        INLINE_POLICIES=$(aws iam list-role-policies --role-name "$ROLE_NAME" --query 'PolicyNames[]'  --output json | jq -r '.[]') || true
+        for INLINE_POLICY in $INLINE_POLICIES; do
+            echo "Deleting inline policy '$INLINE_POLICY' from role '$ROLE_NAME'"
+            aws iam delete-role-policy --role-name "$ROLE_NAME" --policy-name "$INLINE_POLICY" &> /dev/null
+        done
+
+        MANAGED_POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE_NAME" --query 'AttachedPolicies[*].PolicyArn'  --output json | jq -r '.[]') || true
+        for MANAGED_POLICY in $MANAGED_POLICIES; do
+            echo "Detaching managed policy '$MANAGED_POLICY' from role '$ROLE_NAME'"
+            aws iam detach-role-policy --role-name "$ROLE_NAME" --policy-arn "$MANAGED_POLICY" &> /dev/null
+        done
+
+        echo "Role - IA '$ROLE_NAME' exists. Deleting..."
+        aws iam delete-role --role-name "$ROLE_NAME" --query 'Role.RoleName' --output json &> /dev/null
+
+        for INSTANCE_PROFILE_NAME in $INSTANCE_PROFILE_NAMES; do
+            echo "Removing instance profile '$INSTANCE_PROFILE_NAME'"
+            aws iam delete-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" &> /dev/null
+        done
+    fi
+done
+echo "END"
+
+echo "Start clearing EC2 Volumes"
+VOLUMES_NAMES=($(aws ec2 describe-volumes --query 'Volumes[*].Tags[?Key==`Name`].Value' --output json | jq -r '.[][]')) || true
+
+for VOLUMES_NAME in "${VOLUMES_NAMES[@]}"; do
+    match_found=false
+
+  for branch in "${active_branches[@]}"; do
+    if [[ "$VOLUMES_NAME" == *"$branch"* ]]; then
+      match_found=true
+      break
+    fi
+  done
+
+    if ! $match_found && [[ "$VOLUMES_NAME" == *"beest"*  ]]; then
+        echo "Ec2 - Volumes '$VOLUMES_NAME' exists. Deleting..."
+        VOLUMES_ID=$(aws ec2 describe-volumes --filters "Name=tag:Name,Values=$VOLUMES_NAME" | jq -r '.Volumes[].VolumeId')
+
+        if [[ -z "$VOLUMES_ID" ]]; then
+            echo "No volume found with name '$VOLUMES_NAME'"
+            exit 1
+        fi
+
+        INSTANCE_ID=$(aws ec2 describe-volumes --volume-ids "$VOLUMES_ID" | jq -r '.Volumes[].Attachments[].InstanceId')
+
+        if [[ -n "$INSTANCE_ID" ]]; then
+            echo "Detaching volume $VOLUMES_ID from instance $INSTANCE_ID..."
+            aws ec2 detach-volume --volume-id "$VOLUMES_ID"
+            aws ec2 wait volume-available --volume-ids "$VOLUMES_ID"
+        fi
+
+        echo "Deleting volume $VOLUMES_ID..."
+        aws ec2 delete-volume --volume-id "$VOLUMES_ID"
+    fi
+done
+echo "END"
