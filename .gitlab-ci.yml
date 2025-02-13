@@ -191,7 +191,11 @@ cleanup_job:
       when: always
   script:
     - cd $CI_PROJECT_DIR
-    - bash --version
+    - . $CI_PROJECT_DIR/beest/bootstrap_functions.sh
+    - generate_aws_config
+    - configure_aws_beest_credentials
+    - unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY && unset AWS_ROLE_ARN && unset AWS_WEB_IDENTITY_TOKEN_FILE  # Unset gitlab runner AWS credentials which conflicts with Beest ~/.aws/credentials
+    - export AWS_PROFILE=stackstate-sandbox
     - chmod +x env_cleanup_schedule.sh
     - ./env_cleanup_schedule.sh ${gitlab_api_scope_token}
   tags:
