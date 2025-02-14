@@ -1,14 +1,18 @@
 #!/bin/bash
 set -euo pipefail
-test -n "$1"
 GITLAB_TOKEN=$1
+days_threshold=$2
 
 PROJECT_ID="7831967"
 GITLAB_URL="https://gitlab.com/api/v4"
 BEEST_TAG_NAME="beest-resource"
 AWS_REGION="eu-west-1"
 active_branches=()
-days_threshold=180
+
+if [[ ! "${days_threshold}" =~ ^[0-9]+$ ]] || [[ "${days_threshold}" -eq 0 ]]; then
+  days_threshold=21
+fi
+
 threshold_date=$(date -d "$days_threshold days ago" +%s)
 page=1
 

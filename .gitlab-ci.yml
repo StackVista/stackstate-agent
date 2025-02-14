@@ -197,7 +197,7 @@ cleanup_job:
     - unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY && unset AWS_ROLE_ARN && unset AWS_WEB_IDENTITY_TOKEN_FILE  # Unset gitlab runner AWS credentials which conflicts with Beest ~/.aws/credentials
     - export AWS_PROFILE=stackstate-sandbox
     - chmod +x env_cleanup_schedule.sh
-    - ./env_cleanup_schedule.sh ${gitlab_api_scope_token}
+    - ./env_cleanup_schedule.sh ${gitlab_api_scope_token} ${days_of_last_commit}
   tags:
     - sts-k8s-xl-runner
 #  artifacts:
