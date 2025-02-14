@@ -126,7 +126,7 @@ resource "aws_instance" "splunk" {
   }
 
   tags = {
-    Name                  = "beest-resource"
+    Name                  = "beest-resource-${var.environment}-splunk"
     Environment           = var.environment
     VantaContainsUserData = false
     VantaDescription      = "Machine used used in acceptance pipeline"
