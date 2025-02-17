@@ -148,7 +148,7 @@ for CLUSTER_NAME in "${CLUSTER_NAMES[@]}"; do
         fi
     done
 
-    if ! $match_found && [[ "$CLUSTER_TAG" != *"$BEEST_TAG_NAME"* ]]; then
+    if ! $match_found && [[ "$CLUSTER_TAG" == *"$BEEST_TAG_NAME"* ]]; then
         echo "Cluster '$CLUSTER_NAME' exists. Deleting..."
         aws eks delete-cluster --name "$CLUSTER_NAME" --query 'cluster.status' --output json &> /dev/null
         wait_for_cluster_deletion "$CLUSTER_NAME"
