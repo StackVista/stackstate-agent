@@ -10,6 +10,10 @@
 resource "aws_iam_role" "eks_cluster_role" {
   name               = "EKSClusterRole-${var.environment}"
   description        = "Allows EKS to manage clusters on your behalf."
+  tags_all = {
+    Name        = "beest-resource"
+    Environment = var.environment
+  }
   assume_role_policy = <<POLICY
 {
    "Version":"2012-10-17",

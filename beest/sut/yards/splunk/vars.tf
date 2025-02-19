@@ -13,6 +13,7 @@ locals {
   az2          = "${var.aws_default_region}b"
   cluster_name = "${var.yard_id}-cluster"
   common_tags = {
+    "Name"                                        = "beest-resources"
     "Environment"                                 = var.yard_id
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
   }
