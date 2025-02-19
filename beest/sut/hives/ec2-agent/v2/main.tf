@@ -8,6 +8,7 @@ resource "aws_key_pair" "agent_key_pair" {
   public_key = tls_private_key.rsa_key.public_key_openssh
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
   }
 }
@@ -52,6 +53,7 @@ resource "aws_security_group" "agent_group" {
   }
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
   }
 }
@@ -82,7 +84,7 @@ resource "aws_instance" "agent" {
   iam_instance_profile        = var.integration_profile
 
   tags = {
-    Name                  = "${var.environment}-agent-v2"
+    Name                  = "beest-resource-${var.environment}-agent-v2"
     Environment           = var.environment
     VantaContainsUserData = false
     VantaDescription      = "Machine used used in acceptance pipeline"
