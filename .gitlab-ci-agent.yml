@@ -364,7 +364,25 @@ build_binaries:
   rules:
     - when: on_success
 
-build_cluster_agent:
+.x64:
+  #  tags: [ "runner:docker" ]
+  #  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker:20.10-py3
+  variables:
+    DD_TARGET_ARCH: x64
+    BUILD_ARCH: amd64
+  tags:
+    - sts-k8s-xl-runner
+
+.arm:
+  #  tags: ["runner:docker-arm", "platform:arm64"]
+  #  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker:20.10-py3
+  variables:
+    DD_TARGET_ARCH: aarch64
+    BUILD_ARCH: arm64
+  tags:
+    - sts-k8s-xl-arm64-runner
+
+.build_cluster_agent:
   stage: build
   interruptible: true
   needs:
@@ -392,6 +410,14 @@ build_cluster_agent:
     max: 2
     when:
       - always
+
+build_cluster_agent_x64:
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:5ac33c09
+  extends: [ .build_cluster_agent, .x64 ]
+
+build_cluster_agent_arm:
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_arm64:5ac33c09
+  extends: [ .build_cluster_agent, .arm ]
 
 build_deb:
   stage: build
