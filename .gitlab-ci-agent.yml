@@ -712,7 +712,7 @@ pre_release_rpm:
   rules:
     - when: on_success
 
-pre_release_main_agent_image: &pre_release_image
+pre_release_main_agent_image: &pre_release_image_x64
   stage: pre_release
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
@@ -740,11 +740,11 @@ pre_release_main_agent_image: &pre_release_image
   rules:
     - when: on_success
 
-pre_release_cluster_agent_image:
-  <<: *pre_release_image
+pre_release_cluster_agent_image_x64:
+  <<: *pre_release_image_x64
   interruptible: true
   needs:
-    - build_cluster_agent
+    - build_cluster_agent_x64
   script:
     - cd $CI_PROJECT_DIR
     - cp -r ./bin/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
