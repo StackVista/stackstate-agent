@@ -1152,7 +1152,7 @@ release_cluster_agent_image:
   <<: *base_release_image
   interruptible: true
   dependencies:
-    - build_cluster_agent
+    - build_cluster_agent_x64
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
