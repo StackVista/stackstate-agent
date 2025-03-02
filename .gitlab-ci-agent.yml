@@ -892,7 +892,7 @@ beest_k8s_1_29_containerd_test:
     - beest_k8s_1_29_containerd_create
   needs:
     - beest_k8s_1_29_containerd_create
-    - pre_release_cluster_agent_image
+    - pre_release_cluster_agent_image_x64
     - pre_release_main_agent_image
 
 beest_k8s_1_32_containerd_test:
@@ -907,7 +907,7 @@ beest_k8s_1_32_containerd_test:
     - beest_k8s_1_32_containerd_create
   needs:
     - beest_k8s_1_32_containerd_create
-    - pre_release_cluster_agent_image
+    - pre_release_cluster_agent_image_x64
     - pre_release_main_agent_image
 
 beest_k8s_1_29_containerd_manual_cleanup:
