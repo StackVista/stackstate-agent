@@ -347,7 +347,9 @@ build_binaries:
     - go mod vendor
     - inv -e cluster-agent.build
     - ls -la $CI_PROJECT_DIR/bin/
-    - if [ -f $CI_PROJECT_DIR/bin/stackstate-cluster-agent ]; then mkdir -p $CI_PROJECT_DIR/bin/$DD_TARGET_ARCH && mv $CI_PROJECT_DIR/bin/stackstate-cluster-agent $CI_PROJECT_DIR/bin/$DD_TARGET_ARCH; else echo "Cluster agent binary does not exist"; exit 1; fi
+    - mkdir -p $CI_PROJECT_DIR/bin/$DD_TARGET_ARCH && mv $CI_PROJECT_DIR/bin/stackstate-cluster-agent $CI_PROJECT_DIR/bin/$DD_TARGET_ARCH
+    - ls -la $CI_PROJECT_DIR/bin/
+    - ls -la $CI_PROJECT_DIR/bin/$DD_TARGET_ARCH
   artifacts:
     paths:
       - $CI_PROJECT_DIR/bin/$DD_TARGET_ARCH/stackstate-cluster-agent
