@@ -168,6 +168,24 @@ before_script:
   - *configure_debian_env_script
   - *retrieve_linux_go_deps_script
 
+.x64:
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:5ac33c09
+  variables:
+    DD_TARGET_ARCH: x64
+    BUILD_ARCH: amd64
+    ARCH: amd64
+  tags:
+    - sts-k8s-xl-runner
+
+.arm:
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_arm64:5ac33c09
+  variables:
+    DD_TARGET_ARCH: aarch64
+    BUILD_ARCH: arm64
+    ARCH: arm64
+  tags:
+    - sts-k8s-xl-arm64-runner
+
 deps_deb:
   stage: prepare
   interruptible: true
@@ -184,16 +202,11 @@ deps_deb:
     - go mod tidy
     - go mod vendor
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
-#    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz . || echo "No go-pkg"
-#    - cd $GOPATH/pkg && tar czf - . | split -b 800M - $CI_PROJECT_DIR/go-pkg.tar.gz.part. || echo "No go-pkg"
-#    - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz . || echo "No go-bin"
     - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz . || echo "No vendor"
   artifacts:
     <<: *artifacts_expire_in
     paths:
       - $CI_PROJECT_DIR/version.txt
-#      - $CI_PROJECT_DIR/go-pkg.tar.gz.part.*
-#      - $CI_PROJECT_DIR/go-bin.tar.gz
       - $CI_PROJECT_DIR/vendor.tar.gz
 
   retry:
@@ -206,7 +219,7 @@ deps_deb:
 deps_rpm:
   stage: prepare
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_x64:8292f573
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_x64:5ac33c09
   cache:
     key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
@@ -289,7 +302,7 @@ filename_linting:
     when:
       - always
 
-build_binaries:
+.build_binaries:
   stage: build
   interruptible: true
   needs:
@@ -315,23 +328,11 @@ build_binaries:
   rules:
     - when: on_success
 
-.x64:
-  #  tags: [ "runner:docker" ]
-  #  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker:20.10-py3
-  variables:
-    DD_TARGET_ARCH: x64
-    BUILD_ARCH: amd64
-  tags:
-    - sts-k8s-xl-runner
+build_binaries_x64:
+  extends: [ .build_binaries, .x64 ]
 
-.arm:
-  #  tags: ["runner:docker-arm", "platform:arm64"]
-  #  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker:20.10-py3
-  variables:
-    DD_TARGET_ARCH: aarch64
-    BUILD_ARCH: arm64
-  tags:
-    - sts-k8s-xl-arm64-runner
+build_binaries_arm:
+  extends: [ .build_binaries, .arm ]
 
 .build_cluster_agent:
   stage: build
@@ -366,20 +367,16 @@ build_binaries:
       - always
 
 build_cluster_agent_x64:
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:5ac33c09
   extends: [ .build_cluster_agent, .x64 ]
 
 build_cluster_agent_arm:
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_arm64:5ac33c09
   extends: [ .build_cluster_agent, .arm ]
 
-build_deb:
+.build_deb:
   stage: build
   interruptible: true
   needs:
     - deps_deb
-#  variables:
-#    LD_LIBRARY_PATH: "/opt/stackstate-agent/embedded/lib/python3.11/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
   tags:
     - sts-k8s-xl-no-docker-runner
   cache:
@@ -409,7 +406,6 @@ build_deb:
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
     - cp -r $OMNIBUS_BASE_DIR/pkg $CI_PROJECT_DIR/outcomes
     - cp -r $CI_PROJECT_DIR/Dockerfiles $CI_PROJECT_DIR/outcomes
-#    - cp -r /opt/stackstate-agent/embedded/bin/trace-agent  $CI_PROJECT_DIR/outcomes/binary/
 
     - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles
 
@@ -438,10 +434,16 @@ build_deb:
   rules:
     - when: on_success
 
-build_rpm:
+build_deb_x64:
+  extends: [ .build_deb, .x64 ]
+
+build_deb_arm:
+  extends: [ .build_deb, .arm ]
+
+.build_rpm:
   stage: build
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_x64:8292f573
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_x64:5ac33c09
   needs:
     - deps_rpm
   tags:
@@ -501,13 +503,17 @@ build_rpm:
   rules:
     - when: on_success
 
+build_rpm_x64:
+  extends: [ .build_rpm, .x64 ]
+
+build_rpm_arm:
+  extends: [ .build_rpm, .arm ]
+
 ## pre_release stage
 
-test_deb_renaming:
+.test_deb_renaming:
   stage: test
   interruptible: true
-  needs:
-    - build_deb
   before_script: []
   script:
     - ./test/renaming/test_deb.sh $CI_PROJECT_DIR/outcomes/pkg/stackstate-agent_$MAJOR_VERSION*.deb
@@ -518,10 +524,19 @@ test_deb_renaming:
   rules:
     - when: on_success
 
-test_rpm_renaming:
+test_deb_renaming_x64:
+  needs:
+    - build_deb_x64
+  extends: [ .test_deb_renaming, .x64 ]
+
+test_deb_renaming_arm:
+  needs:
+    - build_deb_arm
+  extends: [ .test_deb_renaming, .arm ]
+
+.test_rpm_renaming:
   stage: test
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_x64:8292f573
   needs:
     - build_rpm
   before_script: []
@@ -534,13 +549,24 @@ test_rpm_renaming:
   rules:
     - when: on_success
 
-sign_deb:
+test_rpm_renaming_x64:
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_x64:5ac33c09
+  needs:
+    - build_rpm_x64
+  extends: [ .test_rpm_renaming, .x64 ]
+
+test_rpm_renaming_arm:
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:5ac33c09
+  needs:
+    - build_rpm_arm
+  extends: [ .test_rpm_renaming, .arm ]
+
+.sign_deb:
   stage: pre_release
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
   needs:
     - deps_deb
-    - build_deb
   script:
     - source /usr/local/rvm/scripts/rvm
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
@@ -562,13 +588,23 @@ sign_deb:
   rules:
     - when: on_success
 
-pre_release_deb:
+sign_deb_x64:
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
+  needs:
+    - build_deb_x64
+  extends: [ .sign_deb, .x64 ]
+
+sign_deb_arm:
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
+  needs:
+    - build_deb_arm
+  extends: [ .sign_deb, .arm ]
+
+.pre_release_deb:
   stage: pre_release
   interruptible: true
   needs:
     - deps_deb
-    - build_deb
-    - sign_deb
   script:
     - source /usr/local/rvm/scripts/rvm
 #    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
@@ -584,12 +620,22 @@ pre_release_deb:
   rules:
     - when: on_success
 
-pre_release_rpm:
+pre_release_deb_x64:
+  needs:
+    - build_deb_x64
+    - sign_deb_x64
+  extends: [ .pre_release_deb, .x64 ]
+
+pre_release_deb_arm:
+  needs:
+    - build_deb_arm
+    - sign_deb_arm
+  extends: [ .pre_release_deb, .arm ]
+
+.pre_release_rpm:
   stage: pre_release
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
-  needs:
-    - build_rpm
   before_script: []
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
@@ -601,12 +647,20 @@ pre_release_rpm:
   rules:
     - when: on_success
 
-pre_release_main_agent_image: &pre_release_image_x64
+pre_release_rpm_x64:
+  needs:
+    - build_rpm_x64
+  extends: [ .pre_release_rpm, .x64 ]
+
+pre_release_rpm_arm:
+  needs:
+    - build_rpm_arm
+  extends: [ .pre_release_rpm, .arm ]
+
+pre_release_main_agent_image: &pre_release_image
   stage: pre_release
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
-  needs:
-    - build_deb
   variables:
     DOCKER_DRIVER: overlay
     DOCKER_HOST: tcp://docker:2375
@@ -618,10 +672,8 @@ pre_release_main_agent_image: &pre_release_image_x64
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
-    - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb ./Dockerfiles/agent
+    - cp ./outcomes/pkg/stackstate-agent_*_$ARCH.deb ./Dockerfiles/agent
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/Dockerfiles/agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO
-  tags:
-    - sts-k8s-m-runner
   retry:
     max: 2
     when:
@@ -629,17 +681,27 @@ pre_release_main_agent_image: &pre_release_image_x64
   rules:
     - when: on_success
 
-pre_release_cluster_agent_image_x64:
-  <<: *pre_release_image_x64
+.pre_release_cluster_agent_image:
+  <<: *pre_release_image
   interruptible: true
-  needs:
-    - build_cluster_agent_x64
   script:
     - cd $CI_PROJECT_DIR
     - cp -r ./bin/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO_CLUSTER
   rules:
     - *cluster_agent
+
+pre_release_cluster_agent_image_x64:
+  needs:
+    - build_deb_x64
+    - build_cluster_agent_x64
+  extends: [ .pre_release_cluster_agent_image, .x64 ]
+
+pre_release_cluster_agent_image_arm:
+  needs:
+    - build_deb_arm
+    - build_cluster_agent_arm
+  extends: [ .pre_release_cluster_agent_image, .arm ]
 
 # Core Structure for all the beest steps
 .beest: &beest
@@ -908,7 +970,7 @@ beest_splunk_test:
     - beest_splunk_create
   needs:
     - beest_splunk_create
-    - pre_release_deb
+    - pre_release_deb_x64
 
 beest_splunk_failure_cleanup:
   <<: *beest
@@ -939,11 +1001,9 @@ beest_splunk_success_cleanup:
 
 ## release stage
 
-release_deb:
+.release_deb:
   interruptible: true
   stage: release
-  dependencies:
-    - build_deb
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
@@ -957,12 +1017,20 @@ release_deb:
     when:
       - always
 
-release_rpm:
+release_deb_x64:
+  dependencies:
+    - build_deb_x64
+  extends: [ .release_deb, .x64 ]
+
+release_deb_arm:
+  dependencies:
+    - build_deb_arm
+  extends: [ .release_deb, .arm ]
+
+.release_rpm:
   interruptible: true
   stage: release
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
-  dependencies:
-    - build_rpm
   before_script:
     - mkdir -p /go/src/github.com/StackVista
     - ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
@@ -977,11 +1045,19 @@ release_rpm:
     when:
       - always
 
+release_rpm_x64:
+  dependencies:
+    - build_rpm_x64
+  extends: [ .release_rpm, .x64 ]
+
+release_rpm_arm:
+  dependencies:
+    - build_rpm_arm
+  extends: [ .release_rpm, .arm ]
+
 .base_release_image: &base_release_image
   stage: release
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:20-git
-  dependencies:
-    - build_deb
   variables:
     DOCKER_DRIVER: overlay
     DOCKER_HOST: tcp://docker:2375
@@ -997,23 +1073,31 @@ release_rpm:
     when:
       - always
 
-release_main_agent_image:
+.release_main_agent_image:
   <<: *base_release_image
   interruptible: true
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
-    - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb Dockerfiles/agent
+    - cp ./outcomes/pkg/stackstate-agent_*_$ARCH.deb Dockerfiles/agent
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/Dockerfiles/agent latest
   rules:
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
 
-release_cluster_agent_image:
+release_main_agent_image_x64:
+  dependencies:
+    - build_deb_x64
+  extends: [ .release_main_agent_image, .x64 ]
+
+release_main_agent_image_arm:
+  dependencies:
+    - build_deb_arm
+  extends: [ .release_main_agent_image, .arm ]
+
+.release_cluster_agent_image:
   <<: *base_release_image
   interruptible: true
-  dependencies:
-    - build_cluster_agent_x64
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
@@ -1021,4 +1105,14 @@ release_cluster_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent latest
   rules:
     - *cluster_agent_release
+
+release_cluster_agent_image_x64:
+  dependencies:
+    - build_cluster_agent_x64
+  extends: [ .release_cluster_agent_image, .x64 ]
+
+release_cluster_agent_image_arm:
+  dependencies:
+    - build_cluster_agent_arm
+  extends: [ .release_cluster_agent_image, .arm ]
 
