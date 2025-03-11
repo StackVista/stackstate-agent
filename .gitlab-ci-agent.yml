@@ -319,8 +319,6 @@ filename_linting:
     - inv -e rtloader.install
     - cd $SRC_PATH
     - inv -e agent.build --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
-  tags:
-    - sts-k8s-xl-runner
   retry:
     max: 2
     when:
@@ -357,8 +355,6 @@ build_binaries_arm:
       - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
       - $CI_PROJECT_DIR/version.txt
     <<: *artifacts_expire_in
-  tags:
-    - sts-k8s-xl-runner
   rules:
     - *cluster_agent
   retry:
@@ -1066,8 +1062,6 @@ release_rpm_arm:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:20-dind
       alias: docker
   before_script: []
-  tags:
-    - sts-k8s-m-runner
   retry:
     max: 2
     when:
