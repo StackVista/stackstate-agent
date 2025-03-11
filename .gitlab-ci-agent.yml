@@ -656,14 +656,6 @@ pre_release_rpm_arm:
 .pre_release_main_agent_image:
   stage: pre_release
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
-  variables:
-    DOCKER_DRIVER: overlay
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-  services:
-    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
-      alias: docker
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
@@ -681,12 +673,28 @@ pre_release_main_agent_image_x64: &pre_release_image_x64
   needs:
     - build_deb_x64
     - build_cluster_agent_x64
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
   extends: [ .pre_release_main_agent_image, .x64 ]
 
 pre_release_main_agent_image_arm: &pre_release_image_arm
   needs:
     - build_deb_arm
     - build_cluster_agent_arm
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
   extends: [ .pre_release_main_agent_image, .arm ]
 
 .pre_release_cluster_agent_image_x64:
