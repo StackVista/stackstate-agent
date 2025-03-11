@@ -686,7 +686,7 @@ pre_release_main_agent_image: &pre_release_image
   interruptible: true
   script:
     - cd $CI_PROJECT_DIR
-    - cp -r ./bin/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
+    - cp -r ./bin/$DD_TARGET_ARCH/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO_CLUSTER
   rules:
     - *cluster_agent
@@ -1101,7 +1101,7 @@ release_main_agent_image_arm:
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
-    - cp -r ./bin/stackstate-cluster-agent/* ./Dockerfiles/cluster-agent
+    - cp -r ./bin/$DD_TARGET_ARCH/stackstate-cluster-agent/* ./Dockerfiles/cluster-agent
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent latest
   rules:
     - *cluster_agent_release
