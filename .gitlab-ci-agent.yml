@@ -653,7 +653,7 @@ pre_release_rpm_arm:
     - build_rpm_arm
   extends: [ .pre_release_rpm, .arm ]
 
-pre_release_main_agent_image: &pre_release_image
+.pre_release_main_agent_image:
   stage: pre_release
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
@@ -677,8 +677,30 @@ pre_release_main_agent_image: &pre_release_image
   rules:
     - when: on_success
 
-.pre_release_cluster_agent_image:
-  <<: *pre_release_image
+pre_release_main_agent_image_x64: &pre_release_image_x64
+  needs:
+    - build_deb_x64
+    - build_cluster_agent_x64
+  extends: [ .pre_release_main_agent_image, .x64 ]
+
+pre_release_main_agent_image_arm: &pre_release_image_arm
+  needs:
+    - build_deb_arm
+    - build_cluster_agent_arm
+  extends: [ .pre_release_main_agent_image, .arm ]
+
+.pre_release_cluster_agent_image_x64:
+  <<: *pre_release_image_x64
+  interruptible: true
+  script:
+    - cd $CI_PROJECT_DIR
+    - cp -r ./bin/$DD_TARGET_ARCH/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO_CLUSTER
+  rules:
+    - *cluster_agent
+
+.pre_release_cluster_agent_image_arm:
+  <<: *pre_release_image_arm
   interruptible: true
   script:
     - cd $CI_PROJECT_DIR
@@ -691,13 +713,13 @@ pre_release_cluster_agent_image_x64:
   needs:
     - build_deb_x64
     - build_cluster_agent_x64
-  extends: [ .pre_release_cluster_agent_image, .x64 ]
+  extends: [ .pre_release_cluster_agent_image_x64, .x64 ]
 
 pre_release_cluster_agent_image_arm:
   needs:
     - build_deb_arm
     - build_cluster_agent_arm
-  extends: [ .pre_release_cluster_agent_image, .arm ]
+  extends: [ .pre_release_cluster_agent_image_arm, .arm ]
 
 # Core Structure for all the beest steps
 .beest: &beest
@@ -840,7 +862,7 @@ beest_k8s_1_29_containerd_test:
   needs:
     - beest_k8s_1_29_containerd_create
     - pre_release_cluster_agent_image_x64
-    - pre_release_main_agent_image
+    - pre_release_main_agent_image_x64
 
 beest_k8s_1_32_containerd_test:
   <<: *beest
@@ -855,7 +877,7 @@ beest_k8s_1_32_containerd_test:
   needs:
     - beest_k8s_1_32_containerd_create
     - pre_release_cluster_agent_image_x64
-    - pre_release_main_agent_image
+    - pre_release_main_agent_image_x64
 
 beest_k8s_1_29_containerd_manual_cleanup:
   <<: *beest
