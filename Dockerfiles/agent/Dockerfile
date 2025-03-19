@@ -1,18 +1,21 @@
 ##########################################
 # Preparation stage: extract and cleanup #
 ##########################################
-
 FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:20.04 as extract
+ARG ARCH="amd64"
+ARG S6_ARCH="amd64"
 ARG WITH_JMX
-COPY stackstate-agent*_amd64.deb /
+ENV ARCH=$ARCH
+ENV S6_ARCH=$S6_ARCH
+COPY stackstate-agent*_${ARCH}.deb /
 WORKDIR /output
 
 # Get s6-overlay and check gpg signature
 # Hack: PGP key store locally as it's currently not available from https://keybase.io/justcontainers/key.asc
 COPY hack/s6-pgp-key /tmp/s6-pgp-key
 ENV S6_VERSION v1.21.2.2
-ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-amd64.tar.gz /output/s6.tgz
-ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-amd64.tar.gz.sig /tmp/s6.tgz.sig
+ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${S6_ARCH}.tar.gz /output/s6.tgz
+ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/s6.tgz.sig
 RUN apt-get update \
  && apt-get install --no-install-recommends -y gpg gpg-agent curl ca-certificates \
  && cat /tmp/s6-pgp-key | gpg --import \
@@ -24,7 +27,7 @@ RUN apt-get update \
 #   - docs and manpages                  # FIXME: move upstream
 #   - static libraries                   # FIXME: move upstream
 #   - jmxfetch on nojmx build
-RUN dpkg -x /stackstate-agent*_amd64.deb . \
+RUN dpkg -x /stackstate-agent*_${ARCH}.deb . \
  && rm -rf usr etc/init lib \
     opt/stackstate-agent/sources \
     opt/stackstate-agent/embedded/share/doc \
@@ -73,7 +76,7 @@ RUN if [ -n "$WITH_JMX" ]; then apt-get update \
 RUN apt-get update \
   # CVE-fixing time!
   && apt full-upgrade -y \
-  && apt-get install -y util-linux ncurses-bin ncurses-base libncursesw5:amd64 \
+  && apt-get install -y util-linux ncurses-bin ncurses-base libncursesw5:${ARCH} \
   # https://security-tracker.debian.org/tracker/CVE-2018-15686
   && apt-get install -y libudev1 libsystemd0 libgcrypt20 \
   # https://security-tracker.debian.org/tracker/CVE-2016-2779

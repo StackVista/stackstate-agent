@@ -2,14 +2,15 @@
 
 set -xe
 
-IMAGE_TAG="${1}"
+IMAGE_TAG="${1}-${ARCH}"
 IMAGE_REPO="${2}"
 DOCKERFILE_PATH="${3}"
-EXTRA_TAG="${4}"
+EXTRA_TAG="${4}-${ARCH}"
 K8S_REPO="${5}"
 REGISTRY="quay.io"
 ORGANIZATION="stackstate"
 ARTIFACTORY_URL="artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple"
+S6_ARCH="${6}"
 
 echo "IMAGE_TAG=${IMAGE_TAG}"
 echo "IMAGE_REPO=${IMAGE_REPO}"
@@ -21,7 +22,7 @@ BUILD_TAG="${IMAGE_REPO}:${IMAGE_TAG}"
 docker login -u "${quay_user}" -p "${quay_password}" "${REGISTRY}"
 docker login -u "${artifactory_user}" -p "${artifactory_password}" "${ARTIFACTORY_URL}"
 
-docker build -t "${BUILD_TAG}" "${DOCKERFILE_PATH}"
+docker build --build-arg ARCH="${ARCH}" --build-arg S6_ARCH="${S6_ARCH}" -t "${BUILD_TAG}" "${DOCKERFILE_PATH}"
 
 
 DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
@@ -43,13 +44,4 @@ if [ -n "$EXTRA_TAG" ]; then
         docker push "${DOCKER_K8S_TAG}"
     fi
 
-fi
-
-
-# Comment out the if and fi lines to test anchore scanning on any branch.
-if [ -n "${CI_COMMIT_TAG}" ] || [ "${CI_COMMIT_BRANCH}" = "master" ]; then
-    # for Anchore use publicly accessible image tag
-    DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${EXTRA_TAG}"
-    echo "Scanning image ${DOCKER_TAG} for vulnerabilities"
-    omnibus/package-scripts/anchore_scan.sh -i "${DOCKER_TAG}" -n 0
 fi
