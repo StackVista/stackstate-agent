@@ -1,8 +1,5 @@
 image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_arm64:0d87e00f
 
-tags:
-  - sts-k8s-xl-arm64-runner
-
 stages:
   - manual
   - prepare
@@ -172,6 +169,8 @@ before_script:
 
 deps_deb:
   stage: prepare
+  tags:
+    - sts-k8s-m-arm64-runner
   interruptible: true
   cache:
     key: "deps-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
@@ -207,6 +206,8 @@ deps_deb:
 
 deps_rpm:
   stage: prepare
+  tags:
+    - sts-k8s-m-arm64-runner
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:8292f573
   cache:
@@ -273,6 +274,8 @@ unit_tests:
 
 filename_linting:
   stage: test
+  tags:
+    - sts-k8s-m-arm64-runner
   interruptible: true
   needs:
     - deps_deb
@@ -482,6 +485,8 @@ build_rpm:
 
 test_deb_renaming:
   stage: test
+  tags:
+    - sts-k8s-m-arm64-runner
   interruptible: true
   needs:
     - build_deb
@@ -497,6 +502,8 @@ test_deb_renaming:
 
 test_rpm_renaming:
   stage: test
+  tags:
+    - sts-k8s-m-arm64-runner
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:8292f573
   needs:
@@ -513,6 +520,8 @@ test_rpm_renaming:
 
 sign_deb:
   stage: pre_release
+  tags:
+    - sts-k8s-m-arm64-runner
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
   needs:
@@ -541,6 +550,8 @@ sign_deb:
 
 pre_release_deb:
   stage: pre_release
+  tags:
+    - sts-k8s-m-arm64-runner
   interruptible: true
   needs:
     - deps_deb
@@ -563,6 +574,8 @@ pre_release_deb:
 
 pre_release_rpm:
   stage: pre_release
+  tags:
+    - sts-k8s-m-arm64-runner
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
