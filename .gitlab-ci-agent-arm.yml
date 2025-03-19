@@ -1,5 +1,8 @@
 image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_arm64:0d87e00f
 
+tags:
+  - sts-k8s-xl-arm64-runner
+
 stages:
   - manual
   - prepare
