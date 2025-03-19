@@ -1,4 +1,4 @@
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_arm64:0d87e00f
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_arm64:d15269d5
 
 stages:
   - manual
@@ -209,7 +209,7 @@ deps_rpm:
   tags:
     - sts-k8s-m-arm64-runner
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:8292f573
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:d15269d5
   cache:
     key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
@@ -421,7 +421,7 @@ build_deb:
 build_rpm:
   stage: build
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:8292f573
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:d15269d5
   needs:
     - deps_rpm
   tags:
@@ -505,7 +505,7 @@ test_rpm_renaming:
   tags:
     - sts-k8s-m-arm64-runner
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:8292f573
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:d15269d5
   needs:
     - build_rpm
   before_script: []
