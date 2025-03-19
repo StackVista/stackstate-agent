@@ -153,7 +153,7 @@ agent-arm:
     <<: *agent_variables
     ARCH: arm64
   trigger:
-    include: .gitlab-ci-agent-x86.yml
+    include: .gitlab-ci-agent-arm.yml
     strategy: depend
   rules:
     - <<: *exclude_on_clean
