@@ -1,5 +1,6 @@
 stages:
   - triggers
+  - postbuild
   - schedule
 
 # Gitlab CI Process:
@@ -162,6 +163,25 @@ agent-arm:
     - *other_files_rule
     - *md_only_rule
     - when: always
+
+.merge_docker_manifest: &merge_docker_manifest
+  stage: postbuild
+  needs: [ agent-x86, agent-arm ]
+  trigger:
+    include: .gitlab-ci-docker.yml
+    strategy: depend
+  rules:
+    - when: always
+
+merge_docker_manifest_cluster_agent:
+  <<: *merge_docker_manifest
+  variables:
+    DST_REPOSITORY: quay.io/stackstate/stackstate-k8s-cluster-agent
+
+merge_docker_manifest_main_agent:
+  <<: *merge_docker_manifest
+  variables:
+    DST_REPOSITORY: quay.io/stackstate/stackstate-k8s-agent
 
 cluster_agent:
   stage: triggers
