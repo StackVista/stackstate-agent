@@ -34,7 +34,7 @@ if [ "${WHAT}" = "SHELL" ]; then
         -e artifactory_password="${artifactory_password}" \
         -e ARTIFACTORY_PYPI_URL="${ARTIFACTORY_PYPI_URL}" \
         --workdir=${PWD} \
-        artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:0d87e00f bash
+        artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:61b4ad67 bash
 fi
 
 # Prepare a copy of the agent in the SRC_DIR to make sure that in a containerized environment the source directory

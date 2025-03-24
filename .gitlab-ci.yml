@@ -171,7 +171,7 @@ agent-arm:
     include: .gitlab-ci-docker.yml
     strategy: depend
   rules:
-    - when: always
+    - when: on_success
 
 merge_docker_manifest_cluster_agent:
   <<: *merge_docker_manifest
