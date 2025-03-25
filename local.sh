@@ -23,6 +23,8 @@ if [ -z "${WHAT}" ]; then
 	exit 1
 fi
 
+ARCHX=$(arch)
+IMAGE_ARCH=$(if [ "${ARCHX}" = "x86_64" ]; then echo "x64"; fi; if [ "${ARCHX}" = "aarch64" ]; then echo "arm64"; fi;)
 WHAT=$(echo "${WHAT}" | tr '[:lower:]' '[:upper:]')
 
 if [ "${WHAT}" = "SHELL" ]; then
@@ -34,7 +36,7 @@ if [ "${WHAT}" = "SHELL" ]; then
         -e artifactory_password="${artifactory_password}" \
         -e ARTIFACTORY_PYPI_URL="${ARTIFACTORY_PYPI_URL}" \
         --workdir=${PWD} \
-        artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:61b4ad67 bash
+        artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_${IMAGE_ARCH}:61b4ad67 bash
 fi
 
 # Prepare a copy of the agent in the SRC_DIR to make sure that in a containerized environment the source directory
