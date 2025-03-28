@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+gem 'ffi'
+
 # Install omnibus
 gem 'chef-sugar', git: 'https://github.com/chef/chef-sugar.git', tag: 'v3.6.0'
 # Sadly, DataDog does not provide tag for release we are using, so we are forced to use commit SHA1.
@@ -12,5 +14,3 @@ gem 'omnibus-software', git: 'https://github.com/DataDog/omnibus-software.git', 
 
 
 gem 'mixlib-cli', '~> 1.7.0'
-
-gem 'ffi'
