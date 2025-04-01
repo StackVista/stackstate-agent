@@ -173,7 +173,7 @@ deps_deb:
     - sts-k8s-m-arm64-runner
   interruptible: true
   cache:
-    key: "deps-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
+    key: "deps-deb-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
     paths:
       - vendor
       - venv
@@ -211,7 +211,7 @@ deps_rpm:
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_arm64:d74ccd55
   cache:
-    key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
+    key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
     paths:
       - vendor
   before_script:
@@ -354,8 +354,6 @@ build_deb:
   interruptible: true
   needs:
     - deps_deb
-#  variables:
-#    LD_LIBRARY_PATH: "/opt/stackstate-agent/embedded/lib/python3.11/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
   tags:
     - sts-k8s-xl-arm64-runner
   variables:
@@ -363,7 +361,7 @@ build_deb:
       DD_PKG_ARCH: arm64
       STS_PKG_ARCH: arm64
   cache:
-    key: "build-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
+    key: "build-deb-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
     paths:
       - .omnibus
       - .gems
@@ -427,7 +425,7 @@ build_rpm:
   tags:
     - sts-k8s-xl-arm64-runner
   cache:
-    key: "build-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
+    key: "build-rpm-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
     paths:
       - .omnibus
       - .gems
