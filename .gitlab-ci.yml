@@ -171,6 +171,11 @@ agent-arm:
     include: .gitlab-ci-docker.yml
     strategy: depend
   rules:
+    - <<: *exclude_on_clean
+    - <<: *exclude_on_cluster_agent
+    - <<: *scheduled_master_pipeline
+    - *other_files_rule
+    - *md_only_rule
     - when: on_success
 
 merge_docker_manifest_cluster_agent:
