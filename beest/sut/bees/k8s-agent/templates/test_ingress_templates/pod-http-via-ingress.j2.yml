@@ -8,7 +8,7 @@ metadata:
 spec:
   containers:
     - name: pod-http-via-ingress-apple
-      image: julianosk/continuous-requests-py:1.2
+      image: quay.io/stackstate/continuous-requests-py:2128e0e0
       env:
         - name: URL
           value: "http://{{nginx_controller_external_ip}}/apple"
@@ -24,7 +24,7 @@ metadata:
 spec:
   containers:
     - name: pod-http-via-ingress-banana
-      image: julianosk/continuous-requests-py:1.2
+      image: quay.io/stackstate/continuous-requests-py:2128e0e0
       env:
         - name: URL
           value: "http://{{nginx_controller_external_ip}}/banana"

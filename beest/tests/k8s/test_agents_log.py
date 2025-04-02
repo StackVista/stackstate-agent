@@ -3,12 +3,14 @@ import util
 import logging
 import os
 
-testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
+ANSIBLE_INVENTORY_LOCATION = os.getenv("ANSIBLE_INVENTORY_LOCATION", "../../sut/yards/k8s/ansible_inventory")
+testinfra_hosts = [f"ansible://local?ansible_inventory={ANSIBLE_INVENTORY_LOCATION}"]
 
+STS_KUBECONFIG_FILE = os.getenv("STS_KUBECONFIG_FILE", "./../../sut/yards/k8s/config")
 
 def _get_pods(ansible_var, kubecontext, host, controller_name):
     jsonpath = "'{.items[?(@.spec.containers[*].name==\"%s\")].metadata.name}'" % controller_name
-    cmd = host.run("kubectl --kubeconfig ./../../sut/yards/k8s/config --context={0} get pod -o jsonpath={1}".format(kubecontext, jsonpath))
+    cmd = host.run("kubectl --kubeconfig {2} --context={0} get pod -o jsonpath={1}".format(kubecontext, jsonpath, STS_KUBECONFIG_FILE))
     assert cmd.rc == 0
     pods = cmd.stdout.split()
     print(pods)

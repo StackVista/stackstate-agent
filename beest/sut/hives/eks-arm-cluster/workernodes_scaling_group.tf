@@ -10,7 +10,7 @@
 data "aws_ami" "eks_node_ami" {
   filter {
     name   = "name"
-    values = ["amazon-eks-node-${aws_eks_cluster.cluster.version}*"]
+    values = ["amazon-eks-arm64-node-${aws_eks_cluster.cluster.version}*"]
   }
 
   most_recent = true
