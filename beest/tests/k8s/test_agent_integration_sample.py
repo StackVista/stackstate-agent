@@ -1,8 +1,10 @@
 import util
 import integration_sample
 from conftest import STS_CONTEXT_FILE
+import os
 
-testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
+ANSIBLE_INVENTORY_LOCATION = os.getenv("ANSIBLE_INVENTORY_LOCATION", "../../sut/yards/k8s/ansible_inventory")
+testinfra_hosts = [f"ansible://local?ansible_inventory={ANSIBLE_INVENTORY_LOCATION}"]
 
 
 def kubernetes_event_data(event, json_data):

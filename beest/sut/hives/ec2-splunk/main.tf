@@ -1,11 +1,6 @@
 resource "tls_private_key" "rsa_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
-
-  tags = {
-      Name        = "beest-resource"
-      Environment = var.environment
-    }
 }
 
 resource "aws_key_pair" "splunk_key_pair" {
@@ -13,7 +8,6 @@ resource "aws_key_pair" "splunk_key_pair" {
   public_key = tls_private_key.rsa_key.public_key_openssh
 
   tags = {
-    Name        = "beest-resource"
     Environment = var.environment
   }
 }
@@ -106,7 +100,6 @@ resource "aws_security_group" "splunk_group" {
   }
 
   tags = {
-    Name        = "beest-resource"
     Environment = var.environment
   }
 }
@@ -126,7 +119,7 @@ resource "aws_instance" "splunk" {
   }
 
   tags = {
-    Name                  = "beest-resource-${var.environment}-splunk"
+    Name                  = "${var.environment}-splunk"
     Environment           = var.environment
     VantaContainsUserData = false
     VantaDescription      = "Machine used used in acceptance pipeline"

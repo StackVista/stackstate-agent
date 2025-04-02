@@ -1,9 +1,11 @@
 import json
 import re
+import os
 import util
 from conftest import STS_CONTEXT_FILE
 
-testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
+ANSIBLE_INVENTORY_LOCATION = os.getenv("ANSIBLE_INVENTORY_LOCATION", "../../sut/yards/k8s/ansible_inventory")
+testinfra_hosts = [f"ansible://local?ansible_inventory={ANSIBLE_INVENTORY_LOCATION}"]
 
 
 def _find_component(json_data, type_name, external_id_assert_fn):
