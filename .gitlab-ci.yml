@@ -170,6 +170,9 @@ agent-arm:
   trigger:
     include: .gitlab-ci-docker.yml
     strategy: depend
+
+merge_docker_manifest_cluster_agent:
+  <<: *merge_docker_manifest
   rules:
     - <<: *exclude_on_clean
     - <<: *exclude_on_cluster_agent
@@ -177,14 +180,18 @@ agent-arm:
     - *other_files_rule
     - *md_only_rule
     - when: on_success
-
-merge_docker_manifest_cluster_agent:
-  <<: *merge_docker_manifest
   variables:
     DST_REPOSITORY: quay.io/stackstate/stackstate-k8s-cluster-agent
 
 merge_docker_manifest_main_agent:
   <<: *merge_docker_manifest
+  rules:
+    - <<: *exclude_on_clean
+    - <<: *exclude_on_cluster_agent
+    - <<: *scheduled_master_pipeline
+    - *other_files_rule
+    - *md_only_rule
+    - when: on_success
   variables:
     DST_REPOSITORY: quay.io/stackstate/stackstate-k8s-agent
 
