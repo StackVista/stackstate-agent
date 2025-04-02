@@ -8,7 +8,7 @@ metadata:
 spec:
   containers:
     - name: shipping
-      image: weaveworksdemos/shipping:0.4.8
+      image: ghcr.io/socks-factory/shipping:latest
       ports:
         - containerPort: 80
 ---
@@ -36,7 +36,7 @@ metadata:
 spec:
   containers:
     - name: http-client
-      image: julianosk/continuous-requests-py:1.2
+      image: quay.io/stackstate/continuous-requests-py:2128e0e0
       env:
         - name: URL
           value: "http://shipping/health/"

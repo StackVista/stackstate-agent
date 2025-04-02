@@ -1,0 +1,19 @@
+---
+- hosts: local
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/k8s-stackstate"
+      vars:
+        sts_ingress: KOPS
+        stackpack_store_uri: s3://sts-stackpacks-preprod
+        kubecontext: "{{ stackstate_kubecontext }}"
+        cluster_name: "{{ stackstate_cluster_name }}"
+        namespace: "{{ test_namespace }}"
+        kubernetes_v2_integration:
+          cluster_name: "{{ agent_cluster_name }}"
+        stackstate_k8s_agent_v2:
+          cluster_name: "{{ agent_cluster_name }}"
+    - role: "{{ bees_path }}/k8s-agent"
+      vars:
+        kubecontext: "{{ agent_kubecontext }}"
+        cluster_name: "{{ agent_cluster_name }}"
