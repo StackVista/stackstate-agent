@@ -755,7 +755,8 @@ beest_k8s_1_32_containerd_create:
   <<: *beest_k8s_1_32_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *merge_train_always
+    - *merge_train_always_manual
+#    - *merge_train_always
 
 beest_k8s_1_30_containerd_test:
   <<: *beest
