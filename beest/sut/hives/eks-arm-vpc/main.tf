@@ -8,7 +8,7 @@ resource "aws_vpc" "cluster" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-vpc"
+      "Name" = "beest-resource"
     },
   )
 }
@@ -29,7 +29,7 @@ resource "aws_subnet" "eks_public" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-public"
+      "Name" = "beest-resource"
     },
   )
 }
@@ -43,7 +43,7 @@ resource "aws_subnet" "eks_public_2" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-public-2"
+      "Name" = "beest-resource"
     },
   )
 }
@@ -58,7 +58,7 @@ resource "aws_subnet" "eks_private" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-private"
+      "Name" = "beest-resource"
       "Description" = "This is not a private subnet"
     },
   )
@@ -73,7 +73,7 @@ resource "aws_subnet" "eks_private_2" {
   tags = merge(
     var.common_tags,
     {
-      "Name" = "${var.environment}-eks-private-2"
+      "Name" = "beest-resource"
       "Description" = "This is not a private subnet"
     },
   )
@@ -84,13 +84,13 @@ resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.cluster.id
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
-    Name        = "${var.environment}-igw"
   }
 }
 
 
-# The "private" subnets below aren't actually private. 
+# The "private" subnets below aren't actually private.
 resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.cluster.id
 
@@ -100,8 +100,8 @@ resource "aws_route_table" "private_route_table" {
   }
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
-    Name        = "${var.environment}-private-route-table"
     Description = "This is not a private route table. The traffic goes via Internet Gateway"
   }
 }
@@ -115,8 +115,8 @@ resource "aws_route_table" "private_route_table_2" {
   }
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
-    Name        = "${var.environment}-private-route-table-2"
     Description = "This is not a private route table. The traffic goes via Internet Gateway"
   }
 }
@@ -130,8 +130,8 @@ resource "aws_route_table" "eks_public" {
   }
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
-    Name        = "${var.environment}-eks-public"
   }
 }
 
@@ -144,8 +144,8 @@ resource "aws_route_table" "eks_public_2" {
   }
 
   tags = {
+    Name        = "beest-resource"
     Environment = var.environment
-    Name        = "${var.environment}-eks-public-2"
   }
 }
 

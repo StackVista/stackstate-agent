@@ -15,7 +15,7 @@ variable "agent_eks_runtime" {
   }
 }
 variable "agent_eks_node_type" {
-  default = "m6i.xlarge"
+  default = "m6g.xlarge"
 }
 variable "agent_eks_size" {
   default = 1
