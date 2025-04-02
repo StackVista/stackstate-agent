@@ -1,5 +1,6 @@
 stages:
   - triggers
+  - postbuild
   - schedule
 
 # Gitlab CI Process:
@@ -29,7 +30,6 @@ variables: &commonvariables
   BCC_VERSION: v0.12.0
   SYSTEM_PROBE_GO_VERSION: 1.16.7
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
-  ARCH: amd64
   VCINSTALLDIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
   # This variable represents which one of the gitlab pipelines will contain most of the jobs that's not required for both pipelines to run.
   # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
@@ -37,7 +37,7 @@ variables: &commonvariables
   PRIMARY_MAJOR_VERSION: '3'
   PROCESS_AGENT_TEST_REPO: stackstate-process-agent-test
   AGENT_HELM_CHART_VERSION: ""
-  STACKSTATE_HELM_CHART_VERSION: ""
+  STACKSTATE_HELM_CHART_VERSION: "2.3.2-pre.33"
   RUNNERS_IP: $RUNNERS_IP # IP of NAT Gateway from tooling account (where kubernetes runners live)
   STS_DOCKER_K8S_REPO: stackstate-k8s-agent
   STS_DOCKER_K8S_REPO_CLUSTER: stackstate-k8s-cluster-agent
@@ -130,13 +130,14 @@ variables: &commonvariables
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
 
-agent:
+agent-x86:
   stage: triggers
   variables:
     <<: *commonvariables
     <<: *agent_variables
+    ARCH: amd64
   trigger:
-    include: .gitlab-ci-agent.yml
+    include: .gitlab-ci-agent-x86.yml
     strategy: depend
   rules:
     - <<: *exclude_on_clean
@@ -145,6 +146,54 @@ agent:
     - *other_files_rule
     - *md_only_rule
     - when: always
+
+agent-arm:
+  stage: triggers
+  variables:
+    <<: *commonvariables
+    <<: *agent_variables
+    ARCH: arm64
+  trigger:
+    include: .gitlab-ci-agent-arm.yml
+    strategy: depend
+  rules:
+    - <<: *exclude_on_clean
+    - <<: *exclude_on_cluster_agent
+    - <<: *scheduled_master_pipeline
+    - *other_files_rule
+    - *md_only_rule
+    - when: always
+
+.merge_docker_manifest: &merge_docker_manifest
+  stage: postbuild
+  needs: [ agent-x86, agent-arm ]
+  trigger:
+    include: .gitlab-ci-docker.yml
+    strategy: depend
+
+merge_docker_manifest_cluster_agent:
+  <<: *merge_docker_manifest
+  rules:
+    - <<: *exclude_on_clean
+    - <<: *exclude_on_cluster_agent
+    - <<: *scheduled_master_pipeline
+    - *other_files_rule
+    - *md_only_rule
+    - when: on_success
+  variables:
+    DST_REPOSITORY: quay.io/stackstate/stackstate-k8s-cluster-agent
+
+merge_docker_manifest_main_agent:
+  <<: *merge_docker_manifest
+  rules:
+    - <<: *exclude_on_clean
+    - <<: *exclude_on_cluster_agent
+    - <<: *scheduled_master_pipeline
+    - *other_files_rule
+    - *md_only_rule
+    - when: on_success
+  variables:
+    DST_REPOSITORY: quay.io/stackstate/stackstate-k8s-agent
 
 cluster_agent:
   stage: triggers
