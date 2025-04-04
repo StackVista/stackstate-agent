@@ -8,7 +8,7 @@ module "eks_vpc" {
 }
 
 module "eks_cluster" {
-  source = "../../hives/eks-cluster"
+  source = "../../hives/eks-arm-cluster"
 
   environment         = var.yard_id
   vpc_id              = module.eks_vpc.vpc_id
