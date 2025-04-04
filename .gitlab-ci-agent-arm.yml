@@ -732,12 +732,12 @@ pre_release_cluster_agent_image:
 
 .beest_k8s_1_30_containerd_variables: &beest_k8s_1_30_containerd_variables
   variables:
-    BEEST_SCENARIO: contd-eks-1-30
+    BEEST_SCENARIO: contd-eks-arm-1-30
     BEEST_TEST_GROUP: k8s
 
 .beest_k8s_1_32_containerd_variables: &beest_k8s_1_32_containerd_variables
   variables:
-    BEEST_SCENARIO: contd-eks-1-32
+    BEEST_SCENARIO: contd-eks-arm-1-32
     BEEST_TEST_GROUP: k8s
 
 beest_k8s_1_30_containerd_create:
