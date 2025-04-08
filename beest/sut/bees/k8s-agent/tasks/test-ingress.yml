@@ -3,27 +3,15 @@
   kubernetes.core.helm_repository:
     name: ingress-nginx
     repo_url: "https://kubernetes.github.io/ingress-nginx"
-- name: Deploy Ingress Nginx Helm chart using Helm CLI
-  shell: >
-    helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
-    --reset-values
-    --wait
-    --timeout 30m
-    --debug
-    --namespace {{ test_namespace }}
-    --kube-context {{ kubecontext }}
-  register: helm_deploy
-  ignore_errors: yes  # Ensures that the playbook continues to capture output even if the command fails
-- name: Print Helm Deployment stdout
-  debug:
-    msg: "Helm stdout: {{ helm_deploy.stdout }}"
-- name: Print Helm Deployment stderr
-  debug:
-    msg: "Helm stderr: {{ helm_deploy.stderr }}"
-- name: Fail if Helm deployment failed
-  fail:
-    msg: "Helm deployment failed. Check the stdout and stderr for details."
-  when: helm_deploy.rc != 0
+- name: Deploy Ingress Nginx Helm chart
+  kubernetes.core.helm:
+    context: "{{ kubecontext }}"
+    chart_ref: "ingress-nginx/ingress-nginx"
+    release_name: "ingress-nginx"
+    release_namespace: "{{ test_namespace }}"
+    update_repo_cache: true
+    wait: yes
+    wait_timeout: 30m
 - name: Wait for the nginx-controller to become ready
   command: kubectl --context={{ kubecontext }} -n={{ test_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=controller pod
 - name: Grab and store the nginx-controller LoadBalancer external IP
