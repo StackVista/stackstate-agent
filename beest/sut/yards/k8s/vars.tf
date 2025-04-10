@@ -31,6 +31,6 @@ locals {
   common_tags = {
     "Name"                                              = "beest-resources"
     "Environment"                                       = var.yard_id
-    "kubernetes.io/cluster/${local.agent_cluster_name}" = "shared"
+    "kubernetes.io/cluster/${local.agent_cluster_name}" = "owned"
   }
 }
