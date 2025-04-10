@@ -124,6 +124,54 @@
                   # tag: "{{ stackstate_image_tag }}"
                   # Using pullPolicy always because we use the 'master' tag, which is a moving target.
                   pullPolicy: Always
+            authentication:
+              roles:
+                custom:
+                  stackstate-admin:
+                    systemPermissions:
+                      - access-analytics
+                      - access-cli
+                      - access-explore
+                      - access-log-data
+                      - access-synchronization-data
+                      - access-topic-data
+                      - create-views
+                      - execute-component-actions
+                      - execute-component-templates
+                      - execute-node-sync
+                      - execute-restricted-scripts
+                      - execute-scripts
+                      - export-settings
+                      - import-settings
+                      - manage-annotations
+                      - manage-ingestion-api-keys
+                      - manage-metric-bindings
+                      - manage-monitors
+                      - manage-notifications
+                      - manage-service-tokens
+                      - manage-stackpacks
+                      - manage-star-view
+                      - manage-telemetry-streams
+                      - manage-topology-elements
+                      - perform-custom-query
+                      - read-metrics
+                      - read-permissions
+                      - read-settings
+                      - read-stackpacks
+                      - read-telemetry-streams
+                      - read-traces
+                      - run-monitors
+                      - update-permissions
+                      - update-settings
+                      - update-visualization
+                      - upload-stackpacks
+                      - view-metric-bindings
+                      - view-monitors
+                      - view-notifications
+                      - read-agents
+                      - read-system-notification
+                      - unlock-node
+                    viewPermissions: [ access-view, save-view, delete-view ]
           global:
             receiverApiKey: "{{ sts_api_key }}"
 
