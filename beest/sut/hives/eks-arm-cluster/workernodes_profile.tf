@@ -10,7 +10,7 @@
 //
 //For the latest required policy, see the EKS User Guide.
 resource "aws_iam_role" "eks_node_role" {
-  name = "eks-${var.k8s_cluster_name}-node-role-arm"
+  name = "eks-${var.k8s_cluster_name}-node-role"
   tags_all = {
     Name        = "beest-resource"
     Environment = var.environment
