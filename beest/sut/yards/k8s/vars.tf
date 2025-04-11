@@ -10,7 +10,7 @@ variable "agent_eks_version" {
 variable "agent_eks_runtime" {
   type = string
   validation {
-    condition     = var.agent_eks_runtime == "dockerd" || var.agent_eks_runtime == "containerd"
+    condition     = var.agent_eks_runtime == "containerd"
     error_message = "The kubernetes container runtime can only be 'dockerd' or 'containerd'."
   }
 }
