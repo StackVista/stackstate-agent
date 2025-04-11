@@ -10,7 +10,7 @@ variable "agent_eks_version" {
 variable "agent_eks_runtime" {
   type = string
   validation {
-    condition     = var.agent_eks_runtime == "dockerd" || var.agent_eks_runtime == "containerd"
+    condition     = var.agent_eks_runtime == "containerd"
     error_message = "The kubernetes container runtime can only be 'dockerd' or 'containerd'."
   }
 }
@@ -27,7 +27,7 @@ variable "runners_ip" {
 locals {
   az1                = "${var.aws_default_region}a"
   az2                = "${var.aws_default_region}b"
-  agent_cluster_name = "${var.yard_id}-cluster"
+  agent_cluster_name = "${var.yard_id}-x86-cluster"
   common_tags = {
     "Name"                                              = "beest-resources"
     "Environment"                                       = var.yard_id
