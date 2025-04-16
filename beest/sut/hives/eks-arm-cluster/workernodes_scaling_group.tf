@@ -15,10 +15,6 @@ data "aws_ami" "eks_node_ami" {
 
   most_recent = true
   owners      = ["602401143452"] # Amazon Account ID
-  tags = {
-    Name        = "beest-resource"
-    Environment = var.environment
-  }
 }
 
 # EKS currently documents this required userdata for EKS worker nodes to
@@ -41,11 +37,6 @@ resource "tls_private_key" "eks_rsa" {
 resource "aws_key_pair" "eks_node_key_pair" {
   key_name   = "eks-deployer-${var.k8s_cluster_name}"
   public_key = tls_private_key.eks_rsa.public_key_openssh
-
-  tags = {
-      Name        = "beest-resource"
-      Environment = var.environment
-    }
 }
 
 resource "aws_launch_configuration" "eks_launch_configuration" {
@@ -89,7 +80,7 @@ resource "aws_autoscaling_group" "eks_autoscaling_group" {
   }
   tag {
     key                 = "Name"
-    value               = "beest-resource"
+    value               = "eks-${var.k8s_cluster_name}"
     propagate_at_launch = true
   }
   tag {
