@@ -14,8 +14,21 @@ variable "agent_eks_runtime" {
     error_message = "The kubernetes container runtime can only be 'dockerd' or 'containerd'."
   }
 }
+variable "arch" {
+  description = "Architecture type (amd64 or arm64)"
+  type        = string
+  default     = "amd64"
+
+  validation {
+    condition     = contains(["amd64", "arm64"], var.arch)
+    error_message = "arch must be either 'amd64' or 'arm64'."
+  }
+}
+
 variable "agent_eks_node_type" {
-  default = "t3.xlarge"
+  description = "Type of EKS agent node"
+  type        = string
+  default     = "m6i.xlarge"  # Default node type for "amd64"
 }
 variable "agent_eks_size" {
   default = 1

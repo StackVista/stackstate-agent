@@ -10,11 +10,16 @@
 data "aws_ami" "eks_node_ami" {
   filter {
     name   = "name"
-    values = ["amazon-eks-node-${aws_eks_cluster.cluster.version}*"]
+    values = [
+      var.arch == "arm64"
+        ? "amazon-eks-node-al2023-arm64-standard-${aws_eks_cluster.cluster.version}*"
+        : "amazon-eks-node-${aws_eks_cluster.cluster.version}*"
+    ]
   }
 
   most_recent = true
   owners      = ["602401143452"] # Amazon Account ID
+
   tags = {
     Name        = "beest-resource"
     Environment = var.environment
