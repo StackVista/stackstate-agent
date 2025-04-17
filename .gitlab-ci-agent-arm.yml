@@ -637,6 +637,8 @@ pre_release_cluster_agent_image:
     - cd $CI_PROJECT_DIR
     - export PROCESS_AGENT_BRANCH=`cat stackstate-deps.json | jq -r '.PROCESS_AGENT_BRANCH'`
     - mkdir /go/src/app
+    - cd $CI_PROJECT_DIR/beest/sut/yards/k8s && ./generate_tfvars.sh && cd $CI_PROJECT_DIR
+    - cd $CI_PROJECT_DIR/beest/sut/hives/eks-cluster && ./generate_tfvars.sh && cd $CI_PROJECT_DIR
     - cp -R $CI_PROJECT_DIR/beest/* /go/src/app
     - cd /go/src/app
     - . bootstrap_functions.sh
@@ -653,6 +655,7 @@ pre_release_cluster_agent_image:
     - export RUNNERS_IP="$RUNNERS_IP"
     - echo "$RUNNERS_IP"
     - curl https://ipv4.icanhazip.com
+    - export TF_VAR_arch=${ARCH}
   after_script: # artifacts do not work with absolute path, so we move them inside the build dir
     - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/ || true
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/debug $CI_PROJECT_DIR/beest/ || true
