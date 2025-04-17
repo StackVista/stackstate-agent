@@ -5,7 +5,7 @@ variable "arch" {
 
   validation {
     condition     = contains(["amd64", "arm64"], var.arch)
-    error_message = "arch must be either 'amd64' or 'arm64'."
+    error_message = "The variable arch must be either 'amd64' or 'arm64', did you forget to set the environment variable ARCH?"
   }
 }
 
