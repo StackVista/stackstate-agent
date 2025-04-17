@@ -1,6 +1,6 @@
 locals {
   # Determine the EKS node type based on the arch variable
-  agent_eks_node_type_final = var.arch == "arm64" ? "m6g.xlarge" : var.agent_eks_node_type
+  agent_eks_node_type = var.arch == "arm64" ? "m6g.xlarge" : "m6i.xlarge"
 }
 
 module "eks_vpc" {
@@ -22,6 +22,6 @@ module "eks_cluster" {
   k8s_cluster_name    = local.agent_cluster_name
   k8s_version         = var.agent_eks_version
   k8s_runtime         = var.agent_eks_runtime
-  k8s_node_type       = local.agent_eks_node_type_final
+  k8s_node_type       = local.agent_eks_node_type
   k8s_size            = var.agent_eks_size
 }

@@ -136,6 +136,7 @@ agent-x86:
     <<: *commonvariables
     <<: *agent_variables
     ARCH: amd64
+    TF_VAR_arch: amd64
   trigger:
     include: .gitlab-ci-agent-x86.yml
     strategy: depend
@@ -153,6 +154,7 @@ agent-arm:
     <<: *commonvariables
     <<: *agent_variables
     ARCH: arm64
+    TF_VAR_arch: arm64
   trigger:
     include: .gitlab-ci-agent-arm.yml
     strategy: depend

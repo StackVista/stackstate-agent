@@ -25,11 +25,6 @@ variable "arch" {
   }
 }
 
-variable "agent_eks_node_type" {
-  description = "Type of EKS agent node"
-  type        = string
-  default     = "m6i.xlarge"  # Default node type for "amd64"
-}
 variable "agent_eks_size" {
   default = 1
 }
