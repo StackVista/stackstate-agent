@@ -55,7 +55,7 @@ resource "aws_key_pair" "eks_node_key_pair" {
 
 locals {
   # Determine the EKS node type based on the arch variable
-  agent_eks_node_type_final = var.arch == "arm64" ? "m6g.xlarge" : var.arch
+  agent_eks_node_type_final = var.arch == "arm64" ? "m6g.xlarge" : "m6i.xlarge"
 }
 
 resource "aws_launch_configuration" "eks_launch_configuration" {
