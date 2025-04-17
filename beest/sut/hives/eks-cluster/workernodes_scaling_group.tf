@@ -53,11 +53,16 @@ resource "aws_key_pair" "eks_node_key_pair" {
     }
 }
 
+locals {
+  # Determine the EKS node type based on the arch variable
+  agent_eks_node_type_final = var.arch == "arm64" ? "m6g.xlarge" : var.agent_eks_node_type
+}
+
 resource "aws_launch_configuration" "eks_launch_configuration" {
   associate_public_ip_address = true
   iam_instance_profile        = aws_iam_instance_profile.eks_node_instance_profile.name
   image_id                    = data.aws_ami.eks_node_ami.id
-  instance_type               = var.k8s_node_type
+  instance_type               = local.agent_eks_node_type_final
   //  spot_price                  = "0.008" # TODO check - Status Reason: Max spot instance count exceeded.
   name_prefix      = "eks-${var.k8s_cluster_name}"
   security_groups  = [aws_security_group.eks_nodes_sg.id]
