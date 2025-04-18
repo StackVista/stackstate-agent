@@ -264,7 +264,7 @@ notify-on-master-fail:
   image: ${DOCKER_PROXY_URL}/library/alpine:latest
   only:
     - stac-21872
-    - master
+    - stackstate-7.51.1
   script:
     - SUITE=build ./.cerberus/cerberus_notify_failure.sh
   stage: report
