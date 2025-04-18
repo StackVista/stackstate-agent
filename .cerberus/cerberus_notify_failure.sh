@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This script does a call ot to the Cerberus Lambda running in AWS
+# This script does a call out to the Cerberus Lambda running in AWS
 # The Cerberus code can be found at: https://gitlab.com/stackvista/devops/cerberus
 
 set -exuo pipefail
