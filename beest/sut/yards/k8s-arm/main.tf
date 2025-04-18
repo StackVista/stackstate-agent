@@ -1,5 +1,5 @@
 module "eks_vpc" {
-  source = "../../hives/eks-arm-vpc"
+  source = "../../hives/eks-vpc"
 
   environment = var.yard_id
   az1         = local.az1
