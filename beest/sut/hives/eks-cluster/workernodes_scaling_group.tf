@@ -12,7 +12,7 @@ data "aws_ami" "eks_node_ami" {
     name   = "name"
     values = [
       var.arch == "arm64"
-        ? "amazon-eks-node-al2023-arm64-standard-${aws_eks_cluster.cluster.version}*"
+        ? "amazon-eks-arm64-node-${aws_eks_cluster.cluster.version}*"
         : "amazon-eks-node-${aws_eks_cluster.cluster.version}*"
     ]
   }
