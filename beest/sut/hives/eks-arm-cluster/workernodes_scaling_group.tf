@@ -24,12 +24,19 @@ data "aws_ami" "eks_node_ami" {
 # More information: https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-06-05/amazon-eks-nodegroup.yaml
 locals {
   eks-node-userdata = <<USERDATA
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: application/node.eks.aws
+
 ---
 apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
 spec:
   cluster:
     name: ${var.k8s_cluster_name}
+--BOUNDARY--
 USERDATA
 }
 
