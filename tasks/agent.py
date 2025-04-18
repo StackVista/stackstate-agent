@@ -147,9 +147,6 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/cluster-agent/command/*")
     do_sed_rename(ctx, 's/datadog-agent/stackstate-agent/g', "./cmd/cluster-agent/custommetrics/*.go")
 
-    # Cluster Agent - Kubernetes API client
-    do_go_rename(ctx, '"\\"datadogtoken\\" -> \\"stackstatetoken\\""', "./pkg/util/kubernetes/apiserver")
-
     # DD 7.33 Upstream Merge changes
     do_sed_rename(ctx, 's/"datadog.yaml"/"stackstate.yaml"/g',
                        "./cmd/agent/common/import.go")
@@ -312,6 +309,11 @@ def apply_branding(ctx):
                   "./omnibus/resources/iot/msi/localbuild/rebuild.bat")
     do_sed_rename(ctx, 's/src\\\\etc\\\\datadog-agent/src\\\\etc\\\\stackstate-agent/',
                   "./omnibus/resources/agent/msi/localbuild/rebuild.bat")
+
+    # configmaps
+    do_go_rename(ctx, '"\\"datadog-cluster-id\\" -> \\"stackstate-cluster-id\\""', "./pkg/util/kubernetes/apiserver/common")
+    do_go_rename(ctx, '"\\"datadog-leader-election\\" -> \\"stackstate-leader-election\\""', "./pkg/config/setup")
+    do_go_rename(ctx, '"\\"datadogtoken\\" -> \\"stackstatetoken\\""', "./pkg/config/setup")
 
 
 @task
