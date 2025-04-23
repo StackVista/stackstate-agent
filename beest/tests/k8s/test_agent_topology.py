@@ -17,9 +17,9 @@ def test_cluster_agent_topology(ansible_var, cliv1):
     cluster_agent = release_name + "-cluster-agent"
 
     if release_name == "suse-observability-agent":
-        secret_name = release_name
+        secret_name = release_name + "-secrets"
     else:
-        secret_name = release_name + "-suse-observability-agent"
+        secret_name = release_name + "-suse-observability-agent-secrets"
 
     expected_topology = TopologyMatcher() \
         .component("namespace", type="namespace", name=namespace) \
@@ -57,9 +57,9 @@ def test_node_agent_topology(ansible_var, cliv1):
     node_agent = release_name + "-node-agent"
 
     if release_name == "suse-observability-agent":
-        secret_name = release_name
+        secret_name = release_name + "-secrets"
     else:
-        secret_name = release_name + "-suse-observability-agent"
+        secret_name = release_name + "-suse-observability-agent-secrets"
 
     expected_topology = TopologyMatcher() \
         .component("namespace", type="namespace", name=namespace) \
@@ -113,9 +113,9 @@ def test_checks_agent_topology(ansible_var, cliv1):
     checks_agent = release_name + "-checks-agent"
 
     if release_name == "suse-observability-agent":
-        secret_name = release_name
+        secret_name = release_name + "-secrets"
     else:
-        secret_name = release_name + "-suse-observability-agent"
+        secret_name = release_name + "-suse-observability-agent-secrets"
 
     expected_topology = TopologyMatcher() \
         .component("namespace", type="namespace", name=namespace) \
