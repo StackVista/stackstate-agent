@@ -7,7 +7,7 @@ metadata:
     test: pod-to-pod-headless
 spec:
   containers:
-    - image: itsthenetwork/alpine-ncat
+    - image: wolverminion/ncat
       imagePullPolicy: IfNotPresent
       name: headless-server
       command: ["/bin/bash", "-c", "ncat -vv --broker --listen -p 543 > /dev/null"]
@@ -38,7 +38,7 @@ metadata:
     test: pod-to-pod-headless
 spec:
   containers:
-    - image: jgkamat/netcat
+    - image: wolverminion/netcat
       imagePullPolicy: IfNotPresent
       name: headless-client
       command: ["/bin/bash", "-c", "while echo y; do sleep 0.1; done | nc -vv headless-service 543"]
