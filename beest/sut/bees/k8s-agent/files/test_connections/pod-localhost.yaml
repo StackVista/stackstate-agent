@@ -6,11 +6,11 @@ metadata:
     test: pod-localhost
 spec:
   containers:
-    - image: wolverminion/netcat
+    - image: ghcr.io/louisparkin/netcat
       imagePullPolicy: IfNotPresent
       name: server
       command: ["/bin/bash", "-c", "nc -l -p 234 > /dev/null"]
-    - image: wolverminion/netcat
+    - image: ghcr.io/louisparkin/netcat
       imagePullPolicy: IfNotPresent
       name: client
       command: ["/bin/bash", "-c", "while echo y; do sleep 0.1; done | nc localhost 234"]
