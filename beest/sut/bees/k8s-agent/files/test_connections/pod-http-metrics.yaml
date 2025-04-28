@@ -8,7 +8,7 @@ metadata:
 spec:
   containers:
     - name: shipping
-      image: weaveworksdemos/shipping:0.4.8
+      image: ghcr.io/socks-factory/shipping:latest
       ports:
         - containerPort: 80
 ---
