@@ -20,7 +20,7 @@ stackstate_platform_version: "{{ lookup('env', 'STACKSTATE_PLATFORM_VERSION') }}
 stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENSE }}"
 
 monitoring_namespace: "monitoring"
-agent_release_name: "stackstate-k8s-agent"
+agent_release_name: "suse-observability-agent"
 test_namespace: "{{ yard_id.replace('.','-').replace('_','-') }}"
 agent_cluster_name: "{{ test_namespace }}"
 stackstate_cluster_name: "sandbox-main.sandbox.stackstate.io"

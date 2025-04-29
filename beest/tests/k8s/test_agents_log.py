@@ -2,8 +2,9 @@ import re
 import util
 import logging
 import os
+from conftest import YARD_LOCATION
 
-testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
+testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_inventory"]
 
 
 def _get_pods(ansible_var, kubecontext, host, controller_name):
