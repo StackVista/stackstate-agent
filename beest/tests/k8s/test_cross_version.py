@@ -2,10 +2,9 @@ from packaging import version
 import pytest
 
 from conftest import STS_CONTEXT_FILE
-from conftest import YARD_LOCATION
 from ststest import TopologyMatcher
 
-testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_inventory"]
+testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
 
 def test_projected_volume_topology(ansible_var, cliv1):
