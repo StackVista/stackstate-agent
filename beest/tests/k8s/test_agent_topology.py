@@ -1,11 +1,13 @@
 import logging
+import os
 from platform import release
 import secrets
 
 from conftest import STS_CONTEXT_FILE
 from ststest import TopologyMatcher
 
-testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
+ANSIBLE_INVENTORY_LOCATION = os.getenv("ANSIBLE_INVENTORY_LOCATION", "../../sut/yards/k8s/ansible_inventory")
+testinfra_hosts = [f"ansible://local?ansible_inventory={ANSIBLE_INVENTORY_LOCATION}"]
 
 
 def test_cluster_agent_topology(ansible_var, cliv1):

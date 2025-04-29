@@ -3,7 +3,8 @@ import util
 import logging
 import os
 
-testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
+ANSIBLE_INVENTORY_LOCATION = os.getenv("ANSIBLE_INVENTORY_LOCATION", "../../sut/yards/k8s/ansible_inventory")
+testinfra_hosts = [f"ansible://local?ansible_inventory={ANSIBLE_INVENTORY_LOCATION}"]
 
 
 def _get_pods(ansible_var, kubecontext, host, controller_name):

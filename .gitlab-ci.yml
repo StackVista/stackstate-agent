@@ -135,6 +135,7 @@ agent-x86:
     <<: *commonvariables
     <<: *agent_variables
     ARCH: amd64
+    ANSIBLE_INVENTORY_LOCATION: "../../sut/yards/k8s/ansible_inventory"
   trigger:
     include: .gitlab-ci-agent-x86.yml
     strategy: depend
@@ -152,6 +153,7 @@ agent-arm:
     <<: *commonvariables
     <<: *agent_variables
     ARCH: arm64
+    ANSIBLE_INVENTORY_LOCATION: "../../sut/yards/k8s-arm/ansible_inventory"
   trigger:
     include: .gitlab-ci-agent-arm.yml
     strategy: depend
