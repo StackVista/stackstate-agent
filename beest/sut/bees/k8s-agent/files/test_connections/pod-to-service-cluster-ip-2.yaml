@@ -6,7 +6,7 @@ metadata:
     type: server-2
 spec:
   containers:
-    - image: itsthenetwork/alpine-ncat
+    - image: ghcr.io/louisparkin/ncat
       imagePullPolicy: IfNotPresent
       name: server-2
       command: ["/bin/bash", "-c", "ncat -vv --broker --listen -p 123 > /dev/null"]
@@ -36,7 +36,7 @@ metadata:
   name: pod-client-2
 spec:
   containers:
-    - image: jgkamat/netcat
+    - image: ghcr.io/louisparkin/netcat
       imagePullPolicy: IfNotPresent
       name: client-2
       command: ["/bin/bash", "-c", "while echo y; do sleep 0.1; done | nc -vv pod-service-2 654"]

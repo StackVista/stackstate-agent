@@ -137,6 +137,9 @@ agent-x86:
     <<: *commonvariables
     <<: *agent_variables
     ARCH: amd64
+    ANSIBLE_INVENTORY_LOCATION: "../../sut/yards/k8s/ansible_inventory"
+    STS_CONTEXT_FILE: "../../sut/yards/k8s/config.yaml"
+    STS_KUBECONFIG_FILE: "./../../sut/yards/k8s/config"
   trigger:
     include: .gitlab-ci-agent-x86.yml
     strategy: depend
@@ -154,6 +157,9 @@ agent-arm:
     <<: *commonvariables
     <<: *agent_variables
     ARCH: arm64
+    ANSIBLE_INVENTORY_LOCATION: "../../sut/yards/k8s-arm/ansible_inventory"
+    STS_CONTEXT_FILE: "../../sut/yards/k8s-arm/config.yaml"
+    STS_KUBECONFIG_FILE: "./../../sut/yards/k8s-arm/config"
   trigger:
     include: .gitlab-ci-agent-arm.yml
     strategy: depend
@@ -242,7 +248,7 @@ cleanup_job:
     <<: *commonvariables
     <<: *agent_variables
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" && $CLEAN == "yes"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
       when: always
     - if: $CI_COMMIT_MESSAGE =~ /\[cleanup]/
       when: always
@@ -270,4 +276,3 @@ notify-on-master-fail:
   tags:
     - sts-k8s-m-runner
   when: on_failure
-
