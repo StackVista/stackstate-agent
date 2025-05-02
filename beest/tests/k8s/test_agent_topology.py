@@ -16,6 +16,9 @@ def test_cluster_agent_topology(ansible_var, cliv1):
     release_name = ansible_var("agent_release_name")
     branch_name = ansible_var("agent_current_branch")
 
+    logging.info(f"Setting up cluster-agent topo query with the following values: "
+                 f"cluster_name: {cluster_name}, namespace: {namespace}, release_name: {release_name}")
+
     cluster_agent = release_name + "-cluster-agent"
 
     if release_name == "suse-observability-agent":
@@ -55,6 +58,9 @@ def test_node_agent_topology(ansible_var, cliv1):
     namespace = ansible_var("monitoring_namespace")
     release_name = ansible_var("agent_release_name")
     branch_name = ansible_var("agent_current_branch")
+
+    logging.info(f"Setting up node-agent topo query with the following values: k8s_node_count: {k8s_node_count}, "
+                 f"cluster_name: {cluster_name}, namespace: {namespace}, release_name: {release_name}")
 
     node_agent = release_name + "-node-agent"
 
@@ -111,6 +117,9 @@ def test_checks_agent_topology(ansible_var, cliv1):
     namespace = ansible_var("monitoring_namespace")
     release_name = ansible_var("agent_release_name")
     branch_name = ansible_var("agent_current_branch")
+
+    logging.info(f"Setting up checks-agent topo query with the following values: "
+                 f"cluster_name: {cluster_name}, namespace: {namespace}, release_name: {release_name}")
 
     checks_agent = release_name + "-checks-agent"
 

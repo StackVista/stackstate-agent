@@ -136,6 +136,7 @@ agent-x86:
     <<: *agent_variables
     ARCH: amd64
     ANSIBLE_INVENTORY_LOCATION: "../../sut/yards/k8s/ansible_inventory"
+    STS_CONTEXT_FILE: "../../sut/yards/k8s/config.yaml"
   trigger:
     include: .gitlab-ci-agent-x86.yml
     strategy: depend
@@ -154,6 +155,7 @@ agent-arm:
     <<: *agent_variables
     ARCH: arm64
     ANSIBLE_INVENTORY_LOCATION: "../../sut/yards/k8s-arm/ansible_inventory"
+    STS_CONTEXT_FILE: "../../sut/yards/k8s-arm/config.yaml"
   trigger:
     include: .gitlab-ci-agent-arm.yml
     strategy: depend

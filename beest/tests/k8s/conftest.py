@@ -1,9 +1,11 @@
 import logging
+import os
+
 import pytest
 from stscliv1 import CLIv1
 
 USE_CACHE = False
-STS_CONTEXT_FILE = "../../sut/yards/k8s/config.yaml"
+STS_CONTEXT_FILE = os.getenv("STS_CONTEXT_FILE", "../../sut/yards/k8s/config.yaml")
 
 
 @pytest.fixture
