@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 GITLAB_TOKEN=$1
-days_threshold=$2
+days_threshold=${2:-21}
 
 PROJECT_ID="7831967"
 GITLAB_URL="https://gitlab.com/api/v4"
@@ -53,6 +53,13 @@ while true; do
         break
     fi
 
+    if [[ "$branches_data" == *"\"message\":\"401 Unauthorized\""* ]]; then
+        echo "ERROR: Invalid GitLab token - 401 Unauthorized" >&2
+        break
+    fi
+
+    echo "$branches_data"
+
     branch_names=$(echo "$branches_data" | jq -r '.[] | .name + ">" + (.commit.committed_date | gsub("T";" ") | gsub("Z";""))')
     mapfile -t branch_info_array < <(echo "$branch_names")
     for branch_info in "${branch_info_array[@]}"; do
@@ -70,6 +77,11 @@ while true; do
 
     page=$((page + 1))
 done
+
+if [ ${#active_branches[@]} -eq 0 ]; then
+    echo "No active branches found or error occurred - exiting."
+    exit 0
+fi
 
 echo "Setup aws region"
 aws configure set region $AWS_REGION
