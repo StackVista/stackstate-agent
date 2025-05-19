@@ -50,80 +50,46 @@ COPY stackstate*.yaml etc/stackstate-agent/
 # Actual docker image construction #
 ####################################
 
-FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:20.04
+FROM artifactory.tooling.stackstate.io/docker-virtual/opensuse/tumbleweed:latest
 LABEL maintainer "StackState <info@stackstate.com>"
 ARG WITH_JMX
 ENV DOCKER_STS_AGENT=true \
     PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
-    CURL_CA_BUNDLE=/opt/stackstate-agent/embedded/ssl/certs/cacert.pem \
-    # Pass envvar variables to agents
-    S6_KEEP_ENV=1 \
-    # Direct all agent logs to stdout
-    S6_LOGGING=0 \
-    # Exit container if entrypoint fails
-    S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
-    # Allow readonlyrootfs
-    S6_READ_ONLY_ROOT=1
+    CURL_CA_BUNDLE=/opt/stackstate-agent/embedded/ssl/certs/cacert.pem
 
 # Install openjdk-8-jre-headless on jmx flavor
-RUN if [ -n "$WITH_JMX" ]; then apt-get update \
+RUN if [ -n "$WITH_JMX" ]; then zypper refresh \
  && mkdir /usr/share/man/man1 \
- && apt-get install --no-install-recommends -y openjdk-8-jre-headless \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; fi
+ && zypper --non-interactive install --no-recommends java-1_8_0-openjdk-headless \
+ && zypper --non-interactive clean --all \
+ && rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*; fi
 
 # make sure we have recent dependencies
-RUN apt-get update \
-  # CVE-fixing time!
-  && apt full-upgrade -y \
-  && apt-get install -y util-linux ncurses-bin ncurses-base libncursesw5:${ARCH} \
-  # https://security-tracker.debian.org/tracker/CVE-2018-15686
-  && apt-get install -y libudev1 libsystemd0 libgcrypt20 \
-  # https://security-tracker.debian.org/tracker/CVE-2016-2779
-  && rm -f /usr/sbin/runuser \
-  # https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-6954
-  && rm -f /usr/lib/x86_64-linux-gnu/libdb-5.3.so \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN zypper --non-interactive refresh && \
+    zypper --non-interactive update && \
+    zypper --non-interactive install --no-recommends \
+      systemd libncurses6 libgcrypt20 && \
+    rm -f /usr/sbin/runuser /usr/lib64/libdb-5.3.so && \
+    zypper --non-interactive clean --all && \
+    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
 
 # Copy agent from extract stage
 COPY --from=extract /output/ /
-
-# S6 entrypoint, service definitions, healthcheck probe
-COPY s6-services /etc/services.d/
-
-# STS: We do not use the dd network agent embedded in the main agent (we use our tcptracer-bpf which is embedded in the process-agent)
 RUN rm -rf /etc/services.d/network
 
 COPY cont-init.d /etc/cont-init.d/
 COPY probe.sh initlog.sh secrets-helper/readsecret.py /
 
-# Extract s6-overlay
-#
-# This step is dependant on the distribution's filesystem layout:
-# - When Buster moved to merged-usr (/bin/ as a symlink to /usr/bin),
-#   we had to change the extraction logic, see #1591
-# - The debian image is now built with merged-usr explicitly disabled,
-#   see https://github.com/debuerreotype/debuerreotype/pull/50
-# - Ubuntu 20.10 uses the symlink /bin -> /usr/bin
-RUN tar xzf s6.tgz -C / --exclude="./bin" \
-&& tar xzf s6.tgz -C /usr ./bin \
-&& rm s6.tgz \
-# Prepare for running without root
-# - Create a stackstate-agent:root user and give it permissions on relevant folders
-# - Remove the /var/run -> /run symlink and create a legit /var/run folder
-# as some docker versions re-create /run from zero at container start
- && adduser --system --no-create-home --disabled-password --ingroup root stackstate-agent \
- && rm /var/run && mkdir -p /var/run/s6 \
- && chown -R stackstate-agent:root /etc/stackstate-agent/ /etc/s6/ /var/run/s6/ /var/log/stackstate-agent/ \
- && chmod g+r,g+w,g+X -R /etc/stackstate-agent/ /etc/s6/ /var/run/s6/ /var/log/stackstate-agent/ \
+
+RUN adduser --system --no-create-home --disabled-password --ingroup root stackstate-agent \
+ && rm /var/run \
+ && chown -R stackstate-agent:root /etc/stackstate-agent/ /var/log/stackstate-agent/ \
+ && chmod g+r,g+w,g+X -R /etc/stackstate-agent/ /var/log/stackstate-agent/ \
  && chmod 755 /probe.sh /initlog.sh \
  && chown root:root /readsecret.py \
  && chmod 500 /readsecret.py \
 # Remove the process-agent from the agent container, as it is not used and a source of vulnerabilities
  && rm opt/stackstate-agent/embedded/bin/process-agent
-
-# Override the exit script by ours to fix --pid=host operations
-COPY init-stage3 /etc/s6/init/init-stage3
 
 # Expose DogStatsD and trace-agent ports
 EXPOSE 8125/udp 8126/tcp
@@ -132,6 +98,6 @@ HEALTHCHECK --interval=2m --timeout=5s --retries=2 \
   CMD ["/probe.sh"]
 
 # Leave following directories RW to allow use of kubernetes readonlyrootfs flag
-VOLUME ["/var/run/s6", "/etc/stackstate-agent", "/var/log/stackstate", "/tmp"]
+VOLUME ["/etc/stackstate-agent", "/var/log/stackstate", "/tmp"]
 
-CMD ["/init"]
+CMD ["/opt/stackstate-agent/bin/agent/agent", "run"]
