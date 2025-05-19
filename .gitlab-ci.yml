@@ -248,7 +248,7 @@ cleanup_job:
     <<: *commonvariables
     <<: *agent_variables
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CLEAN == "yes"
       when: always
     - if: $CI_COMMIT_MESSAGE =~ /\[cleanup]/
       when: always
