@@ -1,4 +1,4 @@
-#/bin/bash
+#/bin/sh
 
 zypper --non-interactive refresh
 zypper --non-interactive update
