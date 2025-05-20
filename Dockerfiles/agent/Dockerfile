@@ -50,36 +50,58 @@ COPY stackstate*.yaml etc/stackstate-agent/
 # Actual docker image construction #
 ####################################
 
-FROM artifactory.tooling.stackstate.io/docker-virtual/opensuse/tumbleweed:latest
+FROM registry.suse.com/bci/bci-micro:15.6 as final
+RUN : # No-op command to create an explicit layer - this fixes a weird buildkit/buildx bug on macos arm
+
+# Temporary build stage image
+FROM opensuse/leap:latest AS chroot-builder
+# Install system packages using builder image that has zypper
+COPY --from=final / /chroot/
+
 LABEL maintainer "StackState <info@stackstate.com>"
 ARG WITH_JMX
 ENV DOCKER_STS_AGENT=true \
     PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
     CURL_CA_BUNDLE=/opt/stackstate-agent/embedded/ssl/certs/cacert.pem
 
+COPY installs.sh /
+COPY jmx-installs.sh /
+
 # Install openjdk-8-jre-headless on jmx flavor
-RUN if [ -n "$WITH_JMX" ]; then zypper refresh \
- && mkdir /usr/share/man/man1 \
- && zypper --non-interactive install --no-recommends java-1_8_0-openjdk-headless \
- && zypper --non-interactive clean --all \
- && rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*; fi
+#RUN if [ -n "$WITH_JMX" ]; then zypper refresh \
+# && mkdir /usr/share/man/man1 \
+# && zypper --installroot /chroot -n in --no-recommends java-1_8_0-openjdk-headless \
+# && zypper --non-interactive clean --all \
+# && rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*; fi
+RUN if [ -n "$WITH_JMX" ]; then \
+      /jmx-installs.sh \
+    fi
 
 # make sure we have recent dependencies
-RUN zypper --non-interactive refresh && \
-    zypper --non-interactive update && \
-    zypper --non-interactive install --no-recommends \
-      systemd libncurses6 libgcrypt20 && \
-    rm -f /usr/sbin/runuser /usr/lib64/libdb-5.3.so && \
-    zypper --non-interactive clean --all && \
-    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
+#RUN zypper --non-interactive refresh && \
+#    zypper --non-interactive update && \
+#    zypper --installroot /chroot -n in --no-recommends \
+#      systemd libncurses6 libgcrypt20 && \
+#    rm -f /usr/sbin/runuser /usr/lib64/libdb-5.3.so && \
+#    zypper --non-interactive clean --all && \
+#    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
+RUN /installs.sh
 
 # Copy agent from extract stage
-COPY --from=extract /output/ /
+COPY --from=extract /output/ /chroot/
 RUN rm -rf /etc/services.d/network
 
-COPY cont-init.d /etc/cont-init.d/
-COPY probe.sh initlog.sh secrets-helper/readsecret.py /
+COPY cont-init.d /chroot/etc/cont-init.d/
+COPY probe.sh initlog.sh secrets-helper/readsecret.py /chroot/
 
+FROM final
+COPY --from=chroot-builder /chroot/ /
+
+LABEL maintainer "StackState <info@stackstate.com>"
+ARG WITH_JMX
+ENV DOCKER_STS_AGENT=true \
+    PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
+    CURL_CA_BUNDLE=/opt/stackstate-agent/embedded/ssl/certs/cacert.pem
 
 RUN adduser --system --no-create-home --disabled-password --ingroup root stackstate-agent \
  && rm /var/run \
