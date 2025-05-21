@@ -1,27 +1,13 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-readonly ENTRYPOINT_PATH="/opt/entrypoints"
-
-if [[ -z ${ENTRYPOINT+x} ]]; then
-    # Default entrypoint if none is specified
-    if [[ -x "$ENTRYPOINT_PATH/_default" ]]; then
-        exec "$ENTRYPOINT_PATH/_default"
-    else
-        printf "No entrypoint is defined.\n" >&2
-        exit 1
+for file in $(ls etc/cont-init.d/ | grep -v "50-ci.sh"); do
+    if [[ -f "etc/cont-init.d/${file}" ]]; then
+        "etc/cont-init.d/${file}"
+        RC=$?
+        if [[ $RC -ne 0 ]]; then
+            echo "Error in ${file} with return code ${RC}"
+            exit $RC
+        fi
     fi
-fi
+done
 
-# Prevent directory traversal attacks
-if [[ "${ENTRYPOINT/\//_}" != "$ENTRYPOINT" ]]; then
-    printf "\"%s\" is not a valid ENTRYPOINT.\n" "$ENTRYPOINT" >&2
-    exit 1
-fi
-
-if [[ -x "$ENTRYPOINT_PATH/$ENTRYPOINT" ]]; then
-    exec "$ENTRYPOINT_PATH/$ENTRYPOINT"
-else
-    printf "\"%s\" is not a valid ENTRYPOINT.\n" "$ENTRYPOINT" >&2
-    exit 1
-fi
+/opt/stackstate-agent/bin/agent/agent run
