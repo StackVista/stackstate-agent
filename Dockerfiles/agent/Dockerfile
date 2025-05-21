@@ -74,8 +74,11 @@ COPY jmx-installs.sh /
 # && zypper --non-interactive clean --all \
 # && rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*; fi
 RUN if [ -n "$WITH_JMX" ]; then \
-      /jmx-installs.sh \
-    fi
+      zypper refresh; \
+      mkdir /usr/share/man/man1; \
+      zypper --installroot /chroot -n in --no-recommends java-1_8_0-openjdk-headless; \
+      zypper --non-interactive clean --all; \
+      rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*; fi
 
 # make sure we have recent dependencies
 #RUN zypper --non-interactive refresh && \
@@ -85,7 +88,12 @@ RUN if [ -n "$WITH_JMX" ]; then \
 #    rm -f /usr/sbin/runuser /usr/lib64/libdb-5.3.so && \
 #    zypper --non-interactive clean --all && \
 #    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
-RUN /installs.sh
+RUN zypper --non-interactive refresh; \
+    zypper --non-interactive update; \
+    zypper --installroot /chroot -n in --no-recommends systemd libncurses6 libgcrypt20; \
+    rm -f /usr/sbin/runuser /usr/lib64/libdb-5.3.so; \
+    zypper --non-interactive clean --all; \
+    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*;
 
 # Copy agent from extract stage
 COPY --from=extract /output/ /chroot/
