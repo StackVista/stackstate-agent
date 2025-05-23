@@ -39,39 +39,9 @@ FROM registry.suse.com/bci/bci-base:15.6 AS chroot-builder
 # Install system packages using builder image that has zypper
 COPY --from=final / /chroot/
 
-ARG WITH_JMX
 ENV DOCKER_STS_AGENT=true \
     PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
     CURL_CA_BUNDLE=/opt/stackstate-agent/embedded/ssl/certs/cacert.pem
-
-COPY installs.sh /
-COPY jmx-installs.sh /
-
-# Install openjdk-8-jre-headless on jmx flavor
-#RUN if [ -n "$WITH_JMX" ]; then zypper refresh \
-# && mkdir /usr/share/man/man1 \
-# && zypper --installroot /chroot -n in --no-recommends java-1_8_0-openjdk-headless \
-# && zypper --non-interactive clean --all \
-# && rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*; fi
-RUN if [ -n "$WITH_JMX" ]; then \
-      zypper refresh; \
-      mkdir /usr/share/man/man1; \
-      zypper --installroot /chroot -n in --no-recommends java-1_8_0-openjdk-headless; fi
-
-# make sure we have recent dependencies
-#RUN zypper --non-interactive refresh && \
-#    zypper --non-interactive update && \
-#    zypper --installroot /chroot -n in --no-recommends \
-#      systemd libncurses6 libgcrypt20 && \
-#    rm -f /usr/sbin/runuser /usr/lib64/libdb-5.3.so && \
-#    zypper --non-interactive clean --all && \
-#    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
-RUN zypper --non-interactive refresh; \
-    zypper --non-interactive update; \
-    zypper --installroot /chroot -n in --no-recommends systemd libncurses6 libgcrypt20; \
-    rm -f /usr/sbin/runuser /usr/lib64/libdb-5.3.so; \
-    zypper --non-interactive clean --all; \
-    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*;
 
 # Copy agent from extract stage
 RUN rm -rf /chroot/etc/ssl
@@ -86,21 +56,9 @@ LABEL maintainer "StackState <info@stackstate.com>"
 RUN rm -rf /etc/ssl
 COPY --from=chroot-builder /chroot/ /
 
-LABEL maintainer "StackState <info@stackstate.com>"
-ARG WITH_JMX
 ENV DOCKER_STS_AGENT=true \
     PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
     CURL_CA_BUNDLE=/opt/stackstate-agent/embedded/ssl/certs/cacert.pem
-
-#RUN adduser --system --no-create-home --disabled-password --ingroup root stackstate-agent \
-# && rm /var/run \
-# && chown -R stackstate-agent:root /etc/stackstate-agent/ /var/log/stackstate-agent/ \
-# && chmod g+r,g+w,g+X -R /etc/stackstate-agent/ /var/log/stackstate-agent/ \
-# && chmod 755 /probe.sh /initlog.sh \
-# && chown root:root /readsecret.py \
-# && chmod 500 /readsecret.py \
-## Remove the process-agent from the agent container, as it is not used and a source of vulnerabilities
-# && rm opt/stackstate-agent/embedded/bin/process-agent
 
 ARG user="stackstate-agent"
 
