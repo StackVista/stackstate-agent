@@ -35,11 +35,10 @@ RUN : # No-op command to create an explicit layer - this fixes a weird buildkit/
 
 # Temporary build stage image
 #FROM opensuse/leap:latest AS chroot-builder
-FROM registry.suse.com/bci/bci-micro:15.6 AS chroot-builder
+FROM registry.suse.com/bci/bci-base:15.6 AS chroot-builder
 # Install system packages using builder image that has zypper
 COPY --from=final / /chroot/
 
-LABEL maintainer "StackState <info@stackstate.com>"
 ARG WITH_JMX
 ENV DOCKER_STS_AGENT=true \
     PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
@@ -83,6 +82,7 @@ COPY cont-init.d /chroot/etc/cont-init.d/
 COPY probe.sh initlog.sh secrets-helper/readsecret.py /chroot/
 
 FROM final
+LABEL maintainer "StackState <info@stackstate.com>"
 RUN rm -rf /etc/ssl
 COPY --from=chroot-builder /chroot/ /
 
