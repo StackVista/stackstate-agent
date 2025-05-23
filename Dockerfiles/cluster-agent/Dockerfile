@@ -22,20 +22,17 @@ RUN chmod 755 entrypoint.sh \
 # Actual docker image construction #
 ####################################
 
-FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:20.04
+FROM registry.suse.com/bci/bci-base:15.6 AS software
+RUN :
 
-LABEL maintainer "StackState <info@stackstate.com>"
+FROM registry.suse.com/bci/bci-micro:15.6 AS final
+LABEL maintainer="StackState <info@stackstate.com>"
 
+ARG user="stackstate-agent"
 ENV PATH="/opt/stackstate-agent/bin/:$PATH"
 
-RUN apt-get update \
- && apt full-upgrade -y \
- && apt-get install --no-install-recommends -y ca-certificates curl libgcrypt20 \
- # https://security-tracker.debian.org/tracker/CVE-2018-15686
- && apt-get install -y libudev1 libsystemd0 \
- && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 COPY --from=builder /output /
+COPY --from=software /usr/bin/find /usr/bin/find
 
 # Allow running as an unprivileged user:
 # - General case is the stackstate-agent user
@@ -44,13 +41,14 @@ COPY --from=builder /output /
 # Containerd does not preserve permissions when mounting a volume on top
 # of an empty folder. Creating .placeholder files as a workaround.
 #
-RUN adduser --system --no-create-home --disabled-password --ingroup root stackstate-agent \
- && mkdir -p /var/log/stackstate/ /conf.d \
- && touch /var/log/stackstate/.placeholder \
- && touch /tmp/.placeholder \
- && chown -R stackstate-agent:root /etc/stackstate-agent/ /var/log/stackstate/ /conf.d /tmp/ \
- && chmod g+r,g+w,g+X -R /etc/stackstate-agent/ /var/log/stackstate/ /conf.d /tmp/
+RUN echo "$user:x:1000:1000::/home/$user:/bin/bash" >> /etc/passwd && \
+    echo "$user:x:1000:" >> /etc/group && \
+    mkdir /home/$user && \
+    chown -R $user:$user /home/$user && \
+    chown -R stackstate-agent:root /etc/stackstate-agent/ /var/log/stackstate/ /conf.d /tmp/ && \
+    chmod g+r,g+w,g+X -R /etc/stackstate-agent/ /var/log/stackstate/ /conf.d /tmp/
 
+USER 1000:1000
 # Incompatible with the custom metrics API on port 443
 # Set STS_EXTERNAL_METRICS_PROVIDER_PORT to a higher value to run as non-root
 # USER stackstate-agent

@@ -25,6 +25,8 @@ RUN dpkg -x /stackstate-agent*_${ARCH}.deb . \
 #   - copy default config files
 COPY stackstate*.yaml etc/stackstate-agent/
 
+FROM registry.suse.com/bci/bci-base:15.6 AS software
+RUN :
 ####################################
 # Actual docker image construction #
 ####################################
@@ -40,6 +42,7 @@ ENV DOCKER_STS_AGENT=true \
 
 # Copy agent from extract stage
 COPY --from=extract /output/ /
+COPY --from=software /usr/bin/find /usr/bin/find
 RUN rm -rf /etc/services.d/network
 
 COPY cont-init.d /etc/cont-init.d/
@@ -49,8 +52,11 @@ RUN echo "$user:x:1000:1000::/home/$user:/bin/bash" >> /etc/passwd && \
     echo "$user:x:1000:" >> /etc/group && \
     mkdir /home/$user && \
     chown -R $user:$user /home/$user && \
-    chown -R $user:$user /etc/stackstate-agent/ && \
-    chown -R $user:$user /var/log/stackstate-agent/ && \
+    chown -R $user:root /etc/$user/ /var/log/$user/ && \
+    chmod g+r,g+w,g+X -R /etc/stackstate-agent/ /var/log/stackstate-agent/ && \
+    chmod 755 /probe.sh /initlog.sh && \
+    chown root:root /readsecret.py && \
+    chmod 500 /readsecret.py && \
     rm /opt/stackstate-agent/embedded/bin/process-agent
 
 USER 1000:1000
