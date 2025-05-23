@@ -110,7 +110,8 @@ RUN echo "$user:x:1000:1000::/home/$user:/bin/bash" >> /etc/passwd && \
     mkdir /home/$user && \
     chown -R $user:$user /home/$user && \
     chown -R $user:$user /etc/stackstate-agent/ && \
-    chown -R $user:$user /var/log/stackstate-agent/
+    chown -R $user:$user /var/log/stackstate-agent/ && \
+    rm /opt/stackstate-agent/embedded/bin/process-agent
 
 USER 1000:1000
 
