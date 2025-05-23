@@ -25,42 +25,25 @@ RUN dpkg -x /stackstate-agent*_${ARCH}.deb . \
 #   - copy default config files
 COPY stackstate*.yaml etc/stackstate-agent/
 
-
 ####################################
 # Actual docker image construction #
 ####################################
 
-FROM registry.suse.com/bci/bci-micro:15.6 AS final
-RUN : # No-op command to create an explicit layer - this fixes a weird buildkit/buildx bug on macos arm
-
-# Temporary build stage image
-#FROM opensuse/leap:latest AS chroot-builder
-FROM registry.suse.com/bci/bci-base:15.6 AS chroot-builder
+FROM registry.suse.com/bci/bci-micro:15.6
+LABEL maintainer="StackState <info@stackstate.com>"
 # Install system packages using builder image that has zypper
-COPY --from=final / /chroot/
 
+ARG user="stackstate-agent"
 ENV DOCKER_STS_AGENT=true \
     PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
     CURL_CA_BUNDLE=/opt/stackstate-agent/embedded/ssl/certs/cacert.pem
 
 # Copy agent from extract stage
-RUN rm -rf /chroot/etc/ssl
-COPY --from=extract /output/ /chroot/
-RUN rm -rf /chroot/etc/services.d/network
+COPY --from=extract /output/ /
+RUN rm -rf /etc/services.d/network
 
-COPY cont-init.d /chroot/etc/cont-init.d/
-COPY probe.sh initlog.sh secrets-helper/readsecret.py /chroot/
-
-FROM final
-LABEL maintainer "StackState <info@stackstate.com>"
-RUN rm -rf /etc/ssl
-COPY --from=chroot-builder /chroot/ /
-
-ENV DOCKER_STS_AGENT=true \
-    PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
-    CURL_CA_BUNDLE=/opt/stackstate-agent/embedded/ssl/certs/cacert.pem
-
-ARG user="stackstate-agent"
+COPY cont-init.d /etc/cont-init.d/
+COPY probe.sh initlog.sh secrets-helper/readsecret.py /
 
 RUN echo "$user:x:1000:1000::/home/$user:/bin/bash" >> /etc/passwd && \
     echo "$user:x:1000:" >> /etc/group && \
