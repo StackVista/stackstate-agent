@@ -43,6 +43,9 @@ COPY --from=software /usr/bin/find /usr/bin/find
 #
 RUN echo "$user:x:1000:1000::/home/$user:/bin/bash" >> /etc/passwd && \
     echo "$user:x:1000:" >> /etc/group && \
+    mkdir -p /var/log/stackstate/ /conf.d && \
+    touch /var/log/stackstate/.placeholder && \
+    touch /tmp/.placeholder && \
     mkdir /home/$user && \
     chown -R $user:$user /home/$user && \
     chown -R stackstate-agent:root /etc/stackstate-agent/ /var/log/stackstate/ /conf.d /tmp/ && \
