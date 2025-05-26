@@ -23,6 +23,8 @@ RUN chmod 755 entrypoint.sh \
 ####################################
 
 FROM registry.suse.com/bci/bci-base:15.6 AS software
+# as per comment here: https://github.com/rancher/rancher/blob/main/package/Dockerfile#L12
+# No-op command to create an explicit layer - this fixes a weird buildkit/buildx bug on macos arm
 RUN :
 
 FROM registry.suse.com/bci/bci-micro:15.6 AS final

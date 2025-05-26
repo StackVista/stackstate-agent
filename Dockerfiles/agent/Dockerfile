@@ -26,6 +26,8 @@ RUN dpkg -x /stackstate-agent*_${ARCH}.deb . \
 COPY stackstate*.yaml etc/stackstate-agent/
 
 FROM registry.suse.com/bci/bci-base:15.6 AS software
+# as per comment here: https://github.com/rancher/rancher/blob/main/package/Dockerfile#L12
+# No-op command to create an explicit layer - this fixes a weird buildkit/buildx bug on macos arm
 RUN :
 ####################################
 # Actual docker image construction #

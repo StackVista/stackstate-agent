@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+# These files would have been executed by systemd in the order of the implied priority of the number in the filename.
 FILES="50-kubernetes.sh 51-docker.sh 59-defaults.sh 60-network-check.sh 60-sysprobe-check.sh 89-copy-customfiles.sh"
 
+# But since we are not using systemd, we will execute them in the order they are listed here.
 for file in ${FILES}; do
     if [[ -f "etc/cont-init.d/${file}" ]]; then
         "etc/cont-init.d/${file}"
@@ -9,6 +11,8 @@ for file in ${FILES}; do
         if [[ $RC -ne 0 ]]; then
             echo "Error in ${file} with return code ${RC}"
 #            exit $RC
+            # We log any errors for debugging purposes, but do not exit.
+            # The next if-block will handle the case where no config file is found.
         fi
     fi
 done
