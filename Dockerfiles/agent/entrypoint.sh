@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+file="01-check-apikey.sh"
+"etc/cont-init.d/${file}"
+RC=$?
+if [[ $RC -ne 0 ]]; then
+    echo ""
+    echo "=================================================================================="
+    echo "You must set an STS_API_KEY environment variable to run the StackState Agent container"
+    echo "=================================================================================="
+    echo ""
+    sleep 20
+    exit $RC
+fi
+
 # These files would have been executed by systemd in the order of the implied priority of the number in the filename.
 FILES="50-kubernetes.sh 51-docker.sh 59-defaults.sh 60-network-check.sh 60-sysprobe-check.sh 89-copy-customfiles.sh"
 
