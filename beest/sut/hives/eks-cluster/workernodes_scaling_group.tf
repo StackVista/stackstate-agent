@@ -40,6 +40,9 @@ kind: NodeConfig
 spec:
   cluster:
     name: ${var.k8s_cluster_name}
+    apiServerEndpoint: ${aws_eks_cluster.cluster.endpoint}
+    certificateAuthority: ${aws_eks_cluster.cluster.certificate_authority[0].data}
+    cidr: ${aws_eks_cluster.cluster.kubernetes_network_config[0].service_ipv4_cidr}
 --BOUNDARY--
 USERDATA
 }
