@@ -10,7 +10,7 @@
 data "aws_ami" "eks_node_ami" {
   filter {
     name   = "name"
-    values = ["amazon-eks-arm64-node-${aws_eks_cluster.cluster.version}*"]
+    values = ["amazon-eks-node-al2023-arm64-standard-${aws_eks_cluster.cluster.version}*"]
   }
 
   most_recent = true
@@ -28,8 +28,22 @@ data "aws_ami" "eks_node_ami" {
 # More information: https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-06-05/amazon-eks-nodegroup.yaml
 locals {
   eks-node-userdata = <<USERDATA
-#!/bin/bash -xe
-/etc/eks/bootstrap.sh ${var.k8s_cluster_name} --container-runtime ${var.k8s_runtime}
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: application/node.eks.aws
+
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster:
+    name: ${var.k8s_cluster_name}
+    apiServerEndpoint: ${aws_eks_cluster.cluster.endpoint}
+    certificateAuthority: ${aws_eks_cluster.cluster.certificate_authority[0].data}
+    cidr: ${aws_eks_cluster.cluster.kubernetes_network_config[0].service_ipv4_cidr}
+--BOUNDARY--
 USERDATA
 }
 
