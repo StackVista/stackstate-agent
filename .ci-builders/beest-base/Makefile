@@ -5,6 +5,9 @@ SHELL         := /bin/sh
 
 RUNTIMETAG         := $(shell date +%Y%m%d)
 DOCKER_REGISTRY    ?= docker.io
+
+# For local development, you have to change this to something you have access to push to. For Louis Parkin, it is wolverminion
+BASE_KEEPER_IMAGE_LOCAL ?= wolverminion/beest:local
 BASE_KEEPER_IMAGE   = ${DOCKER_REGISTRY}/stackstate/beest:${RUNTIMETAG}
 
 ARTIFACTORY_PYPI_URL         ?= artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple
@@ -30,8 +33,14 @@ DOCKER_ENV		              = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 build:
 	docker build ${DOCKER_BUILD_ARG} -t ${BASE_KEEPER_IMAGE} .
 
+build-local:
+	docker build ${DOCKER_BUILD_ARG} -t ${BASE_KEEPER_IMAGE_LOCAL} -f ./local.dockerfile .
+
 push: build
 	docker push ${BASE_KEEPER_IMAGE}
+
+push-local: build-local
+	docker push ${BASE_KEEPER_IMAGE_LOCAL}
 
 kaniko:
 	/kaniko/executor ${DOCKER_BUILD_ARG} --destination ${BASE_KEEPER_IMAGE}

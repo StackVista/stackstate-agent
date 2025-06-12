@@ -27,7 +27,10 @@ STS_DOCKER_TEST_REPO         ?= stackstate-agent-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
 
-BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20241022
+# For local development, you have to change this to something you have access to push to. For Louis Parkin, it is wolverminion
+BASE_KEEPER_IMAGE_LOCAL  ?= wolverminion/beest:20250612
+BASE_KEEPER_IMAGE        ?= artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20241022
+
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
 VOLUME_GO_PKG_NAME = beest-go-volume
@@ -51,6 +54,15 @@ build: login
 		--build-arg UNAME_S=${UNAME_S} \
 		-f ./keeper.dockerfile .
 
+build-local: login
+	docker build -t ${KEEPER_IMAGE} \
+		--build-arg BASE_IMAGE=${BASE_KEEPER_IMAGE_LOCAL} \
+		--build-arg UID=${UID} \
+		--build-arg GID=${GID} \
+		--build-arg DOCKER_GID=${DOCKER_GID} \
+		--build-arg UNAME_S=${UNAME_S} \
+		-f ./keeper-local.dockerfile .
+
 start: build
 	docker run -it --rm \
         --name ${KEEPER_CONTAINER} \
@@ -61,6 +73,17 @@ start: build
         --network host \
         ${DOCKER_ENV} \
         ${KEEPER_IMAGE}
+
+start-local: build-local
+	docker run -it --rm \
+		--name ${KEEPER_CONTAINER} \
+		--volume ${PWD}:/go/src/app \
+		--volume ${PWD}/../dev/agent-v1-to-v2-pickle-conversion:/go/src/app/tools/agent-v1-to-v2-pickle-conversion \
+		--volume /var/run/docker.sock:/var/run/docker.sock:ro \
+		--mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
+		--network host \
+		${DOCKER_ENV} \
+		${KEEPER_IMAGE}
 
 stop:
 	-docker kill ${KEEPER_CONTAINER}
