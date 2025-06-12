@@ -27,8 +27,9 @@ STS_DOCKER_TEST_REPO         ?= stackstate-agent-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
 
-BASE_KEEPER_IMAGE        = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20241022
-BASE_KEEPER_IMAGE_LOCAL  = wolverminion/beest:20250612
+# For local development, you have to change this to something you have access to push to. For Louis Parkin, it is wolverminion
+BASE_KEEPER_IMAGE_LOCAL  ?= wolverminion/beest:20250612
+BASE_KEEPER_IMAGE        ?= artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20241022
 
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
@@ -60,7 +61,7 @@ build-local: login
 		--build-arg GID=${GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
 		--build-arg UNAME_S=${UNAME_S} \
-		-f ./keeper.dockerfile .
+		-f ./keeper-local.dockerfile .
 
 start: build
 	docker run -it --rm \
