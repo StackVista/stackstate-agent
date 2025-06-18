@@ -24,7 +24,7 @@ resource "local_file" "get_kubeconfig" {
 set -euo pipefail
 
 echo "Get kubeconfig for stackstate sandbox cluster"
-sts-toolbox cluster connect sandbox-main.sandbox.stackstate.io
+sts-toolbox-new --profile stackstate-sandbox cluster connect sandbox-main.sandbox.stackstate.io
 KUBECONFIG
   file_permission = "0770"
 }

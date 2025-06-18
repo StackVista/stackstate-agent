@@ -26,20 +26,31 @@ install_cobra_cli() {
 generate_aws_config() {
     echo "Generate AWS config StackState profiles ..."
     #sts-toolbox aws generate -p developer
-    sts-toolbox aws configure profile-set -s poweruser --sso-start-url "https://d-9967196c83.awsapps.com/start/#"
+#    sts-toolbox-new aws configure profile-set -s poweruser --sso-start-url "https://d-9967196c83.awsapps.com/start/#"
+    mkdir -p ~/.aws
+    echo """[profile stackstate-sandbox]
+            region         = eu-west-1
+            sso_account_id = 672574731473
+            sso_role_name  = AWSAdministratorAccess
+            output = json
+            sso_region              = eu-central-1
+            sso_registration_scopes = sso:account:access
+            sso_start_url           = https://d-9967196c83.awsapps.com/start/#""" > ~/.aws/config
 }
 
 
 configure_aws_beest_credentials() {
     echo "Configure AWS Beest credentials ..."
 
-    aws sso login --sso-session SuseSSO
+    aws sso login --profile stackstate-sandbox
+#    --sso-session SuseSSO
 
 }
 
 connect_to_stackstate_sandbox() {
     echo "Connect to StackState sandbox cluster ..."
-    sts-toolbox cluster connect sandbox-main.sandbox.stackstate.io
+#    sts-toolbox cluster connect sandbox-main.sandbox.stackstate.io
+    sts-toolbox-new --profile stackstate-sandbox cluster connect sandbox-main.sandbox.stackstate.io
 }
 
 build_beest() {
@@ -50,3 +61,4 @@ build_beest() {
 }
 
 export -f configure_aws_beest_credentials
+export -f connect_to_stackstate_sandbox
