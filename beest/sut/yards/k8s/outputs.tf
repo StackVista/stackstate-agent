@@ -17,7 +17,7 @@ echo "Configure kubernetes agent cluster AWS authentication"
 kubectl --context ${var.yard_id} apply -f ${local_file.agent_eks_aws_auth.filename}
 
 echo "Get kubeconfig for stackstate sandbox cluster"
-sts-toolbox-new --profile stackstate-sandbox cluster connect sandbox-main.sandbox.stackstate.io
+sts-toolbox cluster connect sandbox-main.sandbox.stackstate.io
 KUBECONFIG
   file_permission = "0770"
 }

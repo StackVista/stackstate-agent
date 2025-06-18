@@ -60,5 +60,25 @@ build_beest() {
     go build .
 }
 
+configure_output_tf_sts_toolbox() {
+    FILES=(
+      sut/yards/k8s/outputs.tf
+      sut/yards/k8s-arm/outputs.tf
+      sut/yards/stackstate/outputs.tf
+    )
+
+    for f in "${FILES[@]}"; do
+      if grep -q 'sts-toolbox cluster connect sandbox-main.sandbox.stackstate.io' "$f"; then
+        sed -i \
+          -e 's|sts-toolbox cluster connect sandbox-main\.sandbox\.stackstate\.io|sts-toolbox-new --profile stackstate-sandbox cluster connect sandbox-main.sandbox.stackstate.io|g' \
+          "$f"
+        echo "Patched: $f"
+      else
+        echo "Pattern not found in: $f"
+      fi
+    done
+}
+
 export -f configure_aws_beest_credentials
 export -f connect_to_stackstate_sandbox
+export -f configure_output_tf_sts_toolbox

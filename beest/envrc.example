@@ -24,3 +24,5 @@ export ARCH=amd64
 export RUNNERS_IP=TBD
 
 configure_aws_beest_credentials
+connect_to_stackstate_sandbox
+configure_output_tf_sts_toolbox
