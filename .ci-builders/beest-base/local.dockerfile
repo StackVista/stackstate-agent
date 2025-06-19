@@ -45,33 +45,33 @@ RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWSCLI_V}.zi
     ./aws/install && \
     rm awscliv2.zip
 
-ARG KUBECTL_V=1.22.4
+ARG KUBECTL_V=1.33.1
 RUN curl -LO "https://dl.k8s.io/release/v${KUBECTL_V}/bin/linux/amd64/kubectl" && \
     chmod +x ./kubectl && \
     mv ./kubectl /usr/local/bin/
 
-ARG K9S_V=0.25.21
-RUN curl -LO "https://github.com/derailed/k9s/releases/download/v${K9S_V}/k9s_Linux_x86_64.tar.gz" && \
+ARG K9S_V=0.50.6
+RUN curl -LO "https://github.com/derailed/k9s/releases/download/v${K9S_V}/k9s_linux_amd64.tar.gz" && \
     mkdir -p tmp_k9s && \
-    tar xvzf k9s_Linux_x86_64.tar.gz -C tmp_k9s && \
+    tar xvzf k9s_linux_amd64.tar.gz -C tmp_k9s && \
     mv tmp_k9s/k9s /usr/local/bin/ && \
-    rm -r k9s_Linux_x86_64.tar.gz tmp_k9s
+    rm -r k9s_linux_amd64.tar.gz tmp_k9s
 
 ARG STERN_V=1.11.0
 RUN curl -L "https://github.com/wercker/stern/releases/download/${STERN_V}/stern_linux_amd64" -o stern && \
     chmod +x ./stern && \
     mv ./stern /usr/local/bin/
 
-ARG HELM_V=3.13.3
+ARG HELM_V=3.18.3
 RUN curl -O "https://get.helm.sh/helm-v${HELM_V}-linux-amd64.tar.gz" && \
     tar xvzf helm-v${HELM_V}-linux-amd64.tar.gz && \
     mv ./linux-amd64/helm /usr/local/bin/ && \
     rm -r helm-v${HELM_V}-linux-amd64.tar.gz linux-amd64/
 
-ARG K3D_V=5.2.0
+ARG K3D_V=5.8.3
 RUN curl -s "https://raw.githubusercontent.com/rancher/k3d/main/install.sh" | TAG=v${K3D_V} bash
 
-ARG DOCKER_V=20.10.9
+ARG DOCKER_V=28.2.2
 RUN curl -O "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_V}.tgz" && \
     tar xvzf docker-${DOCKER_V}.tgz && \
     mv ./docker/docker /usr/local/bin/ && \
@@ -81,9 +81,15 @@ ARG STSTOOLBOX_V=1.12.1
 RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/v${STSTOOLBOX_V}/sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz" && \
     tar xvzf sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
+    mv ./sts-toolbox /usr/local/bin/sts-toolbox-new
+
+ARG STSTOOLBOX_V=1.3.34
+RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/v${STSTOOLBOX_V}/sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz" && \
+    tar xvzf sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
+    rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     mv ./sts-toolbox /usr/local/bin/
 
-ARG STSCLI_V2=2.3.0
+ARG STSCLI_V2=3.0.5
 RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstate-cli/v${STSCLI_V2}/stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz" && \
     tar xvzf stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     rm -r stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \

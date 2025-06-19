@@ -20,7 +20,9 @@ RUN chown -R $MYUSER:$GID /home/$MYUSER/.config/
 # external docker volume
 # if we don't precreate it we do not get the permission we want
 RUN mkdir /go/pkg && \
-    chmod a+w /go/pkg
+    chmod a+w /go/pkg && \
+    apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends nano
 
 USER $MYUSER
 WORKDIR /go/src/app
