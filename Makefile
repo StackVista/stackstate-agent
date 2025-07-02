@@ -19,9 +19,9 @@ LOCAL_BUILDER_INIT = Dockerfiles/local_builder/local_init.sh
 # Set this parameter to 'dit' to use the make command in your IDE, You can then execute shell commands allowing the container to run in detached mode
 DOCKER_RUN_MODE   ?= it
 DOCKER_ENV		   = --env PROJECT_DIR=${PROJECT_DIR} \
-                     --env artifactory_user=${ARTIFACTORY_USER} \
-                     --env artifactory_password=${ARTIFACTORY_PASSWORD} \
-                     --env ARTIFACTORY_PYPI_URL="artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple" \
+                     --env GITLAB_PACKAGE_REGISTRY_USER=${GITLAB_PACKAGE_REGISTRY_USER} \
+                     --env GITLAB_PACKAGE_REGISTRY_TOKEN=${GITLAB_PACKAGE_REGISTRY_TOKEN} \
+                     --env GITLAB_PACKAGE_REGISTRY_PYPI_URL="gitlab.com/api/v4/projects/71271774/packages/pypi/simple" \
                      --env PYTHON_RUNTIME=${PYTHON_RUNTIME}
 
 

@@ -10,12 +10,12 @@ DOCKER_REGISTRY    ?= docker.io
 BASE_KEEPER_IMAGE_LOCAL ?= wolverminion/beest:local
 BASE_KEEPER_IMAGE   = ${DOCKER_REGISTRY}/stackstate/beest:${RUNTIMETAG}
 
-ARTIFACTORY_PYPI_URL         ?= artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple
-ARTIFACTORY_USER             ?= NA
-ARTIFACTORY_PASSWORD         ?= NA
-DOCKER_BUILD_ARG              = --build-arg ARTIFACTORY_PYPI_URL=${ARTIFACTORY_PYPI_URL} \
-                                --build-arg ARTIFACTORY_USER=${ARTIFACTORY_USER} \
-                                --build-arg ARTIFACTORY_PASSWORD=${ARTIFACTORY_PASSWORD}
+GITLAB_PACKAGE_REGISTRY_PYPI_URL         ?= gitlab.com/api/v4/projects/71271774/packages/pypi/simple
+GITLAB_PACKAGE_REGISTRY_USER             ?= NA
+GITLAB_PACKAGE_REGISTRY_TOKEN         ?= NA
+DOCKER_BUILD_ARG              = --build-arg GITLAB_PACKAGE_REGISTRY_PYPI_URL=${GITLAB_PACKAGE_REGISTRY_PYPI_URL} \
+                                --build-arg GITLAB_PACKAGE_REGISTRY_USER=${GITLAB_PACKAGE_REGISTRY_USER} \
+                                --build-arg GITLAB_PACKAGE_REGISTRY_TOKEN=${GITLAB_PACKAGE_REGISTRY_TOKEN}
 
 GIT_BRANCH                    = $(shell git rev-parse --abbrev-ref HEAD)
 MAJOR_VERSION                ?= 2

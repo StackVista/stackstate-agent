@@ -996,11 +996,11 @@ def omnibus_build(
     if artifactory_user:
         artifactory_password = os.environ.get("artifactory_password")
         if artifactory_password:
-            artifactory_pypi_url = os.environ.get("ARTIFACTORY_PYPI_URL")
+            artifactory_pypi_url = os.environ.get("GITLAB_PACKAGE_REGISTRY_PYPI_URL")
             if artifactory_pypi_url:
                 python_extra_mirror = f'https://{artifactory_user}:{artifactory_password}@{artifactory_pypi_url}'
             else:
-                print("ARTIFACTORY_PYPI_URL is not set")
+                print("GITLAB_PACKAGE_REGISTRY_PYPI_URL is not set")
         else:
             print("artifactory_password is not set")
     else:
