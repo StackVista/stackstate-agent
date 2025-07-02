@@ -33,6 +33,7 @@ BASE_KEEPER_IMAGE        ?= artifactory.tooling.stackstate.io/docker-virtual/sta
 
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
+KEEPER_CONTAINER_LOCAL = beest-local
 VOLUME_GO_PKG_NAME = beest-go-volume
 DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 					 --env MAJOR_VERSION=${MAJOR_VERSION} \
@@ -76,7 +77,7 @@ start: build
 
 start-local: build-local
 	docker run -it --rm \
-		--name ${KEEPER_CONTAINER} \
+		--name ${KEEPER_CONTAINER_LOCAL} \
 		--volume ${PWD}:/go/src/app \
 		--volume ${PWD}/../dev/agent-v1-to-v2-pickle-conversion:/go/src/app/tools/agent-v1-to-v2-pickle-conversion \
 		--volume /var/run/docker.sock:/var/run/docker.sock:ro \
