@@ -243,7 +243,7 @@ build_agent_runners:
 
 cleanup_job:
   stage: schedule
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20241022
+  image: registry.tooling.stackstate.io/docker/stackstate/beest:20241022
   variables:
     <<: *commonvariables
     <<: *agent_variables

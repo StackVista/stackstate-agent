@@ -29,7 +29,7 @@ PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
 
 # For local development, you have to change this to something you have access to push to. For Louis Parkin, it is wolverminion
 BASE_KEEPER_IMAGE_LOCAL  ?= wolverminion/beest:local
-BASE_KEEPER_IMAGE        ?= artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20241022
+BASE_KEEPER_IMAGE        ?= registry.tooling.stackstate.io/docker/stackstate/beest:20241022
 
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
