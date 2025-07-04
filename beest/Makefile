@@ -44,7 +44,7 @@ DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 
 # Core commands
 login:
-	docker login artifactory.tooling.stackstate.io -u ${artifactory_user} -p ${artifactory_password}
+	docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASSWORD}" "${REGISTRY_HOST}"
 
 build: login
 	docker build -t ${KEEPER_IMAGE} \

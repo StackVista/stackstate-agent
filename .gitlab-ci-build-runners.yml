@@ -19,7 +19,7 @@ variables:
 before_script:
   # login to both docker registries
   - docker login -u "${quay_user}" -p "${quay_password}" "${QUAY_REGISTRY}"
-  - docker login -u "${ARTIFACTORY_USER}" -p "${ARTIFACTORY_PASSWORD}" "${ARTIFACTORY_URL}"
+  - docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASSWORD}" "${REGISTRY_HOST}"
 
 .docker_build_base: &docker_build_base
   # use docker as the image builder
