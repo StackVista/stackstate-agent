@@ -992,19 +992,19 @@ def omnibus_build(
     if not python_mirror or python_mirror is None:
         python_mirror = 'https://pypi.python.org/simple/'
 
-    artifactory_user = os.environ.get("artifactory_user")
+    artifactory_user = os.environ.get("GITLAB_PACKAGE_REGISTRY_USER")
     if artifactory_user:
-        artifactory_password = os.environ.get("artifactory_password")
+        artifactory_password = os.environ.get("GITLAB_PACKAGE_REGISTRY_TOKEN")
         if artifactory_password:
-            artifactory_pypi_url = os.environ.get("GITLAB_PACKAGE_REGISTRY_PYPI_URL")
+            artifactory_pypi_url = os.environ.get("GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL")
             if artifactory_pypi_url:
                 python_extra_mirror = f'https://{artifactory_user}:{artifactory_password}@{artifactory_pypi_url}'
             else:
-                print("GITLAB_PACKAGE_REGISTRY_PYPI_URL is not set")
+                print("GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL is not set")
         else:
-            print("artifactory_password is not set")
+            print("GITLAB_PACKAGE_REGISTRY_TOKEN is not set")
     else:
-        print("artifactory_user is not set")
+        print("GITLAB_PACKAGE_REGISTRY_USER is not set")
 
     # If a python_mirror is set then use it for pip by adding it in the pip.conf file
     pip_index_url = f"[global]\nindex-url = {python_mirror}" if python_mirror else ""

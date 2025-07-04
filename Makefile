@@ -21,7 +21,7 @@ DOCKER_RUN_MODE   ?= it
 DOCKER_ENV		   = --env PROJECT_DIR=${PROJECT_DIR} \
                      --env GITLAB_PACKAGE_REGISTRY_USER=${GITLAB_PACKAGE_REGISTRY_USER} \
                      --env GITLAB_PACKAGE_REGISTRY_TOKEN=${GITLAB_PACKAGE_REGISTRY_TOKEN} \
-                     --env GITLAB_PACKAGE_REGISTRY_PYPI_URL="gitlab.com/api/v4/projects/71271774/packages/pypi/simple" \
+                     --env GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL="gitlab.com/api/v4/projects/71271774/packages/pypi/simple" \
                      --env PYTHON_RUNTIME=${PYTHON_RUNTIME}
 
 

@@ -55,7 +55,7 @@ build: login
 		--build-arg UNAME_S=${UNAME_S} \
 		-f ./keeper.dockerfile .
 
-build-local: login
+build-local:
 	docker build -t ${KEEPER_IMAGE} \
 		--build-arg BASE_IMAGE=${BASE_KEEPER_IMAGE_LOCAL} \
 		--build-arg UID=${UID} \

@@ -32,7 +32,7 @@ if [ "${WHAT}" = "SHELL" ]; then
         -e CI_PROJECT_DIR=${PWD} \
         -e artifactory_user="${artifactory_user}" \
         -e artifactory_password="${artifactory_password}" \
-        -e GITLAB_PACKAGE_REGISTRY_PYPI_URL="${GITLAB_PACKAGE_REGISTRY_PYPI_URL}" \
+        -e GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL="${GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL}" \
         --workdir=${PWD} \
         artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:0d87e00f bash
 fi
