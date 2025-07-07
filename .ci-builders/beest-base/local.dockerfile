@@ -5,12 +5,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # configure python artifactory to pull stackstate-cli v1
-ARG ARTIFACTORY_PYPI_URL
-ARG ARTIFACTORY_USER
-ARG ARTIFACTORY_PASSWORD
+ARG GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL
+ARG GITLAB_PACKAGE_REGISTRY_USER
+ARG GITLAB_PACKAGE_REGISTRY_TOKEN
 RUN mkdir ~/.pip/ && touch ~/.pip/pip.conf && \
     echo "[global]" > ~/.pip/pip.conf && \
-    echo "extra-index-url = https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@${ARTIFACTORY_PYPI_URL}" >> ~/.pip/pip.conf
+    echo "extra-index-url = https://${GITLAB_PACKAGE_REGISTRY_USER}:${GITLAB_PACKAGE_REGISTRY_TOKEN}@${GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL}" >> ~/.pip/pip.conf
 
 COPY requirements* ./
 RUN pip install -r requirements-pip-full.txt

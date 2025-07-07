@@ -29,10 +29,11 @@ PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
 
 # For local development, you have to change this to something you have access to push to. For Louis Parkin, it is wolverminion
 BASE_KEEPER_IMAGE_LOCAL  ?= wolverminion/beest:local
-BASE_KEEPER_IMAGE        ?= artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20241022
+BASE_KEEPER_IMAGE        ?= registry.tooling.stackstate.io/docker/stackstate/beest:20241022
 
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
+KEEPER_CONTAINER_LOCAL = beest-local
 VOLUME_GO_PKG_NAME = beest-go-volume
 DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 					 --env MAJOR_VERSION=${MAJOR_VERSION} \
@@ -43,7 +44,7 @@ DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 
 # Core commands
 login:
-	docker login artifactory.tooling.stackstate.io -u ${artifactory_user} -p ${artifactory_password}
+	docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASSWORD}" "${REGISTRY_HOST}"
 
 build: login
 	docker build -t ${KEEPER_IMAGE} \
@@ -54,7 +55,7 @@ build: login
 		--build-arg UNAME_S=${UNAME_S} \
 		-f ./keeper.dockerfile .
 
-build-local: login
+build-local:
 	docker build -t ${KEEPER_IMAGE} \
 		--build-arg BASE_IMAGE=${BASE_KEEPER_IMAGE_LOCAL} \
 		--build-arg UID=${UID} \
@@ -76,7 +77,7 @@ start: build
 
 start-local: build-local
 	docker run -it --rm \
-		--name ${KEEPER_CONTAINER} \
+		--name ${KEEPER_CONTAINER_LOCAL} \
 		--volume ${PWD}:/go/src/app \
 		--volume ${PWD}/../dev/agent-v1-to-v2-pickle-conversion:/go/src/app/tools/agent-v1-to-v2-pickle-conversion \
 		--volume /var/run/docker.sock:/var/run/docker.sock:ro \

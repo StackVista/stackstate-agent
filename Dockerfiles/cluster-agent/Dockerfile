@@ -2,7 +2,7 @@
 # Preparation stage: layout and chmods #
 ########################################
 
-FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:20.04 as builder
+FROM registry.tooling.stackstate.io/docker/ubuntu:20.04 as builder
 
 WORKDIR /output
 

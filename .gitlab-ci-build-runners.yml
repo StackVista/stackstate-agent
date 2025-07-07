@@ -19,13 +19,13 @@ variables:
 before_script:
   # login to both docker registries
   - docker login -u "${quay_user}" -p "${quay_password}" "${QUAY_REGISTRY}"
-  - docker login -u "${ARTIFACTORY_USER}" -p "${ARTIFACTORY_PASSWORD}" "${ARTIFACTORY_URL}"
+  - docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASSWORD}" "${REGISTRY_HOST}"
 
 .docker_build_base: &docker_build_base
   # use docker as the image builder
-  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  image: registry.tooling.stackstate.io/docker/docker:18.06.0
   services:
-    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+    - name: registry.tooling.stackstate.io/docker/docker:18.09-dind
       alias: docker
   retry:
     max: 2

@@ -119,11 +119,11 @@ and replace `PR_NAME` with the branch name (e.g. `master`, `STAC-xxxx`).
 
 ##### Official
 
-    $ docker pull artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-2:latest
+    $ docker pull registry.tooling.stackstate.io/quay/stackstate/stackstate-agent-2:latest
 
 ##### Test
 
-    $ docker pull artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-2-test:latest
+    $ docker pull registry.tooling.stackstate.io/quay/stackstate/stackstate-agent-2-test:latest
 
 ### Windows
 

@@ -9,7 +9,7 @@ EXTRA_TAG="${4}-${ARCH}"
 K8S_REPO="${5}"
 REGISTRY="quay.io"
 ORGANIZATION="stackstate"
-ARTIFACTORY_URL="artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple"
+GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL="https://gitlab.com/api/v4/projects/71271774/packages/pypi/simple"
 S6_ARCH="${6}"
 
 echo "IMAGE_TAG=${IMAGE_TAG}"
@@ -20,7 +20,7 @@ BUILD_TAG="${IMAGE_REPO}:${IMAGE_TAG}"
 
 # shellcheck disable=SC2154
 docker login -u "${quay_user}" -p "${quay_password}" "${REGISTRY}"
-docker login -u "${artifactory_user}" -p "${artifactory_password}" "${ARTIFACTORY_URL}"
+docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASSWORD}" "${REGISTRY_HOST}"
 
 docker build --build-arg ARCH="${ARCH}" --build-arg S6_ARCH="${S6_ARCH}" -t "${BUILD_TAG}" "${DOCKERFILE_PATH}"
 

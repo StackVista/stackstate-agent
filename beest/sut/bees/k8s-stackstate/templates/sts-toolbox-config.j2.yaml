@@ -3,7 +3,7 @@ generate-values:
   pull-user: {{ artifactory_user }}
   pull-password: {{ artifactory_password }}
   pull-policy: IfNotPresent
-  pull-registry: artifactory.tooling.stackstate.io/docker-virtual
+  pull-registry:  registry.tooling.stackstate.io/quay
   profile: development
   install-agent: false
   cluster-name: {{ cluster_name }}

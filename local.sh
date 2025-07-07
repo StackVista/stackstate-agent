@@ -32,9 +32,9 @@ if [ "${WHAT}" = "SHELL" ]; then
         -e CI_PROJECT_DIR=${PWD} \
         -e artifactory_user="${artifactory_user}" \
         -e artifactory_password="${artifactory_password}" \
-        -e ARTIFACTORY_PYPI_URL="${ARTIFACTORY_PYPI_URL}" \
+        -e GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL="${GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL}" \
         --workdir=${PWD} \
-        artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:0d87e00f bash
+        registry.tooling.stackstate.io/quay/stackstate/datadog_build_deb_x64:0d87e00f bash
 fi
 
 # Prepare a copy of the agent in the SRC_DIR to make sure that in a containerized environment the source directory
