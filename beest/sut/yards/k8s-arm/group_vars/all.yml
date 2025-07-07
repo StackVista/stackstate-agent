@@ -4,8 +4,8 @@ dnat_server_port: 123
 container_to_container_server_port: 234
 headless_service_port: 543
 
-artifactory_user: "{{ lookup('env', 'registry_user') or REGISTRY_USER }}"
-artifactory_password: "{{ lookup('env', 'registry_password') or REGISTRY_PASSWORD }}"
+artifactory_user: "{{ lookup('env', 'REGISTRY_USER') or REGISTRY_USER }}"
+artifactory_password: "{{ lookup('env', 'REGISTRY_PASSWORD') or REGISTRY_PASSWORD }}"
 
 agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
 agent_arch: "{{ lookup('env', 'ARCH') or ARCH }}"
