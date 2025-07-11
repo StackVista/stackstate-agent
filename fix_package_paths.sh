@@ -31,12 +31,15 @@ find "$DIR" -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/S
 # The following stems from some failed branding renames in apply_branding python code that effectively tries to invoke find | sed as follows:
 # find {} {} -prune -o -type f -name \"{}\" -exec sed -i '{}' {{}} +".format(at, to_ignore, file_pattern, rename_pattern)
 
-find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/DD_AGENT/STS_AGENT/g' {} +
-find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/datadog/stackstate/g' {} +
-find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/dd-agent/stackstate-agent/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/\/var\/log\/datadog/\/var\/log\/stackstate-agent/g' {} +
 find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/datadog-agent/stackstate-agent/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/datadog/stackstate/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/DD_AGENT/STS_AGENT/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/dd-agent/stackstate-agent/g' {} +
 
-find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/datadog/stackstate/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/\/var\/log\/datadog/\/var\/log\/stackstate-agent/g' {} +
 find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/datadog-agent/stackstate-agent/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/datadog/stackstate/g' {} +
 find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/DD_AGENT/STS_AGENT/g' {} +
 find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/dd-agent/stackstate-agent/g' {} +
+
