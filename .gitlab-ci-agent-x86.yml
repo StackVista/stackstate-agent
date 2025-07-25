@@ -1037,9 +1037,10 @@ beest_k8s_1_33_containerd_trigger_verification:
     - *merge_train_always
   variables:
     BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
-    AGENT_X86_JOB: "true"
+    TRIGGER_AGENT_X86_TESTS: "true"
   trigger:
     project: stackvista/integrations/beest
+    branch: STAC-23088
 
 ## release stage
 
