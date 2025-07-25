@@ -1022,6 +1022,25 @@ pre_release_cluster_agent_image:
 #    - beest_splunk_test
 #    - beest_splunk_create
 
+## Beest downstream pipeline
+
+# Rules
+.beest_kubernetes_rule: &kubernetes_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
+    when: never
+
+# Jobs
+beest_k8s_1_33_containerd_trigger_verification:
+  stage: acceptance
+  rules:
+    - *kubernetes_ignore_rule
+    - *merge_train_always
+  variables:
+    BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
+    AGENT_X86_JOB: "true"
+  trigger:
+    project: stackvista/integrations/beest
+
 ## release stage
 
 release_deb:
