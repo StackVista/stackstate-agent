@@ -7,6 +7,6 @@ module github.com/DataDog/datadog-agent/tools/retry_file_dump
 
 go 1.20
 
-require github.com/golang/protobuf v1.4.3
+require github.com/golang/protobuf v1.5.0
 
-require google.golang.org/protobuf v1.23.0 // indirect
+require google.golang.org/protobuf v1.33.0 // indirect
