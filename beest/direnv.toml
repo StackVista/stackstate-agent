@@ -1,5 +1,0 @@
-[global]
-strict_env = true
-
-[whitelist]
-prefix = [ "/go/src/app" ]
