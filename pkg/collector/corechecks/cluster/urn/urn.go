@@ -39,6 +39,7 @@ type Builder interface {
 	BuildIngressExternalID(namespace, ingressName string) string
 	BuildVolumeExternalID(namespace, volumeName string) string
 	BuildExternalVolumeExternalID(volumeType string, volumeComponents ...string) string
+	BuildLocalExternalVolumeExternalID(volumeType string, volumeComponents ...string) string
 	BuildPersistentVolumeExternalID(persistentVolumeName string) string
 	BuildPersistentVolumeClaimExternalID(namespace, persistentVolumeName string) string
 	BuildComponentExternalID(component, namespace, name string) string
