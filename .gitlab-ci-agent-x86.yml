@@ -742,6 +742,12 @@ beest_k8s_1_33_containerd_trigger_verification:
   variables:
     BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
     TRIGGER_AGENT_X86_TESTS: "true"
+    PROCESS_AGENT_BRANCH:
+      file: stackstate-deps.json
+      jsonnet: 'std.parseJson(std.extVar("file")).PROCESS_AGENT_BRANCH'
+    PROCESS_AGENT_VERSION:
+      file: stackstate-deps.json
+      jsonnet: 'std.parseJson(std.extVar("file")).PROCESS_AGENT_VERSION'
   trigger:
     project: stackvista/integrations/beest
 
