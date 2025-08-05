@@ -383,7 +383,7 @@ func createProjectedVolume(vc VolumeCreator, pod PodIdentifier, volume v1.Volume
 		return nil, nil
 	}
 
-	extID := vc.GetURNBuilder().BuildExternalVolumeExternalID("projected", volume.Name)
+	extID := vc.GetURNBuilder().BuildVolumeExternalID("projected", fmt.Sprintf("%s/%s/%s", pod.Namespace, pod.Name, volume.Name))
 
 	tags := map[string]string{
 		"kind": "projection",
