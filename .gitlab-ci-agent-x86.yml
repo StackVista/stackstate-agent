@@ -759,7 +759,7 @@ beest_k8s_1_33_containerd_trigger_verification:
     - prepare_beest_trigger
   variables:
     BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
-    TRIGGER_AGENT_ARM_TESTS: "true"
+    TRIGGER_AGENT_X86_TESTS: "true"
     PROCESS_AGENT_BRANCH: "$PROCESS_AGENT_BRANCH"
     PROCESS_AGENT_VERSION: "$PROCESS_AGENT_VERSION"
   trigger:
