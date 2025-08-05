@@ -734,25 +734,38 @@ pre_release_cluster_agent_image:
     when: never
 
 # Jobs
+prepare_beest_trigger:
+  stage: prepare
+  rules:
+    - *kubernetes_ignore_rule
+    - *merge_train_always
+  script:
+    - export PROCESS_AGENT_BRANCH=$(jq -r '.PROCESS_AGENT_BRANCH' stackstate-deps.json)
+    - export PROCESS_AGENT_VERSION=$(jq -r '.PROCESS_AGENT_VERSION' stackstate-deps.json)
+    - echo "BRANCH_UNDER_TEST=$CI_COMMIT_REF_NAME" >> trigger_vars.env
+    - echo "TRIGGER_AGENT_ARM_TESTS=true" >> trigger_vars.env
+    - echo "PROCESS_AGENT_BRANCH=$PROCESS_AGENT_BRANCH" >> trigger_vars.env
+    - echo "PROCESS_AGENT_VERSION=$PROCESS_AGENT_VERSION" >> trigger_vars.env
+  artifacts:
+    reports:
+      dotenv: trigger_vars.env
+
 beest_k8s_1_33_containerd_trigger_verification:
   stage: acceptance
   rules:
     - *kubernetes_ignore_rule
     - *merge_train_always
+  needs:
+    - prepare_beest_trigger
   variables:
     BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
-    TRIGGER_AGENT_X86_TESTS: "true"
-    PROCESS_AGENT_BRANCH:
-      file: stackstate-deps.json
-      jsonnet: 'std.parseJson(std.extVar("file")).PROCESS_AGENT_BRANCH'
-    PROCESS_AGENT_VERSION:
-      file: stackstate-deps.json
-      jsonnet: 'std.parseJson(std.extVar("file")).PROCESS_AGENT_VERSION'
+    TRIGGER_AGENT_ARM_TESTS: "true"
+    PROCESS_AGENT_BRANCH: "$PROCESS_AGENT_BRANCH"
+    PROCESS_AGENT_VERSION: "$PROCESS_AGENT_VERSION"
   trigger:
     project: stackvista/integrations/beest
 
 ## release stage
-
 release_deb:
   interruptible: true
   stage: release
