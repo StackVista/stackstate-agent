@@ -637,11 +637,11 @@ pre_release_cluster_agent_image:
   when: never
 
 # Jobs
-prepare_beest_trigger:
-  image: docker.io/library/alpine:latest
-  stage: prepare
+beest_k8s_1_33_containerd_trigger_verification:
+  stage: acceptance
   before_script:
-    - apk add --no-cache bash jq
+    - export PROCESS_AGENT_BRANCH=`cat stackstate-deps.json | jq -r '.PROCESS_AGENT_BRANCH'`
+    - export PROCESS_AGENT_VERSION=`cat stackstate-deps.json | jq -r '.PROCESS_AGENT_VERSION'`
   rules:
     - *kubernetes_ignore_rule
     - *merge_train_always
@@ -666,11 +666,8 @@ beest_k8s_1_33_containerd_trigger_verification:
   variables:
     BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
     TRIGGER_AGENT_ARM_TESTS: "true"
-    PROCESS_AGENT_BRANCH: "$(cat process_agent_branch.txt)"
-    PROCESS_AGENT_VERSION: "$(cat process_agent_version.txt)"
-  rules:
-    - *kubernetes_ignore_rule
-    - *merge_train_always
+    PROCESS_AGENT_BRANCH: "$PROCESS_AGENT_BRANCH"
+    PROCESS_AGENT_VERSION: "$PROCESS_AGENT_VERSION"
   trigger:
     project: stackvista/integrations/beest
 
