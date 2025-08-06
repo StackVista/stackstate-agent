@@ -735,7 +735,7 @@ pre_release_cluster_agent_image:
 
 # Jobs
 prepare_beest_trigger:
-  image: ${DOCKER_PROXY_URL}/library/alpine:latest
+  image: registry.tooling.stackstate.io/quay/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
   stage: prepare
   script:
     - apk add --no-cache jq
