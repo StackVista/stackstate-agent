@@ -735,6 +735,7 @@ pre_release_cluster_agent_image:
 
 # Jobs
 prepare_beest_trigger:
+  image: imega/jq:latest
   stage: prepare
   script:
     - export PROCESS_AGENT_BRANCH=$(jq -r '.PROCESS_AGENT_BRANCH' stackstate-deps.json)
@@ -756,6 +757,8 @@ beest_k8s_1_33_containerd_trigger_verification:
     TRIGGER_AGENT_X86_TESTS: "true"
     PROCESS_AGENT_BRANCH: "$PROCESS_AGENT_BRANCH"
     PROCESS_AGENT_VERSION: "$PROCESS_AGENT_VERSION"
+  rules:
+    - when: on_success
   trigger:
     project: stackvista/integrations/beest
     branch: STAC-23159
