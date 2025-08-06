@@ -742,6 +742,8 @@ prepare_beest_trigger:
   rules:
     - if: $CI_COMMIT_REF_NAME == "STAC-23159"
       when: always
+    - *kubernetes_ignore_rule
+    - *merge_train_always
   script:
     - jq -r '.PROCESS_AGENT_BRANCH' stackstate-deps.json > process_agent_branch.txt
     - jq -r '.PROCESS_AGENT_VERSION' stackstate-deps.json > process_agent_version.txt
@@ -757,7 +759,7 @@ prepare_beest_trigger:
       - process_agent_version.txt
 
 beest_k8s_1_33_containerd_trigger_verification:
-  stage: acceptance
+  stage: build
   variables:
     BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
     TRIGGER_AGENT_X86_TESTS: "true"
@@ -766,6 +768,8 @@ beest_k8s_1_33_containerd_trigger_verification:
   rules:
     - if: $CI_COMMIT_REF_NAME == "STAC-23159"
       when: always
+    - *kubernetes_ignore_rule
+    - *merge_train_always
   trigger:
     project: stackvista/integrations/beest
     branch: "STAC-23159"
