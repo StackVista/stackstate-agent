@@ -735,6 +735,7 @@ pre_release_cluster_agent_image:
 
 # Jobs
 prepare_beest_trigger:
+  image: docker.io/library/alpine:latest
   stage: prepare
   script:
     - apk add --no-cache jq
