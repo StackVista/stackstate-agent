@@ -757,7 +757,7 @@ prepare_beest_trigger:
       - process_agent_version.txt
 
 beest_k8s_1_33_containerd_trigger_verification:
-  stage: build
+  stage: acceptance
   needs:
     - prepare_beest_trigger
   variables:
