@@ -770,7 +770,6 @@ beest_k8s_1_33_containerd_trigger_verification:
     - *merge_train_always
   trigger:
     project: stackvista/integrations/beest
-    branch: "STAC-23159"
 
 ## release stage
 release_deb:
