@@ -737,8 +737,9 @@ pre_release_cluster_agent_image:
 prepare_beest_trigger:
   image: docker.io/library/alpine:latest
   stage: prepare
+  before_script:
+    - apk add --no-cache bash jq
   script:
-    - apk add --no-cache jq
     - export PROCESS_AGENT_BRANCH=$(jq -r '.PROCESS_AGENT_BRANCH' stackstate-deps.json)
     - export PROCESS_AGENT_VERSION=$(jq -r '.PROCESS_AGENT_VERSION' stackstate-deps.json)
     - echo "BRANCH_UNDER_TEST=$CI_COMMIT_REF_NAME" >> trigger_vars.env
