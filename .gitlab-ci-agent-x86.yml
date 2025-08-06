@@ -735,9 +735,10 @@ pre_release_cluster_agent_image:
 
 # Jobs
 prepare_beest_trigger:
-  image: imega/jq:latest
+  image: ${DOCKER_PROXY_URL}/library/alpine:latest
   stage: prepare
   script:
+    - apk add --no-cache jq
     - export PROCESS_AGENT_BRANCH=$(jq -r '.PROCESS_AGENT_BRANCH' stackstate-deps.json)
     - export PROCESS_AGENT_VERSION=$(jq -r '.PROCESS_AGENT_VERSION' stackstate-deps.json)
     - echo "BRANCH_UNDER_TEST=$CI_COMMIT_REF_NAME" >> trigger_vars.env
