@@ -736,9 +736,6 @@ pre_release_cluster_agent_image:
 # Jobs
 prepare_beest_trigger:
   stage: prepare
-  rules:
-    - *kubernetes_ignore_rule
-    - *merge_train_always
   script:
     - export PROCESS_AGENT_BRANCH=$(jq -r '.PROCESS_AGENT_BRANCH' stackstate-deps.json)
     - export PROCESS_AGENT_VERSION=$(jq -r '.PROCESS_AGENT_VERSION' stackstate-deps.json)
@@ -752,9 +749,6 @@ prepare_beest_trigger:
 
 beest_k8s_1_33_containerd_trigger_verification:
   stage: acceptance
-  rules:
-    - *kubernetes_ignore_rule
-    - *merge_train_always
   needs:
     - prepare_beest_trigger
   variables:
@@ -764,6 +758,7 @@ beest_k8s_1_33_containerd_trigger_verification:
     PROCESS_AGENT_VERSION: "$PROCESS_AGENT_VERSION"
   trigger:
     project: stackvista/integrations/beest
+    branch: STAC-23159
 
 ## release stage
 release_deb:
