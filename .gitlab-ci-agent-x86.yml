@@ -739,6 +739,9 @@ prepare_beest_trigger:
   stage: prepare
   before_script:
     - apk add --no-cache bash jq
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "STAC-23159"
+      when: always
   script:
     - jq -r '.PROCESS_AGENT_BRANCH' stackstate-deps.json > process_agent_branch.txt
     - jq -r '.PROCESS_AGENT_VERSION' stackstate-deps.json > process_agent_version.txt
