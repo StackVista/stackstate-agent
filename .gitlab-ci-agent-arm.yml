@@ -648,7 +648,7 @@ prepare_beest_trigger:
   script:
     - jq -r '.PROCESS_AGENT_BRANCH' stackstate-deps.json > process_agent_branch.txt
     - jq -r '.PROCESS_AGENT_VERSION' stackstate-deps.json > process_agent_version.txt
-    - echo "BRANCH_UNDER_TEST=$CI_COMMIT_REF_NAME" >> trigger_vars.env
+    - echo "AGENT_UNDER_TEST=$CI_COMMIT_REF_NAME" >> trigger_vars.env
     - echo "TRIGGER_AGENT_ARM_TESTS=true" >> trigger_vars.env
     - echo "PROCESS_AGENT_BRANCH=$(cat process_agent_branch.txt)" >> trigger_vars.env
     - echo "PROCESS_AGENT_VERSION=$(cat process_agent_version.txt)" >> trigger_vars.env
@@ -664,7 +664,7 @@ beest_k8s_1_33_containerd_trigger_verification:
   needs:
     - prepare_beest_trigger
   variables:
-    BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
+    AGENT_UNDER_TEST: "$CI_COMMIT_REF_NAME"
     TRIGGER_AGENT_ARM_TESTS: "true"
     PROCESS_AGENT_BRANCH: "$(cat process_agent_branch.txt)"
     PROCESS_AGENT_VERSION: "$(cat process_agent_version.txt)"
