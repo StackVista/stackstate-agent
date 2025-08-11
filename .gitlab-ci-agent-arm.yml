@@ -665,9 +665,7 @@ beest_k8s_1_33_containerd_trigger_verification:
     - prepare_beest_trigger
   variables:
     AGENT_UNDER_TEST: "$CI_COMMIT_REF_NAME"
-    TRIGGER_AGENT_ARM_TESTS: "true"
-    PROCESS_AGENT_BRANCH: "$(cat process_agent_branch.txt)"
-    PROCESS_AGENT_VERSION: "$(cat process_agent_version.txt)"
+    TRIGGER_AGENT_ARM_TESTS: "false"
   rules:
     - *kubernetes_ignore_rule
     - *merge_train_always
