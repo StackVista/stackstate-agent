@@ -664,7 +664,8 @@ beest_k8s_1_33_containerd_trigger_verification:
   needs:
     - prepare_beest_trigger
   variables:
-    AGENT_UNDER_TEST: "$CI_COMMIT_REF_NAME"
+    AGENT_BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
+    AGENT_HASH_UNDER_TEST: "$CI_COMMIT_SHORT_SHA"
     TRIGGER_AGENT_ARM_TESTS: "false"
   rules:
     - *kubernetes_ignore_rule
