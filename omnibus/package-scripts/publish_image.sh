@@ -6,11 +6,10 @@ IMAGE_TAG="${1}-${ARCH}"
 IMAGE_REPO="${2}"
 DOCKERFILE_PATH="${3}"
 EXTRA_TAG="${4}-${ARCH}"
-K8S_REPO="${5}"
 REGISTRY="quay.io"
 ORGANIZATION="stackstate"
 GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL="https://gitlab.com/api/v4/projects/71271774/packages/pypi/simple"
-S6_ARCH="${6}"
+S6_ARCH="${5}"
 
 echo "IMAGE_TAG=${IMAGE_TAG}"
 echo "IMAGE_REPO=${IMAGE_REPO}"
@@ -35,13 +34,4 @@ if [ -n "$EXTRA_TAG" ]; then
     docker tag "${DOCKER_TAG}" "${DOCKER_EXTRA_TAG}"
     echo "Pushing release to ${EXTRA_TAG}"
     docker push "${DOCKER_EXTRA_TAG}"
-
-    # If K8S_REPO is not equal to "NOP" and is set then push the image to the k8s repo
-    if [ -n "${K8S_REPO}" ] && [ "${K8S_REPO}" != "NOP" ]; then
-        DOCKER_K8S_TAG="${REGISTRY}/${ORGANIZATION}/${K8S_REPO}:${EXTRA_TAG}"
-        docker tag "${DOCKER_TAG}" "${DOCKER_K8S_TAG}"
-        echo "Pushing release to ${K8S_REPO}"
-        docker push "${DOCKER_K8S_TAG}"
-    fi
-
 fi
