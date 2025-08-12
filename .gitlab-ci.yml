@@ -58,6 +58,7 @@ variables: &commonvariables
   STS_DOCKER_RELEASE_REPO: stackstate-agent
   STS_DOCKER_TEST_REPO: stackstate-agent-test
   STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
+  STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
   STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
   STS_DOCKER_RELEASE_REPO_SWARM: stackstate-swarm-agent
