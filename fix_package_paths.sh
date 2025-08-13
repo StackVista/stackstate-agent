@@ -4,6 +4,7 @@ DIR=${1:-$CI_PROJECT_DIR}
 
 # This line is used to fix the package import paths in golang files in the agent codebase.
 find "$DIR" -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/\"github.com\/DataDog\/datadog-agent/\"github.com\/StackVista\/stackstate-agent/g' {} +
+find "$DIR" -type d -name .git -prune -o -type f -name "*.go" -exec sed -i 's/Datadog config/StackState config/g' {} +
 
 # This line is used to fix the package import paths in go.mod files in the agent codebase.
 find "$DIR" -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g' {} +
@@ -27,3 +28,19 @@ find "$DIR" -type d -name .git -prune -o -type f -name "*.mod" -exec sed -i 's/S
 #find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bdatadog-agent\b/stackstate-agent/g' {} +
 #find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/\bDataDog\b/StackVista/g' {} +
 #find $CI_PROJECT_DIR/tasks -type d -name .git -prune -o -type f -name "*.py" -exec sed -i 's/StackVista\/agent-payload/DataDog\/agent-payload/g' {} +
+
+# The following stems from some failed branding renames in apply_branding python code that effectively tries to invoke find | sed as follows:
+# find {} {} -prune -o -type f -name \"{}\" -exec sed -i '{}' {{}} +".format(at, to_ignore, file_pattern, rename_pattern)
+
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/\/var\/log\/datadog/\/var\/log\/stackstate-agent/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/datadog-agent/stackstate-agent/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/datadog/stackstate/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/DD_AGENT/STS_AGENT/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "pre*" -exec sed -i 's/dd-agent/stackstate-agent/g' {} +
+
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/\/var\/log\/datadog/\/var\/log\/stackstate-agent/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/datadog-agent/stackstate-agent/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/datadog/stackstate/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/DD_AGENT/STS_AGENT/g' {} +
+find "${DIR}/omnibus/package-scripts" -type d -name .git -prune -o -type f -name "post*" -exec sed -i 's/dd-agent/stackstate-agent/g' {} +
+
