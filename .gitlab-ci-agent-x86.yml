@@ -726,50 +726,6 @@ pre_release_cluster_agent_image:
   rules:
     - *cluster_agent
 
-# Core Structure for all the beest steps
-
-# Rules
-.beest_kubernetes_rule: &kubernetes_ignore_rule
-    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
-    when: never
-
-# Jobs
-prepare_beest_trigger:
-  image: docker.io/library/alpine:latest
-  stage: prepare
-  before_script:
-    - apk add --no-cache bash jq
-  rules:
-    - *kubernetes_ignore_rule
-    - *merge_train_always
-  script:
-    - jq -r '.PROCESS_AGENT_BRANCH' stackstate-deps.json > process_agent_branch.txt
-    - jq -r '.PROCESS_AGENT_VERSION' stackstate-deps.json > process_agent_version.txt
-    - echo "AGENT_UNDER_TEST=$CI_COMMIT_REF_NAME" >> trigger_vars.env
-    - echo "TRIGGER_AGENT_ARM_TESTS=true" >> trigger_vars.env
-    - echo "PROCESS_AGENT_BRANCH=$(cat process_agent_branch.txt)" >> trigger_vars.env
-    - echo "PROCESS_AGENT_VERSION=$(cat process_agent_version.txt)" >> trigger_vars.env
-  artifacts:
-    reports:
-      dotenv: trigger_vars.env
-    paths:
-      - process_agent_branch.txt
-      - process_agent_version.txt
-
-beest_k8s_1_33_containerd_trigger_verification:
-  stage: acceptance
-  needs:
-    - prepare_beest_trigger
-  variables:
-    AGENT_BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
-    AGENT_HASH_UNDER_TEST: "$CI_COMMIT_SHORT_SHA"
-    TRIGGER_AGENT_X86_TESTS: "true"
-  rules:
-    - *kubernetes_ignore_rule
-    - *merge_train_always
-  trigger:
-    project: stackvista/integrations/beest
-
 ## release stage
 release_deb:
   interruptible: true
