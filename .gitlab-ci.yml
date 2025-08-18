@@ -202,18 +202,21 @@ merge_docker_manifest_main_agent:
   variables:
     DST_REPOSITORY: quay.io/stackstate/stackstate-k8s-agent
 
-cluster_agent:
-  stage: triggers
+beest_k8s_1_33_containerd_trigger_verification:
+  stage: postbuild
+  needs: [ merge_docker_manifest_main_agent, merge_docker_manifest_cluster_agent]
   variables:
-    <<: *commonvariables
-    <<: *agent_variables
-  trigger:
-    include: .gitlab-ci-cluster-agent.yml
-    strategy: depend
+    AGENT_BRANCH_UNDER_TEST: "$CI_COMMIT_REF_NAME"
+    AGENT_HASH_UNDER_TEST: "$CI_COMMIT_SHORT_SHA"
+    TRIGGER_AGENT_X86_TESTS: "true"
   rules:
-    - <<: *exclude_on_clean
-    - <<: *include_on_cluster_agent
-    - when: never
+    - if: $CI_COMMIT_REF_NAME == "stackstate-7.51.1"
+      when: on_success
+    - if: $CI_COMMIT_BRANCH
+      when: manual
+      allow_failure: true
+  trigger:
+    project: stackvista/integrations/beest
 
 build_agent_runners:
   stage: triggers
