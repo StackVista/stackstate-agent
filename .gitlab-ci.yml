@@ -200,6 +200,7 @@ beest_k8s_1_33_containerd_trigger_verification:
   rules:
     - if: $CI_COMMIT_REF_NAME == "stackstate-7.51.1"
       when: manual
+      allow_failure: true
     - if: $CI_COMMIT_BRANCH
       when: manual
       allow_failure: true
