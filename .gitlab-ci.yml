@@ -36,12 +36,10 @@ variables: &commonvariables
   # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
   # do jobs like these run on
   PRIMARY_MAJOR_VERSION: '3'
-  PROCESS_AGENT_TEST_REPO: stackstate-process-agent-test
+  PROCESS_AGENT_TEST_REPO: stackstate-k8s-process-agent
   AGENT_HELM_CHART_VERSION: ""
   STACKSTATE_HELM_CHART_VERSION: ""
   RUNNERS_IP: $RUNNERS_IP # IP of NAT Gateway from tooling account (where kubernetes runners live)
-  STS_DOCKER_K8S_REPO: stackstate-k8s-agent
-  STS_DOCKER_K8S_REPO_CLUSTER: stackstate-k8s-cluster-agent
   DD_KUBE_RESOURCES_NAMESPACE: "default" # this is here to make sure k8s based unit tests do not pick up namespaces from the environment when  running in k8s
 
 .agent_variables: &agent_variables
@@ -55,24 +53,14 @@ variables: &commonvariables
   STS_AWS_TEST_BUCKET_YUM: stackstate-agent-3-rpm-test
   STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-3
   STS_AWS_TEST_BUCKET_WIN: stackstate-agent-3-test
-  STS_DOCKER_RELEASE_REPO: stackstate-agent
-  STS_DOCKER_TEST_REPO: stackstate-agent-test
-  STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
-  STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
-  STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
-  STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
-  STS_DOCKER_RELEASE_REPO_SWARM: stackstate-swarm-agent
-  STS_DOCKER_TEST_REPO_SWARM: stackstate-swarm-agent-test
+  STS_DOCKER_RELEASE_REPO: stackstate-k8s-agent
+  STS_DOCKER_TEST_REPO: stackstate-k8s-agent
+  STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-k8s-cluster-agent
+  STS_DOCKER_TEST_REPO_CLUSTER: stackstate-k8s-cluster-agent
 
 .rules:
   - &exclude_on_cluster_agent
     if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
-    when: never
-  - &include_on_cluster_agent
-    if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
-    when: on_success
-  - &exclude_on_tag_v3
-    if: $CI_COMMIT_TAG =~ /3\..*/
     when: never
   - &scheduled_master_pipeline
     if: $CI_COMMIT_TAG || ($CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE == "schedule")
@@ -211,7 +199,7 @@ beest_k8s_1_33_containerd_trigger_verification:
     TRIGGER_AGENT_X86_TESTS: "true"
   rules:
     - if: $CI_COMMIT_REF_NAME == "stackstate-7.51.1"
-      when: on_success
+      when: manual
     - if: $CI_COMMIT_BRANCH
       when: manual
       allow_failure: true
