@@ -43,7 +43,8 @@ function prepare() {
     . /usr/local/rvm/scripts/rvm
 
     if ! type "rsync" > /dev/null; then
-      apt install rsync -y --no-install-recommends
+        apt update
+        apt install rsync -y --no-install-recommends
     fi
 
     mkdir -p $SRC_PATH

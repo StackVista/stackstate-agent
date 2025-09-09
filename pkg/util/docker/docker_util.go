@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 
@@ -101,10 +101,10 @@ func ConnectToDocker(ctx context.Context) (*client.Client, error) {
 }
 
 // Images returns a slice of all images.
-func (d *DockerUtil) Images(ctx context.Context, includeIntermediate bool) ([]types.ImageSummary, error) {
+func (d *DockerUtil) Images(ctx context.Context, includeIntermediate bool) ([]image.Summary, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.queryTimeout)
 	defer cancel()
-	images, err := d.cli.ImageList(ctx, types.ImageListOptions{All: includeIntermediate})
+	images, err := d.cli.ImageList(ctx, image.ListOptions{All: includeIntermediate})
 	if err != nil {
 		return nil, fmt.Errorf("unable to list docker images: %s", err)
 	}
@@ -137,14 +137,14 @@ func (d *DockerUtil) RawClient() *client.Client {
 
 // RawContainerList wraps around the docker client's ContainerList method.
 // Value validation and error handling are the caller's responsibility.
-func (d *DockerUtil) RawContainerList(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
+func (d *DockerUtil) RawContainerList(ctx context.Context, options container.ListOptions) ([]container.Summary, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.queryTimeout)
 	defer cancel()
 	return d.cli.ContainerList(ctx, options)
 }
 
 // RawContainerListWithFilter is like RawContainerList but with a container filter.
-func (d *DockerUtil) RawContainerListWithFilter(ctx context.Context, options types.ContainerListOptions, filter *containers.Filter) ([]types.Container, error) {
+func (d *DockerUtil) RawContainerListWithFilter(ctx context.Context, options container.ListOptions, filter *containers.Filter) ([]container.Summary, error) {
 	containers, err := d.RawContainerList(ctx, options)
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (d *DockerUtil) RawContainerListWithFilter(ctx context.Context, options typ
 		return containers, nil
 	}
 
-	isExcluded := func(container types.Container) bool {
+	isExcluded := func(container container.Summary) bool {
 		var annotations map[string]string
 		// TODO(components)L inject dependency and remove use of global
 		if pod, err := workloadmeta.GetGlobalStore().GetKubernetesPodForContainer(container.ID); err == nil {
@@ -170,7 +170,7 @@ func (d *DockerUtil) RawContainerListWithFilter(ctx context.Context, options typ
 		return false
 	}
 
-	filtered := []types.Container{}
+	filtered := []container.Summary{}
 	for _, container := range containers {
 		if !isExcluded(container) {
 			filtered = append(filtered, container)
@@ -265,7 +265,7 @@ func (d *DockerUtil) GetPreferredImageName(imageID string, repoTags []string, re
 }
 
 // ImageInspect returns an image inspect object for a given image ID
-func (d *DockerUtil) ImageInspect(ctx context.Context, imageID string) (types.ImageInspect, error) {
+func (d *DockerUtil) ImageInspect(ctx context.Context, imageID string) (image.InspectResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.queryTimeout)
 	defer cancel()
 
@@ -293,7 +293,7 @@ func (d *DockerUtil) ImageHistory(ctx context.Context, imageID string) ([]image.
 // ResolveImageNameFromContainer will resolve the container sha image name to their user-friendly name.
 // It is similar to ResolveImageName except it tries to match the image to the container Config.Image.
 // For non-sha names we will just return the name as-is.
-func (d *DockerUtil) ResolveImageNameFromContainer(ctx context.Context, co types.ContainerJSON) (string, error) {
+func (d *DockerUtil) ResolveImageNameFromContainer(ctx context.Context, co container.InspectResponse) (string, error) {
 	if co.Config.Image != "" && !isImageShaOrRepoDigest(co.Config.Image) {
 		return co.Config.Image, nil
 	}
@@ -303,9 +303,9 @@ func (d *DockerUtil) ResolveImageNameFromContainer(ctx context.Context, co types
 
 // Inspect returns a docker inspect object for a given container ID.
 // It tries to locate the container in the inspect cache before making the docker inspect call
-func (d *DockerUtil) Inspect(ctx context.Context, id string, withSize bool) (types.ContainerJSON, error) {
+func (d *DockerUtil) Inspect(ctx context.Context, id string, withSize bool) (container.InspectResponse, error) {
 	cacheKey := GetInspectCacheKey(id, withSize)
-	var container types.ContainerJSON
+	var container container.InspectResponse
 
 	cached, hit := cache.Cache.Get(cacheKey)
 	// Try to get sized hit if we got a miss and withSize=false
@@ -314,7 +314,7 @@ func (d *DockerUtil) Inspect(ctx context.Context, id string, withSize bool) (typ
 	}
 
 	if hit {
-		container, ok := cached.(types.ContainerJSON)
+		container, ok := cached.(container.InspectResponse)
 		if !ok {
 			log.Errorf("Invalid inspect cache format, forcing a cache miss")
 		} else {
@@ -336,7 +336,7 @@ func (d *DockerUtil) Inspect(ctx context.Context, id string, withSize bool) (typ
 // InspectNoCache returns a docker inspect object for a given container ID. It
 // ignores the inspect cache, always collecting fresh data from the docker
 // daemon.
-func (d *DockerUtil) InspectNoCache(ctx context.Context, id string, withSize bool) (types.ContainerJSON, error) {
+func (d *DockerUtil) InspectNoCache(ctx context.Context, id string, withSize bool) (container.InspectResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.queryTimeout)
 	defer cancel()
 
@@ -361,7 +361,7 @@ func (d *DockerUtil) InspectNoCache(ctx context.Context, id string, withSize boo
 func (d *DockerUtil) AllContainerLabels(ctx context.Context) (map[string]map[string]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.queryTimeout)
 	defer cancel()
-	containers, err := d.cli.ContainerList(ctx, types.ContainerListOptions{})
+	containers, err := d.cli.ContainerList(ctx, container.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("error listing containers: %s", err)
 	}
@@ -379,14 +379,14 @@ func (d *DockerUtil) AllContainerLabels(ctx context.Context) (map[string]map[str
 }
 
 // GetContainerStats returns docker container stats
-func (d *DockerUtil) GetContainerStats(ctx context.Context, containerID string) (*types.StatsJSON, error) {
+func (d *DockerUtil) GetContainerStats(ctx context.Context, containerID string) (*container.StatsResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.queryTimeout)
 	defer cancel()
 	stats, err := d.cli.ContainerStatsOneShot(ctx, containerID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Docker stats: %s", err)
 	}
-	containerStats := &types.StatsJSON{}
+	containerStats := &container.StatsResponse{}
 	err = json.NewDecoder(stats.Body).Decode(&containerStats)
 	if err != nil {
 		return nil, fmt.Errorf("error listing containers: %s", err)
@@ -395,7 +395,7 @@ func (d *DockerUtil) GetContainerStats(ctx context.Context, containerID string) 
 }
 
 // ContainerLogs returns a container logs reader
-func (d *DockerUtil) ContainerLogs(ctx context.Context, container string, options types.ContainerLogsOptions) (io.ReadCloser, error) {
+func (d *DockerUtil) ContainerLogs(ctx context.Context, container string, options container.LogsOptions) (io.ReadCloser, error) {
 	return d.cli.ContainerLogs(ctx, container, options)
 }
 

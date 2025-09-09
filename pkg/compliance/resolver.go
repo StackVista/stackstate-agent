@@ -26,7 +26,9 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/version"
 	"github.com/DataDog/datadog-go/v5/statsd"
 
-	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
 	docker "github.com/docker/docker/client"
 
 	auditrule "github.com/elastic/go-libaudit/rule"
@@ -581,7 +583,7 @@ func (r *defaultResolver) resolveDocker(ctx context.Context, spec InputSpecDocke
 	var resolved []interface{}
 	switch spec.Kind {
 	case "image":
-		list, err := cl.ImageList(ctx, dockertypes.ImageListOptions{All: true})
+		list, err := cl.ImageList(ctx, image.ListOptions{All: true})
 		if err != nil {
 			return nil, err
 		}
@@ -597,7 +599,7 @@ func (r *defaultResolver) resolveDocker(ctx context.Context, spec InputSpecDocke
 			})
 		}
 	case "container":
-		list, err := cl.ContainerList(ctx, dockertypes.ContainerListOptions{All: true})
+		list, err := cl.ContainerList(ctx, container.ListOptions{All: true})
 		if err != nil {
 			return nil, err
 		}
@@ -614,7 +616,7 @@ func (r *defaultResolver) resolveDocker(ctx context.Context, spec InputSpecDocke
 			})
 		}
 	case "network":
-		networks, err := cl.NetworkList(ctx, dockertypes.NetworkListOptions{})
+		networks, err := cl.NetworkList(ctx, network.ListOptions{})
 		if err != nil {
 			return nil, err
 		}

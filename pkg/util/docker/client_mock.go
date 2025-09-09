@@ -11,7 +11,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 
 	"github.com/DataDog/datadog-agent/pkg/util/containers"
@@ -21,9 +22,9 @@ import (
 // Should probably be generated at some point
 type MockClient struct {
 	FakeRawClient                   *client.Client
-	FakeContainerList               []types.Container
+	FakeContainerList               []container.Summary
 	FakeImageNameMapping            map[string]string
-	FakeImages                      []types.ImageSummary
+	FakeImages                      []image.Summary
 	FakeStorageStats                []*StorageStats
 	FakeAttachedVolumes             int
 	FakeDandlingVolumes             int
@@ -40,7 +41,7 @@ func (d *MockClient) RawClient() *client.Client {
 // RawContainerList is a mock method
 //
 //nolint:revive // TODO(CINT) Fix revive linter
-func (d *MockClient) RawContainerList(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
+func (d *MockClient) RawContainerList(ctx context.Context, options container.ListOptions) ([]container.Summary, error) {
 	return d.FakeContainerList, d.FakeError
 }
 
@@ -54,7 +55,7 @@ func (d *MockClient) ResolveImageName(ctx context.Context, image string) (string
 // Images is a mock method
 //
 //nolint:revive // TODO(CINT) Fix revive linter
-func (d *MockClient) Images(ctx context.Context, includeIntermediate bool) ([]types.ImageSummary, error) {
+func (d *MockClient) Images(ctx context.Context, includeIntermediate bool) ([]image.Summary, error) {
 	return d.FakeImages, d.FakeError
 }
 
