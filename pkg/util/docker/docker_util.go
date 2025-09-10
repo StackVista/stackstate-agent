@@ -305,7 +305,7 @@ func (d *DockerUtil) ResolveImageNameFromContainer(ctx context.Context, co conta
 // It tries to locate the container in the inspect cache before making the docker inspect call
 func (d *DockerUtil) Inspect(ctx context.Context, id string, withSize bool) (container.InspectResponse, error) {
 	cacheKey := GetInspectCacheKey(id, withSize)
-	var container container.InspectResponse
+	var inspect container.InspectResponse
 
 	cached, hit := cache.Cache.Get(cacheKey)
 	// Try to get sized hit if we got a miss and withSize=false
@@ -314,23 +314,23 @@ func (d *DockerUtil) Inspect(ctx context.Context, id string, withSize bool) (con
 	}
 
 	if hit {
-		container, ok := cached.(container.InspectResponse)
+		inspect, ok := cached.(container.InspectResponse)
 		if !ok {
 			log.Errorf("Invalid inspect cache format, forcing a cache miss")
 		} else {
-			return container, nil
+			return inspect, nil
 		}
 	}
 
-	container, err := d.InspectNoCache(ctx, id, withSize)
+	inspect, err := d.InspectNoCache(ctx, id, withSize)
 	if err != nil {
-		return container, err
+		return inspect, err
 	}
 
 	// cache the inspect for 10 seconds to reduce pressure on the daemon
-	cache.Cache.Set(cacheKey, container, 10*time.Second)
+	cache.Cache.Set(cacheKey, inspect, 10*time.Second)
 
-	return container, nil
+	return inspect, nil
 }
 
 // InspectNoCache returns a docker inspect object for a given container ID. It
@@ -340,20 +340,20 @@ func (d *DockerUtil) InspectNoCache(ctx context.Context, id string, withSize boo
 	ctx, cancel := context.WithTimeout(ctx, d.queryTimeout)
 	defer cancel()
 
-	container, _, err := d.cli.ContainerInspectWithRaw(ctx, id, withSize)
+	inspect, _, err := d.cli.ContainerInspectWithRaw(ctx, id, withSize)
 	if client.IsErrNotFound(err) {
-		return container, dderrors.NewNotFound(fmt.Sprintf("docker container %s", id))
+		return inspect, dderrors.NewNotFound(fmt.Sprintf("docker container %s", id))
 	}
 	if err != nil {
-		return container, err
+		return inspect, err
 	}
 
 	// ContainerJSONBase is a pointer embed, so it might be nil and cause segfaults
-	if container.ContainerJSONBase == nil {
-		return container, errors.New("invalid inspect data")
+	if inspect.ContainerJSONBase == nil {
+		return inspect, errors.New("invalid inspect data")
 	}
 
-	return container, nil
+	return inspect, nil
 }
 
 // AllContainerLabels retrieves all running containers (`docker ps`) and returns

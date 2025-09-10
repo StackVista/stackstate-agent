@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/system"
 
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
@@ -79,7 +79,7 @@ func (s *StorageStats) GetPercentUsed() float64 {
 // parseStorageStatsFromInfo converts the [][2]string DriverStatus from docker
 // info into a reliable StorageStats struct. It only supports DeviceMapper
 // stats for now.
-func parseStorageStatsFromInfo(info types.Info) ([]*StorageStats, error) {
+func parseStorageStatsFromInfo(info system.Info) ([]*StorageStats, error) {
 	statsArray := []*StorageStats{}
 	statsPerName := make(map[string]*StorageStats)
 
