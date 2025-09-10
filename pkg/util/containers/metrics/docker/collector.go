@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta"
 	"github.com/DataDog/datadog-agent/pkg/config"
@@ -168,7 +168,7 @@ func (d *dockerCollector) GetSelfContainerID() (string, error) {
 }
 
 // stats returns stats by container ID
-func (d *dockerCollector) stats(containerID string) (*types.StatsJSON, error) {
+func (d *dockerCollector) stats(containerID string) (*container.StatsResponse, error) {
 	stats, err := d.du.GetContainerStats(context.TODO(), containerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get container stats for %s: %w", containerID, err)
@@ -182,7 +182,7 @@ func (d *dockerCollector) pids(containerID string) ([]int, error) {
 	return d.du.GetContainerPIDs(context.TODO(), containerID)
 }
 
-func (d *dockerCollector) spec(containerID string) (*types.ContainerJSON, error) {
+func (d *dockerCollector) spec(containerID string) (*container.InspectResponse, error) {
 	contSpec, err := d.du.Inspect(context.TODO(), containerID, false)
 	if err != nil {
 		return nil, err
@@ -213,7 +213,7 @@ func (d *dockerCollector) refreshPIDCache(currentTime time.Time, cacheValidity t
 	return nil
 }
 
-func fillStatsFromSpec(containerStats *provider.ContainerStats, spec *types.ContainerJSON) {
+func fillStatsFromSpec(containerStats *provider.ContainerStats, spec *container.InspectResponse) {
 	if spec == nil || containerStats == nil {
 		return
 	}
@@ -222,7 +222,7 @@ func fillStatsFromSpec(containerStats *provider.ContainerStats, spec *types.Cont
 	computeMemoryLimit(containerStats, spec)
 }
 
-func computeMemoryLimit(containerStats *provider.ContainerStats, spec *types.ContainerJSON) {
+func computeMemoryLimit(containerStats *provider.ContainerStats, spec *container.InspectResponse) {
 	if spec == nil || spec.HostConfig == nil || containerStats.Memory == nil {
 		return
 	}
@@ -232,7 +232,7 @@ func computeMemoryLimit(containerStats *provider.ContainerStats, spec *types.Con
 	}
 }
 
-func convertNetworkStats(stats *types.StatsJSON) *provider.ContainerNetworkStats {
+func convertNetworkStats(stats *container.StatsResponse) *provider.ContainerNetworkStats {
 	containerNetworkStats := &provider.ContainerNetworkStats{
 		Timestamp:   stats.Read,
 		BytesSent:   pointer.Ptr(0.0),
