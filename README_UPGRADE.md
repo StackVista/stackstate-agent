@@ -6,6 +6,8 @@ datadog version we put our work on top off.
 
 Because we have merge commits in our history, we cannot rebase/cherry-pick directly onto datadog. We first squash our work into a single commit, to get rid of merge commits.
 
+Lucidchart here: **https://lucid.app/lucidspark/2f9240e3-dca7-4ef1-b796-e7742fc4f1e2/edit**
+
 We use the following version (git hash) shortnames:
 - `F`: The datadog version we currently base ourselves on
 - `Fsts`: The git commit denoting the latest HEAD of the patch we put on datadog version `F`
