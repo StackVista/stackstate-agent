@@ -13,7 +13,7 @@ skip_transitive_dependency_licensing true
 version("2.4.7") { source sha256: "4f7f217f057ce655ff22559ad221a0fd8ef84ad1fc5fcb6990cecc333aa1635d" }
 
 # Use a stable mirror for libtool source
-source url: "https://mirror.clientvps.com/gnu/libtool/libtool-#{version}.tar.xz"
+source url: "https://mirror.easyname.at/gnu/libtool/libtool-#{version}.tar.xz"
 
 relative_path "libtool-#{version}"
 
