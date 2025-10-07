@@ -192,7 +192,8 @@ func (ku *KubeUtil) getLocalPodList(ctx context.Context) (*PodList, error) {
 		}
 	}
 
-	data, code, err := ku.QueryKubelet(ctx, kubeletPodPath)
+	// Query with automatic compatibility for Kubernetes 1.34+
+	data, code, err := ku.queryPodListWithCompatibility(ctx)
 	if err != nil {
 		return nil, errors.NewRetriable("podlist", fmt.Errorf("error performing kubelet query %s%s: %w", ku.kubeletClient.kubeletURL, kubeletPodPath, err))
 	}
