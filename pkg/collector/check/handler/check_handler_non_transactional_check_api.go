@@ -48,7 +48,7 @@ func (ch *NonTransactionalCheckHandler) GetState(key string) string {
 	if err != nil {
 		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
 	}
-	log.Infof("Retrieved state for check %s, state key: %s, value: %s", ch.ID(), key, s)
+	log.Infof("Retrieved state for check %s, state key: %s", ch.ID(), key)
 	return s
 }
 
