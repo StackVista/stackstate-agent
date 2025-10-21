@@ -8,7 +8,18 @@
 package python
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
+	check2 "github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionmanager"
+	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -188,11 +199,13 @@ func testSubmitServiceCheckEmptyHostame(t *testing.T) {
 }
 
 func testSubmitEvent(t *testing.T) {
-	sender := mocksender.NewMockSender(checkid.ID("testID"))
-	release := scopeInitCheckContext(sender.GetSenderManager())
+	_, mockTransactionalBatcher, _, manager := handler.SetupMockTransactionalComponents()
+
+	release := scopeInitCheckManager(manager)
 	defer release()
 
-	sender.SetupAcceptAll()
+	testCheck := &test.STSTestCheck{Name: "check-id-event-test"}
+	manager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	ev := C.event_t{}
 	ev.title = C.CString("ev_title")
@@ -207,7 +220,10 @@ func testSubmitEvent(t *testing.T) {
 	tags := []*C.char{C.CString("tag1"), C.CString("tag2"), nil}
 	ev.tags = &tags[0]
 
-	SubmitEvent(C.CString("testID"), &ev)
+	checkId := C.CString(testCheck.String())
+
+	StartTransaction(checkId)
+	SubmitEvent(checkId, &ev)
 
 	expectedEvent := event.Event{
 		Title:          "ev_title",
@@ -220,7 +236,20 @@ func testSubmitEvent(t *testing.T) {
 		AggregationKey: "aggregation_key",
 		SourceTypeName: "source_type",
 	}
-	sender.AssertEvent(t, expectedEvent, 0)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
+	currentCheckState, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
+
+	expectedCheckState := transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: currentCheckState.Transaction, // not asserting this specifically, it just needs to be present
+		Health:      map[string]health.Health{},
+		Events:      &telemetry.IntakeEvents{Events: []telemetry.Event{handler.ConvertToStsEvent(expectedEvent)}},
+	}
+	assert.Equal(t, expectedCheckState, currentCheckState)
+
+	manager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testSubmitHistogramBucket(t *testing.T) {
@@ -263,6 +292,6 @@ func testSubmitEventPlatformEvent(t *testing.T) {
 }
 
 func scopeInitCheckContext(senderManager sender.SenderManager) func() {
-	initializeCheckContext(senderManager)
+	withLockedCheckContext(senderManager, handler.NewCheckManager(batcher.NewMockBatcher(), transactionbatcher.NewMockTransactionalBatcher(), transactionmanager.NewMockTransactionManager()))
 	return releaseCheckContext
 }

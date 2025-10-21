@@ -11,6 +11,8 @@ import (
 	"errors"
 	_ "expvar" // Blank import used because this isn't directly used in this file
 	"fmt"
+	"github.com/DataDog/datadog-agent/comp/stackstate"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"net/http"
 	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
 	"os"
@@ -97,7 +99,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/flavor"
 	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
 	"github.com/DataDog/datadog-agent/pkg/util/hostname"
-	"github.com/DataDog/datadog-agent/pkg/util/installinfo"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection"
 	pkglog "github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/util/optional"
@@ -109,6 +110,7 @@ import (
 	// register core checks
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/helm"
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/ksm"
+	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubeapi"
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/orchestrator"
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containerimage"
@@ -167,6 +169,7 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 			}),
 			getSharedFxOption(),
 			getPlatformModules(),
+			stackstate.Bundle(),
 		)
 	}
 
@@ -216,6 +219,7 @@ func run(log log.Component,
 	_ netflowServer.Component,
 	_ langDetectionCl.Component,
 	agentAPI internalAPI.Component,
+	checkManager handler.CheckManager,
 ) error {
 	defer func() {
 		stopAgent(cliParams, server, demultiplexer, agentAPI)
@@ -275,6 +279,7 @@ func run(log log.Component,
 		invAgent,
 		agentAPI,
 		invChecks,
+		checkManager,
 	); err != nil {
 		return err
 	}
@@ -376,6 +381,7 @@ func startAgent(
 	invAgent inventoryagent.Component,
 	agentAPI internalAPI.Component,
 	invChecks inventorychecks.Component,
+	checkManager handler.CheckManager,
 ) error {
 
 	var err error
@@ -562,13 +568,14 @@ func startAgent(
 	}
 
 	// Append version and timestamp to version history log file if this Agent is different than the last run version
-	installinfo.LogVersionHistory()
+	// [STS] we don't need this feature
+	// installinfo.LogVersionHistory()
 
 	// TODO: (components) - Until the checks are components we set there context so they can depends on components.
 	check.InitializeInventoryChecksContext(invChecks)
 
 	// Set up check collector
-	common.AC.AddScheduler("check", collector.InitCheckScheduler(common.Coll, demultiplexer), true)
+	common.AC.AddScheduler("check", collector.InitCheckScheduler(common.Coll, demultiplexer, checkManager), true)
 	common.Coll.Start()
 
 	demultiplexer.AddAgentStartupTelemetry(version.AgentVersion)

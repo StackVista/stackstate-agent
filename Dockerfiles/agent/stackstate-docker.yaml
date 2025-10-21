@@ -1,0 +1,16 @@
+## Provides autodetected defaults, for vanilla Docker environments,
+## please see stackstate.yaml.example for all supported options
+
+# Autodiscovery settings for vanilla Docker
+listeners:
+  - name: docker
+config_providers:
+  - name: docker
+    polling: true
+    poll_interval: 1s
+
+apm_config:
+  apm_non_local_traffic: true
+
+# Use java container support
+jmx_use_container_support: true

@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <rtloader.h>
 
@@ -102,6 +103,8 @@ public:
     void setHeadersCb(cb_headers_t);
     void setGetHostnameCb(cb_get_hostname_t);
     void setGetClusternameCb(cb_get_clustername_t);
+    void setGetPidCb(cb_get_pid_t);
+    void setGetCreateTimeCb(cb_get_create_time_t);
     void setGetTracemallocEnabledCb(cb_tracemalloc_enabled_t);
     void setLogCb(cb_log_t);
     void setSetCheckMetadataCb(cb_set_check_metadata_t);
@@ -129,6 +132,34 @@ public:
 
     // containers
     void setIsExcludedCb(cb_is_excluded_t);
+
+    // topology
+    void setSubmitComponentCb(cb_submit_component_t);
+    void setSubmitRelationCb(cb_submit_relation_t);
+    void setSubmitStartSnapshotCb(cb_submit_start_snapshot_t);
+    void setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t);
+    void setSubmitDeleteCb(cb_submit_delete_t);
+
+    // telemetry
+    void setSubmitTopologyEventCb(cb_submit_topology_event_t);
+
+    // raw metrics
+    void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t);
+
+    // health
+    void setSubmitHealthCheckDataCb(cb_submit_health_check_data_t);
+    void setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t);
+    void setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t);
+
+    // transaction state
+    void setStartTransactionCb(cb_start_transaction_t);
+    void setStopTransactionCb(cb_stop_transaction_t);
+    void setDiscardTransactionCb(cb_discard_transaction_t);
+    void setTransactionStateCb(cb_set_transaction_state_t);
+
+    // state
+    void setStateCb(cb_set_state_t);
+    char *setGetStateCb(cb_get_state_t);
 
 private:
     //! initPythonHome member.

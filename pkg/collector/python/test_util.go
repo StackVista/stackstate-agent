@@ -8,6 +8,8 @@
 package python
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -75,4 +77,9 @@ func testGetSubprocessOutputError(t *testing.T) {
 	assert.NotEqual(t, "", C.GoString(cStderr))
 	assert.NotEqual(t, C.int(0), cRetCode)
 	assert.Nil(t, exception)
+}
+
+func scopeInitCheckManager(manager handler.CheckManager) func() {
+	withLockedCheckContext(aggregator.NewNoOpSenderManager(), manager)
+	return releaseCheckContext
 }

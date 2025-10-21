@@ -14,7 +14,8 @@ build do
   license "MIT"
   license_file "https://raw.githubusercontent.com/pypa/pip/main/LICENSE.txt"
 
-  patch :source => "remove-python27-deprecation-warning.patch", :target => "src/pip/_internal/cli/base_command.py"
+#   [sts] we are not removing the pip warning because we want to discourage our clients to use py2
+#   patch :source => "remove-python27-deprecation-warning.patch", :target => "src/pip/_internal/cli/base_command.py"
 
   if ohai["platform"] == "windows"
     python_bin = "#{windows_safe_path(python_2_embedded)}\\python.exe"

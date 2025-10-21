@@ -38,6 +38,9 @@ type legacyKubernetesInstance struct {
 	NodeLabelsToTags map[string]string `yaml:"node_labels_to_host_tags"`
 
 	CollectEvents       bool   `yaml:"collect_events"`
+	CollectMetrics      bool   `yaml:"collect_metrics"`
+	CollectTopology     bool   `yaml:"collect_topology"`
+	CollectTimeout      int    `yaml:"collect_timeout"`
 	LeaderCandidate     bool   `yaml:"leader_candidate"`
 	LeaderLeaseDuration int    `yaml:"leader_lease_duration"`
 	CollectServiceTags  string `yaml:"collect_service_tags"`
@@ -184,6 +187,9 @@ func importKubernetesConfWithDeprec(src, dst string, overwrite bool, converter *
 	// Temporarily in main datadog.yaml, will move to DCA
 	// Booleans are always imported as zero value is false
 	converter.Set("collect_kubernetes_events", instance.CollectEvents)
+	// [sts] kubernetes converters for metrics + topology
+	converter.Set("collect_kubernetes_metrics", instance.CollectMetrics)
+	converter.Set("collect_kubernetes_topology", instance.CollectTopology)
 	converter.Set("leader_election", instance.LeaderCandidate)
 
 	if instance.LeaderLeaseDuration > 0 {

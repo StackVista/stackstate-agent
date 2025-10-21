@@ -36,7 +36,7 @@ func TestProcessorRunFullStatsLinux(t *testing.T) {
 	assert.ErrorIs(t, err, nil)
 
 	expectedTags := []string{"runtime:docker"}
-	mockSender.AssertNumberOfCalls(t, "Rate", 20)
+	mockSender.AssertNumberOfCalls(t, "Rate", 21)
 	mockSender.AssertNumberOfCalls(t, "Gauge", 16)
 
 	mockSender.AssertMetricInRange(t, "Gauge", "container.uptime", 0, 600, "", expectedTags)

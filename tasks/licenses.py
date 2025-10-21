@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Utility functions for manipulating licenses
 """
@@ -111,7 +112,8 @@ def licenses_csv(licenses):
             copyright = f'"{copyright}"'
         return copyright
 
-    return [f"{l['component']},{l['package']},{l['license']},{fmt_copyright(l)}" for l in licenses]
+    return ["{},{},{},{}".format(l['component'], l['package'], l['license'], fmt_copyright(l)) for l in
+            licenses]  # [sts] refactored to be compatible with py2
 
 
 def wwhrd_licenses(ctx):
@@ -159,11 +161,11 @@ def wwhrd_licenses(ctx):
                 continue
             license = ""
             package = ""
-            for val in line[index + len('msg="Found License"') :].split(" "):
+            for val in line[index + len('msg="Found License"'):].split(" "):
                 if val.startswith('license='):
-                    license = val[len('license=') :]
+                    license = val[len('license='):]
                 elif val.startswith('package='):
-                    package = val[len('package=') :]
+                    package = val[len('package='):]
                     if is_excluded(package):
                         print(f"Skipping {package} ({license}) excluded in .wwhrd.yml")
                     else:

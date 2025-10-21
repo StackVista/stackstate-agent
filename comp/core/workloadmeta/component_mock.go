@@ -4,7 +4,6 @@
 // Copyright 2023-present Datadog, Inc.
 
 //go:build test
-// +build test
 
 // Package workloadmeta provides the workloadmeta component for the Datadog Agent
 package workloadmeta

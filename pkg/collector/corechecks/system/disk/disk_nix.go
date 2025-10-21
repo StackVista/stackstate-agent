@@ -9,6 +9,7 @@ package disk
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"path/filepath"
 
 	"github.com/shirou/gopsutil/v3/disk"
@@ -29,6 +30,9 @@ var (
 type Check struct {
 	core.CheckBase
 	cfg *diskConfig
+	// sts
+	// topologyCollector collects all disk topology and produces it using the Batcher
+	topologyCollector *TopologyCollector
 }
 
 // Run executes the check
@@ -38,7 +42,7 @@ func (c *Check) Run() error {
 		return err
 	}
 
-	err = c.collectPartitionMetrics(sender)
+	partitions, err := c.collectPartitionMetrics(sender)
 	if err != nil {
 		return err
 	}
@@ -48,15 +52,25 @@ func (c *Check) Run() error {
 	}
 	sender.Commit()
 
-	return nil
-}
-
-func (c *Check) collectPartitionMetrics(sender sender.Sender) error {
-	partitions, err := diskPartitions(true)
+	//sts
+	// produce disk topology
+	err = c.topologyCollector.BuildTopology(partitions, c.GetCheckHandler())
 	if err != nil {
 		return err
 	}
+	//sts
 
+	return nil
+}
+
+func (c *Check) collectPartitionMetrics(sender sender.Sender) ([]disk.PartitionStat, error) {
+	partitions, err := diskPartitions(true)
+	if err != nil {
+		return nil, err
+	}
+
+	// sts - collect disk partitions to create host topology
+	parts := make([]disk.PartitionStat, 0)
 	for _, partition := range partitions {
 		if c.excludeDisk(partition.Mountpoint, partition.Device, partition.Fstype) {
 			continue
@@ -65,7 +79,7 @@ func (c *Check) collectPartitionMetrics(sender sender.Sender) error {
 		// Get disk metrics here to be able to exclude on total usage
 		usage, err := diskUsage(partition.Mountpoint)
 		if err != nil {
-			log.Warnf("Unable to get disk metrics of %s mount point: %s", partition.Mountpoint, err)
+			log.Debugf("Unable to get disk metrics of %s mount point: %s", partition.Mountpoint, err)
 			continue
 		}
 
@@ -90,10 +104,13 @@ func (c *Check) collectPartitionMetrics(sender sender.Sender) error {
 
 		tags = c.applyDeviceTags(partition.Device, partition.Mountpoint, tags)
 
+		// sts - keep the partitions
+		parts = append(parts, partition)
+
 		c.sendPartitionMetrics(sender, usage, tags)
 	}
 
-	return nil
+	return parts, nil
 }
 
 func (c *Check) collectDiskMetrics(sender sender.Sender) error {
@@ -141,10 +158,17 @@ func (c *Check) sendDiskMetrics(sender sender.Sender, ioCounter disk.IOCountersS
 }
 
 // Configure the disk check
-func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
-	err := c.CommonConfigure(senderManager, integrationConfigDigest, initConfig, data, source)
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
+	err := c.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, data, source)
 	if err != nil {
 		return err
 	}
+
+	// sts init topology collector
+	if /*c.instance.CollectSwarmTopology && */ c.topologyCollector == nil {
+		topologyCollector := MakeTopologyCollector()
+		c.topologyCollector = topologyCollector
+	}
+
 	return c.instanceConfigure(data)
 }

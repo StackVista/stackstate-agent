@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	redis2 "github.com/go-redis/redis/v9"
+	redis2 "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/twmb/franz-go/pkg/kgo"

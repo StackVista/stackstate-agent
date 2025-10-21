@@ -15,14 +15,19 @@ from invoke.exceptions import Exit
 from .build_tags import get_build_tags, get_default_build_tags
 from .cluster_agent_helpers import build_common, clean_common, refresh_assets_common, version_common
 from .go import deps
-from .utils import load_release_versions
+from .utils import (
+    load_release_versions,
+    do_go_rename,  # sts
+    do_sed_rename,  # sts
+    BRANDED,     # sts
+)
+from .agent import apply_branding
 
 # constants
-BIN_PATH = os.path.join(".", "bin", "datadog-cluster-agent")
-AGENT_TAG = "datadog/cluster_agent:master"
-POLICIES_REPO = "https://github.com/DataDog/security-agent-policies.git"
+BIN_PATH = os.path.join(".", "bin", "stackstate-cluster-agent")
+AGENT_TAG = "stackstate/cluster_agent:master"
+POLICIES_REPO = "https://github.com/StackVista/security-agent-policies.git"
 CONTAINER_PLATFORM_MAPPING = {"aarch64": "arm64", "amd64": "amd64", "x86_64": "amd64"}
-
 
 @task
 def build(
@@ -42,6 +47,10 @@ def build(
      Example invokation:
         inv cluster-agent.build
     """
+    # sts
+    if BRANDED:
+        apply_branding(ctx)
+
     build_common(
         ctx,
         BIN_PATH,
@@ -55,19 +64,21 @@ def build(
         skip_assets,
     )
 
-    if policies_version is None:
-        print(f"Loading release versions for {release_version}")
-        env = load_release_versions(ctx, release_version)
-        if "SECURITY_AGENT_POLICIES_VERSION" in env:
-            policies_version = env["SECURITY_AGENT_POLICIES_VERSION"]
-            print(f"Security Agent polices for {release_version}: {policies_version}")
+    # sts - ignore security policies (we don't use the security agent)
 
-    build_context = "Dockerfiles/cluster-agent"
-    policies_path = f"{build_context}/security-agent-policies"
-    ctx.run(f"rm -rf {policies_path}")
-    ctx.run(f"git clone {POLICIES_REPO} {policies_path}")
-    if policies_version != "master":
-        ctx.run(f"cd {policies_path} && git checkout {policies_version}")
+    # if policies_version is None:
+    #     print("Loading release versions for {}".format(release_version))
+    #     env = load_release_versions(ctx, release_version)
+    #     if "SECURITY_AGENT_POLICIES_VERSION" in env:
+    #         policies_version = env["SECURITY_AGENT_POLICIES_VERSION"]
+    #         print("Security Agent polices for {}: {}".format(release_version, policies_version))
+    #
+    # build_context = "Dockerfiles/cluster-agent"
+    # policies_path = "{}/security-agent-policies".format(build_context)
+    # ctx.run("rm -rf {}".format(policies_path))
+    # ctx.run("git clone {} {}".format(POLICIES_REPO, policies_path))
+    # if policies_version != "master":
+    #     ctx.run("cd {} && git checkout {}".format(policies_path, policies_version))
 
 
 @task
@@ -83,7 +94,7 @@ def clean(ctx):
     """
     Remove temporary objects and binary artifacts
     """
-    clean_common(ctx, "datadog-cluster-agent")
+    clean_common(ctx, "stackstate-cluster-agent")  # sts
 
 
 @task
@@ -134,7 +145,7 @@ def image_build(ctx, arch=None, tag=AGENT_TAG, push=False):
         print("Unable to determine architecture to build, please set `arch` parameter")
         raise Exit(code=1)
 
-    dca_binary = glob.glob(os.path.join(BIN_PATH, "datadog-cluster-agent"))
+    dca_binary = glob.glob(os.path.join(BIN_PATH, "stackstate-cluster-agent"))  # sts
     # get the last debian package built
     if not dca_binary:
         print(f"No bin found in {BIN_PATH}")
@@ -144,8 +155,8 @@ def image_build(ctx, arch=None, tag=AGENT_TAG, push=False):
     ctx.run(f"chmod +x {latest_file}")
 
     build_context = "Dockerfiles/cluster-agent"
-    exec_path = f"{build_context}/datadog-cluster-agent.{arch}"
-    dockerfile_path = f"{build_context}/Dockerfile"
+    exec_path = "{}/stackstate-cluster-agent.{}".format(build_context, arch)  # sts
+    dockerfile_path = "{}/{}/Dockerfile".format(build_context, arch)
 
     shutil.copy2(latest_file, exec_path)
     shutil.copytree("Dockerfiles/agent/nosys-seccomp", f"{build_context}/nosys-seccomp", dirs_exist_ok=True)
@@ -182,10 +193,10 @@ def hacky_dev_image_build(ctx, base_image=None, target_image="cluster-agent", pu
         dockerfile.write(
             f'''FROM ubuntu:latest AS src
 
-COPY . /usr/src/datadog-agent
+COPY . /usr/src/stackstate-agent
 
-RUN find /usr/src/datadog-agent -type f \\! -name \\*.go -print0 | xargs -0 rm
-RUN find /usr/src/datadog-agent -type d -empty -print0 | xargs -0 rmdir
+RUN find /usr/src/stackstate-agent -type f \\! -name \\*.go -print0 | xargs -0 rm
+RUN find /usr/src/stackstate-agent -type d -empty -print0 | xargs -0 rmdir
 
 FROM golang:latest AS dlv
 
@@ -201,8 +212,8 @@ RUN apt-get update && \
 ENV DELVE_PAGER=less
 
 COPY --from=dlv /go/bin/dlv /usr/local/bin/dlv
-COPY --from=src /usr/src/datadog-agent {os.getcwd()}
-COPY bin/datadog-cluster-agent/datadog-cluster-agent /opt/datadog-agent/bin/datadog-cluster-agent
+COPY --from=src /usr/src/stackstate-agent {os.getcwd()}
+COPY bin/datadog-cluster-agent/datadog-cluster-agent /opt/stackstate-agent/bin/datadog-cluster-agent
 RUN agent                 completion bash > /usr/share/bash-completion/completions/agent
 RUN datadog-cluster-agent completion bash > /usr/share/bash-completion/completions/datadog-cluster-agent
 

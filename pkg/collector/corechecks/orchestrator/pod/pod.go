@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 
 	"go.uber.org/atomic"
 
@@ -63,6 +64,7 @@ func PodFactory() check.Check {
 // nil check to allow for overrides
 func (c *Check) Configure(
 	senderManager sender.SenderManager,
+	checkManager handler.CheckManager,
 	integrationConfigDigest uint64,
 	data integration.Data,
 	initConfig integration.Data,
@@ -70,7 +72,7 @@ func (c *Check) Configure(
 ) error {
 	c.BuildID(integrationConfigDigest, data, initConfig)
 
-	err := c.CommonConfigure(senderManager, integrationConfigDigest, initConfig, data, source)
+	err := c.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, data, source)
 	if err != nil {
 		return err
 	}

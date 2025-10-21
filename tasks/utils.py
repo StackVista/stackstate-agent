@@ -18,9 +18,13 @@ from invoke.exceptions import Exit
 from .libs.common.color import color_message
 
 # constants
-DEFAULT_BRANCH = "main"
-GITHUB_ORG = "DataDog"
-REPO_NAME = "datadog-agent"
+DEFAULT_BRANCH = "master"  # sts
+GITHUB_ORG = os.getenv('AGENT_GITHUB_ORG') or "StackVista"
+if os.getenv("BRANDED") is not None:
+    BRANDED = os.getenv("BRANDED") == "true"
+else:
+    BRANDED = GITHUB_ORG == "StackVista"
+REPO_NAME = os.getenv('AGENT_REPO_NAME') or "stackstate-agent"
 GITHUB_REPO_NAME = f"{GITHUB_ORG}/{REPO_NAME}"
 REPO_PATH = f"github.com/{GITHUB_REPO_NAME}"
 ALLOWED_REPO_NON_NIGHTLY_BRANCHES = {"dev", "stable", "beta", "none"}
@@ -119,7 +123,7 @@ def get_build_flags(
     rtloader_root=None,
     python_home_2=None,
     python_home_3=None,
-    major_version='7',
+    major_version='3',
     python_runtimes='3',
     headless_mode=False,
 ):
@@ -145,7 +149,7 @@ def get_build_flags(
         base = os.path.dirname(os.path.abspath(__file__))
         task_repo_root = os.path.abspath(os.path.join(base, ".."))
         git_repo_root = get_root()
-        gopath_root = f"{get_gopath(ctx)}/src/github.com/DataDog/datadog-agent"
+        gopath_root = f"{get_gopath(ctx)}/src/github.com/{GITHUB_ORG}/{REPO_NAME}"
 
         for root_candidate in [task_repo_root, git_repo_root, gopath_root]:
             test_embedded_path = os.path.join(root_candidate, "dev")
@@ -188,6 +192,9 @@ def get_build_flags(
     if rtloader_common_headers:
         extra_cgo_flags += f" -I{rtloader_common_headers}"
     env['CGO_CFLAGS'] = os.environ.get('CGO_CFLAGS', '') + extra_cgo_flags
+
+    # sts
+    print(env)
 
     # if `static` was passed ignore setting rpath, even if `embedded_path` was passed as well
     if static:
@@ -298,8 +305,23 @@ def get_git_branch_name():
     """
     return check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode('utf-8').strip()
 
+def query_version(ctx, git_sha_length=7, prefix=None, major_version_hint='3'):
+    # The old way of doing it relied on a tag existing for the version, which is no longer the case.
+    # So, instead of doing that, something like this is needed:
+    branch = get_git_branch_name()
+    get_commit_count_cmd="git rev-list --count {}".format(branch)
+    commit_count = ctx.run(get_commit_count_cmd, hide=True).stdout.strip()
+    get_commit_short_sha_cmd=f"git rev-parse --short={git_sha_length} {branch}"
+    commit_short_sha = ctx.run(get_commit_short_sha_cmd, hide=True).stdout.strip()
+    # version=f"{major_version}.0.0-k8s.git.{commit_count}.{commit_short_sha}"
+    version = "3.0.0"
+    pre = "k8s"
+    pipeline_id = os.getenv("CI_PIPELINE_IID", None)
 
-def query_version(ctx, git_sha_length=7, prefix=None, major_version_hint=None):
+    return version, pre, commit_count, commit_short_sha, pipeline_id
+
+
+def _query_version(ctx, git_sha_length=7, prefix=None, major_version_hint=None):
     # The string that's passed in will look something like this: 6.0.0-beta.0-1-g4f19118
     # if the tag is 6.0.0-beta.0, it has been one commit since the tag and that commit hash is g4f19118
     cmd = "git describe --tags --candidates=50"
@@ -387,32 +409,6 @@ def get_version(
     if pipeline_id is None:
         pipeline_id = os.getenv("CI_PIPELINE_ID")
 
-    project_name = os.getenv("CI_PROJECT_NAME")
-    try:
-        agent_version_cache_file_exist = os.path.exists(AGENT_VERSION_CACHE_NAME)
-        if not agent_version_cache_file_exist:
-            if pipeline_id and pipeline_id.isdigit() and project_name == REPO_NAME:
-                ctx.run(
-                    f"aws s3 cp s3://dd-ci-artefacts-build-stable/datadog-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
-                    hide="stdout",
-                )
-                agent_version_cache_file_exist = True
-
-        if agent_version_cache_file_exist:
-            with open(AGENT_VERSION_CACHE_NAME, "r") as file:
-                cache_data = json.load(file)
-
-            version, pre, commits_since_version, git_sha, pipeline_id = cache_data[major_version]
-            # Dev's versions behave the same as nightly
-            is_nightly = cache_data["nightly"] or cache_data["dev"]
-
-            if pre and include_pre:
-                version = f"{version}-{pre}"
-    except (IOError, json.JSONDecodeError, IndexError) as e:
-        # If a cache file is found but corrupted we ignore it.
-        print(f"Error while recovering the version from {AGENT_VERSION_CACHE_NAME}: {e}", file=sys.stderr)
-        version = ""
-    # If we didn't load the cache
     if not version:
         if pipeline_id:
             # only log this warning in CI
@@ -446,40 +442,28 @@ def get_version(
     return str(version)
 
 
-def get_version_numeric_only(ctx, major_version='7'):
+def get_version_numeric_only(ctx, major_version='3'):
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
     version = ""
-    pipeline_id = os.getenv("CI_PIPELINE_ID")
-    project_name = os.getenv("CI_PROJECT_NAME")
-    if pipeline_id and pipeline_id.isdigit() and project_name == REPO_NAME:
-        try:
-            if not os.path.exists(AGENT_VERSION_CACHE_NAME):
-                ctx.run(
-                    f"aws s3 cp s3://dd-ci-artefacts-build-stable/datadog-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
-                    hide="stdout",
-                )
-
-            with open(AGENT_VERSION_CACHE_NAME, "r") as file:
-                cache_data = json.load(file)
-
-            version, *_ = cache_data[major_version]
-        except (IOError, json.JSONDecodeError, IndexError) as e:
-            # If a cache file is found but corrupted we ignore it.
-            print(f"Error while recovering the version from {AGENT_VERSION_CACHE_NAME}: {e}")
-            version = ""
     if not version:
         version, *_ = query_version(ctx, major_version_hint=major_version)
     return version
 
 
 def load_release_versions(_, target_version):
-    with open("release.json", "r") as f:
+    print("[load_release_versions] Loading deps for version ", target_version)
+    with open("stackstate-deps.json", "r") as f:
         versions = json.load(f)
-        if target_version in versions:
-            # windows runners don't accepts anything else than strings in the
-            # environment when running a subprocess.
-            return {str(k): str(v) for k, v in versions[target_version].items()}
-    raise Exception(f"Could not find '{target_version}' version in release.json")
+        print("Using the following build environment:")
+        for k, v in versions.items():
+            print("[dep_version]", str(k), str(v))
+        return {str(k):str(v) for k, v in versions.items()}
+        # versions = json.load(f)
+        # if target_version in versions:
+        #     # windows runners don't accepts anything else than strings in the
+        #     # environment when running a subprocess.
+        #     return {str(k): str(v) for k, v in versions[target_version].items()}
+    # raise Exception("Could not find '{}' version in release.json".format(target_version))
 
 
 @task()
@@ -576,3 +560,35 @@ def timed(name="", quiet=False):
         res.duration = time.time() - start
         if not quiet:
             print(f"{name} completed in {res.duration:.2f}s")
+
+def do_go_rename(ctx, rename, at):
+    ctx.run("gofmt -l -w -r {} {}".format(rename, at))
+
+
+def do_sed_rename(ctx, rename, at):
+    ctx.run("sed -i '{}' {}".format(rename, at))
+
+
+def do_sed_rename_quoted(ctx, rename, at):
+    ctx.run("sed -i \"{}\" {}".format(rename, at))
+
+def do_find_sed_rename(ctx, file_pattern, to_rename, rename_to, at):
+    # find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*windows*.go" -exec sed -i 's/Datadog Agent Service/StackState Agent Service/g' {} +
+    ctx.run("find {} -type d -name .git -prune -o -type f -name \"{}\" -exec sed -i 's/{}/{}/g' {{}} +".format(at, file_pattern, to_rename, rename_to))
+
+def do_find_sed_rename_pattern(ctx, file_pattern, rename_pattern, at):
+    # find $CI_PROJECT_DIR -type d -name .git -prune -o -type f -name "*windows*.go" -exec sed -i 's/Datadog Agent Service/StackState Agent Service/g' {} +
+    ctx.run("find {} -type d -name .git -prune -o -type f -name \"{}\" -exec sed -i '{}' {{}} +".format(at, file_pattern, rename_pattern))
+
+def do_find_sed_rename_pattern_multi_ignore(ctx, file_pattern, rename_pattern, at, ignore_dirs):
+    # find $CI_PROJECT_DIR \( -type d -name .git -o -type d -name vendor \) -prune -o -type f -name "*windows*.go" -exec sed -i 's/Datadog Agent Service/StackState Agent Service/g' {} +
+    to_ignore = "\("
+    ig_len = len(ignore_dirs)
+    count = 0
+    for ignore_dir in ignore_dirs:
+        if count == ig_len - 1:
+            to_ignore += f" -type d -name {ignore_dir} \)"
+        else:
+            to_ignore += f" -type d -name {ignore_dir} -o"
+        count += 1
+    ctx.run("find {} {} -prune -o -type f -name \"{}\" -exec sed -i '{}' {{}} +".format(at, to_ignore, file_pattern, rename_pattern))

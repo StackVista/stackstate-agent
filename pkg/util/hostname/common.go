@@ -35,8 +35,9 @@ var (
 
 // Data contains hostname and the hostname provider
 type Data struct {
-	Hostname string
-	Provider string
+	Hostname    string
+	Provider    string
+	Identifiers []string // Sts
 }
 
 func fromConfig(ctx context.Context, _ string) (string, error) {

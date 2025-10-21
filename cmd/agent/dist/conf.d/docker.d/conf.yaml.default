@@ -108,3 +108,8 @@ instances:
     # capped_metrics:
     #   docker.cpu.user: 1000
     #   docker.cpu.system: 1000
+
+    ## @param collect_container_topology - boolean - optional - default: true
+    ## Collect StackState topology for containers
+    #
+    # collect_container_topology: true

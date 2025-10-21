@@ -1,11 +1,11 @@
 [Unit]
-Description=Datadog IoT Agent
+Description="Stackstate IoT Agent"
 After=network.target
 
 [Service]
 Type=simple
 PIDFile=<%= install_dir %>/run/agent.pid
-User=dd-agent
+User=stackstate-agent
 Restart=on-failure
 ExecStart=<%= install_dir %>/bin/agent/agent run -p <%= install_dir %>/run/agent.pid
 

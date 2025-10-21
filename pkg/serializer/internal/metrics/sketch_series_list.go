@@ -8,7 +8,6 @@ package metrics
 import (
 	"bytes"
 	"expvar"
-
 	"github.com/DataDog/agent-payload/v5/gogen"
 	"github.com/richardartoul/molecule"
 

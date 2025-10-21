@@ -122,7 +122,7 @@ def build(
 @task
 def build_dev_image(ctx, image=None, push=False, base_image="datadog/agent:latest", include_agent_binary=False):
     """
-    Build a dev image of the security-agent based off an existing datadog-agent image
+    Build a dev image of the security-agent based off an existing stackstate-agent image
 
     image: the image name used to tag the image
     push: if true, run a docker push on the image
@@ -139,7 +139,7 @@ def build_dev_image(ctx, image=None, push=False, base_image="datadog/agent:lates
         ctx.run(f"cp bin/system-probe/system-probe {docker_context + '/system-probe'}")
         if include_agent_binary:
             ctx.run(f"cp bin/agent/agent {docker_context + '/agent'}")
-            core_agent_dest = "/opt/datadog-agent/bin/agent/agent"
+            core_agent_dest = "/opt/stackstate-agent/bin/agent/agent"
         else:
             # this is necessary so that the docker build doesn't fail while attempting to copy the agent binary
             ctx.run(f"touch {docker_context}/agent")
@@ -150,8 +150,8 @@ def build_dev_image(ctx, image=None, push=False, base_image="datadog/agent:lates
         ctx.run(f"cp pkg/ebpf/bytecode/build/co-re/*.o {docker_context}/co-re/")
         ctx.run(f"cp pkg/ebpf/bytecode/build/runtime/*.c {docker_context}")
         ctx.run(f"chmod 0444 {docker_context}/*.o {docker_context}/*.c {docker_context}/co-re/*.o")
-        ctx.run(f"cp /opt/datadog-agent/embedded/bin/clang-bpf {docker_context}")
-        ctx.run(f"cp /opt/datadog-agent/embedded/bin/llc-bpf {docker_context}")
+        ctx.run(f"cp /opt/stackstate-agent/embedded/bin/clang-bpf {docker_context}")
+        ctx.run(f"cp /opt/stackstate-agent/embedded/bin/llc-bpf {docker_context}")
 
         with ctx.cd(docker_context):
             # --pull in the build will force docker to grab the latest base image
@@ -599,9 +599,9 @@ RUN apt-get update -y \
     && apt-get install -y --no-install-recommends xfsprogs ca-certificates iproute2 clang-14 llvm-14 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /opt/datadog-agent/embedded/bin
-RUN ln -s $(which clang-14) /opt/datadog-agent/embedded/bin/clang-bpf
-RUN ln -s $(which llc-14) /opt/datadog-agent/embedded/bin/llc-bpf
+RUN mkdir -p /opt/stackstate-agent/embedded/bin
+RUN ln -s $(which clang-14) /opt/stackstate-agent/embedded/bin/clang-bpf
+RUN ln -s $(which llc-14) /opt/stackstate-agent/embedded/bin/llc-bpf
     """
 
     docker_image_tag_name = "docker-functional-tests"
@@ -672,8 +672,8 @@ def cws_go_generate(ctx):
     ctx.run("go install golang.org/x/tools/cmd/stringer")
     ctx.run("go install github.com/mailru/easyjson/easyjson")
     with ctx.cd("./pkg/security/secl"):
-        ctx.run("go install github.com/DataDog/datadog-agent/pkg/security/secl/compiler/generators/accessors")
-        ctx.run("go install github.com/DataDog/datadog-agent/pkg/security/secl/compiler/generators/operators")
+        ctx.run("go install github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/generators/accessors")
+        ctx.run("go install github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/generators/operators")
         if sys.platform == "linux":
             ctx.run("GOOS=windows go generate ./...")
         # Disable cross generation from windows for now. Need to fix the stringer issue.
@@ -701,7 +701,7 @@ def generate_syscall_table(ctx):
         if abis:
             abis = f"-abis {abis}"
         ctx.run(
-            f"go run github.com/DataDog/datadog-agent/pkg/security/secl/model/syscall_table_generator -table-url {table_url} -output {output_file} -output-string {output_string_file} {abis}"
+            f"go run github.com/StackVista/stackstate-agent/pkg/security/secl/model/syscall_table_generator -table-url {table_url} -output {output_file} -output-string {output_string_file} {abis}"
         )
 
     linux_version = "v6.1"
@@ -834,7 +834,7 @@ def kitchen_prepare(ctx, skip_linters=False):
 
     # Copy clang binaries
     for bin in ["clang-bpf", "llc-bpf"]:
-        ctx.run(f"cp /opt/datadog-agent/embedded/bin/{bin} {KITCHEN_ARTIFACT_DIR}/{bin}")
+        ctx.run(f"cp /opt/stackstate-agent/embedded/bin/{bin} {KITCHEN_ARTIFACT_DIR}/{bin}")
 
     # Copy gotestsum binary
     gopath = get_gopath(ctx)

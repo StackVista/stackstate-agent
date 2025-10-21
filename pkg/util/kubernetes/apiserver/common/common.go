@@ -69,7 +69,7 @@ func GetOrCreateClusterID(coreClient corev1.CoreV1Interface) (string, error) {
 		return x.(string), nil
 	}
 
-	myNS := GetMyNamespace()
+	myNS := GetResourcesNamespace()
 
 	cm, err := coreClient.ConfigMaps(myNS).Get(context.TODO(), defaultClusterIDMap, metav1.GetOptions{})
 	if err != nil {

@@ -7,6 +7,7 @@ package collector
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -40,7 +41,7 @@ func (l *MockCoreLoader) Name() string {
 }
 
 //nolint:revive // TODO(AML) Fix revive linter
-func (l *MockCoreLoader) Load(senderManager sender.SenderManager, config integration.Config, instance integration.Data) (check.Check, error) {
+func (l *MockCoreLoader) Load(senderManager sender.SenderManager, checkManager handler.CheckManager, config integration.Config, instance integration.Data) (check.Check, error) {
 	mockCheck := MockCheck{Name: config.Name, Loader: l.Name()}
 	return &mockCheck, nil
 }
@@ -52,7 +53,7 @@ func (l *MockPythonLoader) Name() string {
 }
 
 //nolint:revive // TODO(AML) Fix revive linter
-func (l *MockPythonLoader) Load(senderManager sender.SenderManager, config integration.Config, instance integration.Data) (check.Check, error) {
+func (l *MockPythonLoader) Load(senderManager sender.SenderManager, checkManager handler.CheckManager, config integration.Config, instance integration.Data) (check.Check, error) {
 	mockCheck := MockCheck{Name: config.Name, Loader: l.Name()}
 	return &mockCheck, nil
 }

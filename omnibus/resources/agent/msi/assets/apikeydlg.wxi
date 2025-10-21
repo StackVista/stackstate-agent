@@ -10,9 +10,10 @@
       </Control>
       <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes"
                Text="Next">
-        <Publish Event="NewDialog" Value="SiteDlg" />
-      </Control>
-      <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes"
+          <Publish Event="NewDialog" Value="StsUrlDlg" />
+          
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes"
                Text="Cancel">
         <Publish Event="EndDialog" Value="Exit">1</Publish>
       </Control>

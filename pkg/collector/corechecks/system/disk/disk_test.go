@@ -7,6 +7,14 @@
 package disk
 
 import (
+	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
+	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
 
@@ -96,7 +104,11 @@ func TestDiskCheck(t *testing.T) {
 	ioCounters = diskIoSampler
 	diskCheck := new(Check)
 	mock := mocksender.NewMockSender(diskCheck.ID())
-	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	mockBatcher, _, _, checkManager := handler.SetupMockTransactionalComponents()
+	diskCheck.Configure(mock.GetSenderManager(), checkManager, integration.FakeConfigHash, nil, nil, "test")
+	// set mock hostname
+	testHostname := "test-hostname"
+	config.Datadog.SetWithoutSource("hostname", testHostname)
 
 	expectedMonoCounts := 2
 	expectedRates := 2
@@ -127,13 +139,44 @@ func TestDiskCheck(t *testing.T) {
 	mock.On("Rate", "system.disk.write_time_pct", 41860.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 
 	mock.On("Commit").Return().Times(1)
-	diskCheck.Run()
+	err := diskCheck.Run() // [sts] - added error handling for better logging when things fail
+
+	assert.NoError(t, err)
 
 	mock.AssertExpectations(t)
 	mock.AssertNumberOfCalls(t, "MonotonicCount", expectedMonoCounts)
 	mock.AssertNumberOfCalls(t, "Gauge", expectedGauges)
 	mock.AssertNumberOfCalls(t, "Rate", expectedRates)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
+
+	producedTopology := mockBatcher.CollectedTopology.Flush()
+	expectedTopology := batcher.CheckInstanceBatchStates(map[checkid.ID]batcher.CheckInstanceBatchState{
+		"": {
+			Health: make(map[string]health.Health),
+			Topology: &topology.Topology{
+				StartSnapshot: false,
+				StopSnapshot:  false,
+				Instance:      topology.Instance{Type: "disk", URL: "agents"},
+				Components: []topology.Component{
+					{
+						ExternalID: fmt.Sprintf("urn:host:/%s", testHostname),
+						Type: topology.Type{
+							Name: "host",
+						},
+						Data: topology.Data{
+							"host":        testHostname,
+							"devices":     []string{"/dev/sda2", "/dev/sda1"},
+							"identifiers": []string{},
+						},
+					},
+				},
+				Relations: []topology.Relation{},
+				DeleteIDs: []string{},
+			},
+		},
+	})
+
+	assert.Equal(t, expectedTopology, producedTopology)
 }
 
 func TestDiskCheckExcludedDiskFilsystem(t *testing.T) {
@@ -142,10 +185,11 @@ func TestDiskCheckExcludedDiskFilsystem(t *testing.T) {
 	ioCounters = diskIoSampler
 	diskCheck := new(Check)
 	mock := mocksender.NewMockSender(diskCheck.ID())
-	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 	diskCheck.cfg.excludedFilesystems = []string{"vfat"}
 	diskCheck.cfg.excludedDisks = []string{"/dev/sda2"}
 
+	_ = batcher.NewMockBatcher()
 	expectedMonoCounts := 2
 	expectedGauges := 0
 	expectedRates := 2
@@ -172,11 +216,12 @@ func TestDiskCheckExcludedRe(t *testing.T) {
 	ioCounters = diskIoSampler
 	diskCheck := new(Check)
 	mock := mocksender.NewMockSender(diskCheck.ID())
-	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	diskCheck.cfg.excludedMountpointRe = regexp.MustCompile("/boot/efi")
 	diskCheck.cfg.excludedDiskRe = regexp.MustCompile("/dev/sda2")
 
+	_ = batcher.NewMockBatcher()
 	expectedMonoCounts := 2
 	expectedGauges := 0
 	expectedRates := 2
@@ -201,12 +246,13 @@ func TestDiskCheckTags(t *testing.T) {
 	diskPartitions = diskSampler
 	diskUsage = diskUsageSampler
 	ioCounters = diskIoSampler
-	diskCheck := new(Check)
+	diskCheck := diskFactory().(*Check)
 
 	config := integration.Data([]byte("use_mount: true\ntag_by_filesystem: true\nall_partitions: true\ndevice_tag_re:\n  /boot/efi: role:esp\n  /dev/sda2: device_type:sata,disk_size:large"))
 
 	mock := mocksender.NewMockSender(diskCheck.ID())
-	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, config, nil, "test")
+	diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, config, nil, "test")
+	_ = batcher.NewMockBatcher()
 
 	expectedMonoCounts := 2
 	expectedGauges := 16
@@ -244,4 +290,41 @@ func TestDiskCheckTags(t *testing.T) {
 	mock.AssertNumberOfCalls(t, "Gauge", expectedGauges)
 	mock.AssertNumberOfCalls(t, "Rate", expectedRates)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
+}
+
+func TestExcludedDiskFSFromConfig(t *testing.T) {
+	for _, tc := range []struct {
+		test                string
+		config              integration.Data
+		excludedDisks       []string
+		excludedFileSystems []string
+	}{
+		{
+			test:                "No file system and disk exclusions",
+			config:              integration.Data("use_mount: true"),
+			excludedFileSystems: []string{"iso9660"},
+		},
+		{
+			test:                "Exclude file systems",
+			config:              integration.Data("use_mount: true\nexcluded_filesystems: \n  - tmpfs\n  - squashfs"),
+			excludedFileSystems: []string{"iso9660", "tmpfs", "squashfs"},
+		},
+		{
+			test:                "Exclude disks",
+			config:              integration.Data("use_mount: true\nexcluded_disks: \n  - /dev/nvme0n1p1\n  - /dev/sda1\n  - /dev/sda2"),
+			excludedDisks:       []string{"/dev/nvme0n1p1", "/dev/sda1", "/dev/sda2"},
+			excludedFileSystems: []string{"iso9660"},
+		},
+	} {
+		t.Run(tc.test, func(t *testing.T) {
+			diskPartitions = diskSampler
+			diskCheck := diskFactory().(*Check)
+			mock := mocksender.NewMockSender(diskCheck.ID())
+			err := diskCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, tc.config, nil, "test")
+
+			assert.NoError(t, err)
+			assert.ElementsMatch(t, diskCheck.cfg.excludedDisks, tc.excludedDisks)
+			assert.ElementsMatch(t, diskCheck.cfg.excludedFilesystems, tc.excludedFileSystems)
+		})
+	}
 }

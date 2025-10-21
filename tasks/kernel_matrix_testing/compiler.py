@@ -18,14 +18,14 @@ def start_compiler(ctx):
         ctx.run("docker rm -f $(docker ps -aqf \"name=kmt-compiler\")")
 
     ctx.run(
-        "docker run -d --restart always --name kmt-compiler --mount type=bind,source=./,target=/datadog-agent kmt:compile sleep \"infinity\""
+        "docker run -d --restart always --name kmt-compiler --mount type=bind,source=./,target=/stackstate-agent kmt:compile sleep \"infinity\""
     )
 
     uid = ctx.run("getent passwd $USER | cut -d ':' -f 3").stdout.rstrip()
     gid = ctx.run("getent group $USER | cut -d ':' -f 3").stdout.rstrip()
     docker_exec(ctx, f"getent group {gid} || groupadd -f -g {gid} compiler", user="root")
     docker_exec(ctx, f"getent passwd {uid} || useradd -m -u {uid} -g {gid} compiler", user="root")
-    docker_exec(ctx, f"chown {uid}:{gid} /datadog-agent && chown -R {uid}:{gid} /datadog-agent", user="root")
+    docker_exec(ctx, f"chown {uid}:{gid} /stackstate-agent && chown -R {uid}:{gid} /stackstate-agent", user="root")
     docker_exec(ctx, "apt install sudo", user="root")
     docker_exec(ctx, "usermod -aG sudo compiler && echo 'compiler ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers", user="root")
     docker_exec(ctx, f"install -d -m 0777 -o {uid} -g {uid} /go", user="root")
@@ -41,4 +41,4 @@ def compiler_running(ctx):
 def build_compiler(ctx):
     ctx.run("docker rm -f $(docker ps -aqf \"name=kmt-compiler\")", warn=True, hide=True)
     ctx.run("docker image rm kmt:compile", warn=True, hide=True)
-    ctx.run("cd ../datadog-agent-buildimages && docker build -f system-probe_x64/Dockerfile -t kmt:compile .")
+    ctx.run("cd ../stackstate-agent-buildimages && docker build -f system-probe_x64/Dockerfile -t kmt:compile .")

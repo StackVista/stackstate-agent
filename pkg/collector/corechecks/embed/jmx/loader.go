@@ -9,6 +9,7 @@ package jmx
 
 import (
 	"errors"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -34,7 +35,7 @@ func (jl *JMXCheckLoader) Name() string {
 }
 
 // Load returns a JMX check
-func (jl *JMXCheckLoader) Load(senderManager sender.SenderManager, config integration.Config, instance integration.Data) (check.Check, error) {
+func (jl *JMXCheckLoader) Load(senderManager sender.SenderManager, checkManager handler.CheckManager, config integration.Config, instance integration.Data) (check.Check, error) {
 	var c check.Check
 
 	if !check.IsJMXInstance(config.Name, instance, config.InitConfig) {
@@ -63,7 +64,7 @@ func (jl *JMXCheckLoader) Load(senderManager sender.SenderManager, config integr
 		Name:          config.Name,
 		Provider:      config.Provider,
 	}
-	c = newJMXCheck(senderManager, cf, config.Source)
+	c = newJMXCheck(senderManager, checkManager, cf, config.Source)
 
 	return c, err
 }
@@ -73,7 +74,7 @@ func (jl *JMXCheckLoader) String() string {
 }
 
 func init() {
-	factory := func(sender.SenderManager) (check.Loader, error) {
+	factory := func(sender.SenderManager, handler.CheckManager) (check.Loader, error) {
 		return NewJMXCheckLoader()
 	}
 

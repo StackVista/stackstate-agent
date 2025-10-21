@@ -11,6 +11,7 @@ package ksm
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"regexp"
 	"strings"
 	"time"
@@ -201,11 +202,11 @@ func init() {
 }
 
 // Configure prepares the configuration of the KSM check instance
-func (k *KSMCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+func (k *KSMCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
 	k.BuildID(integrationConfigDigest, config, initConfig)
 	k.agentConfig = ddconfig.Datadog
 
-	err := k.CommonConfigure(senderManager, integrationConfigDigest, initConfig, config, source)
+	err := k.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, config, source)
 	if err != nil {
 		return err
 	}
@@ -532,7 +533,10 @@ func (k *KSMCheck) Cancel() {
 // processMetrics attaches tags and forwards metrics to the aggregator
 func (k *KSMCheck) processMetrics(sender sender.Sender, metrics map[string][]ksmstore.DDMetricsFam, labelJoiner *labelJoiner, now time.Time) {
 	for _, metricsList := range metrics {
-		for _, metricFamily := range metricsList {
+		// Create a new aggregated metric from all the reason metrics
+		aggregatedMetricList := aggregateStatusReasonMetrics(metricsList)
+
+		for _, metricFamily := range aggregatedMetricList {
 			// First check for aggregator, because the check use _labels metrics to aggregate values.
 			if aggregator, found := k.metricAggregators[metricFamily.Name]; found {
 				for _, m := range metricFamily.ListMetrics {
@@ -651,6 +655,7 @@ func (k *KSMCheck) metricFilter(m ksmstore.DDMetric) bool {
 	return m.Val == float64(1)
 }
 
+// [STS] build multiple tags for the original label key
 // buildTag applies the LabelsMapper config and returns the tag in a key:value string format
 // The second return value is the hostname of the metric if a 'node' or 'host' tag is found, empty string otherwise
 func (k *KSMCheck) buildTag(key, value string, lMapperOverride map[string]string) (tag, hostname string) {

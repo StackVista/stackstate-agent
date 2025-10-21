@@ -12,6 +12,5 @@
   <?define IncludePython3= "true" ?>
   <?define IncludeAPMInject= "false" ?>
   <?define Platform= "x64" ?>
-  <?define IncludeSysprobe="true" ?>
-  <?define IncludeProcmon="true" ?>
+  <?define IncludeSysprobe="false" ?>
 </Include>
