@@ -38,6 +38,7 @@ ALL_TAGS = {
     "podman",
     "process",
     "python",
+    "secrets",
     "serverless",
     "systemd",
     "trivy",
@@ -94,13 +95,14 @@ AGENT_HEROKU_TAGS = AGENT_TAGS.difference(
 )
 
 # CLUSTER_AGENT_TAGS lists the tags needed when building the cluster-agent
-CLUSTER_AGENT_TAGS = {"clusterchecks", "kubeapiserver", "orchestrator", "zlib", "ec2", "gce"}
+CLUSTER_AGENT_TAGS = set(["clusterchecks", "kubeapiserver", "orchestrator", "secrets", "zlib", "ec2", "gce",
+                          "docker", "cri", "containerd"])  # sts
 
 # CLUSTER_AGENT_CLOUDFOUNDRY_TAGS lists the tags needed when building the cloudfoundry cluster-agent
 CLUSTER_AGENT_CLOUDFOUNDRY_TAGS = {"clusterchecks"}
 
 # DOGSTATSD_TAGS lists the tags needed when building dogstatsd
-DOGSTATSD_TAGS = {"containerd", "docker", "kubelet", "podman", "zlib"}
+DOGSTATSD_TAGS = set(["containerd", "docker", "kubelet", "secrets", "zlib"])
 
 # IOT_AGENT_TAGS lists the tags needed when building the IoT agent
 IOT_AGENT_TAGS = {"jetson", "otlp", "systemd", "zlib"}

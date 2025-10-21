@@ -13,3 +13,4 @@ instances:
   capped_metrics: {}
   unbundle_events: false
   collected_event_types: []
+  collect_container_topology: true

@@ -206,3 +206,10 @@ func (m *MockSerializer) SendOrchestratorMetadata(_ []types.ProcessMessageBody, 
 func (m *MockSerializer) SendOrchestratorManifests(_ []types.ProcessMessageBody, _, _ string) error {
 	return nil
 }
+
+// sts begin
+func (s *MockSerializer) SendJSONToV1Intake(_ interface{}) error {
+	return nil
+}
+
+// sts end

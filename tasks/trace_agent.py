@@ -23,7 +23,7 @@ def build(
     major_version='7',
     python_runtimes='3',
     arch="x64",
-    go_mod="mod",
+    go_mod="vendor",
 ):
     """
     Build the trace agent.

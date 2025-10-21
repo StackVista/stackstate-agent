@@ -16,3 +16,8 @@ const (
 	OpenShiftOAPI     OpenShiftAPILevel = "legacy OAPI"
 	NotOpenShift      OpenShiftAPILevel = "no API"
 )
+
+// OpenShiftDetector detects whether this is an OpenShift K8s cluster or a generic one.
+type OpenShiftDetector interface {
+	DetectOpenShiftAPILevel() OpenShiftAPILevel
+}

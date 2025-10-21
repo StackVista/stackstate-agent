@@ -45,24 +45,24 @@ func Mock(t testing.TB) *MockConfig {
 		defer m.Unlock()
 		if isConfigMocked {
 			// The configuration is already mocked.
-			return &MockConfig{Datadog}
+			return &MockConfig{GetDatadogConfig()}
 		}
 
 		isConfigMocked = true
-		originalDatadogConfig := Datadog
+		originalDatadogConfig := GetDatadogConfig()
 		t.Cleanup(func() {
 			m.Lock()
 			defer m.Unlock()
 			isConfigMocked = false
-			Datadog = originalDatadogConfig
+			SetDatadogConfig(originalDatadogConfig)
 		})
 	}
 
 	// Configure Datadog global configuration
-	Datadog = NewConfig("datadog", "DD", strings.NewReplacer(".", "_"))
+	SetDatadogConfig(NewConfig("datadog", "DD", strings.NewReplacer(".", "_")))
 	// Configuration defaults
-	pkgconfigsetup.InitConfig(Datadog)
-	return &MockConfig{Datadog}
+	pkgconfigsetup.InitConfig(GetDatadogConfig())
+	return &MockConfig{GetDatadogConfig()}
 }
 
 // MockSystemProbe is creating and returning a mock system-probe config

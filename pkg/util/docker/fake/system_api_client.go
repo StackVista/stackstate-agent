@@ -38,7 +38,7 @@ func (c *SystemAPIClient) Info(ctx context.Context) (types.Info, error) {
 // RegistryLogin is a mock method
 //
 //nolint:revive,staticcheck // TODO(CINT) Fix revive linter // TODO(CINT) Fix staticcheck linter
-func (c *SystemAPIClient) RegistryLogin(ctx context.Context, auth types.AuthConfig) (registry.AuthenticateOKBody, error) {
+func (c *SystemAPIClient) RegistryLogin(ctx context.Context, auth registry.AuthConfig) (registry.AuthenticateOKBody, error) {
 	return registry.AuthenticateOKBody{}, nil
 }
 

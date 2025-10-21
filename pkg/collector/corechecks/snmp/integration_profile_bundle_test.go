@@ -6,6 +6,7 @@
 package snmp
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"path/filepath"
 	"testing"
 	"time"
@@ -45,7 +46,7 @@ collect_topology: false
 	// language=yaml
 	rawInitConfig := []byte(``)
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := chk.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
+	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
 	assert.NoError(t, err)
 
 	assert.Contains(t, chk.config.Profiles, "profile-from-ui")

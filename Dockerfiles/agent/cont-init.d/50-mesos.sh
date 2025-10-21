@@ -2,7 +2,7 @@
 
 # Enable the Mesos integrations if relevant
 
-CONFD=/etc/datadog-agent/conf.d
+CONFD=/etc/stackstate-agent/conf.d
 
 if [[ $MESOS_MASTER ]]; then
   if [[ ! -e $CONFD/mesos_master.d/conf.yaml.default ]]; then
@@ -27,5 +27,5 @@ fi
 if [[ $MARATHON_URL ]] && [[ ! -e $CONFD/marathon.d/conf.yaml.default ]]; then
   mv $CONFD/marathon.d/conf.yaml.example \
      $CONFD/marathon.d/conf.yaml.default
-  sed -i -E -e "s@ - url: (\")?https://<SERVER>:<PORT>(\")?@- url: ${MARATHON_URL}@" $CONFD/marathon.d/conf.yaml.default
+  sed -i -e "s@ - url: \"https://<SERVER>:<PORT>\"@- url: ${MARATHON_URL}@" $CONFD/marathon.d/conf.yaml.default
 fi

@@ -18,6 +18,7 @@ import (
 	"github.com/DataDog/datadog-agent/cmd/cluster-agent/subcommands"
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/helm"
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/ksm"
+	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubeapi"
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/orchestrator"
 	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/net"

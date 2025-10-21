@@ -7,6 +7,7 @@
 package stub
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -14,6 +15,7 @@ import (
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/stats"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/features"
 )
 
 // StubCheck stubs a check, should only be used in tests
@@ -37,7 +39,7 @@ func (c *StubCheck) Stop() {}
 func (c *StubCheck) Cancel() {}
 
 // Configure is a noop
-func (c *StubCheck) Configure(sender.SenderManager, uint64, integration.Data, integration.Data, string) error {
+func (c *StubCheck) Configure(sender.SenderManager, handler.CheckManager, uint64, integration.Data, integration.Data, string) error {
 	return nil
 }
 
@@ -67,3 +69,9 @@ func (c *StubCheck) InstanceConfig() string { return "" }
 
 // GetDiagnoses returns the diagnoses of the check
 func (c *StubCheck) GetDiagnoses() ([]diagnosis.Diagnosis, error) { return nil, nil }
+
+// SetFeatures is a noop
+func (c *StubCheck) SetFeatures(features features.Features) {}
+
+// GetFeatures is a noop
+func (c *StubCheck) GetFeatures() features.Features { return nil }

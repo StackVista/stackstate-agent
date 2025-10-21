@@ -1,0 +1,27 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+services:
+  - alias: docker
+    command:
+      - --experimental
+      - --tls=false
+    name: ${DOCKER_PROXY_URL}/docker:20-dind
+
+stages:
+  - merge-manifest
+
+merge-manifest:
+  tags:
+    - sts-k8s-m-runner
+  stage: merge-manifest
+  image: ${DOCKER_PROXY_URL}/docker:20-git
+  script:
+    - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin quay.io
+    - DST_TAG="${CI_COMMIT_SHORT_SHA}"
+    - docker manifest create "${DST_REPOSITORY}:${DST_TAG}" --amend "${DST_REPOSITORY}:${DST_TAG}-amd64" --amend "${DST_REPOSITORY}:${DST_TAG}-arm64"
+    - docker manifest push "${DST_REPOSITORY}:${DST_TAG}"
+  rules:
+    - when: on_success

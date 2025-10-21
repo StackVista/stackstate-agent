@@ -1,6 +1,6 @@
 name "python3"
 
-default_version "3.11.5"
+default_version "3.11.10"
 
 if ohai["platform"] != "windows"
 
@@ -14,8 +14,8 @@ if ohai["platform"] != "windows"
   dependency "liblzma"
   dependency "libyaml"
 
-  source :url => "https://python.org/ftp/python/#{version}/Python-#{version}.tgz",
-         :sha256 => "a12a0a013a30b846c786c010f2c19dd36b7298d888f7c4bd1581d90ce18b5e58"
+  source :url => "https://www.python.org/ftp/python/#{version}/Python-#{version}.tgz",
+         :sha256 => "92f2faf242681bfa406d53a51e17d42c5373affe23a130cd9697e132ef574706"
 
   relative_path "Python-#{version}"
 

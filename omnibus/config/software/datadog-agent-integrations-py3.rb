@@ -107,110 +107,22 @@ build do
   }
 
   # Install the checks along with their dependencies
-  if windows_target?
-    wheel_build_dir = "#{windows_safe_path(project_dir)}\\.wheels"
-    build_deps_dir = "#{windows_safe_path(project_dir)}\\.build_deps"
-  else
-    wheel_build_dir = "#{project_dir}/.wheels"
-    build_deps_dir = "#{project_dir}/.build_deps"
-  end
-
-  #
-  # Prepare the build env, these dependencies are only needed to build and
-  # install the core integrations.
-  #
-  command "#{python} -m pip download --dest #{build_deps_dir} hatchling==0.25.1", :env => pre_build_env
-  command "#{python} -m pip download --dest #{build_deps_dir} setuptools==66.1.1", :env => pre_build_env # Version from ./setuptools3.rb
-  command "#{python} -m pip install wheel==0.38.4", :env => pre_build_env
-  command "#{python} -m pip install pip-tools==7.3.0", :env => pre_build_env
-  uninstall_buildtime_deps = ['rtloader', 'click', 'first', 'pip-tools']
-  nix_build_env = {
-    "PIP_FIND_LINKS" => "#{build_deps_dir}",
-    "PIP_CONFIG_FILE" => "#{pip_config_file}",
-    # Specify C99 standard explicitly to avoid issues while building some
-    # wheels (eg. ddtrace)
-    "CFLAGS" => "-I#{install_dir}/embedded/include -I/opt/mqm/inc",
-    "CXXFLAGS" => "-I#{install_dir}/embedded/include -I/opt/mqm/inc",
-    "LDFLAGS" => "-L#{install_dir}/embedded/lib -L/opt/mqm/lib64 -L/opt/mqm/lib",
-    "LD_RUN_PATH" => "#{install_dir}/embedded/lib -L/opt/mqm/lib64 -L/opt/mqm/lib",
-    "PATH" => "#{install_dir}/embedded/bin:#{ENV['PATH']}",
-  }
-
-  win_build_env = {
-    "PIP_FIND_LINKS" => "#{build_deps_dir}",
-    "PIP_CONFIG_FILE" => "#{pip_config_file}",
-  }
-
-  # Some libraries (looking at you, aerospike-client-python) need EXT_CFLAGS instead of CFLAGS.
-  nix_specific_build_env = {
-    "aerospike" => nix_build_env.merge({"EXT_CFLAGS" => nix_build_env["CFLAGS"] + " -std=gnu99"}),
-    # Always build pyodbc from source to link to the embedded version of libodbc
-    "pyodbc" => nix_build_env.merge({"PIP_NO_BINARY" => "pyodbc"}),
-  }
-  win_specific_build_env = {}
-
-  # On Linux & Windows, specify the C99 standard explicitly to avoid issues while building some
-  # wheels (eg. ddtrace).
-  # Not explicitly setting that option has caused us problems in the past on SUSE, where the ddtrace
-  # wheel has to be manually built, as the C code in ddtrace doesn't follow the C89 standard (the default value of std).
-  # Note: We don't set this on MacOS, as on MacOS we need to build a bunch of packages & C extensions that
-  # don't have precompiled MacOS wheels. When building C extensions, the CFLAGS variable is added to
-  # the command-line parameters, even when compiling C++ code, where -std=c99 is invalid.
-  # See: https://github.com/python/cpython/blob/v3.8.8/Lib/distutils/sysconfig.py#L227
-  if linux_target? || windows_target?
-    nix_build_env["CFLAGS"] += " -std=c99"
-  end
-
-  # We only have gcc 10.4.0 on linux for now
-  if linux_target?
-    nix_build_env["CC"] = "/opt/gcc-#{gcc_version}/bin/gcc"
-    nix_build_env["CXX"] = "/opt/gcc-#{gcc_version}/bin/g++"
-  end
-
-  # We need to explicitly specify RUSTFLAGS for libssl and libcrypto
-  # See https://github.com/pyca/cryptography/issues/8614#issuecomment-1489366475
-  if redhat_target? && !arm_target?
-    nix_specific_build_env["cryptography"] = nix_build_env.merge(
-      {
-        "RUSTFLAGS" => "-C link-arg=-Wl,-rpath,#{install_dir}/embedded/lib",
-        "OPENSSL_DIR" => "#{install_dir}/embedded/",
-        "PIP_NO_CACHE_DIR" => "off",
-        "PIP_FORCE_REINSTALL" => "1",
-      }
-    )
-  end
-
-  #
-  # Prepare the requirements file containing ALL the dependencies needed by
-  # any integration. This will provide the "static Python environment" of the Agent.
-  # We don't use the .in file provided by the base check directly because we
-  # want to filter out things before installing.
-  #
-  if windows_target?
-    static_reqs_in_file = "#{windows_safe_path(project_dir)}\\datadog_checks_base\\datadog_checks\\base\\data\\#{agent_requirements_in}"
-    static_reqs_out_folder = "#{windows_safe_path(project_dir)}\\"
-    static_reqs_out_file = static_reqs_out_folder + filtered_agent_requirements_in
-    compiled_reqs_file_path = "#{windows_safe_path(install_dir)}\\#{agent_requirements_file}"
-  else
-    static_reqs_in_file = "#{project_dir}/datadog_checks_base/datadog_checks/base/data/#{agent_requirements_in}"
-    static_reqs_out_folder = "#{project_dir}/"
-    static_reqs_out_file = static_reqs_out_folder + filtered_agent_requirements_in
-    compiled_reqs_file_path = "#{install_dir}/#{agent_requirements_file}"
-  end
-
-  specific_build_env = windows_target? ? win_specific_build_env : nix_specific_build_env
-  build_env = windows_target? ? win_build_env : nix_build_env
-  cwd_base = windows_target? ? "#{windows_safe_path(project_dir)}\\datadog_checks_base" : "#{project_dir}/datadog_checks_base"
-  cwd_downloader = windows_target? ? "#{windows_safe_path(project_dir)}\\datadog_checks_downloader" : "#{project_dir}/datadog_checks_downloader"
-
-  # Creating a hash containing the requirements and requirements file path associated to every lib
-  requirements_custom = Hash.new()
-  specific_build_env.each do |lib, env|
-    lib_compiled_req_file_path = (windows_target? ? "#{windows_safe_path(install_dir)}\\" : "#{install_dir}/") + "agent_#{lib}_requirements-py3.txt"
-    requirements_custom[lib] = {
-      "req_lines" => Array.new,
-      "req_file_path" => static_reqs_out_folder + lib + "-py3.in",
-      "compiled_req_file_path" => lib_compiled_req_file_path,
+  block do
+    #
+    # Prepare the build env, these dependencies are only needed to build and
+    # install the core integrations.
+    #
+    command "#{pip} install wheel==0.38.1"
+    command "#{pip} install pip-tools==7.3.0"
+    uninstall_buildtime_deps = ['rtloader', 'click', 'first', 'pip-tools']
+    nix_build_env = {
+      # Specify C99 standard explicitly to avoid issues while building some
+      # wheels (eg. ddtrace)
+      "CFLAGS" => "-I#{install_dir}/embedded/include -I/opt/mqm/inc",
+      "CXXFLAGS" => "-I#{install_dir}/embedded/include -I/opt/mqm/inc",
+      "LDFLAGS" => "-L#{install_dir}/embedded/lib -L/opt/mqm/lib64 -L/opt/mqm/lib",
+      "LD_RUN_PATH" => "#{install_dir}/embedded/lib -L/opt/mqm/lib64 -L/opt/mqm/lib",
+      "PATH" => "#{install_dir}/embedded/bin:#{ENV['PATH']}",
     }
   end
 

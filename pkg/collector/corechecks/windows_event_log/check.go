@@ -19,11 +19,7 @@ import (
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	agentEvent "github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil/eventlog/api"
 	"github.com/DataDog/datadog-agent/pkg/util/winutil/eventlog/api/windows"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil/eventlog/session"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil/eventlog/subscription"
-
 	"golang.org/x/sys/windows"
 )
 
@@ -175,11 +171,11 @@ func (c *Check) bookmarkPersistentCacheKey() string {
 }
 
 // Configure processes the configuration for the check
-func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string) error {
 	// common CoreCheck requirements
 	// This check supports multiple instances, BuildID must be called before CommonConfigure
 	c.BuildID(integrationConfigDigest, data, initConfig)
-	err := c.CommonConfigure(senderManager, integrationConfigDigest, initConfig, data, source)
+	err := c.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, data, source)
 	if err != nil {
 		return fmt.Errorf("configuration error: %w", err)
 	}

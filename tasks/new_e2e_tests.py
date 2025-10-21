@@ -61,7 +61,7 @@ def run(
     """
     if shutil.which("pulumi") is None:
         raise Exit(
-            "pulumi CLI not found, Pulumi needs to be installed on the system (see https://github.com/DataDog/test-infra-definitions/blob/main/README.md)",
+            "pulumi CLI not found, Pulumi needs to be installed on the system (see https://github.com/StackVista/test-infra-definitions/blob/main/README.md)",
             1,
         )
 
@@ -88,7 +88,7 @@ def run(
     coverage_opt = ""
     coverage_path = "coverage.out"
     if coverage:
-        coverage_opt = f"-cover -covermode=count -coverprofile={coverage_path} -coverpkg=./...,github.com/DataDog/test-infra-definitions/..."
+        coverage_opt = f"-cover -covermode=count -coverprofile={coverage_path} -coverpkg=./...,github.com/StackVista/test-infra-definitions/..."
 
     test_run_arg = ""
     if test_run_name != "":
@@ -223,7 +223,7 @@ def _get_existing_stacks(ctx: Context) -> List[str]:
 
 
 def _destroy_stack(ctx: Context, stack: str):
-    # running in temp dir as this is where datadog-agent test
+    # running in temp dir as this is where stackstate-agent test
     # stacks are stored. It is expected to fail on stacks existing locally
     # with resources removed by agent-sandbox clean up job
     with ctx.cd(tempfile.gettempdir()):

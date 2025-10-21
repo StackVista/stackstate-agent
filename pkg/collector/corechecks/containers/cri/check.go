@@ -9,6 +9,7 @@
 package cri
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -64,9 +65,9 @@ func (c *CRIConfig) Parse(data []byte) error {
 }
 
 // Configure parses the check configuration and init the check
-func (c *CRICheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+func (c *CRICheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
 	var err error
-	if err = c.CommonConfigure(senderManager, integrationConfigDigest, initConfig, config, source); err != nil {
+	if err = c.CommonConfigure(senderManager, checkManager, integrationConfigDigest, initConfig, config, source); err != nil {
 		return err
 	}
 

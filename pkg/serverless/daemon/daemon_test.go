@@ -7,14 +7,13 @@ package daemon
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"os"
 	"reflect"
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 
 	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo/trace"
 	"github.com/DataDog/datadog-agent/pkg/serverless/random"
@@ -48,7 +47,13 @@ func TestWaitForDaemonBlocking(t *testing.T) {
 }
 
 func GetValueSyncOnce(so *sync.Once) uint64 {
-	return reflect.ValueOf(so).Elem().FieldByName("done").Uint()
+	val := reflect.ValueOf(so).Elem().FieldByName("done")
+	if val.Kind() == reflect.Struct {
+		// Go >= 1.22 (sync/atomic.Uint32)
+		return val.FieldByName("v").Uint()
+	}
+	// Go <= 1.21 (uint32)
+	return val.Uint()
 }
 
 func TestTellDaemonRuntimeDoneOnceStartOnly(t *testing.T) {

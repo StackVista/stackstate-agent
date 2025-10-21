@@ -1,0 +1,10 @@
+## Provides autodetected defaults, for kubernetes environments
+## where configuration templates are set as docker labels
+## please see stackstate.yaml.example for all supported options
+
+# Autodiscovery for Kubernetes
+listeners:
+  - name: kubelet
+
+# Use java container support
+jmx_use_container_support: true

@@ -17,6 +17,8 @@ import (
 func TestGetClusterName(t *testing.T) {
 	ctx := context.Background()
 	mockConfig := config.Mock(t)
+	// [sts] validtion is skipped by default, so we set it to "dont skip" explicitly
+	mockConfig.SetWithoutSource("skip_validate_clustername", false)
 	config.SetFeatures(t, config.Kubernetes)
 	data := newClusterNameData()
 
@@ -54,8 +56,11 @@ func TestGetClusterName(t *testing.T) {
 		"mx.gmail.com.",
 	} {
 		mockConfig.SetWithoutSource("cluster_name", invalidClusterName)
+		ResetClusterName()
+		FlushProviderCatalog()
 		freshData = newClusterNameData()
 		assert.Equal(t, "", getClusterName(ctx, freshData, "hostname"))
+		PopulateProviderCatalog()
 	}
 
 	mockConfig.SetWithoutSource("cluster_name", "")

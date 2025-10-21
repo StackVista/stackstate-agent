@@ -124,7 +124,7 @@ def clean_running_pipelines(ctx, git_ref=DEFAULT_BRANCH, here=False, use_latest_
     should be cancelled.
     """
 
-    project_name = "DataDog/datadog-agent"
+    project_name = "StackVista/stackstate-agent"
     gitlab = Gitlab(project_name=project_name, api_token=get_gitlab_token())
     gitlab.test_project_found()
 
@@ -144,7 +144,7 @@ def clean_running_pipelines(ctx, git_ref=DEFAULT_BRANCH, here=False, use_latest_
     print(
         f"Found {len(pipelines)} running pipeline(s) matching the request.",
         "They are ordered from the newest one to the oldest one.\n",
-        sep='\n',
+        # sep='\n',  # sts - not supported in py2
     )
     cancel_pipelines_with_confirmation(gitlab, pipelines)
 
@@ -187,7 +187,7 @@ def auto_cancel_previous_pipelines(ctx):
     Automatically cancel previous pipelines running on the same ref
     """
 
-    project_name = "DataDog/datadog-agent"
+    project_name = "StackVista/stackstate-agent"
     if not os.environ.get('GITLAB_TOKEN'):
         raise Exit("GITLAB_TOKEN variable needed to cancel pipelines on the same ref.", 1)
 
@@ -278,7 +278,7 @@ def run(
       inv pipeline.run --deploy --use-release-entries --major-versions "6,7" --git-ref "7.32.0" --repo-branch "stable"
     """
 
-    project_name = "DataDog/datadog-agent"
+    project_name = "StackVista/stackstate-agent"
     gitlab = Gitlab(project_name=project_name, api_token=get_gitlab_token())
     gitlab.test_project_found()
 
@@ -330,7 +330,7 @@ def run(
             "For each of them, you'll be asked whether you want to cancel them or not.",
             "If you don't need these pipelines, please cancel them to save CI resources.",
             "They are ordered from the newest one to the oldest one.\n",
-            sep='\n',
+            # sep='\n', # [sts] not supported in py2
         )
         cancel_pipelines_with_confirmation(gitlab, pipelines)
 
@@ -355,13 +355,13 @@ def run(
 
 
 @task
-def follow(ctx, id=None, git_ref=None, here=False, project_name="DataDog/datadog-agent"):
+def follow(ctx, id=None, git_ref=None, here=False, project_name="StackVista/stackstate-agent"):
     """
     Follow a pipeline's progress in the CLI.
     Use --here to follow the latest pipeline on your current branch.
     Use --git-ref to follow the latest pipeline on a given tag or branch.
     Use --id to follow a specific pipeline.
-    Use --project-name to specify a repo other than DataDog/datadog-agent (default)
+    Use --project-name to specify a repo other than StackVista/stackstate-agent (default)
 
     Examples:
     inv pipeline.follow --git-ref my-branch
@@ -411,7 +411,7 @@ Please check for typos in the JOBOWNERS file and/or add them to the Github <-> S
 
 
 def generate_failure_messages(project_name: str, failed_jobs: FailedJobs) -> Dict[str, SlackMessage]:
-    all_teams = "@DataDog/agent-all"
+    all_teams = "@StackVista/agent-all"
 
     # Generate messages for each team
     messages_to_send = defaultdict(TeamMessage)
@@ -419,17 +419,17 @@ def generate_failure_messages(project_name: str, failed_jobs: FailedJobs) -> Dic
 
     failed_job_owners = find_job_owners(failed_jobs)
     for owner, jobs in failed_job_owners.items():
-        if owner == "@DataDog/multiple":
+        if owner == "@StackVista/multiple":
             for job in jobs.all_non_infra_failures():
                 for test in get_failed_tests(project_name, job):
                     messages_to_send[all_teams].add_test_failure(test, job)
                     for owner in test.owners:
                         messages_to_send[owner].add_test_failure(test, job)
-        elif owner == "@DataDog/do-not-notify":
-            # Jobs owned by @DataDog/do-not-notify do not send team messages
+        elif owner == "@StackVista/do-not-notify":
+            # Jobs owned by @StackVista/do-not-notify do not send team messages
             pass
         elif owner == all_teams:
-            # Jobs owned by @DataDog/agent-all will already be in the global
+            # Jobs owned by @StackVista/agent-all will already be in the global
             # message, do not overwrite the failed jobs list
             pass
         else:
@@ -449,9 +449,9 @@ def trigger_child_pipeline(_, git_ref, project_name, variables="", follow=True):
     Use --follow to make this task wait for the pipeline to finish, and return 1 if it fails. (requires GITLAB_TOKEN).
 
     Examples:
-    inv pipeline.trigger-child-pipeline --git-ref "master" --project-name "DataDog/agent-release-management" --variables "RELEASE_VERSION"
+    inv pipeline.trigger-child-pipeline --git-ref "master" --project-name "StackVista/agent-release-management" --variables "RELEASE_VERSION"
 
-    inv pipeline.trigger-child-pipeline --git-ref "master" --project-name "DataDog/agent-release-management" --variables "VAR1,VAR2,VAR3"
+    inv pipeline.trigger-child-pipeline --git-ref "master" --project-name "StackVista/agent-release-management" --variables "VAR1,VAR2,VAR3"
     """
 
     if not os.environ.get('CI_JOB_TOKEN'):
@@ -508,7 +508,7 @@ def parse(commit_str):
     url = ""
     pr_id_match = re.search(r".*\(#(\d+)\)", title)
     if pr_id_match is not None:
-        url = f"https://github.com/DataDog/datadog-agent/pull/{pr_id_match.group(1)}"
+        url = f"https://github.com/StackVista/stackstate-agent/pull/{pr_id_match.group(1)}"
     author = lines[1]
     author_email = lines[2]
     files = lines[3:]
@@ -517,10 +517,10 @@ def parse(commit_str):
 
 def is_system_probe(owners, files):
     target = {
-        ("TEAM", "@DataDog/Networks"),
-        ("TEAM", "@DataDog/universal-service-monitoring"),
-        ("TEAM", "@DataDog/ebpf-platform"),
-        ("TEAM", "@DataDog/agent-security"),
+        ("TEAM", "@StackVista/Networks"),
+        ("TEAM", "@StackVista/universal-service-monitoring"),
+        ("TEAM", "@StackVista/ebpf-platform"),
+        ("TEAM", "@StackVista/agent-security"),
     }
     for f in files:
         match_teams = set(owners.of(f)) & target
@@ -537,7 +537,7 @@ EMAIL_SLACK_ID_MAP = {"guy20495@gmail.com": "U03LJSCAPK2", "safchain@gmail.com":
 def changelog(ctx, new_commit_sha):
     old_commit_sha = ctx.run(
         "aws ssm get-parameter --region us-east-1 --name "
-        "ci.datadog-agent.gitlab_changelog_commit_sha --with-decryption --query "
+        "ci.stackstate-agent.gitlab_changelog_commit_sha --with-decryption --query "
         "\"Parameter.Value\" --out text",
         hide=True,
     ).stdout.strip()
@@ -573,7 +573,7 @@ def changelog(ctx, new_commit_sha):
         time.sleep(1)  # necessary to prevent slack/sdm API rate limits
         messages.append(f"{message_link} {author_handle}")
 
-    commit_range_link = f"https://github.com/DataDog/datadog-agent/compare/{old_commit_sha}..{new_commit_sha}"
+    commit_range_link = f"https://github.com/StackVista/stackstate-agent/compare/{old_commit_sha}..{new_commit_sha}"
     slack_message = (
         "The nightly deployment is rolling out to Staging :siren: \n"
         + f"Changelog for <{commit_range_link}|commit range>: `{old_commit_sha}` to `{new_commit_sha}`:\n"
@@ -593,7 +593,7 @@ def changelog(ctx, new_commit_sha):
     send_slack_message("system-probe-ops", slack_message)
     print(f"Writing new commit sha: {new_commit_sha} to SSM")
     ctx.run(
-        f"aws ssm put-parameter --name ci.datadog-agent.gitlab_changelog_commit_sha --value {new_commit_sha} "
+        f"aws ssm put-parameter --name ci.stackstate-agent.gitlab_changelog_commit_sha --value {new_commit_sha} "
         "--type \"SecureString\" --region us-east-1 --overwrite",
         hide=True,
     )
@@ -618,20 +618,20 @@ def notify(_, notification_type="merge", print_to_stdout=False):
     Use the --print-to-stdout option to test this locally, without sending
     real slack messages.
     """
-    project_name = "DataDog/datadog-agent"
+    project_name = "StackVista/stackstate-agent"
 
     try:
         failed_jobs = get_failed_jobs(project_name, os.getenv("CI_PIPELINE_ID"))
         messages_to_send = generate_failure_messages(project_name, failed_jobs)
     except Exception as e:
         buffer = io.StringIO()
-        print(base_message("datadog-agent", "is in an unknown state"), file=buffer)
+        print(base_message("stackstate-agent", "is in an unknown state"), file=buffer)
         print("Found exception when generating notification:", file=buffer)
         traceback.print_exc(limit=-1, file=buffer)
         print("See the notify job log for the full exception traceback.", file=buffer)
 
         messages_to_send = {
-            "@DataDog/agent-all": SlackMessage(base=buffer.getvalue()),
+            "@StackVista/agent-all": SlackMessage(base=buffer.getvalue()),
         }
         # Print traceback on job log
         print(e)
@@ -651,9 +651,9 @@ def notify(_, notification_type="merge", print_to_stdout=False):
 
     header = ""
     if notification_type == "merge":
-        header = f"{header_icon} :merged: datadog-agent merge"
+        header = f"{header_icon} :merged: stackstate-agent merge"
     elif notification_type == "deploy":
-        header = f"{header_icon} :rocket: datadog-agent deploy"
+        header = f"{header_icon} :rocket: stackstate-agent deploy"
     base = base_message(header, state)
 
     # Send messages
@@ -661,7 +661,7 @@ def notify(_, notification_type="merge", print_to_stdout=False):
         channel = GITHUB_SLACK_MAP.get(owner.lower(), None)
         message.base_message = base
         if channel is None:
-            channel = "#datadog-agent-pipelines"
+            channel = "#stackstate-agent-pipelines"
             message.base_message += UNKNOWN_OWNER_TEMPLATE.format(owner=owner)
         message.coda = coda
         if print_to_stdout:
@@ -677,7 +677,7 @@ def send_stats(_, print_to_stdout=False):
     Use the --print-to-stdout option to test this locally, without sending
     data points to Datadog.
     """
-    project_name = "DataDog/datadog-agent"
+    project_name = "StackVista/stackstate-agent"
 
     try:
         global_failure_reason, job_failure_stats = get_failed_jobs_stats(project_name, os.getenv("CI_PIPELINE_ID"))
@@ -704,7 +704,7 @@ def send_stats(_, print_to_stdout=False):
                 value=count,
                 tags=list(failure_tags)
                 + [
-                    "repository:datadog-agent",
+                    "repository:stackstate-agent",
                     f"git_ref:{os.getenv('CI_COMMIT_REF_NAME')}",
                 ],
             )
@@ -716,7 +716,7 @@ def send_stats(_, print_to_stdout=False):
         pipeline_state = "succeeded"
 
     pipeline_tags = [
-        "repository:datadog-agent",
+        "repository:stackstate-agent",
         f"git_ref:{os.getenv('CI_COMMIT_REF_NAME')}",
         f"status:{pipeline_state}",
     ]
@@ -743,7 +743,7 @@ def send_stats(_, print_to_stdout=False):
 
 
 def _init_pipeline_schedule_task():
-    project_name = "DataDog/datadog-agent"
+    project_name = "StackVista/stackstate-agent"
     gitlab = Gitlab(project_name=project_name, api_token=get_gitlab_bot_token())
     gitlab.test_project_found()
     return gitlab

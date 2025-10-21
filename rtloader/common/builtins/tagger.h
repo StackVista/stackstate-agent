@@ -40,7 +40,7 @@
     tagger generate tags. This memory should be freed with the cgo_free helper
     available when done.
 */
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <rtloader_types.h>
 

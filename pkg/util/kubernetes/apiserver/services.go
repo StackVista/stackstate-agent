@@ -8,7 +8,11 @@
 package apiserver
 
 import (
+	"context"
 	"fmt"
+	"k8s.io/api/extensions/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "k8s.io/api/core/v1"
 )
@@ -43,4 +47,34 @@ func EntityForService(svc *v1.Service) string {
 // EntityForServiceWithNames builds entity strings for Service objects based on the name and the namespace
 func EntityForServiceWithNames(namespace, name string) string {
 	return fmt.Sprintf("%s%s/%s", kubeServiceIDPrefix, namespace, name)
+}
+
+// GetServices retrieves all the endpoints in the Kubernetes / OpenShift cluster across all namespaces.
+func (c *APIClient) GetServices() ([]v1.Service, error) {
+	serviceList, err := c.Cl.CoreV1().Services(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return []v1.Service{}, err
+	}
+
+	return serviceList.Items, nil
+}
+
+// GetIngressesExtV1Beta1 retrieves all the (extensions/v1beta1) ingress endpoints linked to services in the Kubernetes / OpenShift cluster across all namespaces.
+func (c *APIClient) GetIngressesExtV1B1() ([]v1beta1.Ingress, error) {
+	ingressList, err := c.Cl.ExtensionsV1beta1().Ingresses(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return []v1beta1.Ingress{}, err
+	}
+
+	return ingressList.Items, nil
+}
+
+// GetIngressesNetV1 retrieves all the (networking.k8s.io/v1) ingress endpoints linked to services in the Kubernetes / OpenShift cluster across all namespaces.
+func (c *APIClient) GetIngressesNetV1() ([]netv1.Ingress, error) {
+	ingressList, err := c.Cl.NetworkingV1().Ingresses(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return []netv1.Ingress{}, err
+	}
+
+	return ingressList.Items, nil
 }

@@ -20,8 +20,6 @@ import (
 	dderrors "github.com/DataDog/datadog-agent/pkg/errors"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/util/retry"
-	"github.com/opencontainers/image-spec/identity"
-
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
@@ -30,6 +28,7 @@ import (
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/opencontainers/image-spec/identity"
 )
 
 const (
@@ -159,7 +158,7 @@ func (c *ContainerdUtil) connect() error {
 	if c.cl != nil {
 		err = c.cl.Reconnect()
 		if err != nil {
-			log.Errorf("Could not reconnect to the containerd daemon: %v", err)
+			_ = log.Errorf("Could not reconnect to the containerd daemon: %v", err)
 			return c.cl.Close() // Attempt to close connections to avoid overloading the GRPC
 		}
 		return nil
@@ -198,6 +197,10 @@ func (c *ContainerdUtil) ContainerWithContext(ctx context.Context, namespace str
 	}
 
 	return ctn, err
+}
+
+func logExtractionError(what string, container containerd.Container, err error) {
+	log.Debugf("Could not extract containerd %s from container '%s'. Error: %v", what, container.ID(), err)
 }
 
 // Containers interfaces with the containerd api to get the list of Containers.

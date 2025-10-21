@@ -8,6 +8,7 @@ package snmp
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"sync"
 	"time"
 
@@ -115,7 +116,7 @@ func (c *Check) runCheckDevice(deviceCk *devicecheck.DeviceCheck) error {
 }
 
 // Configure configures the snmp checks
-func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string) error {
 	var err error
 
 	c.config, err = checkconfig.NewCheckConfig(rawInstance, rawInitConfig)
@@ -143,7 +144,7 @@ func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigD
 	// Must be called before c.CommonConfigure
 	c.BuildID(integrationConfigDigest, rawInstance, rawInitConfig)
 
-	err = c.CommonConfigure(senderManager, integrationConfigDigest, rawInitConfig, rawInstance, source)
+	err = c.CommonConfigure(senderManager, checkManager, integrationConfigDigest, rawInitConfig, rawInstance, source)
 	if err != nil {
 		return fmt.Errorf("common configure failed: %s", err)
 	}

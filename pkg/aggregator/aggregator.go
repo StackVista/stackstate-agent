@@ -249,6 +249,11 @@ type BufferedAggregator struct {
 	globalTags              func(collectors.TagCardinality) ([]string, error) // This function gets global tags from the tagger when host tags are not available
 
 	flushAndSerializeInParallel FlushAndSerializeInParallel
+
+	// [sts]
+	MetricPrefix string // The prefix used for metrics generated in the aggregator.
+	// We use this prefix to override datadog metrics we can't brand when using the agent as a dependency in the process-agent
+	// [sts]
 }
 
 // FlushAndSerializeInParallel contains options for flushing metrics and serializing in parallel.
@@ -312,6 +317,9 @@ func NewBufferedAggregator(s serializer.MetricSerializer, eventPlatformForwarder
 		agentTags:                   tagger.AgentTags,
 		globalTags:                  tagger.GlobalTags,
 		flushAndSerializeInParallel: NewFlushAndSerializeInParallel(config.Datadog),
+
+		// [sts]
+		MetricPrefix: "datadog",
 	}
 
 	return aggregator
@@ -386,6 +394,23 @@ func (agg *BufferedAggregator) GetEventPlatformForwarder() (epforwarder.EventPla
 		return nil, errors.New("event platform forwarder not initialized")
 	}
 	return agg.eventPlatformForwarder, nil
+}
+
+//// GetBufferedChannels returns a channel which can be subsequently used to send MetricSamples, Event or ServiceCheck
+//func (agg *BufferedAggregator) GetBufferedChannels() (chan []metrics.MetricSample, chan []*metrics.Event, chan []*metrics.ServiceCheck) {
+//	return agg.bufferedMetricIn, agg.bufferedEventIn, agg.bufferedServiceCheckIn
+//}
+
+//// GetBufferedMetricsWithTsChannel returns the channel to send MetricSamples containing their timestamp.
+//func (agg *BufferedAggregator) GetBufferedMetricsWithTsChannel() chan []metrics.MetricSample {
+//	return agg.bufferedMetricInWithTs
+//}
+
+// SetHostname sets the hostname that the aggregator uses by default on all the data it sends
+// Blocks until the main aggregator goroutine has finished handling the update
+func (agg *BufferedAggregator) SetHostname(hostname string) {
+	agg.hostnameUpdate <- hostname
+	<-agg.hostnameUpdateDone
 }
 
 func (agg *BufferedAggregator) registerSender(id checkid.ID) error {
@@ -571,7 +596,7 @@ func (agg *BufferedAggregator) appendDefaultSeries(start time.Time, series metri
 	// Send along a metric that showcases that this Agent is running (internally, in backend,
 	// a `datadog.`-prefixed metric allows identifying this host as an Agent host, used for dogbone icon)
 	series.Append(&metrics.Serie{
-		Name:           fmt.Sprintf("datadog.%s.running", agg.agentName),
+		Name:           fmt.Sprintf("%s.%s.running", agg.MetricPrefix, agg.agentName),
 		Points:         []metrics.Point{{Value: 1, Ts: float64(start.Unix())}},
 		Tags:           tagset.CompositeTagsFromSlice(agg.tags(true)),
 		Host:           agg.hostname,
@@ -581,7 +606,7 @@ func (agg *BufferedAggregator) appendDefaultSeries(start time.Time, series metri
 
 	// Send along a metric that counts the number of times we dropped some payloads because we couldn't split them.
 	series.Append(&metrics.Serie{
-		Name:           fmt.Sprintf("n_o_i_n_d_e_x.datadog.%s.payload.dropped", agg.agentName),
+		Name:           fmt.Sprintf("n_o_i_n_d_e_x.%s.%s.payload.dropped", agg.MetricPrefix, agg.agentName),
 		Points:         []metrics.Point{{Value: float64(split.GetPayloadDrops()), Ts: float64(start.Unix())}},
 		Tags:           tagset.CompositeTagsFromSlice(agg.tags(false)),
 		Host:           agg.hostname,
@@ -622,7 +647,7 @@ func (agg *BufferedAggregator) sendServiceChecks(start time.Time, serviceChecks 
 func (agg *BufferedAggregator) flushServiceChecks(start time.Time, waitForSerializer bool) {
 	// Add a simple service check for the Agent status
 	agg.addServiceCheck(servicecheck.ServiceCheck{
-		CheckName: fmt.Sprintf("datadog.%s.up", agg.agentName),
+		CheckName: fmt.Sprintf("stackstate.%s.up", agg.agentName),
 		Status:    servicecheck.ServiceCheckOK,
 		Tags:      agg.tags(false),
 		Host:      agg.hostname,
@@ -914,11 +939,13 @@ func (agg *BufferedAggregator) handleRegisterSampler(id checkid.ID) {
 		log.Debugf("Sampler with ID '%s' has already been registered, will use existing sampler", id)
 		return
 	}
+	copyOfConfig := config.GetDatadogConfig()
+
 	agg.checkSamplers[id] = newCheckSampler(
-		config.Datadog.GetInt("check_sampler_bucket_commits_count_expiry"),
-		config.Datadog.GetBool("check_sampler_expire_metrics"),
-		config.Datadog.GetBool("check_sampler_context_metrics"),
-		config.Datadog.GetDuration("check_sampler_stateful_metric_expiration_time"),
+		copyOfConfig.GetInt("check_sampler_bucket_commits_count_expiry"),
+		copyOfConfig.GetBool("check_sampler_expire_metrics"),
+		copyOfConfig.GetBool("check_sampler_context_metrics"),
+		copyOfConfig.GetDuration("check_sampler_stateful_metric_expiration_time"),
 		agg.tagsStore,
 		id,
 	)

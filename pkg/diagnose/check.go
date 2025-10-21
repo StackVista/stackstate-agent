@@ -8,6 +8,7 @@ package diagnose
 
 import (
 	"context"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"time"
 
 	"github.com/DataDog/datadog-agent/cmd/agent/common"
@@ -115,7 +116,7 @@ func diagnoseChecksInCLIProcess(diagCfg diagnosis.Config, senderManager diagnose
 
 	// Create the CheckScheduler, but do not attach it to
 	// AutoDiscovery.  NOTE: we do not start common.Coll, either.
-	collector.InitCheckScheduler(common.Coll, senderManagerInstance)
+	collector.InitCheckScheduler(common.Coll, senderManagerInstance, handler.NewMockCheckManager())
 
 	// Load matching configurations (should we use common.AC.GetAllConfigs())
 	waitCtx, cancelTimeout := context.WithTimeout(context.Background(), time.Duration(5*time.Second))

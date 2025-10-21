@@ -10,6 +10,8 @@ package jmx
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/comp/stackstate"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -122,6 +124,7 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 			}),
 			workloadmeta.Module(),
 			apiimpl.Module(),
+			stackstate.Bundle(),
 
 			// TODO(components): this is a temporary hack as the StartServer() method of the API package was previously called with nil arguments
 			// This highlights the fact that the API Server created by JMX (through ExecJmx... function) should be different from the ones created
@@ -263,7 +266,7 @@ func disableCmdPort() {
 
 // runJmxCommandConsole sets up the common utils necessary for JMX, and executes the command
 // with the Console reporter
-func runJmxCommandConsole(config config.Component, cliParams *cliParams, wmeta workloadmeta.Component, diagnoseSendermanager diagnosesendermanager.Component, secretResolver secrets.Component, agentAPI internalAPI.Component) error {
+func runJmxCommandConsole(config config.Component, cliParams *cliParams, wmeta workloadmeta.Component, diagnoseSendermanager diagnosesendermanager.Component, secretResolver secrets.Component, agentAPI internalAPI.Component, checkManager handler.CheckManager) error {
 	// This prevents log-spam from "comp/core/workloadmeta/collectors/internal/remote/process_collector/process_collector.go"
 	// It appears that this collector creates some contention in AD.
 	// Disabling it is both more efficient and gets rid of this log spam
@@ -285,7 +288,7 @@ func runJmxCommandConsole(config config.Component, cliParams *cliParams, wmeta w
 
 	// Create the CheckScheduler, but do not attach it to
 	// AutoDiscovery.  NOTE: we do not start common.Coll, either.
-	collector.InitCheckScheduler(common.Coll, senderManager)
+	collector.InitCheckScheduler(common.Coll, senderManager, checkManager)
 
 	// if cliSelectedChecks is empty, then we want to fetch all check configs;
 	// otherwise, we fetch only the matching cehck configs.
