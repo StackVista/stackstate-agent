@@ -224,7 +224,7 @@ build_agent_runners:
 notify-on-master-fail:
   before_script:
     - apk add --no-cache bash curl
-  image: ${DOCKER_PROXY_URL}/library/alpine:latest
+  image: ${REGISTRY_DOCKER_URL}/library/alpine:latest
   only:
     - stackstate-7.51.1
   script:
