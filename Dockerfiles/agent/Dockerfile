@@ -1,7 +1,7 @@
 ##########################################
 # Preparation stage: extract and cleanup #
 ##########################################
-FROM registry.tooling.stackstate.io/library/docker/ubuntu:20.04 AS extract
+FROM registry.tooling.stackstate.io/docker/library/ubuntu:20.04 AS extract
 ARG ARCH="amd64"
 ENV ARCH=$ARCH
 COPY stackstate-agent*_${ARCH}.deb /

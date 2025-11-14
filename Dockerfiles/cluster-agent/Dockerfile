@@ -2,7 +2,7 @@
 # Preparation stage: layout and chmods #
 ########################################
 
-FROM registry.tooling.stackstate.io/library/docker/ubuntu:20.04 as builder
+FROM registry.tooling.stackstate.io/docker/library/ubuntu:20.04 as builder
 
 WORKDIR /output
 
