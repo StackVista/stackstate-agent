@@ -8,7 +8,7 @@ services:
     command:
       - --experimental
       - --tls=false
-    name: ${REGISTRY_DOCKER_URL}/docker:20-dind
+    name: ${REGISTRY_DOCKER_URL}/library/docker:20-dind
 
 stages:
   - merge-manifest
@@ -17,7 +17,7 @@ merge-manifest:
   tags:
     - sts-k8s-m-runner
   stage: merge-manifest
-  image: ${REGISTRY_DOCKER_URL}/docker:20-git
+  image: ${REGISTRY_DOCKER_URL}/library/docker:20-git
   script:
     - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin quay.io
     - DST_TAG="${CI_COMMIT_SHORT_SHA}"
