@@ -689,7 +689,7 @@ pre_release_rpm:
 pre_release_main_agent_image: &pre_release_image
   stage: pre_release
   interruptible: true
-  image: registry.tooling.stackstate.io/docker/docker:18.06.0
+  image: ${REGISTRY_DOCKER_URL}/library/docker:18.06.0
   needs:
     - build_deb
   variables:
@@ -697,7 +697,7 @@ pre_release_main_agent_image: &pre_release_image
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - name: registry.tooling.stackstate.io/docker/docker:18.09-dind
+    - name: ${REGISTRY_DOCKER_URL}/library/docker:18.09-dind
       alias: docker
   before_script: []
   script:
@@ -795,7 +795,7 @@ release_win:
 
 .base_release_image: &base_release_image
   stage: release
-  image: registry.tooling.stackstate.io/docker/docker:20-git
+  image: ${REGISTRY_DOCKER_URL}/library/docker:20-git
   dependencies:
     - build_deb
   variables:
@@ -803,7 +803,7 @@ release_win:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - name: registry.tooling.stackstate.io/docker/docker:20-dind
+    - name: ${REGISTRY_DOCKER_URL}/library/docker:20-dind
       alias: docker
   before_script: []
   tags:

@@ -23,9 +23,9 @@ before_script:
 
 .docker_build_base: &docker_build_base
   # use docker as the image builder
-  image: registry.tooling.stackstate.io/docker/docker:18.06.0
+  image: ${REGISTRY_DOCKER_URL}/library/docker:18.06.0
   services:
-    - name: registry.tooling.stackstate.io/docker/docker:18.09-dind
+    - name: ${REGISTRY_DOCKER_URL}/library/docker:18.09-dind
       alias: docker
   retry:
     max: 2

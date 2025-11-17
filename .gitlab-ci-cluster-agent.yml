@@ -79,7 +79,7 @@ unit_tests_cluster_agent:
   stage: build_and_test
   interruptible: true
   services:
-    - name: registry.tooling.stackstate.io/docker/docker:18.09-dind
+    - name: ${REGISTRY_DOCKER_URL}/library/docker:18.09-dind
       alias: docker
   needs:
     - deps_deb
@@ -196,7 +196,7 @@ pre_release_deb:
 pre_release_main_agent_image: &pre_release_image
   stage: pre_release
   interruptible: true
-  image: registry.tooling.stackstate.io/docker/docker:18.06.0
+  image: ${REGISTRY_DOCKER_URL}/library/docker:18.06.0
   needs:
     - build_deb
   variables:
@@ -204,7 +204,7 @@ pre_release_main_agent_image: &pre_release_image
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - name: registry.tooling.stackstate.io/docker/docker:18.09-dind
+    - name: ${REGISTRY_DOCKER_URL}/library/docker:18.09-dind
       alias: docker
   before_script: []
   script:
