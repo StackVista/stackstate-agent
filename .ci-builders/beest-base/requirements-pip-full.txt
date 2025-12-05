@@ -52,7 +52,7 @@ stackstate-cli==5.0.0
 stringcase==1.2.0
 tabulate==0.8.9
 tomli==2.0.1
-urllib3==1.26.12
+urllib3==2.6.0
 watchdog==2.1.9
 websocket-client==1.4.1
 yamale==3.0.8
