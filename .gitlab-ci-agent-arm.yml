@@ -232,6 +232,8 @@ build_cluster_agent:
     max: 2
     when:
       - always
+  rules:
+    - when: on_success
 
 build_deb:
   stage: build
