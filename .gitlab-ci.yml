@@ -32,10 +32,6 @@ variables: &commonvariables
   SYSTEM_PROBE_GO_VERSION: 1.16.7
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
   VCINSTALLDIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
-  # This variable represents which one of the gitlab pipelines will contain most of the jobs that's not required for both pipelines to run.
-  # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
-  # do jobs like these run on
-  PRIMARY_MAJOR_VERSION: '3'
   PROCESS_AGENT_TEST_REPO: stackstate-k8s-process-agent
   AGENT_HELM_CHART_VERSION: ""
   STACKSTATE_HELM_CHART_VERSION: ""
@@ -58,65 +54,75 @@ variables: &commonvariables
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-k8s-cluster-agent
   STS_DOCKER_TEST_REPO_CLUSTER: stackstate-k8s-cluster-agent
 
-.rules:
-  - &exclude_on_cluster_agent
-    if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
-    when: never
-  - &scheduled_master_pipeline
-    if: $CI_COMMIT_TAG || ($CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE == "schedule")
+# These make sure we only get a commit pipeline when there is no MR.
+.pipline_on_commit_or_mr: &pipline_on_commit_or_mr
+  # If it is the master branch or a tag, always execute this step
+  - if: $CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "stackstate-7.51.1"
     when: always
-  - &exclude_on_clean
-    if: $CLEAN == "yes"
-    when: never
-
-.other_files_rule: &other_files_rule
-  # Check if any files (not MD) changed
-  # Glob syntax that checks for changes in all files except files that end with .md, .mdown or .markdown extension.
-  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-
-  # Run pipeline for merge requests and not for branch pipelines when a commit is pushed
+    allow_failure: false
+  # Else, if it is a merge train job, always execute this step
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: always
+    allow_failure: false
+  # Else, if there is a valid MR internal ID, manually execute this step
   - if: $CI_MERGE_REQUEST_IID
-    changes:
-      - "**/{!(*.markdown|*.mdown|*.md),.*}"
-    # If any non-MD files changed, always run the pipeline.
     when: always
-
-  # Do not run pipeline for branch commits when there is an open merge request available
-  - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH
+    allow_failure: false
+  # Else, if there is an open merge request (but no MR IID), never execute this step
+  # This is the magic, here we skip the pipeline for commits when an MR is open. The rules before this make sure
+  # it still runs on master commits and other cases.
+  - if: $CI_OPEN_MERGE_REQUESTS
     when: never
-
-  # Run pipeline for branch commits when no merge requests are available
-  - if: $CI_COMMIT_BRANCH || $CI_COMMIT_REF_NAME == "master"
-    changes:
-      - "**/{!(*.markdown|*.mdown|*.md),.*}"
-    # If any non-MD files changed, always run the pipeline.
+  # Else, if code was committed to a branch, manually execute this step
+  - if: $CI_COMMIT_BRANCH
     when: always
+    allow_failure: false
 
-.md_only_rule: &md_only_rule
-  # Check if any MD files changed
-  # Glob syntax that checks for changes in files ending with .md, .mdown or .markdown extension.
-  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-
-  # Run pipeline for merge requests and not for branch pipelines when a commit is pushed
+# These make sure we only get a commit pipeline when there is no MR.
+.pipline_on_commit_or_mr_success: &pipline_on_commit_or_mr_success
+  # If it is the master branch or a tag, always execute this step
+  - if: $CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "stackstate-7.51.1"
+    when: on_success
+    allow_failure: false
+  # Else, if it is a merge train job, on_success execute this step
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: false
+  # Else, if there is a valid MR internal ID, manually execute this step
   - if: $CI_MERGE_REQUEST_IID
-    changes:
-      - "**/*.{markdown,mdown,md}"
-    # If only MD files changed, don't run the pipeline.
+    when: on_success
+    allow_failure: false
+  # Else, if there is an open merge request (but no MR IID), never execute this step
+  # This is the magic, here we skip the pipeline for commits when an MR is open. The rules before this make sure
+  # it still runs on master commits and other cases.
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  # Else, if code was committed to a branch, manually execute this step
+  - if: $CI_COMMIT_BRANCH
+    when: on_success
+    allow_failure: false
+
+.pipline_on_commit_or_mr_manual: &pipline_on_commit_or_mr_manual
+  # If it is the master branch or a tag, always execute this step
+  - if: $CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "stackstate-7.51.1"
     when: manual
-    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
-
-  # Do not run pipeline for branch commits when there is an open merge request available
-  - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH
-    when: never
-
-  # Run pipeline for branch commits when no merge requests are available
-  - if: $CI_COMMIT_BRANCH || $CI_COMMIT_REF_NAME == "master"
-    changes:
-      - "**/*.{markdown,mdown,md}"
-    # If only MD files changed, don't run the pipeline.
+  # Else, if it is a merge train job, always execute this step
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
     when: manual
-    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
+    allow_failure: true
+  # Else, if there is a valid MR internal ID, manually execute this step
+  - if: $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  # Else, if there is an open merge request (but no MR IID), never execute this step
+  # This is the magic, here we skip the pipeline for commits when an MR is open. The rules before this make sure
+  # it still runs on master commits and other cases.
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  # Else, if code was committed to a branch, manually execute this step
+  - if: $CI_COMMIT_BRANCH
+    when: manual
     allow_failure: true
 
 agent-x86:
@@ -132,11 +138,7 @@ agent-x86:
     include: .gitlab-ci-agent-x86.yml
     strategy: depend
   rules:
-    - <<: *exclude_on_clean
-    - <<: *exclude_on_cluster_agent
-    - <<: *scheduled_master_pipeline
-    - *other_files_rule
-    - *md_only_rule
+    - *pipline_on_commit_or_mr
     - when: always
 
 agent-arm:
@@ -152,41 +154,25 @@ agent-arm:
     include: .gitlab-ci-agent-arm.yml
     strategy: depend
   rules:
-    - <<: *exclude_on_clean
-    - <<: *exclude_on_cluster_agent
-    - <<: *scheduled_master_pipeline
-    - *other_files_rule
-    - *md_only_rule
+    - *pipline_on_commit_or_mr
     - when: always
 
 .merge_docker_manifest: &merge_docker_manifest
   stage: postbuild
   needs: [ agent-x86, agent-arm ]
+  rules:
+    - *pipline_on_commit_or_mr_success
   trigger:
     include: .gitlab-ci-docker.yml
     strategy: depend
 
 merge_docker_manifest_cluster_agent:
   <<: *merge_docker_manifest
-  rules:
-    - <<: *exclude_on_clean
-    - <<: *exclude_on_cluster_agent
-    - <<: *scheduled_master_pipeline
-    - *other_files_rule
-    - *md_only_rule
-    - when: on_success
   variables:
     DST_REPOSITORY: quay.io/stackstate/stackstate-k8s-cluster-agent
 
 merge_docker_manifest_main_agent:
   <<: *merge_docker_manifest
-  rules:
-    - <<: *exclude_on_clean
-    - <<: *exclude_on_cluster_agent
-    - <<: *scheduled_master_pipeline
-    - *other_files_rule
-    - *md_only_rule
-    - when: on_success
   variables:
     DST_REPOSITORY: quay.io/stackstate/stackstate-k8s-agent
 
@@ -198,29 +184,27 @@ beest_k8s_1_33_containerd_trigger_verification:
     AGENT_HASH_UNDER_TEST: "$CI_COMMIT_SHORT_SHA"
     TRIGGER_AGENT_X86_TESTS: "true"
   rules:
-    - if: $CI_COMMIT_REF_NAME == "stackstate-7.51.1"
-      when: manual
-      allow_failure: true
-    - if: $CI_COMMIT_BRANCH
-      when: manual
-      allow_failure: true
+    - *pipline_on_commit_or_mr_manual
   trigger:
     project: stackvista/integrations/beest
 
-build_agent_runners:
-  stage: triggers
-  variables:
-    <<: *commonvariables
-  trigger:
-    include: .gitlab-ci-build-runners.yml
-    strategy: depend
-  rules:
-    - <<: *exclude_on_clean
-    - if: $CI_MERGE_REQUEST_IID
-    - if: $CI_OPEN_MERGE_REQUESTS
-      when: never
-    - if: $CI_COMMIT_BRANCH
+# FIXME: We are pretty much done with these builder (using datadog images now) except for the signing job.
+# We should ditch this at some point and the associated file
+# Right now just commenting it out.
+#build_agent_runners:
+#  stage: triggers
+#  variables:
+#    <<: *commonvariables
+#  trigger:
+#    include: .gitlab-ci-build-runners.yml
+#    strategy: depend
+#  rules:
+#    - if: $CI_MERGE_REQUEST_IID
+#    - if: $CI_OPEN_MERGE_REQUESTS
+#      when: never
+#    - if: $CI_COMMIT_BRANCH
 
+# We do not need the pipline_on_commit rules here because it only runs on the main branch commit pipeline.
 notify-on-master-fail:
   before_script:
     - apk add --no-cache bash curl
