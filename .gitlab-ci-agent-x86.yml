@@ -83,13 +83,10 @@ deps_deb:
 #      - $CI_PROJECT_DIR/go-pkg.tar.gz.part.*
 #      - $CI_PROJECT_DIR/go-bin.tar.gz
       - $CI_PROJECT_DIR/vendor.tar.gz
-
   retry:
     max: 2
     when:
       - always
-  rules:
-    - when: always
 
 #deps_rpm:
 #  stage: prepare
