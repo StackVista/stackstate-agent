@@ -87,6 +87,8 @@ deps_deb:
     max: 2
     when:
       - always
+  rules:
+    - when: always
 
 #deps_rpm:
 #  stage: prepare
