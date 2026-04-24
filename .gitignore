@@ -3,19 +3,36 @@ Dockerfiles/dogstatsd/alpine/static/
 
 # folders
 vendor/
+outcomes/
 .vendor-new/
 bin/
-/dev/
+/dev/*
 /site/
 __pycache__
 .pytest_cache
 venv*/
+.venv
+.python-version
+.gems/
+omnibus/omnibus/
+
+# dev tools for pickle conversion
+!/dev/agent-v1-to-v2-pickle-conversion/
+/dev/agent-v1-to-v2-pickle-conversion/.tox
+/dev/agent-v1-to-v2-pickle-conversion/venv
+/dev/agent-v1-to-v2-pickle-conversion/*.egg-info
+/dev/agent-v1-to-v2-pickle-conversion/run/v2/*
+!/dev/agent-v1-to-v2-pickle-conversion/run/v2/__example__*
+!/dev/agent-v1-to-v2-pickle-conversion/.python-version
+/dev/agent-v1-to-v2-pickle-conversion/backups
 
 **/*.tmp
 **/debug.test
 # files
 .DS_Store
-# *.cov could be removed in OCT 2023, replaced by **/coverage.out
+.vscode
+.env
+.envrc
 *.cov
 **/coverage.out
 # Python coverage
@@ -53,8 +70,12 @@ devagent
 deva
 
 # go-generated files
-datadog.yaml
+stackstate.yaml
+# Exception: allow stackstate.yaml in testdata and test directories (needed for branded tests)
+!**/testdata/stackstate.yaml
+!**/test/stackstate.yaml
 system-probe.yaml
+network-tracer.yaml
 security-agent.yaml
 dogstatsd.yaml
 cloudfoundry.yaml
@@ -69,7 +90,8 @@ pkg/status/template.go
 /.ijwb/
 
 # Ignore debs from the root of the project.
-datadog-agent*_amd64.deb
+stackstate-agent*_amd64.deb
+stackstate-agent*_amd64.rpm
 
 # Ignore pem created during the tests
 *.pem
@@ -106,6 +128,7 @@ cmd/agent/android/gradlew*
 cmd/agent/android/gradle
 cmd/agent/android/build
 cmd/agent/android/app/build
+cmd/agent/dist/datadog.yml
 
 # local copy of device signing cert
 platform.pk8
@@ -163,7 +186,7 @@ pkg/util/winutil/messagestrings/*.bin
 
 # dev VM
 .vagrant
-Vagrantfile
+/Vagrantfile
 packer.json
 *.box
 devenv/iso
@@ -187,9 +210,8 @@ pkg/network/netlink/testdata/message_dump*
 .layers
 .extension
 
-# Emacs
-*~
-.dir-locals.el
+# Merge artifacts
+*.orig
 
 # Vim
 .vimrc
@@ -197,9 +219,13 @@ pkg/network/netlink/testdata/message_dump*
 # etags
 /TAGS
 
-# cscope
-cscope.out
+#sts
+version.txt
 
+.cd-builders/windows/builder7/runner/roles/
+
+# ignore manual test files
+test/manual/*
 tools/windows/DatadogAgentInstaller/.vs/
 tools/windows/DatadogAgentInstaller/packages/
 tools/windows/DatadogAgentInstaller/WixSetup/cabcache/
@@ -208,20 +234,25 @@ tools/windows/DatadogAgentInstaller/WixSetup/cabcache/
 *.g.wxs
 *.DotSettings.user
 
-# e2e test intake generated binary
-test/fakeintake/build/*
+# cluster agent generated files
+Dockerfiles/cluster-agent/stackstate-cluster.yaml
+Dockerfiles/cluster-agent/auth_token
+Dockerfiles/cluster-agent/cluster_agent.auth_token
+Dockerfiles/cluster-agent/stackstate-cluster-agent
+Dockerfiles/cluster-agent/dist/
 
-# dev container
-.devcontainer/
+# windows ami
+.cd-builders/windows/builder/runner/roles/sa_gitlab_runner_win
 
-# Allow Single Machine Performance material to ignore excludes
-!test/regression/**
-!test/workload-checks/**
+# msgpack gen files
+*_gen*.go
 
 kmt-deps/
 test/new-e2e/system-probe/test-json-review/test-json-review
 test/new-e2e/system-probe/test-runner/test-runner
 test/new-e2e/start-microvms
+# Temp State Files
+pkg/collector/check/state/temp-write-to-disk-test/*
 
 # trace-agent generates install.json files during tests
 pkg/serverless/trace/install.json
@@ -244,3 +275,5 @@ go.work.sum
 
 # CLAUDE override file for personal use
 CLAUDE_PERSONAL.md
+
+.bash_history

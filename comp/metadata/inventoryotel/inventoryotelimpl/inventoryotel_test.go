@@ -27,6 +27,12 @@ import (
 )
 
 func getProvides(t *testing.T, confOverrides map[string]any) (provides, error) {
+	if confOverrides == nil {
+		confOverrides = map[string]any{}
+	}
+	if _, ok := confOverrides["inventories_enabled"]; !ok {
+		confOverrides["inventories_enabled"] = true
+	}
 	return newInventoryOtelProvider(
 		fxutil.Test[dependencies](
 			t,

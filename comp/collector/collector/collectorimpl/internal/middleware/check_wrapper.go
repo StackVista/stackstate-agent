@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	agenttelemetry "github.com/DataDog/datadog-agent/comp/core/agenttelemetry/def"
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	diagnose "github.com/DataDog/datadog-agent/comp/core/diagnose/def"
@@ -87,11 +89,11 @@ func (c *CheckWrapper) String() string {
 }
 
 // Configure implements Check#Configure
-func (c *CheckWrapper) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
+func (c *CheckWrapper) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string) error {
 	if c.senderManager == nil {
 		c.senderManager = senderManager
 	}
-	return c.inner.Configure(c.senderManager, integrationConfigDigest, config, initConfig, source)
+	return c.inner.Configure(c.senderManager, checkManager, integrationConfigDigest, config, initConfig, source)
 }
 
 // Interval implements Check#Interval

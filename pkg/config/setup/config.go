@@ -140,6 +140,26 @@ const (
 
 	// DefaultNetworkPathMaxTTL defines the default maximum TTL for traceroute tests
 	DefaultNetworkPathMaxTTL = 30
+
+	// DefaultBatcherBufferSize sets the default buffer size of the batcher to 10000
+	// [sts]
+	DefaultBatcherBufferSize = 10000
+
+	// DefaultTxManagerChannelBufferSize is the concurrent transactions before the tx manager begins backpressure
+	// [sts] transaction manager
+	DefaultTxManagerChannelBufferSize = 100
+	// DefaultTxManagerTimeoutDurationSeconds is the amount of time before a transaction is marked as stale, 5 minutes by default
+	DefaultTxManagerTimeoutDurationSeconds = 60 * 5
+	// DefaultTxManagerEvictionDurationSeconds is the amount of time before a transaction is evicted and rolled back, 10 minutes by default
+	DefaultTxManagerEvictionDurationSeconds = 60 * 10
+	// DefaultTxManagerTickerIntervalSeconds is the ticker interval to mark transactions as stale / timeout.
+	DefaultTxManagerTickerIntervalSeconds = 30
+
+	// DefaultCheckStateExpirationDuration is the amount of time before an element is expired from the Check State cache, 10 minutes by default
+	// [sts]
+	DefaultCheckStateExpirationDuration = 10 * time.Minute
+	// DefaultCheckStatePurgeDuration is the amount of time before an element is removed from the Check State cache, 10 minutes by default
+	DefaultCheckStatePurgeDuration = 10 * time.Minute
 )
 
 var (
@@ -263,6 +283,7 @@ var serverlessConfigComponents = []func(pkgconfigmodel.Setup){
 	podman,
 	fleet,
 	autoscaling,
+	stackstate,
 }
 
 func init() {
@@ -681,7 +702,10 @@ func InitConfig(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("cloud_foundry_container_tagger.retry_interval", 10)
 
 	// Azure
-	config.BindEnvAndSetDefault("azure_hostname_style", "os")
+	// When using `os` as the Azure hostname resolution the `containerd` check on Azure will produce a container with
+	// a hostname that includes the cluster name which breaks compatibility (and merging behavior) with
+	// the Kubernetes and process agent hostnames.
+	config.BindEnvAndSetDefault("azure_hostname_style", "name")
 
 	// IBM cloud
 	// We use a long timeout here since the metadata and token API can be very slow sometimes.
@@ -909,7 +933,7 @@ func InitConfig(config pkgconfigmodel.Setup) {
 	config.BindEnv("provider_kind")
 
 	// Orchestrator Explorer DCA and core agent
-	config.BindEnvAndSetDefault("orchestrator_explorer.enabled", true)
+	config.BindEnvAndSetDefault("orchestrator_explorer.enabled", false)
 	// enabling/disabling the environment variables & command scrubbing from the container specs
 	// this option will potentially impact the CPU usage of the agent
 	config.BindEnvAndSetDefault("orchestrator_explorer.container_scrubbing.enabled", true)
@@ -930,11 +954,11 @@ func InitConfig(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("orchestrator_explorer.custom_resources.ootb.enabled", true)
 
 	// Container lifecycle configuration
-	config.BindEnvAndSetDefault("container_lifecycle.enabled", true)
+	config.BindEnvAndSetDefault("container_lifecycle.enabled", false)
 	bindEnvAndSetLogsConfigKeys(config, "container_lifecycle.")
 
 	// Container image configuration
-	config.BindEnvAndSetDefault("container_image.enabled", true)
+	config.BindEnvAndSetDefault("container_image.enabled", false)
 	bindEnvAndSetLogsConfigKeys(config, "container_image.")
 
 	// Remote process collector
@@ -1005,7 +1029,9 @@ func InitConfig(config pkgconfigmodel.Setup) {
 	})
 
 	// inventories
-	config.BindEnvAndSetDefault("inventories_enabled", true)
+	// [sts] Default to false: STS receiver doesn't support the /api/v1/metadata endpoint,
+	// so inventory payloads would produce 404 errors. Can be re-enabled via config/env if needed.
+	config.BindEnvAndSetDefault("inventories_enabled", false)
 	config.BindEnvAndSetDefault("inventories_configuration_enabled", true)             // controls the agent configurations
 	config.BindEnvAndSetDefault("inventories_checks_configuration_enabled", true)      // controls the checks configurations
 	config.BindEnvAndSetDefault("inventories_collect_cloud_provider_account_id", true) // collect collection of `cloud_provider_account_id`
@@ -1164,6 +1190,37 @@ func InitConfig(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("config_stream.sleep_interval", 3*time.Second)
 }
 
+func stackstate(config pkgconfigmodel.Setup) {
+	// [sts] skip datadog functionality
+	config.BindEnvAndSetDefault("skip_leader_election", true)
+	// [sts] bind env for skip_validate_clustername, default is set in the config_template.yaml to avoid test failures.
+	config.BindEnv("skip_validate_clustername") //nolint:errcheck
+
+	// [sts] batcher environment variables
+	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
+
+	// [sts] transactional environment variables
+	config.BindEnvAndSetDefault("transaction_manager_channel_buffer_size", DefaultTxManagerChannelBufferSize)
+	config.BindEnvAndSetDefault("transaction_timeout_duration_seconds", DefaultTxManagerTimeoutDurationSeconds)
+	config.BindEnvAndSetDefault("transaction_eviction_duration_seconds", DefaultTxManagerEvictionDurationSeconds)
+	config.BindEnvAndSetDefault("transaction_ticket_interval_seconds", DefaultTxManagerTickerIntervalSeconds)
+
+	// [sts] check state manager environment variable
+	config.BindEnvAndSetDefault("check_state_root_path", "")
+	config.BindEnvAndSetDefault("check_state_expiration_duration", DefaultCheckStateExpirationDuration)
+	config.BindEnvAndSetDefault("check_state_purge_duration", DefaultCheckStatePurgeDuration)
+
+	// [sts] retryable http client environment variables
+	config.BindEnvAndSetDefault("transactional_forwarder_retry_min", 1*time.Second)
+	config.BindEnvAndSetDefault("transactional_forwarder_retry_max", 10*time.Second)
+
+	config.BindEnvAndSetDefault("skip_hostname_validation", false) // sts
+
+	// [sts] disable periodic connectivity checker — STS receiver does not support all DD endpoints,
+	// causing 404s in receiver logs every 10 minutes
+	config.BindEnvAndSetDefault("connectivity_checker.enabled", false)
+}
+
 func agent(config pkgconfigmodel.Setup) {
 	config.BindEnv("api_key")
 
@@ -1177,12 +1234,21 @@ func agent(config pkgconfigmodel.Setup) {
 	config.SetDefault("proxy.https", "")
 	config.SetDefault("proxy.no_proxy", []string{})
 
-	config.BindEnvAndSetDefault("skip_ssl_validation", false)
+	// sts begin
+	stsSkipSSLValidationEnv := os.Getenv("STS_SKIP_SSL_VALIDATION")
+	stsSkipSSLValidation, err := strconv.ParseBool(stsSkipSSLValidationEnv)
+	if err != nil && len(stsSkipSSLValidationEnv) > 0 {
+		_ = log.Warnf("Could not parse `STS_SKIP_SSL_VALIDATION` environment variable to boolean: %v", err)
+	}
+	config.BindEnvAndSetDefault("skip_ssl_validation", stsSkipSSLValidation)
+	// sts end
+
 	config.BindEnvAndSetDefault("sslkeylogfile", "")
 	config.BindEnv("tls_handshake_timeout")
 	config.BindEnv("http_dial_fallback_delay")
 	config.BindEnvAndSetDefault("hostname", "")
 	config.BindEnvAndSetDefault("hostname_file", "")
+	config.BindEnvAndSetDefault("skip_hostname_validation", false) // sts
 	config.BindEnvAndSetDefault("tags", []string{})
 	config.BindEnvAndSetDefault("extra_tags", []string{})
 	// If enabled, all origin detection mechanisms will be unified to use the same logic.
@@ -1300,7 +1366,7 @@ func fips(config pkgconfigmodel.Setup) {
 
 func remoteconfig(config pkgconfigmodel.Setup) {
 	// Remote config
-	config.BindEnvAndSetDefault("remote_configuration.enabled", true)
+	config.BindEnvAndSetDefault("remote_configuration.enabled", false)
 	config.BindEnvAndSetDefault("remote_configuration.key", "")
 	config.BindEnv("remote_configuration.api_key")
 	config.BindEnv("remote_configuration.rc_dd_url")
@@ -1432,7 +1498,9 @@ func telemetry(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("telemetry.dogstatsd.listeners_channel_latency_buckets", []string{})
 
 	// Agent Telemetry
-	config.BindEnvAndSetDefault("agent_telemetry.enabled", true)
+	// [sts] Default to false: STS receiver doesn't support the instrumentation-telemetry-intake endpoint,
+	// so agent telemetry payloads would produce DNS/connection errors. Can be re-enabled via config/env if needed.
+	config.BindEnvAndSetDefault("agent_telemetry.enabled", false)
 	// default compression first setup inside the next bindEnvAndSetLogsConfigKeys() function ...
 	bindEnvAndSetLogsConfigKeys(config, "agent_telemetry.")
 	// ... and overridden by the following two lines - do not switch these 3 lines order
@@ -1455,13 +1523,14 @@ func serializer(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("serializer_zstd_compressor_level", DefaultZstdCompressionLevel)
 	config.BindEnvAndSetDefault("serializer_use_events_marshaler_v2", true)
 
-	config.BindEnvAndSetDefault("use_v2_api.series", true)
+	config.BindEnvAndSetDefault("use_v2_api.series", false) // sts: TODO make sure we use our own client
 	// Serializer: allow user to blacklist any kind of payload to be sent
 	config.BindEnvAndSetDefault("enable_payloads.events", true)
 	config.BindEnvAndSetDefault("enable_payloads.series", true)
-	config.BindEnvAndSetDefault("enable_payloads.service_checks", true)
-	config.BindEnvAndSetDefault("enable_payloads.sketches", true)
+	config.BindEnvAndSetDefault("enable_payloads.service_checks", false) // [sts] disabled — STS receiver doesn't support this endpoint
+	config.BindEnvAndSetDefault("enable_payloads.sketches", false)       // [sts] disabled — STS receiver doesn't support this endpoint
 	config.BindEnvAndSetDefault("enable_payloads.json_to_v1_intake", true)
+	config.BindEnvAndSetDefault("enable_payloads.check_runs", false) // [sts] disabled — STS receiver doesn't support /api/v1/check_run
 }
 
 func aggregator(config pkgconfigmodel.Setup) {
@@ -1495,7 +1564,7 @@ func forwarder(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("forwarder_apikey_validation_interval", DefaultAPIKeyValidationInterval) // in minutes
 	config.BindEnvAndSetDefault("forwarder_num_workers", 1)
 	config.BindEnvAndSetDefault("forwarder_stop_timeout", 2)
-	config.BindEnvAndSetDefault("forwarder_max_concurrent_requests", 10)
+	config.BindEnvAndSetDefault("forwarder_max_concurrent_requests", 1)
 	// Forwarder retry settings
 	config.BindEnvAndSetDefault("forwarder_backoff_factor", 2)
 	config.BindEnvAndSetDefault("forwarder_backoff_base", 2)
@@ -1847,7 +1916,7 @@ func cri(config pkgconfigmodel.Setup) {
 
 func kubernetes(config pkgconfigmodel.Setup) {
 	// Kubernetes
-	config.BindEnvAndSetDefault("kubernetes_kubelet_host", "")
+	config.BindEnvAndSetDefault("kubernetes_kubelet_host", os.Getenv("STS_KUBERNETES_KUBELET_HOST"))
 	config.BindEnvAndSetDefault("kubernetes_kubelet_nodename", "")
 	config.BindEnvAndSetDefault("eks_fargate", false)
 	config.BindEnvAndSetDefault("kubelet_use_api_server", false)
@@ -1855,8 +1924,15 @@ func kubernetes(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("kubernetes_https_kubelet_port", 10250)
 
 	config.BindEnvAndSetDefault("kubelet_tls_verify", true)
+	config.BindEnvAndSetDefault("kubelet_fallback_to_unverified_tls", true) // sts
+	config.BindEnvAndSetDefault("kubelet_fallback_to_insecure", true)       // sts
 	config.BindEnvAndSetDefault("kubelet_core_check_enabled", true)
 	config.BindEnvAndSetDefault("collect_kubernetes_events", false)
+	config.BindEnvAndSetDefault("collect_kubernetes_metrics", false)          // sts
+	config.BindEnvAndSetDefault("collect_kubernetes_topology", false)         // sts
+	config.BindEnvAndSetDefault("collect_kubernetes_timeout", 10)             // sts
+	config.BindEnvAndSetDefault("configmap_max_datasize", 0)                  // sts
+	config.BindEnvAndSetDefault("kubernetes_csi_pv_mapper_enabled", false)    // sts
 	config.BindEnvAndSetDefault("kubernetes_events_source_detection.enabled", false)
 	config.BindEnvAndSetDefault("kubelet_client_ca", "")
 
@@ -1890,6 +1966,29 @@ func kubernetes(config pkgconfigmodel.Setup) {
 
 func podman(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("podman_db_path", "")
+}
+
+// GetMaxCapacity returns the maximum amount of elements per batch for the transactionbatcher
+// [sts]
+func GetMaxCapacity(config pkgconfigmodel.Reader) int {
+	if config.IsSet("batcher_capacity") {
+		return config.GetInt("batcher_capacity")
+	}
+
+	return DefaultBatcherBufferSize
+}
+
+// GetTxManagerConfig returns the transaction manager configuration. The buffer size, the time duration and the eviction duration
+// [sts]
+func GetTxManagerConfig(config pkgconfigmodel.Reader) (int, time.Duration, time.Duration, time.Duration) {
+	txBufferSize := Datadog().GetInt("transaction_manager_channel_buffer_size")
+	// get the checkmanager duration and convert it to duration in seconds. Both transaction_timeout_duration_seconds and
+	// transaction_eviction_duration_seconds have default values.
+	txTickerInterval := time.Second * time.Duration(config.GetInt("transaction_ticket_interval_seconds"))
+	txTimeoutDuration := time.Second * time.Duration(config.GetInt("transaction_timeout_duration_seconds"))
+	txEvictionDuration := time.Second * time.Duration(config.GetInt("transaction_eviction_duration_seconds"))
+
+	return txBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration
 }
 
 // LoadProxyFromEnv overrides the proxy settings with environment variables
@@ -2738,7 +2837,7 @@ func GetValidHostAliases(_ context.Context, config pkgconfigmodel.Reader) ([]str
 func getValidHostAliasesWithConfig(config pkgconfigmodel.Reader) []string {
 	aliases := []string{}
 	for _, alias := range config.GetStringSlice("host_aliases") {
-		if err := validate.ValidHostname(alias); err == nil {
+		if err := ValidHostname(config, alias); err == nil {
 			aliases = append(aliases, alias)
 		} else {
 			log.Warnf("skipping invalid host alias '%s': %s", alias, err)
@@ -2746,6 +2845,18 @@ func getValidHostAliasesWithConfig(config pkgconfigmodel.Reader) []string {
 	}
 
 	return aliases
+}
+
+// ValidHostname determines whether the passed string is a valid hostname.
+// sts
+func ValidHostname(config pkgconfigmodel.Reader, hostname string) error {
+	// [sts] If hostname validation is disabled just return nil
+	skipHostnameValidation := config.GetBool("skip_hostname_validation")
+	if skipHostnameValidation {
+		log.Debugf("Hostname validation is disabled, accepting %s as a valid hostname", hostname)
+		return nil
+	}
+	return validate.ValidHostname(hostname)
 }
 
 func bindVectorOptions(config pkgconfigmodel.Setup, datatype DataType) {

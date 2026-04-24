@@ -77,7 +77,7 @@ def _get_vs_build_command(cmd, vstudio_root=None):
     return cmd
 
 
-def _get_env(ctx, major_version='7', flavor=None):
+def _get_env(ctx, major_version='3', flavor=None):
     env = load_dependencies(ctx)
 
     if flavor is None:
@@ -296,7 +296,7 @@ def build(
     ctx,
     vstudio_root=None,
     arch="x64",
-    major_version='7',
+    major_version='3',
     flavor=None,
     debug=False,
     build_upgrade=False,
@@ -403,7 +403,7 @@ def build_installer(ctx, vstudio_root=None, arch="x64", debug=False):
 
 
 @task
-def test(ctx, vstudio_root=None, arch="x64", major_version='7', debug=False):
+def test(ctx, vstudio_root=None, arch="x64", major_version='3', debug=False):
     """
     Run the unit test for the MSI installer for the agent
     """

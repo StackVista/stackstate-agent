@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -150,7 +151,8 @@ func sqsMessageAttrCarrier(attr events.SQSMessageAttribute) (tracer.TextMapReade
 	if err := json.Unmarshal(bytes, &carrier); err != nil {
 		return nil, fmt.Errorf("Error unmarshaling payload value: %w", err)
 	}
-	return carrier, nil
+	// Map x-stackstate-* headers to x-datadog-* for propagator compatibility (only when BRANDED)
+	return mapStackstateToDatadogHeaders(carrier), nil
 }
 
 // snsBody is used to  unmarshal only required fields on events.SNSEntity
@@ -220,7 +222,8 @@ func snsEntityCarrier(event events.SNSEntity) (tracer.TextMapReader, error) {
 	if err = json.Unmarshal(bytes, &carrier); err != nil {
 		return nil, fmt.Errorf("Error unmarshaling the decoded binary: %w", err)
 	}
-	return carrier, nil
+	// Map x-stackstate-* headers to x-datadog-* for propagator compatibility (only when BRANDED)
+	return mapStackstateToDatadogHeaders(carrier), nil
 }
 
 // eventBridgeCarrier returns the tracer.TextMapReader used to extract trace
@@ -237,6 +240,51 @@ type invocationPayload struct {
 	Headers tracer.TextMapCarrier `json:"headers"`
 }
 
+// isBranded checks if the BRANDED environment variable is set to true/1
+func isBranded() bool {
+	branded := os.Getenv("BRANDED")
+	return branded == "true" || branded == "1"
+}
+
+// mapStackstateToDatadogHeaders maps x-stackstate-* headers to x-datadog-* headers
+// for compatibility with dd-trace-go propagator which expects x-datadog-* headers.
+// This mapping only happens when BRANDED environment variable is set.
+// When propagation style is "tracecontext", we don't map headers to avoid interfering
+// with W3C traceparent extraction.
+func mapStackstateToDatadogHeaders(carrier tracer.TextMapReader) tracer.TextMapReader {
+	if !isBranded() {
+		// In production (non-branded), pass headers through unchanged
+		return carrier
+	}
+	// Check propagation style - if tracecontext, don't map to avoid interfering with traceparent
+	// Check both branded and unbranded env var names
+	propStyle := os.Getenv("STS_TRACE_PROPAGATION_STYLE")
+	if propStyle == "" {
+		propStyle = os.Getenv("DD_TRACE_PROPAGATION_STYLE")
+	}
+	if propStyle == "tracecontext" {
+		// For tracecontext, filter out x-stackstate-* headers so only traceparent is used
+		mapped := make(map[string]string)
+		carrier.ForeachKey(func(key, val string) error {
+			// Only include non-x-stackstate-* headers (like traceparent)
+			if !strings.HasPrefix(strings.ToLower(key), "x-stackstate-") {
+				mapped[key] = val
+			}
+			return nil
+		})
+		return tracer.TextMapCarrier(mapped)
+	}
+	// Create a new map with mapped headers
+	mapped := make(map[string]string)
+	carrier.ForeachKey(func(key, val string) error {
+		// Map x-stackstate-* to x-datadog-*
+		mappedKey := strings.Replace(key, "x-stackstate-", "x-datadog-", 1)
+		mapped[mappedKey] = val
+		return nil
+	})
+	return tracer.TextMapCarrier(mapped)
+}
+
 // rawPayloadCarrier returns the tracer.TextMapReader used to extract trace
 // context from the raw json event payload.
 func rawPayloadCarrier(rawPayload []byte) (tracer.TextMapReader, error) {
@@ -244,13 +292,16 @@ func rawPayloadCarrier(rawPayload []byte) (tracer.TextMapReader, error) {
 	if err := json.Unmarshal(rawPayload, &payload); err != nil {
 		return nil, errorCouldNotUnmarshal
 	}
-	return payload.Headers, nil
+	// Map x-stackstate-* headers to x-datadog-* for propagator compatibility (only when BRANDED)
+	return mapStackstateToDatadogHeaders(payload.Headers), nil
 }
 
 // headersCarrier returns the tracer.TextMapReader used to extract trace
 // context from a Headers field of form map[string]string.
 func headersCarrier(hdrs map[string]string) (tracer.TextMapReader, error) {
-	return tracer.TextMapCarrier(hdrs), nil
+	// Map x-stackstate-* headers to x-datadog-* for propagator compatibility (only when BRANDED)
+	carrier := tracer.TextMapCarrier(hdrs)
+	return mapStackstateToDatadogHeaders(carrier), nil
 }
 
 // headersOrMultiheadersCarrier returns the tracer.TextMapReader used to extract
@@ -260,7 +311,10 @@ func headersOrMultiheadersCarrier(hdrs map[string]string, multiHdrs map[string][
 	if len(hdrs) > 0 {
 		return headersCarrier(hdrs)
 	}
-	return tracer.HTTPHeadersCarrier(multiHdrs), nil
+	// Convert multiHdrs to a map[string]string for mapping, then back to HTTPHeadersCarrier
+	// Map x-stackstate-* headers to x-datadog-* for propagator compatibility (only when BRANDED)
+	carrier := tracer.HTTPHeadersCarrier(multiHdrs)
+	return mapStackstateToDatadogHeaders(carrier), nil
 }
 
 // extractTraceContextFromStepFunctionContext extracts the execution ARN, execution redrive count, state name, state

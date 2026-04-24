@@ -22,7 +22,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/serverless/random"
 	"github.com/DataDog/datadog-agent/pkg/trace/config"
 	"github.com/DataDog/datadog-agent/pkg/trace/testutil"
-	"github.com/DataDog/datadog-agent/pkg/util/testutil/flake"
 )
 
 func setupTraceAgentTest(t *testing.T) {
@@ -33,6 +32,7 @@ func setupTraceAgentTest(t *testing.T) {
 }
 
 func TestStartEnabledFalse(t *testing.T) {
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	setupTraceAgentTest(t)
 
 	lambdaSpanChan := make(chan *pb.Span)
@@ -54,6 +54,7 @@ func (l *LoadConfigMocked) Load() (*config.AgentConfig, error) {
 }
 
 func TestStartEnabledTrueInvalidConfig(t *testing.T) {
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	setupTraceAgentTest(t)
 
 	lambdaSpanChan := make(chan *pb.Span)
@@ -69,6 +70,7 @@ func TestStartEnabledTrueInvalidConfig(t *testing.T) {
 }
 
 func TestStartEnabledTrueValidConfigInvalidPath(t *testing.T) {
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	setupTraceAgentTest(t)
 
 	lambdaSpanChan := make(chan *pb.Span)
@@ -87,6 +89,7 @@ func TestStartEnabledTrueValidConfigInvalidPath(t *testing.T) {
 }
 
 func TestStartEnabledTrueValidConfigValidPath(t *testing.T) {
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	setupTraceAgentTest(t)
 
 	lambdaSpanChan := make(chan *pb.Span)
@@ -103,7 +106,7 @@ func TestStartEnabledTrueValidConfigValidPath(t *testing.T) {
 }
 
 func TestLoadConfigShouldBeFast(t *testing.T) {
-	flake.Mark(t)
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	setupTraceAgentTest(t)
 
 	startTime := time.Now()

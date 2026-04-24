@@ -54,17 +54,28 @@
     The returned C-string YAML representation is allocated by the function and should
     be subsequently freed by the caller.
 */
+/*! \fn char *as_json(PyObject * object)
+    \brief Returns a C string JSON representation for the supplied Python object.
+    \param object The python object whose JSON representation we want.
+    \return char * pointer to the C-string representation for the supplied Python object.
+    In case of error, NULL will be returned.
+
+    The returned C-string JSON representation is allocated by the function and should
+    be subsequently freed by the caller.
+*/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 int init_stringutils(void);
 char *as_string(PyObject *);
 PyObject *from_yaml(const char *);
 char *as_yaml(PyObject *);
+char *as_json(PyObject *);
 
 #ifdef __cplusplus
 }

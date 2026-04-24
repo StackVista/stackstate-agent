@@ -17,6 +17,7 @@ import (
 	workloadmeta "github.com/DataDog/datadog-agent/comp/core/workloadmeta/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/kubelet/common"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/kubelet/provider/cadvisor"
@@ -113,12 +114,12 @@ func Factory(store workloadmeta.Component, filterStore workloadfilter.Component,
 }
 
 // Configure configures the check
-func (k *KubeletCheck) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string) error {
+func (k *KubeletCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string) error {
 	if !pkgconfigsetup.Datadog().GetBool("kubelet_core_check_enabled") {
 		return fmt.Errorf("%w: kubelet core check is disabled", check.ErrSkipCheckInstance)
 	}
 
-	err := k.CommonConfigure(senderManager, initConfig, config, source)
+	err := k.CommonConfigure(senderManager, checkManager, initConfig, config, source)
 	if err != nil {
 		return err
 	}

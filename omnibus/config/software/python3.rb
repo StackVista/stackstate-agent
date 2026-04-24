@@ -70,6 +70,19 @@ build do
     block do
       FileUtils.rm_f(Dir.glob("#{install_dir}/embedded/lib/python#{major}.#{minor}/distutils/command/wininst-*.exe"))
     end
+
+    # Python curses modules depend on system ncurses libraries (libncursesw.so.6, libtinfo.so.6, libpanelw.so.6)
+    # which are widely available on Linux systems. These are safe dependencies.
+    if linux_target?
+      block do
+        Dir.glob("#{install_dir}/embedded/lib/python#{major}.#{minor}/lib-dynload/_curses*.so").each do |file|
+          whitelist_file file
+        end
+        Dir.glob("#{install_dir}/embedded/lib/python#{major}.#{minor}/lib-dynload/_curses_panel*.so").each do |file|
+          whitelist_file file
+        end
+      end
+    end
   else
     dependency "vc_redist_14"
 

@@ -26,7 +26,7 @@ def build(
     install_path=None,
     flavor=AgentFlavor.base.name,
     rebuild=False,
-    major_version='7',
+    major_version='3',
     go_mod="readonly",
 ):
     """

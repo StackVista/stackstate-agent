@@ -6,6 +6,7 @@
 package telemetry
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,9 +32,10 @@ func TestCheck(t *testing.T) {
 	}()
 
 	sm := mocksender.CreateDefaultDemultiplexer()
+    cm := handler.NewMockCheckManager()
 
 	c := &checkImpl{CheckBase: corechecks.NewCheckBase(CheckName)}
-	c.Configure(sm, integration.FakeConfigHash, nil, nil, "test")
+	c.Configure(sm, cm, integration.FakeConfigHash, nil, nil, "test")
 
 	s := mocksender.NewMockSenderWithSenderManager(c.ID(), sm)
 	s.On("Gauge", "datadog.agent.test.gauge", 1.0, "", []string{"foo:bar"}).Return().Times(1)

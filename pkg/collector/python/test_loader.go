@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -163,9 +165,14 @@ func testLoadCustomCheck(t *testing.T) {
 	mockRtloader(t)
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
-	loader, err := NewPythonCheckLoader(senderManager, logReceiver, tagger)
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
+	loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger)
 	assert.Nil(t, err)
 
 	// testing loading custom checks
@@ -177,7 +184,7 @@ func testLoadCustomCheck(t *testing.T) {
 	C.get_check_deprecated_check = newMockPyObjectPtr()
 	C.get_check_deprecated_return = 1
 
-	check, err := loader.Load(senderManager, conf, conf.Instances[0], 1)
+	check, err := loader.Load(senderManager, handler.NewMockCheckManager(), conf, conf.Instances[0], 1)
 	// Remove check finalizer that may trigger race condition while testing
 	runtime.SetFinalizer(check, nil)
 
@@ -202,9 +209,14 @@ func testLoadWheelCheck(t *testing.T) {
 	mockRtloader(t)
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
+	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
-	loader, err := NewPythonCheckLoader(senderManager, logReceiver, tagger)
+
+	release := scopeInitCheckManager(checkManager)
+	defer release()
+
+	loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger)
 	assert.Nil(t, err)
 
 	// testing loading dd wheels
@@ -217,7 +229,7 @@ func testLoadWheelCheck(t *testing.T) {
 	C.get_check_deprecated_check = newMockPyObjectPtr()
 	C.get_check_deprecated_return = 1
 
-	check, err := loader.Load(senderManager, conf, conf.Instances[0], 0)
+	check, err := loader.Load(senderManager, handler.NewMockCheckManager(), conf, conf.Instances[0], 0)
 	// Remove check finalizer that may trigger race condition while testing
 	runtime.SetFinalizer(check, nil)
 
@@ -239,9 +251,10 @@ func testLoadHACheck(t *testing.T) {
 	mockRtloader(t)
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
+	checkManager := handler.NewMockCheckManager()
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
-	loader, err := NewPythonCheckLoader(senderManager, logReceiver, tagger)
+	loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger)
 	assert.Nil(t, err)
 
 	testCases := []struct {
@@ -301,7 +314,7 @@ func testLoadHACheck(t *testing.T) {
 			C.get_attr_bool_return = C.int(tc.getAttrBoolReturn)
 			C.get_attr_bool_attr_value = C.int(tc.getAttrBoolValue)
 
-			check, err := loader.Load(senderManager, conf, conf.Instances[0], 0)
+			check, err := loader.Load(senderManager, handler.NewMockCheckManager(), conf, conf.Instances[0], 0)
 			// Remove check finalizer that may trigger race condition while testing
 			runtime.SetFinalizer(check, nil)
 
@@ -328,9 +341,10 @@ func testLoadError(t *testing.T) {
 	mockRtloader(t)
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
+	checkManager := handler.NewMockCheckManager()
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
-	loader, err := NewPythonCheckLoader(senderManager, logReceiver, tagger)
+	loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger)
 	require.NoError(t, err)
 
 	// testing loading dd wheels
@@ -339,7 +353,7 @@ func testLoadError(t *testing.T) {
 	C.get_class_dd_wheel_py_module = nil
 	C.get_class_dd_wheel_py_class = nil
 
-	check, err := loader.Load(senderManager, conf, conf.Instances[0], 0)
+	check, err := loader.Load(senderManager, handler.NewMockCheckManager(), conf, conf.Instances[0], 0)
 	require.Error(t, err)
 	require.Nil(t, check)
 }

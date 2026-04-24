@@ -214,7 +214,7 @@ def get_build_flags(
     embedded_path=None,
     rtloader_root=None,
     python_home_3=None,
-    major_version='7',
+    major_version='3',
     headless_mode=False,
     arch: Arch | None = None,
 ):
@@ -376,7 +376,7 @@ def get_payload_version():
     raise Exception("Could not find valid version for agent-payload in go.mod file")
 
 
-def get_version_ldflags(ctx, major_version='7', install_path=None):
+def get_version_ldflags(ctx, major_version='3', install_path=None):
     """
     Compute the version from the git tags, and set the appropriate compiler
     flags

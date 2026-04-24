@@ -31,7 +31,8 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/serializer/types"
 	"github.com/DataDog/datadog-agent/pkg/util/compression"
 
-	log "github.com/DataDog/datadog-agent/comp/core/log/def"
+	logger "github.com/DataDog/datadog-agent/comp/core/log/def"
+	pkglog "github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/version"
 )
 
@@ -94,7 +95,46 @@ type MetricSerializer interface {
 	SendAgentchecksMetadata(m marshaler.JSONMarshaler) error
 	SendOrchestratorMetadata(msgs []types.ProcessMessageBody, hostName, clusterID string, payloadType int) error
 	SendOrchestratorManifests(msgs []types.ProcessMessageBody, hostName, clusterID string) error
+	SendJSONToV1Intake(data interface{}) error // sts
 }
+
+// [sts] begin
+
+// AgentV1Serializer is a serializer for just agent v1 data
+type AgentV1Serializer interface {
+	SendJSONToV1Intake(data interface{}) error
+}
+
+// AgentV1MockSerializer is a mock implementation of agent v1 serializer. USed for testing
+type AgentV1MockSerializer struct {
+	sendJSONToV1IntakeMessages chan interface{}
+}
+
+// NewAgentV1MockSerializer instantiate the agent v1 mock serializer
+func NewAgentV1MockSerializer() AgentV1MockSerializer {
+	return AgentV1MockSerializer{
+		sendJSONToV1IntakeMessages: make(chan interface{}),
+	}
+}
+
+// SendJSONToV1Intake publishes v1 agent data
+func (serializer AgentV1MockSerializer) SendJSONToV1Intake(data interface{}) error {
+	serializer.sendJSONToV1IntakeMessages <- data
+	return nil
+}
+
+// GetJSONToV1IntakeMessage gets message from the mock
+func (serializer AgentV1MockSerializer) GetJSONToV1IntakeMessage() interface{} {
+	select {
+	case res := <-serializer.sendJSONToV1IntakeMessages:
+		return res
+	case <-time.After(3 * time.Second):
+		pkglog.Error("Timeout retrieving element")
+		return nil
+	}
+}
+
+// [sts] end
 
 // Serializer serializes metrics to the correct format and routes the payloads to the correct endpoint in the Forwarder
 type Serializer struct {
@@ -121,46 +161,51 @@ type Serializer struct {
 	enableSketches       bool
 	enableJSONToV1Intake bool
 	hostname             string
-	logger               log.Component
+	logger               logger.Component
+	enableCheckRuns      bool
 }
 
 // NewSerializer returns a new Serializer initialized
-func NewSerializer(forwarder forwarder.Forwarder, orchestratorForwarder orchestratorForwarder.Component, compressor compression.Compressor, config config.Component, logger log.Component, hostName string) *Serializer {
+func NewSerializer(forwarder forwarder.Forwarder, orchestratorForwarder orchestratorForwarder.Component, compressor compression.Compressor, config config.Component, loggerComponent logger.Component, hostName string) *Serializer {
 	s := &Serializer{
 		Forwarder:                           forwarder,
 		orchestratorForwarder:               orchestratorForwarder,
 		config:                              config,
-		seriesJSONPayloadBuilder:            stream.NewJSONPayloadBuilder(config.GetBool("enable_json_stream_shared_compressor_buffers"), config, compressor, logger),
+		seriesJSONPayloadBuilder:            stream.NewJSONPayloadBuilder(config.GetBool("enable_json_stream_shared_compressor_buffers"), config, compressor, loggerComponent),
 		enableEvents:                        config.GetBool("enable_payloads.events"),
 		enableSeries:                        config.GetBool("enable_payloads.series"),
 		enableServiceChecks:                 config.GetBool("enable_payloads.service_checks"),
 		enableSketches:                      config.GetBool("enable_payloads.sketches"),
 		enableJSONToV1Intake:                config.GetBool("enable_payloads.json_to_v1_intake"),
+		enableCheckRuns:                     config.GetBool("enable_payloads.check_runs"),
 		hostname:                            hostName,
 		Strategy:                            compressor,
 		jsonExtraHeaders:                    make(http.Header),
 		protobufExtraHeaders:                make(http.Header),
 		jsonExtraHeadersWithCompression:     make(http.Header),
 		protobufExtraHeadersWithCompression: make(http.Header),
-		logger:                              logger,
+		logger:                              loggerComponent,
 	}
 
 	initExtraHeaders(s)
 
 	if !s.enableEvents {
-		logger.Warn("event payloads are disabled: all events will be dropped")
+		loggerComponent.Warn("event payloads are disabled: all events will be dropped")
 	}
 	if !s.AreSeriesEnabled() {
-		logger.Warn("series payloads are disabled: all series will be dropped")
+		loggerComponent.Warn("series payloads are disabled: all series will be dropped")
 	}
 	if !s.AreSketchesEnabled() {
-		logger.Warn("service_checks payloads are disabled: all service_checks will be dropped")
+		loggerComponent.Info("service_checks payloads are disabled: all service_checks will be dropped")
+	}
+	if !s.enableCheckRuns { // [sts]
+		loggerComponent.Info("check_runs payloads are disabled: all check_runs will be dropped")
 	}
 	if !s.enableSketches {
-		logger.Warn("sketches payloads are disabled: all sketches will be dropped")
+		loggerComponent.Info("sketches payloads are disabled: all sketches will be dropped")
 	}
 	if !s.enableJSONToV1Intake {
-		logger.Warn("JSON to V1 intake is disabled: all payloads to that endpoint will be dropped")
+		loggerComponent.Warn("JSON to V1 intake is disabled: all payloads to that endpoint will be dropped")
 	}
 
 	return s
@@ -403,6 +448,13 @@ func (s *Serializer) sendMetadata(m marshaler.JSONMarshaler, submit func(payload
 	return nil
 }
 
+// SendJSONToV1Intake serializes a payload and sends it to the forwarder.
+// Used only by the legacy processes metadata collector.
+// sts
+func (s *Serializer) SendJSONToV1Intake(data interface{}) error {
+	return s.SendProcessesMetadata(data)
+}
+
 // SendProcessesMetadata serializes a payload and sends it to the forwarder.
 // Used only by the legacy processes metadata collector.
 func (s *Serializer) SendProcessesMetadata(data interface{}) error {
@@ -415,6 +467,7 @@ func (s *Serializer) SendProcessesMetadata(data interface{}) error {
 	if err != nil {
 		return fmt.Errorf("could not serialize processes metadata payload: %s", err)
 	}
+
 	compressedPayload, err := s.Strategy.Compress(payload)
 	if err != nil {
 		return fmt.Errorf("could not compress processes metadata payload: %s", err)

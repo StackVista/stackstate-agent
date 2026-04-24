@@ -4,7 +4,6 @@ The Datadog Agent is currently split in four binaries running cooperatively:
 
   - the main `agent`, collecting metrics, events and logs
   - the `trace-agent`, collecting APM traces
-  - the `process-agent`, collecting live container and process data
   - the `system-probe`, collecting network data, accessible by the process-agent
 
 In order to provide an all-in-one image, we are including a process supervisor.

@@ -8,6 +8,7 @@ Utilities to manage build tags
 from __future__ import annotations
 
 import os
+import secrets
 import sys
 
 from invoke import task
@@ -53,6 +54,7 @@ ALL_TAGS = {
     "pcap",  # used by system-probe to compile packet filters using google/gopacket/pcap, which requires cgo to link libpcap
     "podman",
     "python",
+    # "secrets",
     "requirefips",  # used for Linux FIPS mode to avoid having to set GOFIPS
     "sds",
     "serverless",
@@ -134,6 +136,7 @@ CLUSTER_AGENT_TAGS = {
     "grpcnotrace",
     "kubeapiserver",
     "orchestrator",
+    # "secrets",
     "zlib",
     "zstd",
     "ec2",

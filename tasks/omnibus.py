@@ -28,7 +28,7 @@ from tasks.libs.common.omnibus import (
 )
 from tasks.libs.common.user_interactions import yes_no_question
 from tasks.libs.common.utils import gitlab_section, timed
-from tasks.libs.releasing.version import get_version, load_dependencies
+from tasks.libs.releasing.version import get_version, load_dependencies, load_stackstate_dependencies
 
 
 def omnibus_run_task(ctx, task, target_project, base_dir, env, log_level="info", host_distribution=None):
@@ -82,7 +82,7 @@ def bundle_install_omnibus(ctx, gem_path=None, env=None, max_try=2):
 def get_omnibus_env(
     ctx,
     skip_sign=False,
-    major_version='7',
+    major_version='3',
     hardened_runtime=False,
     system_probe_bin=None,
     go_mod_cache=None,
@@ -92,6 +92,10 @@ def get_omnibus_env(
     fips_mode=False,
 ):
     env = load_dependencies(ctx)
+
+    # [STS] Merge StackState-specific dependencies (stackstate-deps.json) into env
+    sts_env = load_stackstate_dependencies(ctx)
+    env.update(sts_env)
 
     # Discard windows variables when not on Windows (so that they're not used in the cache key either)
     if sys.platform != 'win32':
@@ -115,7 +119,6 @@ def get_omnibus_env(
         env['OMNIBUS_GOMODCACHE'] = go_mod_cache
 
     external_repos = {
-        "INTEGRATIONS_CORE_VERSION": "https://github.com/DataDog/integrations-core.git",
         "OMNIBUS_RUBY_VERSION": "https://github.com/DataDog/omnibus-ruby.git",
     }
     for key, url in external_repos.items():
@@ -220,7 +223,7 @@ def build(
     gem_path=None,
     skip_deps=False,
     skip_sign=False,
-    major_version='7',
+    major_version='3',
     hardened_runtime=False,
     system_probe_bin=None,
     go_mod_cache=None,
@@ -276,6 +279,16 @@ def build(
 
     # If a python_mirror is set then use it for pip by adding it in the pip.conf file
     pip_index_url = f"[global]\nindex-url = {python_mirror}" if python_mirror else ""
+
+    # [STS] Add private GitLab PyPI registry as extra-index-url if credentials are available
+    # Credentials are not included in the URL here, they are expected to be in .netrc (see setup_artifact_registry.sh)
+    artifact_registry_pypi_url = os.environ.get("GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL")
+    if artifact_registry_pypi_url:
+        python_extra_mirror = f"https://{artifact_registry_pypi_url}"
+        if pip_index_url:
+            pip_index_url += f"\nextra-index-url = {python_extra_mirror}"
+        else:
+            pip_index_url = f"[global]\nextra-index-url = {python_extra_mirror}"
 
     # We're passing the --index-url arg through a pip.conf file so that omnibus doesn't leak the token
     with open(pip_config_file, 'w') as f:
@@ -390,7 +403,7 @@ def manifest(
     base_dir=None,
     gem_path=None,
     skip_sign=False,
-    major_version='7',
+    major_version='3',
     hardened_runtime=False,
     system_probe_bin=None,
     go_mod_cache=None,
@@ -469,7 +482,7 @@ def build_repackaged_agent(ctx, log_level="info"):
             key=_pipeline_id_of_package,
         )
 
-    env = get_omnibus_env(ctx, skip_sign=True, major_version='7', flavor=AgentFlavor.base)
+    env = get_omnibus_env(ctx, skip_sign=True, major_version='3', flavor=AgentFlavor.base)
 
     env['OMNIBUS_REPACKAGE_SOURCE_URL'] = f"https://apt.datad0g.com/{latest_package.filename}"
     env['OMNIBUS_REPACKAGE_SOURCE_SHA256'] = latest_package.sha256

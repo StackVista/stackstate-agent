@@ -269,6 +269,11 @@ type BufferedAggregator struct {
 	globalTags                  func(types.TagCardinality) ([]string, error) // This function gets global tags from the tagger when host tags are not available
 	tagger                      tagger.Component
 	flushAndSerializeInParallel FlushAndSerializeInParallel
+
+	// [sts]
+	MetricPrefix string // The prefix used for metrics generated in the aggregator.
+	// We use this prefix to override datadog metrics we can't brand when using the agent as a dependency in the process-agent
+	// [sts]
 }
 
 // FlushAndSerializeInParallel contains options for flushing metrics and serializing in parallel.
@@ -346,6 +351,9 @@ func NewBufferedAggregator(s serializer.MetricSerializer, eventPlatformForwarder
 		globalTags:                  tagger.GlobalTags,
 		tagger:                      tagger,
 		flushAndSerializeInParallel: NewFlushAndSerializeInParallel(pkgconfigsetup.Datadog()),
+
+		// [sts]
+		MetricPrefix: "datadog",
 	}
 
 	return aggregator
@@ -421,6 +429,13 @@ func (agg *BufferedAggregator) GetEventPlatformForwarder() (eventplatform.Forwar
 		return nil, errors.New("event platform forwarder not initialized")
 	}
 	return forwarder, nil
+}
+
+// SetHostname sets the hostname that the aggregator uses by default on all the data it sends
+// Blocks until the main aggregator goroutine has finished handling the update
+func (agg *BufferedAggregator) SetHostname(hostname string) {
+	agg.hostnameUpdate <- hostname
+	<-agg.hostnameUpdateDone
 }
 
 func (agg *BufferedAggregator) registerSender(id checkid.ID) error {
@@ -607,7 +622,7 @@ func (agg *BufferedAggregator) appendDefaultSeries(start time.Time, series metri
 	// Send along a metric that showcases that this Agent is running (internally, in backend,
 	// a `datadog.`-prefixed metric allows identifying this host as an Agent host, used for dogbone icon)
 	series.Append(&metrics.Serie{
-		Name:           fmt.Sprintf("datadog.%s.running", agg.agentName),
+		Name:           fmt.Sprintf("%s.%s.running", agg.MetricPrefix, agg.agentName),
 		Points:         []metrics.Point{{Value: 1, Ts: float64(start.Unix())}},
 		Tags:           tagset.CompositeTagsFromSlice(slices.Concat(agg.tags(true), agg.configIDTags())),
 		Host:           agg.hostname,
@@ -624,7 +639,7 @@ func (agg *BufferedAggregator) appendDefaultSeries(start time.Time, series metri
 		// datadog.agent.ha_agent.running is currently used in dashboard to monitor HA Agent state (active/standby)
 		// This metric is not intended to be used as replacement for datadog.agent.running
 		series.Append(&metrics.Serie{
-			Name:           fmt.Sprintf("datadog.%s.ha_agent.running", agg.agentName),
+			Name:           fmt.Sprintf("%s.%s.ha_agent.running", agg.MetricPrefix, agg.agentName),
 			Points:         []metrics.Point{{Value: float64(1), Ts: float64(start.Unix())}},
 			Tags:           tagset.CompositeTagsFromSlice(haAgentTags),
 			Host:           agg.hostname,
@@ -665,7 +680,7 @@ func (agg *BufferedAggregator) sendServiceChecks(start time.Time, serviceChecks 
 func (agg *BufferedAggregator) flushServiceChecks(start time.Time, waitForSerializer bool) {
 	// Add a simple service check for the Agent status
 	agg.addServiceCheck(servicecheck.ServiceCheck{
-		CheckName: fmt.Sprintf("datadog.%s.up", agg.agentName),
+		CheckName: fmt.Sprintf("%s.%s.up", agg.MetricPrefix, agg.agentName),
 		Status:    servicecheck.ServiceCheckOK,
 		Tags:      agg.tags(false),
 		Host:      agg.hostname,
@@ -974,6 +989,7 @@ func (agg *BufferedAggregator) handleRegisterSampler(id checkid.ID) {
 		log.Debugf("Sampler with ID '%s' has already been registered, will use existing sampler", id)
 		return
 	}
+	
 	agg.checkSamplers[id] = newCheckSampler(
 		pkgconfigsetup.Datadog().GetInt("check_sampler_bucket_commits_count_expiry"),
 		pkgconfigsetup.Datadog().GetBool("check_sampler_expire_metrics"),

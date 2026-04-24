@@ -139,11 +139,20 @@ func GetHostAliases(ctx context.Context) ([]string, string) {
 			} else if len(cloudAliases) > 0 {
 				m.Lock()
 				aliases = append(aliases, cloudAliases...)
+				// sts begin: infrastructure cloud providers supersede kubelet/kubernetes
 				if cloudprovider == "" {
 					cloudprovider = cloudAliasesDetector.name
+				} else if cloudAliasesDetector.name == "kubelet" || cloudAliasesDetector.name == kubernetes.CloudProviderName {
+					// kubelet/kubernetes detected alongside a real cloud provider — keep the cloud provider
+					log.Debugf("Cloud provider %s already detected, ignoring %s", cloudprovider, cloudAliasesDetector.name)
+				} else if cloudprovider == "kubelet" || cloudprovider == kubernetes.CloudProviderName {
+					// real cloud provider detected after kubelet/kubernetes — upgrade
+					log.Debugf("Upgrading cloud provider from %s to %s", cloudprovider, cloudAliasesDetector.name)
+					cloudprovider = cloudAliasesDetector.name
 				} else {
-					log.Warnf("Ambiguous cloud provider: %s or %s", cloudprovider, cloudAliasesDetector.name)
+					log.Infof("Ambiguous cloud provider: %s or %s", cloudprovider, cloudAliasesDetector.name)
 				}
+				// sts end
 				m.Unlock()
 			}
 		}(cloudAliasesDetector)

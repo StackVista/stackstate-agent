@@ -10,6 +10,7 @@ package containerd
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"io"
 	"net/http"
 	"regexp"
@@ -88,9 +89,9 @@ func (co *ContainerdConfig) Parse(data []byte) error {
 }
 
 // Configure parses the check configuration and init the check
-func (c *ContainerdCheck) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string) error {
+func (c *ContainerdCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string) error {
 	var err error
-	if err = c.CommonConfigure(senderManager, initConfig, config, source); err != nil {
+	if err = c.CommonConfigure(senderManager, checkManager, initConfig, config, source); err != nil {
 		return err
 	}
 

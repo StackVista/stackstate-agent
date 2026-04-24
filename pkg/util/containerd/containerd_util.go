@@ -166,7 +166,7 @@ func (c *ContainerdUtil) connect() error {
 	if c.cl != nil {
 		err = c.cl.Reconnect()
 		if err != nil {
-			log.Errorf("Could not reconnect to the containerd daemon: %v", err)
+			_ = log.Errorf("Could not reconnect to the containerd daemon: %v", err)
 			return c.cl.Close() // Attempt to close connections to avoid overloading the GRPC
 		}
 		return nil
@@ -205,6 +205,10 @@ func (c *ContainerdUtil) ContainerWithContext(ctx context.Context, namespace str
 	}
 
 	return ctn, err
+}
+
+func logExtractionError(what string, container containerd.Container, err error) {
+	log.Debugf("Could not extract containerd %s from container '%s'. Error: %v", what, container.ID(), err)
 }
 
 // Containers interfaces with the containerd api to get the list of Containers.

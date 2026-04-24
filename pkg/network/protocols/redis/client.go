@@ -14,7 +14,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/redis/go-redis/v9"
+	redis "github.com/redis/go-redis/v9"
 )
 
 var errProtocolVersionNotSupported = errors.New("protocol version not supported")

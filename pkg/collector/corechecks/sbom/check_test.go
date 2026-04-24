@@ -23,6 +23,7 @@ import (
 	workloadmetamock "github.com/DataDog/datadog-agent/comp/core/workloadmeta/mock"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	scanner2 "github.com/DataDog/datadog-agent/pkg/sbom/scanner"
 	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
@@ -194,6 +195,7 @@ func TestConfigure(t *testing.T) {
 	assert.NotNil(t, c)
 
 	err := c.Configure(senderManager,
+		handler.NewMockCheckManager(),
 		123,
 		integration.Data{},
 		integration.Data{},

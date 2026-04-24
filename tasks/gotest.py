@@ -255,7 +255,7 @@ def test(
     rtloader_root=None,
     python_home_3=None,
     cpus=None,
-    major_version='7',
+    major_version='3',
     timeout=180,
     cache=True,
     test_run_name="",

@@ -58,6 +58,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/Microsoft/hcsshim v0.12.9
+	github.com/StackVista/stackstate-receiver-go-client v0.0.0-20251027145110-84e00b9623fc
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/alecthomas/participle v0.7.1 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b
@@ -693,6 +694,7 @@ require (
 	go.opentelemetry.io/collector/service v0.133.0
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb
 	go4.org/mem v0.0.0-20220726221520-4f986261bf13
+	gotest.tools v2.2.0+incompatible
 	k8s.io/cli-runtime v0.31.2
 	k8s.io/kubectl v0.31.2
 	pgregory.net/rapid v1.2.0

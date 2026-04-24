@@ -11,6 +11,8 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	tagger "github.com/DataDog/datadog-agent/comp/core/tagger/def"
 	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -27,6 +29,7 @@ var checkContextMutex = sync.Mutex{}
 // per dependency used inside SubmitMetric like methods.
 type checkContext struct {
 	senderManager sender.SenderManager
+	checkManager  handler.CheckManager
 	logReceiver   option.Option[integrations.Component]
 	tagger        tagger.Component
 }
@@ -41,11 +44,12 @@ func getCheckContext() (*checkContext, error) {
 	return checkCtx, nil
 }
 
-func initializeCheckContext(senderManager sender.SenderManager, logReceiver option.Option[integrations.Component], tagger tagger.Component) {
+func initializeCheckContext(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component) {
 	checkContextMutex.Lock()
 	if checkCtx == nil {
 		checkCtx = &checkContext{
 			senderManager: senderManager,
+			checkManager:  checkManager,
 			logReceiver:   logReceiver,
 			tagger:        tagger,
 		}
@@ -58,8 +62,26 @@ func initializeCheckContext(senderManager sender.SenderManager, logReceiver opti
 	checkContextMutex.Unlock()
 }
 
+// Testing utilities - Made test execution mutexed to avoid race conditions during testing.
+var testMutex = sync.Mutex{}
+
+func withLockedCheckContext(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component) {
+	testMutex.Lock()
+	checkContextMutex.Lock()
+	if checkCtx != nil {
+		panic("CheckContext was left initialized")
+	}
+	checkContextMutex.Unlock()
+	initializeCheckContext(senderManager, checkManager, logReceiver, tagger)
+}
+
 func releaseCheckContext() {
 	checkContextMutex.Lock()
+	if checkCtx != nil {
+		checkCtx.checkManager.Stop()
+	}
+
 	checkCtx = nil
 	checkContextMutex.Unlock()
+	testMutex.Unlock()
 }

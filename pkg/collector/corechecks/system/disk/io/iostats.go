@@ -7,6 +7,7 @@
 package io
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"regexp"
 
 	yaml "gopkg.in/yaml.v2"
@@ -28,8 +29,8 @@ const (
 )
 
 // Configure the IOstats check
-func (c *IOCheck) commonConfigure(senderManager sender.SenderManager, data integration.Data, initConfig integration.Data, source string) error {
-	if err := c.CommonConfigure(senderManager, initConfig, data, source); err != nil {
+func (c *IOCheck) commonConfigure(senderManager sender.SenderManager, checkManager handler.CheckManager, data integration.Data, initConfig integration.Data, source string) error {
+	if err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source); err != nil {
 		return err
 	}
 

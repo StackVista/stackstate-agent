@@ -59,7 +59,7 @@ def build(
     race=False,
     rebuild=False,
     install_path=None,
-    major_version='7',
+    major_version='3',
     go_mod="readonly",
     skip_assets=False,
     static=False,
@@ -311,7 +311,7 @@ def build_functional_tests(
     output='pkg/security/tests/testsuite',
     srcpath='pkg/security/tests',
     arch: str | Arch = CURRENT_ARCH,
-    major_version='7',
+    major_version='3',
     build_tags='functionaltests',
     build_flags='',
     bundle_ebpf=True,
@@ -397,7 +397,7 @@ def functional_tests(
     ctx,
     verbose=False,
     race=False,
-    major_version='7',
+    major_version='3',
     output='pkg/security/tests/testsuite',
     bundle_ebpf=True,
     testflags='',
@@ -428,7 +428,7 @@ def ebpfless_functional_tests(
     verbose=False,
     race=False,
     arch=CURRENT_ARCH,
-    major_version='7',
+    major_version='3',
     output='pkg/security/tests/testsuite',
     bundle_ebpf=True,
     testflags='',
@@ -459,7 +459,7 @@ def docker_functional_tests(
     verbose=False,
     race=False,
     arch=CURRENT_ARCH,
-    major_version='7',
+    major_version='3',
     testflags='',
     bundle_ebpf=True,
     skip_linters=False,
@@ -785,7 +785,7 @@ def e2e_prepare_win(ctx):
 @task
 def run_ebpf_unit_tests(ctx, verbose=False, trace=False, testflags=''):
     build_cws_object_files(
-        ctx, major_version='7', kernel_release=None, with_unit_test=True, bundle_ebpf=True, arch=CURRENT_ARCH
+        ctx, major_version='3', kernel_release=None, with_unit_test=True, bundle_ebpf=True, arch=CURRENT_ARCH
     )
 
     env = {"CGO_ENABLED": "1"}

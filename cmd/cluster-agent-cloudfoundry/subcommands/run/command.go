@@ -11,6 +11,8 @@ package run
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/comp/stackstate"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"os"
 	"os/signal"
 	"regexp"
@@ -152,6 +154,7 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 				metadatarunnerimpl.Module(),
 				dcametadatafx.Module(),
 				ipcfx.ModuleReadWrite(),
+				stackstate.Bundle(),
 			)
 		},
 	}
@@ -176,6 +179,7 @@ func run(
 	diagonseComp diagnose.Component,
 	dcametadataComp dcametadata.Component,
 	telemetry telemetry.Component,
+	checkManager handler.CheckManager,
 ) error {
 	mainCtx, mainCtxCancel := context.WithCancel(context.Background())
 	defer mainCtxCancel() // Calling cancel twice is safe
@@ -213,7 +217,7 @@ func run(
 	common.LoadComponents(secretResolver, wmeta, ac, pkgconfigsetup.Datadog().GetString("confd_path"))
 
 	// Set up check collector
-	ac.AddScheduler("check", pkgcollector.InitCheckScheduler(option.New(collector), demultiplexer, logReceiver, taggerComp), true)
+	ac.AddScheduler("check", pkgcollector.InitCheckScheduler(option.New(collector), demultiplexer, checkManager, logReceiver, taggerComp), true)
 
 	// start the autoconfig, this will immediately run any configured check
 	ac.LoadAndRun(mainCtx)

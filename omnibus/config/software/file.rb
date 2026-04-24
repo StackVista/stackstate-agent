@@ -15,7 +15,7 @@
 #
 
 name "file"
-default_version "5.45"
+default_version "5.46"
 
 dependency 'zlib'
 dependency 'bzip2'
@@ -25,9 +25,9 @@ license "BSD"
 license_file "COPYING"
 skip_transitive_dependency_licensing true
 
-version("5.45") { source sha256: "fc97f51029bb0e2c9f4e3bffefdaf678f0e039ee872b9de5c002a6d09c784d82" }
+version("5.46") { source sha256: "c9cc77c7c560c543135edc555af609d5619dbef011997e988ce40a3d75d86088" }
 
-source url: "http://ftp.astron.com/pub/file/file-#{version}.tar.gz"
+source url: "https://distfiles.macports.org/file/file-#{version}.tar.gz"
 
 relative_path "file-#{version}"
 
@@ -39,4 +39,8 @@ build do
 
   make "-j #{workers}", env: env
   make "install", env: env
+
+  # The file binary depends on libseccomp.so.2 which is a system library.
+  # This is safe as libseccomp is widely available on Linux systems.
+  whitelist_file "#{install_dir}/embedded/bin/file"
 end
