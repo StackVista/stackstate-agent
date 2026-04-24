@@ -913,7 +913,7 @@ def _get_existing_stacks(ctx: Context) -> list[str]:
 
 
 def _destroy_stack(ctx: Context, stack: str):
-    # running in temp dir as this is where datadog-agent test
+    # running in temp dir as this is where stackstate-agent test
     # stacks are stored. It is expected to fail on stacks existing locally
     # with resources removed by agent-sandbox clean up job
 

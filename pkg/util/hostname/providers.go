@@ -166,7 +166,7 @@ func getProviderCatalog(legacyHostnameResolution bool) []provider {
 }
 
 func saveHostname(cacheHostnameKey string, hostname string, providerName string, legacyHostnameResolution bool) Data {
-	data := Data{
+	data := hostnameinterface.Data{
 		Hostname: hostname,
 		Provider: providerName,
 	}
@@ -180,7 +180,7 @@ func saveHostname(cacheHostnameKey string, hostname string, providerName string,
 	return data
 }
 
-// GetWithProvider returns the hostname for the Agent and the provider that was use to retrieve it
+// GetWithProvider returns the hostname for the Agent and the provider that was used to retrieve it
 func GetWithProvider(ctx context.Context) (Data, error) {
 	return getHostname(ctx, "hostname", false)
 }
@@ -206,6 +206,7 @@ func getHostname(ctx context.Context, keyCache string, legacyHostnameResolution 
 	var err error
 	var hostname string
 	var providerName string
+	var results []string
 
 	for _, p := range getProviderCatalog(legacyHostnameResolution) {
 		log.Debugf("trying to get hostname from '%s' provider", p.name)
@@ -216,10 +217,12 @@ func getHostname(ctx context.Context, keyCache string, legacyHostnameResolution 
 			expErr.Set(err.Error())
 			hostnameErrors.Set(p.expvarName, expErr)
 			log.Debugf("unable to get the hostname from '%s' provider: %s", p.name, err)
+			results = append(results, fmt.Sprintf("'%s': %s", p.name, err))
 			continue
 		}
 
 		log.Debugf("hostname provider '%s' successfully found hostname '%s'", p.name, detectedHostname)
+		results = append(results, fmt.Sprintf("'%s': '%s' - p.stopIfSuccessful: %v", p.name, detectedHostname, p.stopIfSuccessful))
 		hostname = detectedHostname
 		providerName = p.name
 
@@ -238,7 +241,8 @@ func getHostname(ctx context.Context, keyCache string, legacyHostnameResolution 
 		return hostnameData, nil
 	}
 
-	err = fmt.Errorf("unable to reliably determine the host name. You can define one in the agent config file or in your hosts file")
+	//err = fmt.Errorf("unable to reliably determine the host name. You can define one in the agent config file or in your hosts file")
+	err = fmt.Errorf("unable to reliably determine the host name. Results: %v", results)
 	expErr := new(expvar.String)
 	expErr.Set(err.Error())
 	hostnameErrors.Set("all", expErr)

@@ -18,6 +18,7 @@ import (
 	configmock "github.com/DataDog/datadog-agent/comp/core/config"
 	flaremock "github.com/DataDog/datadog-agent/comp/core/flare/flareimpl"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 )
 
 // testConfig represents a test configuration for the agentprofiling check
@@ -52,7 +53,8 @@ user_email: "%s"`, cfg.memoryThreshold, cfg.cpuThreshold, cfg.ticketID, cfg.user
 
 	initConfig := []byte("")
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := check.Configure(senderManager, integration.FakeConfigHash, configData, initConfig, "test")
+	checkManager := handler.NewMockCheckManager()
+	err := check.Configure(senderManager, checkManager, integration.FakeConfigHash, configData, initConfig, "test")
 	require.NoError(t, err)
 
 	return check

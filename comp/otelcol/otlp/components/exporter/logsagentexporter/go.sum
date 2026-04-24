@@ -1,6 +1,6 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/DataDog/datadog-agent/comp/core/secrets v0.69.2 h1:iep80+th6Qint3W4u/biUtdtCFFKt9luKsGZ8cgtfDY=
+github.com/DataDog/datadog-agent/comp/core/secrets v0.71.2 h1:iep80+th6Qint3W4u/biUtdtCFFKt9luKsGZ8cgtfDY=
 github.com/DataDog/datadog-api-client-go/v2 v2.44.0 h1:aJYsVh4Z/rgiyzIwObBdWBYZ3adZO4GzYNUeG3RmExw=
 github.com/DataDog/datadog-api-client-go/v2 v2.44.0/go.mod h1:d3tOEgUd2kfsr9uuHQdY+nXrWp4uikgTgVCPdKNK30U=
 github.com/DataDog/opentelemetry-mapping-go/pkg/internal/sketchtest v0.32.0 h1:EPhFfwP5uxIYroMzGpWnCNre7NLfFFr63Z9Ed8iLyBE=

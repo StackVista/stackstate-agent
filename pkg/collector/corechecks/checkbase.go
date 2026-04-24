@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
@@ -43,6 +45,7 @@ import (
 // be automatically appended to each send done by this check.
 type CheckBase struct {
 	senderManager  sender.SenderManager
+	checkManager   handler.CheckManager
 	checkName      string
 	checkID        checkid.ID
 	latestWarnings []error
@@ -76,9 +79,9 @@ func (c *CheckBase) BuildID(integrationConfigDigest uint64, instance, initConfig
 
 // Configure is provided for checks that require no config. If overridden,
 // the call to CommonConfigure must be preserved.
-func (c *CheckBase) Configure(senderManager sender.SenderManager, _ uint64, data integration.Data, initConfig integration.Data, source string) error {
+func (c *CheckBase) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, data integration.Data, initConfig integration.Data, source string) error {
 	c.senderManager = senderManager
-	err := c.CommonConfigure(senderManager, initConfig, data, source)
+	err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source)
 	if err != nil {
 		return err
 	}
@@ -96,8 +99,9 @@ func (c *CheckBase) Configure(senderManager sender.SenderManager, _ uint64, data
 
 // CommonConfigure is called when checks implement their own Configure method,
 // in order to setup common options (run interval, empty hostname)
-func (c *CheckBase) CommonConfigure(senderManager sender.SenderManager, initConfig, instanceConfig integration.Data, source string) error {
+func (c *CheckBase) CommonConfigure(senderManager sender.SenderManager, checkManager handler.CheckManager, initConfig, instanceConfig integration.Data, source string) error {
 	c.senderManager = senderManager
+	c.checkManager = checkManager
 	handleConf := func(conf integration.Data, c *CheckBase) error {
 		commonOptions := integration.CommonInstanceConfig{}
 		err := yaml.Unmarshal(conf, &commonOptions)
@@ -106,8 +110,10 @@ func (c *CheckBase) CommonConfigure(senderManager sender.SenderManager, initConf
 			return err
 		}
 
-		// See if a collection interval was specified
-		if commonOptions.MinCollectionInterval > 0 {
+		// [STS] See if collection interval was specified
+		if commonOptions.CollectionInterval > 0 {
+			c.checkInterval = time.Duration(commonOptions.CollectionInterval) * time.Second
+		} else if commonOptions.MinCollectionInterval > 0 {
 			c.checkInterval = time.Duration(commonOptions.MinCollectionInterval) * time.Second
 		}
 
@@ -280,6 +286,10 @@ func (c *CheckBase) GetSenderStats() (stats.SenderStats, error) {
 		return stats.SenderStats{}, fmt.Errorf("failed to retrieve a sender: %v", err)
 	}
 	return sender.GetSenderStats(), nil
+}
+
+func (c *CheckBase) GetCheckHandler() handler.CheckHandler {
+	return c.checkManager.GetCheckHandler(c.ID())
 }
 
 // GetDiagnoses returns the diagnoses cached in last run or diagnose explicitly

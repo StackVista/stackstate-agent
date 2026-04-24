@@ -15,6 +15,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DataDog/datadog-agent/comp/stackstate"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 
@@ -23,8 +26,8 @@ import (
 	"github.com/DataDog/datadog-agent/comp/agent"
 	"github.com/DataDog/datadog-agent/comp/agent/jmxlogger"
 	"github.com/DataDog/datadog-agent/comp/agent/jmxlogger/jmxloggerimpl"
+	"github.com/DataDog/datadog-agent/comp/aggregator/demultiplexer/demultiplexerimpl"
 	"github.com/DataDog/datadog-agent/comp/aggregator/diagnosesendermanager"
-	"github.com/DataDog/datadog-agent/comp/aggregator/diagnosesendermanager/diagnosesendermanagerimpl"
 	"github.com/DataDog/datadog-agent/comp/api/api/apiimpl"
 	internalAPI "github.com/DataDog/datadog-agent/comp/api/api/def"
 	grpcNonefx "github.com/DataDog/datadog-agent/comp/api/grpcserver/fx-none"
@@ -45,11 +48,15 @@ import (
 	workloadmeta "github.com/DataDog/datadog-agent/comp/core/workloadmeta/def"
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta/defaults"
 	workloadmetafx "github.com/DataDog/datadog-agent/comp/core/workloadmeta/fx"
+	"github.com/DataDog/datadog-agent/comp/forwarder"
+	"github.com/DataDog/datadog-agent/comp/forwarder/defaultforwarder"
+	eventplatformimpl "github.com/DataDog/datadog-agent/comp/forwarder/eventplatform/eventplatformimpl"
+	eventplatformreceiverimpl "github.com/DataDog/datadog-agent/comp/forwarder/eventplatformreceiver/eventplatformreceiverimpl"
+	orchestratorimpl "github.com/DataDog/datadog-agent/comp/forwarder/orchestrator/orchestratorimpl"
 	haagentfx "github.com/DataDog/datadog-agent/comp/haagent/fx"
 	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
 	logscompression "github.com/DataDog/datadog-agent/comp/serializer/logscompression/fx"
 	metricscompression "github.com/DataDog/datadog-agent/comp/serializer/metricscompression/fx"
-	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/cli/standalone"
 	pkgcollector "github.com/DataDog/datadog-agent/pkg/collector"
 	"github.com/DataDog/datadog-agent/pkg/config/model"
@@ -124,10 +131,13 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 			fx.Supply(cliParams),
 			fx.Supply(params),
 			core.Bundle(),
-			diagnosesendermanagerimpl.Module(),
-			fx.Supply(func(diagnoseSenderManager diagnosesendermanager.Component) (sender.SenderManager, error) {
-				return diagnoseSenderManager.LazyGetSenderManager()
-			}),
+			forwarder.Bundle(defaultforwarder.NewParams(defaultforwarder.WithFeatures(defaultforwarder.CoreFeatures))),
+			orchestratorimpl.Module(orchestratorimpl.NewDefaultParams()),
+			eventplatformreceiverimpl.Module(),
+			eventplatformimpl.Module(eventplatformimpl.NewDefaultParams()),
+			demultiplexerimpl.Module(demultiplexerimpl.NewDefaultParams()),
+			// Note: demultiplexerimpl.Module already provides diagnosesendermanager.Component
+			// (as DiagnosticSenderManager), so we don't need diagnosesendermanagerimpl.Module() here
 			// workloadmeta setup
 			wmcatalog.GetCatalog(),
 			workloadmetafx.Module(defaults.DefaultParams()),
@@ -150,6 +160,7 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 			logscompression.Module(),
 			metricscompression.Module(),
 			ipcfx.ModuleReadOnly(),
+			stackstate.Bundle(),
 		)
 	}
 
@@ -290,7 +301,8 @@ func runJmxCommandConsole(config config.Component,
 	jmxLogger jmxlogger.Component,
 	logReceiver option.Option[integrations.Component],
 	tagger tagger.Component,
-	ipc ipc.Component) error {
+	ipc ipc.Component,
+	checkManager handler.CheckManager) error {
 	// This prevents log-spam from "comp/core/workloadmeta/collectors/internal/remote/process_collector/process_collector.go"
 	// It appears that this collector creates some contention in AD.
 	// Disabling it is both more efficient and gets rid of this log spam
@@ -307,7 +319,7 @@ func runJmxCommandConsole(config config.Component,
 
 	// Create the CheckScheduler, but do not attach it to
 	// AutoDiscovery.
-	pkgcollector.InitCheckScheduler(collector, senderManager, logReceiver, tagger)
+	pkgcollector.InitCheckScheduler(collector, senderManager, checkManager, logReceiver, tagger)
 
 	// if cliSelectedChecks is empty, then we want to fetch all check configs;
 	// otherwise, we fetch only the matching cehck configs.

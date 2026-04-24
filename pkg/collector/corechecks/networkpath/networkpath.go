@@ -18,6 +18,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/forwarder/eventplatform"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/networkdevice/utils"
 	"github.com/DataDog/datadog-agent/pkg/networkpath/metricsender"
@@ -123,11 +124,11 @@ func (c *Check) Interval() time.Duration {
 }
 
 // Configure the networkpath check
-func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string) error {
 	// Must be called before c.CommonConfigure
 	c.BuildID(integrationConfigDigest, rawInstance, rawInitConfig)
 
-	err := c.CommonConfigure(senderManager, rawInitConfig, rawInstance, source)
+	err := c.CommonConfigure(senderManager, checkManager, rawInitConfig, rawInstance, source)
 	if err != nil {
 		return fmt.Errorf("common configure failed: %s", err)
 	}

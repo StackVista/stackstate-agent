@@ -286,6 +286,7 @@ var allowedTerminatedReasons = map[string]struct{}{
 	"oomkilled":          {},
 	"containercannotrun": {},
 	"error":              {},
+	"unknown":            {},
 }
 
 func containerTerminatedReasonTransformer(s sender.Sender, _ string, metric ksmstore.DDMetric, hostname string, tags []string, _ time.Time) {

@@ -7,6 +7,7 @@
 package io
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"regexp"
 	"runtime"
 	"testing"
@@ -109,7 +110,7 @@ func TestIOCheckDM(_ *testing.T) {
 	ioCounters = ioSamplerDM
 	swapMemory = SwapMemory
 	ioCheck := new(IOCheck)
-	ioCheck.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	ioCheck.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	mock := mocksender.NewMockSender(ioCheck.ID())
 
@@ -136,7 +137,7 @@ func TestIOCheck(t *testing.T) {
 	swapMemory = SwapMemory
 	ioCheck := new(IOCheck)
 	mock := mocksender.NewMockSender(ioCheck.ID())
-	ioCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	ioCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	expectedRates := 2
 	expectedGauges := 0
@@ -203,7 +204,7 @@ func TestIOCheckBlacklist(t *testing.T) {
 	swapMemory = SwapMemory
 	ioCheck := new(IOCheck)
 	mock := mocksender.NewMockSender(ioCheck.ID())
-	ioCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	ioCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test")
 
 	expectedRates := 0
 	expectedGauges := 0

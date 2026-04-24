@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"os"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -406,11 +407,33 @@ func (n *NestedStepFunctionPayload) UnmarshalJSON(data []byte) error {
 
 // UnmarshalJSON for LambdaRootStepFunctionPayload.
 func (l *LambdaRootStepFunctionPayload) UnmarshalJSON(data []byte) error {
-	return genericUnmarshal(data, map[string]interface{}{
+	// Determine which keys to use - check JSON for branded keys first if in branded mode
+	traceIDKey := "x-datadog-trace-id"
+	tagsKey := "x-datadog-tags"
+	
+	if os.Getenv("BRANDED") == "true" || os.Getenv("BRANDED") == "1" {
+		// In branded mode, check if x-stackstate-* keys exist in the JSON
+		var aux struct {
+			Datadog map[string]json.RawMessage `json:"_datadog"`
+		}
+		if err := json.Unmarshal(data, &aux); err == nil {
+			// Check for branded keys first
+			if _, exists := aux.Datadog["x-stackstate-trace-id"]; exists {
+				traceIDKey = "x-stackstate-trace-id"
+				tagsKey = "x-stackstate-tags"
+			}
+		}
+	}
+	
+	fieldMap := map[string]interface{}{
 		"Execution":          &l.Payload.Execution,
 		"State":              &l.Payload.State,
-		"x-datadog-trace-id": &l.TraceID,
-		"x-datadog-tags":     &l.TraceTags,
 		"serverless-version": &l.ServerlessVersion,
-	})
+	}
+	
+	// Add trace ID and tags keys - genericUnmarshal will skip if they don't exist
+	fieldMap[traceIDKey] = &l.TraceID
+	fieldMap[tagsKey] = &l.TraceTags
+	
+	return genericUnmarshal(data, fieldMap)
 }

@@ -2,7 +2,7 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DataDog/appsec-internal-go v1.14.0 h1:MIEZ015kdpeSZSFYBQteSmg8f7zkQTWbMDHbSL9zBx8=
 github.com/DataDog/appsec-internal-go v1.14.0/go.mod h1:9YppRCpElfGX+emXOKruShFYsdPq7WEPq/Fen4tYYpk=
-github.com/DataDog/datadog-agent/comp/core/secrets v0.69.2 h1:iep80+th6Qint3W4u/biUtdtCFFKt9luKsGZ8cgtfDY=
+github.com/DataDog/datadog-agent/comp/core/secrets v0.71.2 h1:iep80+th6Qint3W4u/biUtdtCFFKt9luKsGZ8cgtfDY=
 github.com/DataDog/datadog-go/v5 v5.6.0 h1:2oCLxjF/4htd55piM75baflj/KoE6VYS7alEUqFvRDw=
 github.com/DataDog/datadog-go/v5 v5.6.0/go.mod h1:K9kcYBlxkcPP8tvvjZZKs/m1edNAUFzBbdpTUKfCsuw=
 github.com/DataDog/go-libddwaf/v3 v3.5.4 h1:cLV5lmGhrUBnHG50EUXdqPQAlJdVCp9n3aQ5bDWJEAg=

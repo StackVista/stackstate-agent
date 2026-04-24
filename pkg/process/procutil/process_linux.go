@@ -358,6 +358,15 @@ func (p *probe) getRootProcFile() (*os.File, error) {
 
 // getActivePIDs retrieves a list of PIDs representing actively running processes.
 func (p *probe) getActivePIDs() ([]int32, error) {
+	// Close and reopen the directory handle to ensure we see newly added entries.
+	// This is necessary because Readdirnames(-1) reads all entries at once, and
+	// new entries added after the initial read won't be visible until we reopen.
+	// This is especially important for tests that modify the procfs directory structure.
+	if p.procRootFile != nil {
+		p.procRootFile.Close()
+		p.procRootFile = nil
+	}
+
 	procFile, err := p.getRootProcFile()
 	if err != nil {
 		return nil, err

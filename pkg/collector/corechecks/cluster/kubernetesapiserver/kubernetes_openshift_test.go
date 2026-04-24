@@ -10,6 +10,7 @@ package kubernetesapiserver
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"os"
 	"testing"
 
@@ -37,8 +38,8 @@ func TestReportClusterQuotas(t *testing.T) {
 
 	instanceCfg := []byte("")
 	initCfg := []byte("")
-	kubeASCheck := newCheck(tagger).(*KubeASCheck)
-	err = kubeASCheck.Configure(aggregator.NewNoOpSenderManager(), integration.FakeConfigHash, instanceCfg, initCfg, "test")
+    kubeASCheck := newCheck(tagger).(*KubeASCheck)
+	err = kubeASCheck.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, instanceCfg, initCfg, "test")
 	require.NoError(t, err)
 
 	mocked := mocksender.NewMockSender(kubeASCheck.ID())

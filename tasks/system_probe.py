@@ -651,7 +651,7 @@ def ninja_cgo_type_files(nw: NinjaWriter):
 def ninja_generate(
     ctx: Context,
     ninja_path,
-    major_version='7',
+    major_version='3',
     arch: str | Arch = CURRENT_ARCH,
     debug=False,
     strip_object_files=False,
@@ -776,7 +776,7 @@ def build(
     ctx,
     race=False,
     rebuild=False,
-    major_version='7',
+    major_version='3',
     go_mod="readonly",
     arch: str = CURRENT_ARCH,
     bundle_ebpf=False,
@@ -833,7 +833,7 @@ def build_sysprobe_binary(
     ctx,
     race=False,
     rebuild=False,
-    major_version='7',
+    major_version='3',
     go_mod="readonly",
     arch: str = CURRENT_ARCH,
     binary=BIN_PATH,
@@ -1463,7 +1463,7 @@ def run_ninja(
     task="",
     target="",
     explain=False,
-    major_version='7',
+    major_version='3',
     arch: str | Arch = CURRENT_ARCH,
     kernel_release=None,
     debug=False,
@@ -1595,7 +1595,7 @@ def validate_object_file_metadata(ctx: Context, build_dir: str | Path = "pkg/ebp
 @task(aliases=["object-files"])
 def build_object_files(
     ctx,
-    major_version='7',
+    major_version='3',
     arch: str = CURRENT_ARCH,
     kernel_release=None,
     debug=False,
@@ -1662,7 +1662,7 @@ def build_object_files(
 
 def build_cws_object_files(
     ctx,
-    major_version='7',
+    major_version='3',
     arch: str | Arch = CURRENT_ARCH,
     kernel_release=None,
     debug=False,
@@ -1681,7 +1681,7 @@ def build_cws_object_files(
     )
 
 
-def clean_object_files(ctx, major_version='7', kernel_release=None, debug=False, strip_object_files=False):
+def clean_object_files(ctx, major_version='3', kernel_release=None, debug=False, strip_object_files=False):
     run_ninja(
         ctx,
         task="clean",

@@ -7,6 +7,7 @@ package loaders
 
 import (
 	"errors"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,7 @@ func (lo LoaderOne) Name() string {
 	return "loader_one"
 }
 
-func (lo LoaderOne) Load(_ sender.SenderManager, _ integration.Config, _ integration.Data, _ int) (check.Check, error) {
+func (lo LoaderOne) Load(_ sender.SenderManager, _ handler.CheckManager, _ integration.Config, _ integration.Data, _ int) (check.Check, error) {
 	var c check.Check
 	return c, nil
 }
@@ -39,7 +40,7 @@ func (lt LoaderTwo) Name() string {
 	return "loader_two"
 }
 
-func (lt LoaderTwo) Load(_ sender.SenderManager, _ integration.Config, _ integration.Data, _ int) (check.Check, error) {
+func (lt LoaderTwo) Load(_ sender.SenderManager, _ handler.CheckManager, _ integration.Config, _ integration.Data, _ int) (check.Check, error) {
 	var c check.Check
 	return c, nil
 }
@@ -50,22 +51,22 @@ func (lt *LoaderThree) Name() string {
 	return "loader_three"
 }
 
-func (lt *LoaderThree) Load(_ sender.SenderManager, _ integration.Config, _ integration.Data, _ int) (check.Check, error) {
+func (lt *LoaderThree) Load(_ sender.SenderManager, _ handler.CheckManager, _ integration.Config, _ integration.Data, _ int) (check.Check, error) {
 	var c check.Check
 	return c, nil
 }
 
 func TestLoaderCatalog(t *testing.T) {
 	l1 := LoaderOne{}
-	factory1 := func(sender.SenderManager, option.Option[integrations.Component], tagger.Component) (check.Loader, int, error) {
+	factory1 := func(sender.SenderManager, handler.CheckManager, option.Option[integrations.Component], tagger.Component) (check.Loader, int, error) {
 		return l1, 20, nil
 	}
 	l2 := LoaderTwo{}
-	factory2 := func(sender.SenderManager, option.Option[integrations.Component], tagger.Component) (check.Loader, int, error) {
+	factory2 := func(sender.SenderManager, handler.CheckManager, option.Option[integrations.Component], tagger.Component) (check.Loader, int, error) {
 		return l2, 10, nil
 	}
 	var l3 *LoaderThree
-	factory3 := func(sender.SenderManager, option.Option[integrations.Component], tagger.Component) (check.Loader, int, error) {
+	factory3 := func(sender.SenderManager, handler.CheckManager, option.Option[integrations.Component], tagger.Component) (check.Loader, int, error) {
 		return l3, 30, errors.New("error")
 	}
 
@@ -73,9 +74,10 @@ func TestLoaderCatalog(t *testing.T) {
 	RegisterLoader(factory2)
 	RegisterLoader(factory3)
 	senderManager := mocksender.CreateDefaultDemultiplexer()
+    checkManager := handler.NewMockCheckManager()
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
-	require.Len(t, LoaderCatalog(senderManager, logReceiver, tagger), 2)
-	assert.Equal(t, l1, LoaderCatalog(senderManager, logReceiver, tagger)[1])
-	assert.Equal(t, l2, LoaderCatalog(senderManager, logReceiver, tagger)[0])
+	require.Len(t, LoaderCatalog(senderManager, checkManager, logReceiver, tagger), 2)
+	assert.Equal(t, l1, LoaderCatalog(senderManager, checkManager, logReceiver, tagger)[1])
+	assert.Equal(t, l2, LoaderCatalog(senderManager, checkManager, logReceiver, tagger)[0])
 }

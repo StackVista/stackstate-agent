@@ -12,6 +12,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"strings"
 	"time"
 
@@ -373,7 +374,7 @@ func (c *Check) Teardown() {
 }
 
 // Configure configures the Oracle check.
-func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string) error {
 	var err error
 	c.config, err = config.NewCheckConfig(rawInstance, rawInitConfig)
 	if err != nil {
@@ -383,7 +384,7 @@ func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigD
 	// Must be called before c.CommonConfigure because this integration supports multiple instances
 	c.BuildID(integrationConfigDigest, rawInstance, rawInitConfig)
 
-	if err := c.CommonConfigure(senderManager, rawInitConfig, rawInstance, source); err != nil {
+	if err := c.CommonConfigure(senderManager, checkManager, rawInitConfig, rawInstance, source); err != nil {
 		return fmt.Errorf("common configure failed: %s", err)
 	}
 

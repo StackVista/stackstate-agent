@@ -2050,7 +2050,7 @@ func TestDefaultAndNoDefaultPromRegistries(t *testing.T) {
 }
 
 func TestAgentTelemetryParseDefaultConfiguration(t *testing.T) {
-	c := defaultProfiles
+	c := "agent_telemetry:\n  enabled: true\n" + defaultProfiles
 	cfg := configmock.NewFromYAML(t, c)
 	atCfg, err := parseConfig(cfg)
 

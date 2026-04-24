@@ -118,6 +118,8 @@ func FetchOrCreateArtifact[T any](ctx context.Context, location string, factory 
 	var lockErr error
 
 	// trying to read artifact or locking file
+	lockFilePath := location + lockSuffix
+	log.Debugf("attempting to acquire lock for artifact at: %s (lock file: %s)", location, lockFilePath)
 	for {
 		// First check if another process were able to create and save artifact during wait
 		res, err := TryFetchArtifact(location, factory)
@@ -130,7 +132,7 @@ func FetchOrCreateArtifact[T any](ctx context.Context, location string, factory 
 		ok, err := fileLock.TryLock()
 		if err != nil {
 			lockErr = err
-			log.Debugf("unable to acquire lock: %v", err)
+			log.Debugf("unable to acquire lock for %s: %v", lockFilePath, err)
 		}
 		if ok {
 			break

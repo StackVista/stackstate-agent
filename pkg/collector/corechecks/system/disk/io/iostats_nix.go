@@ -9,6 +9,7 @@ package io
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"math"
 	"regexp"
 	"time"
@@ -41,8 +42,8 @@ type IOCheck struct {
 }
 
 // Configure the IOstats check
-func (c *IOCheck) Configure(senderManager sender.SenderManager, _ uint64, data integration.Data, initConfig integration.Data, source string) error {
-	err := c.commonConfigure(senderManager, data, initConfig, source)
+func (c *IOCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, data integration.Data, initConfig integration.Data, source string) error {
+	err := c.commonConfigure(senderManager, checkManager, data, initConfig, source)
 	return err
 }
 

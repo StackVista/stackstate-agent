@@ -33,6 +33,12 @@ func (p *testPayload) SplitPayload(_ int) ([]marshaler.AbstractMarshaler, error)
 }
 
 func getTestInventoryPayload(t *testing.T, confOverrides map[string]any) *InventoryPayload {
+	if confOverrides == nil {
+		confOverrides = map[string]any{}
+	}
+	if _, ok := confOverrides["inventories_enabled"]; !ok {
+		confOverrides["inventories_enabled"] = true
+	}
 	i := CreateInventoryPayload(
 		config.NewMockWithOverrides(t, confOverrides),
 		logmock.New(t),
@@ -44,6 +50,12 @@ func getTestInventoryPayload(t *testing.T, confOverrides map[string]any) *Invent
 }
 
 func getEmptyInventoryPayload(t *testing.T, confOverrides map[string]any) *InventoryPayload {
+	if confOverrides == nil {
+		confOverrides = map[string]any{}
+	}
+	if _, ok := confOverrides["inventories_enabled"]; !ok {
+		confOverrides["inventories_enabled"] = true
+	}
 	i := CreateInventoryPayload(
 		config.NewMockWithOverrides(t, confOverrides),
 		logmock.New(t),

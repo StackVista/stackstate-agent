@@ -9,7 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/DataDog/datadog-agent/pkg/serverless/trigger/events"
 	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
@@ -27,6 +29,25 @@ const (
 	ddSamplingPriorityHeader = "x-datadog-sampling-priority"
 	ddInvocationErrorHeader  = "x-datadog-invocation-error"
 )
+
+// getLayerHeader returns the header value, checking both the given key and its
+// alternate (x-datadog-* vs x-stackstate-*) when BRANDED is set, so tests and
+// layers can send either form.
+func getLayerHeader(hdr http.Header, key string) string {
+	if v := hdr.Get(key); v != "" {
+		return v
+	}
+	if os.Getenv("BRANDED") != "true" && os.Getenv("BRANDED") != "1" {
+		return ""
+	}
+	alt := key
+	if strings.HasPrefix(key, "x-datadog-") {
+		alt = "x-stackstate-" + strings.TrimPrefix(key, "x-datadog-")
+	} else if strings.HasPrefix(key, "x-stackstate-") {
+		alt = "x-datadog-" + strings.TrimPrefix(key, "x-stackstate-")
+	}
+	return hdr.Get(alt)
+}
 
 var (
 	errorUnsupportedExtractionType = errors.New("Unsupported event type for trace context extraction")
@@ -162,12 +183,12 @@ func (e Extractor) ExtractFromLayer(hdr http.Header) *TraceContextExtended {
 	}
 
 	var spanID uint64
-	if value, err := convertStrToUint64(hdr.Get(ddSpanIDHeader)); err == nil {
+	if value, err := convertStrToUint64(getLayerHeader(hdr, ddSpanIDHeader)); err == nil {
 		log.Debugf("injecting spanId = %v", value)
 		spanID = value
 	}
 
-	invocationError := hdr.Get(ddInvocationErrorHeader) == "true"
+	invocationError := getLayerHeader(hdr, ddInvocationErrorHeader) == "true"
 
 	return &TraceContextExtended{
 		TraceContext:    tc,
@@ -178,7 +199,7 @@ func (e Extractor) ExtractFromLayer(hdr http.Header) *TraceContextExtended {
 
 func (e Extractor) extractTraceContextFromLayer(hdr http.Header) (*TraceContext, error) {
 	var traceID uint64
-	if value, err := convertStrToUint64(hdr.Get(ddTraceIDHeader)); err == nil {
+	if value, err := convertStrToUint64(getLayerHeader(hdr, ddTraceIDHeader)); err == nil {
 		log.Debugf("injecting traceID = %v", value)
 		traceID = value
 	}
@@ -187,7 +208,7 @@ func (e Extractor) extractTraceContextFromLayer(hdr http.Header) (*TraceContext,
 	}
 
 	var parentID uint64
-	if value, err := convertStrToUint64(hdr.Get(ddParentIDHeader)); err == nil {
+	if value, err := convertStrToUint64(getLayerHeader(hdr, ddParentIDHeader)); err == nil {
 		log.Debugf("injecting parentId = %v", value)
 		parentID = value
 	}
@@ -196,7 +217,7 @@ func (e Extractor) extractTraceContextFromLayer(hdr http.Header) (*TraceContext,
 	}
 
 	samplingPriority := defaultSamplingPriority
-	if value, err := strconv.ParseInt(hdr.Get(ddSamplingPriorityHeader), 10, 8); err == nil {
+	if value, err := strconv.ParseInt(getLayerHeader(hdr, ddSamplingPriorityHeader), 10, 8); err == nil {
 		log.Debugf("injecting samplingPriority = %v", value)
 		samplingPriority = sampler.SamplingPriority(value)
 	}

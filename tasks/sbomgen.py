@@ -18,7 +18,7 @@ def build(
     ctx,
     dumpdep=False,
     install_path=None,
-    major_version='7',
+    major_version='3',
     static=False,
 ):
     """

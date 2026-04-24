@@ -219,7 +219,9 @@ func TestGetTelemetry(t *testing.T) {
 }
 
 func TestStatusProvider(t *testing.T) {
-	provides, _, _, _ := buildComponent(t)
+	provides, lc, _, _ := buildComponent(t)
+	lc.Start(context.Background())
+	defer lc.Stop(context.Background())
 	component := provides.Comp
 	statusProvider := provides.Status
 

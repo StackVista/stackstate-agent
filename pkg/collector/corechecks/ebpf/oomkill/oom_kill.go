@@ -10,6 +10,7 @@ package oomkill
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
@@ -72,8 +73,8 @@ func (c *OOMKillConfig) Parse(data []byte) error {
 }
 
 // Configure parses the check configuration and init the check
-func (m *OOMKillCheck) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string) error {
-	err := m.CommonConfigure(senderManager, initConfig, config, source)
+func (m *OOMKillCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string) error {
+	err := m.CommonConfigure(senderManager, checkManager, initConfig, config, source)
 	if err != nil {
 		return err
 	}
