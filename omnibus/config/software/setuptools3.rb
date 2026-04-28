@@ -1,7 +1,7 @@
 name "setuptools3"
 
 # The version of setuptools used must be at least equal to the one bundled with the Python version we use
-default_version "75.1.0"
+default_version "78.1.1"
 
 skip_transitive_dependency_licensing true
 
@@ -10,7 +10,7 @@ dependency "pip3"
 relative_path "setuptools-#{version}"
 
 source :url => "https://github.com/pypa/setuptools/archive/v#{version}.tar.gz",
-       :sha256 => "514dc60688d3118c9883a3dd54a38b28128ea912c01ea325d6e204a93da3b524",
+       :sha256 => "38d9e42ccb8714bcc6ad969caf5154f4d7b7b4f827fa7a00cf41783f6d862ef9",
        :extract => :seven_zip
 
 build do

@@ -117,7 +117,7 @@ build do
     # Prepare the build env, these dependencies are only needed to build and
     # install the core integrations.
     #
-    command "#{pip} install wheel==0.38.1"
+    command "#{pip} install wheel==0.46.2"
     command "#{pip} install pip-tools==7.3.0"
 
     uninstall_buildtime_deps = ['rtloader', 'click', 'first', 'pip-tools']
@@ -202,11 +202,12 @@ build do
       output = `#{pip} --version`
       puts output
       puts "-----------------------------------"
-      # [STS] Pin setuptools<78 in build isolation envs so pkg_resources stays
-      # available (setuptools >=78 split pkg_resources into a separate package).
+      # [STS] Pin setuptools<79 in build isolation envs so pkg_resources stays
+      # available (setuptools >=78 split pkg_resources into a separate package,
+      # but it is still bundled through 78.x).
       build_constraint_file = "#{project_dir}/build_constraints.txt"
       File.open(build_constraint_file, 'w') do |f|
-        f.puts "setuptools<78"
+        f.puts "setuptools<79"
       end
       compile_env = nix_build_env.merge({"PIP_CONSTRAINT" => build_constraint_file})
       command "#{python} -m piptools compile --generate-hashes --no-emit-index-url --no-emit-find-links --output-file #{install_dir}/#{agent_requirements_file} #{static_reqs_out_file}", :env => compile_env
