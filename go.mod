@@ -1036,6 +1036,11 @@ replace github.com/iceber/iouring-go => github.com/lebauce/iouring-go v0.0.0-202
 // github.com/golang/mock is unmaintained and archived, v1.6.0 is the last released version
 replace github.com/golang/mock => github.com/golang/mock v1.6.0
 
+// Pin testify to v1.10.0: v1.11.x changed EventuallyWithT to check the
+// condition immediately (stretchr/testify#1427), which exposes latent race
+// conditions and nil-pointer panics in several existing tests.
+replace github.com/stretchr/testify => github.com/stretchr/testify v1.10.0
+
 // Remove once sigs.k8s.io/custom-metrics-apiserver upgrades to k8s.io/* v0.32+
 replace (
 	k8s.io/api => k8s.io/api v0.31.2
