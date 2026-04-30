@@ -148,6 +148,9 @@ unbranded_unit_tests:
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
     - invoke install-tools
+    # STS: Go 1.25.9 is downloaded as a toolchain at runtime and does not
+    # ship the covdata tool. Install it so that coverage runs can succeed.
+    - go install golang.org/x/tools/cmd/covdata@latest
     # STS: drop build tags for features StackState does not ship in the
     # cluster-agent / node-agent images: oracle DB monitoring, trivy SBOM
     # scanning, NVIDIA GPU/Jetson hardware support, the Datadog installer
@@ -197,6 +200,9 @@ branded_unit_tests:
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
     - invoke install-tools
+    # STS: Go 1.25.9 is downloaded as a toolchain at runtime and does not
+    # ship the covdata tool. Install it so that coverage runs can succeed.
+    - go install golang.org/x/tools/cmd/covdata@latest
     # STS: drop build tags for features StackState does not ship in the
     # cluster-agent / node-agent images: oracle DB monitoring, trivy SBOM
     # scanning, NVIDIA GPU/Jetson hardware support, the Datadog installer
