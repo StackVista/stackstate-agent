@@ -202,12 +202,12 @@ build do
       output = `#{pip} --version`
       puts output
       puts "-----------------------------------"
-      # [STS] Pin setuptools<79 in build isolation envs so pkg_resources stays
+      # [STS] Pin setuptools<81 in build isolation envs so pkg_resources stays
       # available (setuptools >=78 split pkg_resources into a separate package,
-      # but it is still bundled through 78.x).
+      # but it is still bundled through 80.x).
       build_constraint_file = "#{project_dir}/build_constraints.txt"
       File.open(build_constraint_file, 'w') do |f|
-        f.puts "setuptools<79"
+        f.puts "setuptools<81"
       end
       compile_env = nix_build_env.merge({"PIP_CONSTRAINT" => build_constraint_file})
       command "#{python} -m piptools compile --generate-hashes --no-emit-index-url --no-emit-find-links --output-file #{install_dir}/#{agent_requirements_file} #{static_reqs_out_file}", :env => compile_env
