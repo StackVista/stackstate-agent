@@ -29,7 +29,6 @@ ALL_TAGS = {
     "cri",
     "crio",
     "datadog.no_waf",
-    "docker",
     "ec2",
     "etcd",
     "fargateprocess",
@@ -80,7 +79,6 @@ AGENT_TAGS = {
     "cri",
     "crio",
     "datadog.no_waf",
-    "docker",
     "ec2",
     "etcd",
     "fargateprocess",
@@ -112,7 +110,6 @@ AGENT_HEROKU_TAGS = AGENT_TAGS.difference(
         "no_dynamic_plugins",
         "cri",
         "crio",
-        "docker",
         "ec2",
         "fargateprocess",
         "jetson",
@@ -146,13 +143,13 @@ CLUSTER_AGENT_TAGS = {
 CLUSTER_AGENT_CLOUDFOUNDRY_TAGS = {"clusterchecks", "grpcnotrace"}
 
 # DOGSTATSD_TAGS lists the tags needed when building dogstatsd
-DOGSTATSD_TAGS = {"containerd", "grpcnotrace", "no_dynamic_plugins", "docker", "kubelet", "podman", "zlib", "zstd"}
+DOGSTATSD_TAGS = {"containerd", "grpcnotrace", "no_dynamic_plugins", "kubelet", "podman", "zlib", "zstd"}
 
 # IOT_AGENT_TAGS lists the tags needed when building the IoT agent
 IOT_AGENT_TAGS = {"grpcnotrace", "jetson", "otlp", "systemd", "zlib", "zstd"}
 
 # INSTALLER_TAGS lists the tags needed when building the installer
-INSTALLER_TAGS = {"docker", "ec2", "kubelet"}
+INSTALLER_TAGS = {"ec2", "kubelet"}
 
 # PROCESS_AGENT_TAGS lists the tags necessary to build the process-agent
 PROCESS_AGENT_TAGS = {
@@ -162,7 +159,6 @@ PROCESS_AGENT_TAGS = {
     "crio",
     "datadog.no_waf",
     "ec2",
-    "docker",
     "fargateprocess",
     "grpcnotrace",
     "kubelet",
@@ -186,7 +182,6 @@ PROCESS_AGENT_HEROKU_TAGS = {
 SECURITY_AGENT_TAGS = {
     "netcgo",
     "datadog.no_waf",
-    "docker",
     "grpcnotrace",
     "zlib",
     "zstd",
@@ -200,7 +195,6 @@ SBOMGEN_TAGS = {
     "grpcnotrace",
     "no_dynamic_plugins",
     "containerd",
-    "docker",
     "crio",
 }
 
@@ -225,7 +219,6 @@ SYSTEM_PROBE_TAGS = {
 
 # TRACE_AGENT_TAGS lists the tags that have to be added when the trace-agent
 TRACE_AGENT_TAGS = {
-    "docker",
     "containerd",
     "grpcnotrace",
     "no_dynamic_plugins",
@@ -242,7 +235,6 @@ TRACE_AGENT_HEROKU_TAGS = TRACE_AGENT_TAGS.difference(
     {
         "containerd",
         "no_dynamic_plugins",
-        "docker",
         "kubeapiserver",
         "kubelet",
         "podman",
@@ -266,11 +258,7 @@ LINUX_ONLY_TAGS = {"netcgo", "systemd", "jetson", "linux_bpf", "nvml", "pcap", "
 WINDOWS_EXCLUDE_TAGS = {"linux_bpf", "nvml", "requirefips"}
 
 # List of tags to always remove when building on Darwin/macOS
-DARWIN_EXCLUDED_TAGS = {"docker", "containerd", "no_dynamic_plugins", "nvml", "cri", "crio"}
-
-# [STS] Tags excluded from StackState builds — Docker support is not shipped,
-# removing the tag avoids compiling github.com/docker/docker into the binaries.
-STS_EXCLUDED_TAGS = {"docker"}
+DARWIN_EXCLUDED_TAGS = {"containerd", "no_dynamic_plugins", "nvml", "cri", "crio"}
 
 # Unit test build tags
 UNIT_TEST_TAGS = {"test"}
@@ -425,9 +413,6 @@ def filter_incompatible_tags(include, platform=sys.platform):
 
     if platform == "darwin":
         exclude = exclude.union(DARWIN_EXCLUDED_TAGS)
-
-    # [STS] Always exclude Docker-related tags from StackState builds
-    exclude = exclude.union(STS_EXCLUDED_TAGS)
 
     return get_build_tags(include, exclude)
 
