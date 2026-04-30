@@ -148,8 +148,14 @@ unbranded_unit_tests:
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
     - invoke install-tools
-    - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION"
-    - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION
+    # STS: drop build tags for features StackState does not ship in the
+    # cluster-agent / node-agent images: oracle DB monitoring, trivy SBOM
+    # scanning, NVIDIA GPU/Jetson hardware support, the Datadog installer
+    # bundling, and host systemd integration (containers don't use systemd
+    # and our agent.build already runs with --build-exclude=systemd).
+    - export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
+    - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE"
+    - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE
   tags:
     - ${RUNNER_TAG_XL}
   retry:
@@ -186,8 +192,14 @@ branded_unit_tests:
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
     - invoke install-tools
-    - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION"
-    - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION
+    # STS: drop build tags for features StackState does not ship in the
+    # cluster-agent / node-agent images: oracle DB monitoring, trivy SBOM
+    # scanning, NVIDIA GPU/Jetson hardware support, the Datadog installer
+    # bundling, and host systemd integration (containers don't use systemd
+    # and our agent.build already runs with --build-exclude=systemd).
+    - export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
+    - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE"
+    - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE
   tags:
     - ${RUNNER_TAG_XL}
   retry:
