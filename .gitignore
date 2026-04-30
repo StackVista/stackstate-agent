@@ -267,6 +267,9 @@ flake-finder-gitlab-ci.yml
 # go.work.sum is always changing, we should not need it since we tidy each module individually
 go.work.sum
 
+# build folder
+build/
+
 
 #### Cursor related files
 
