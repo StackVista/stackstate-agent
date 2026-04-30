@@ -153,7 +153,7 @@ unbranded_unit_tests:
     # scanning, NVIDIA GPU/Jetson hardware support, the Datadog installer
     # bundling, and host systemd integration (containers don't use systemd
     # and our agent.build already runs with --build-exclude=systemd).
-    - export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
+    - export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd,docker"
     # STS: bump per-package -timeout from 180s to 600s. Tests like
     # pkg/collector/corechecks/servicediscovery/apm.TestGoDetector shell out to
     # `go build` to compile fixture binaries; with our cold modcache (we run
@@ -202,7 +202,7 @@ branded_unit_tests:
     # scanning, NVIDIA GPU/Jetson hardware support, the Datadog installer
     # bundling, and host systemd integration (containers don't use systemd
     # and our agent.build already runs with --build-exclude=systemd).
-    - export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
+    - export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd,docker"
     # STS: bump per-package -timeout from 180s to 600s. Tests like
     # pkg/collector/corechecks/servicediscovery/apm.TestGoDetector shell out to
     # `go build` to compile fixture binaries; with our cold modcache (we run

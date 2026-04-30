@@ -268,6 +268,10 @@ WINDOWS_EXCLUDE_TAGS = {"linux_bpf", "nvml", "requirefips"}
 # List of tags to always remove when building on Darwin/macOS
 DARWIN_EXCLUDED_TAGS = {"docker", "containerd", "no_dynamic_plugins", "nvml", "cri", "crio"}
 
+# [STS] Tags excluded from StackState builds — Docker support is not shipped,
+# removing the tag avoids compiling github.com/docker/docker into the binaries.
+STS_EXCLUDED_TAGS = {"docker"}
+
 # Unit test build tags
 UNIT_TEST_TAGS = {"test"}
 
@@ -421,6 +425,9 @@ def filter_incompatible_tags(include, platform=sys.platform):
 
     if platform == "darwin":
         exclude = exclude.union(DARWIN_EXCLUDED_TAGS)
+
+    # [STS] Always exclude Docker-related tags from StackState builds
+    exclude = exclude.union(STS_EXCLUDED_TAGS)
 
     return get_build_tags(include, exclude)
 
