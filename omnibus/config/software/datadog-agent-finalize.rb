@@ -168,6 +168,14 @@ build do
               # The healthcheck will fail as the rpath doesn't contain install_dir
               command "inv omnibus.rpath-edit #{install_dir} #{install_dir}", cwd: Dir.pwd
             end
+
+            # [STS] Remove pip, setuptools and wheel from the final image —
+            # they are build-time tools only and carry their own CVEs.
+            command "#{install_dir}/embedded/bin/python3 -m pip uninstall -y pip setuptools wheel"
+            # Also remove stale ensurepip bundled wheels
+            block 'remove ensurepip bundled wheels' do
+              FileUtils.rm_f(Dir.glob("#{install_dir}/embedded/lib/python3.*/ensurepip/_bundled/*.whl"))
+            end
         end
 
         if osx_target?
