@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/networkdevice/profile
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/invopop/jsonschema v0.12.0
@@ -12,7 +12,7 @@ require (
 
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
-	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect

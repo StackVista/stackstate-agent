@@ -9,8 +9,6 @@ if linux_target?
 end
 if fips_mode?
   dependency 'openssl-fips-provider'
-else
-  dependency 'secret-generic-connector' unless heroku_target?
 end
 
 # Bundled cacerts file (is this a good idea?)

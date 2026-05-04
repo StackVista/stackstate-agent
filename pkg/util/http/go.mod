@@ -1,13 +1,13 @@
 module github.com/DataDog/datadog-agent/pkg/util/http
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/DataDog/datadog-agent/pkg/config/mock v0.71.2
 	github.com/DataDog/datadog-agent/pkg/config/model v0.71.2
 	github.com/DataDog/datadog-agent/pkg/util/log v0.71.2
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/net v0.43.0
+	golang.org/x/net v0.47.0
 )
 
 require (
@@ -58,8 +58,8 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20250808145144-a408d31f581a // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

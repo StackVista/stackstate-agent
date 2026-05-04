@@ -1,8 +1,8 @@
 module github.com/DataDog/datadog-agent/pkg/util/flavor
 
-go 1.24.0
+go 1.25.0
 
-toolchain go1.24.6
+toolchain go1.25.9
 
 require (
 	github.com/DataDog/datadog-agent/pkg/config/mock v0.71.2
