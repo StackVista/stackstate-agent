@@ -19,10 +19,9 @@ import (
 	"strings"
 	"time"
 
+	"io"
+
 	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/network"
 
 	"github.com/DataDog/datadog-go/v5/statsd"
 
@@ -31,8 +30,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/jsonquery"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/version"
-
-	docker "github.com/docker/docker/client"
 
 	"github.com/shirou/gopsutil/v4/process"
 
@@ -50,7 +47,7 @@ import (
 const inputsResolveTimeout = 5 * time.Second
 
 // DockerProvider is a function returning a Docker client.
-type DockerProvider func(context.Context) (docker.APIClient, error)
+type DockerProvider func(context.Context) (any, error)
 
 // KubernetesGroupsAndResourcesProvider is a function that returns the Kubernetes groups and services
 // Note: this is the same as the ServerGroupsAndResources function defined in
@@ -73,7 +70,7 @@ type LinuxAuditClient interface {
 }
 
 // DefaultDockerProvider returns the default Docker client.
-func DefaultDockerProvider(ctx context.Context) (docker.APIClient, error) {
+func DefaultDockerProvider(ctx context.Context) (any, error) {
 	return newDockerClient(ctx)
 }
 
@@ -122,7 +119,7 @@ type defaultResolver struct {
 	kubeClusterIDCache string
 	kubeResourcesCache *[]*kubemetav1.APIResourceList
 
-	dockerCl                        docker.APIClient
+	dockerCl                        any
 	kubernetesCl                    kubedynamic.Interface
 	kubernetesGroupAndResourcesFunc KubernetesGroupsAndResourcesProvider
 	linuxAuditCl                    LinuxAuditClient
@@ -158,10 +155,10 @@ func NewResolver(ctx context.Context, opts ResolverOptions) Resolver {
 }
 
 func (r *defaultResolver) Close() {
-	if r.dockerCl != nil {
-		r.dockerCl.Close()
-		r.dockerCl = nil
+	if cl, ok := r.dockerCl.(io.Closer); ok {
+		cl.Close()
 	}
+	r.dockerCl = nil
 	if r.linuxAuditCl != nil {
 		r.linuxAuditCl.Close()
 		r.linuxAuditCl = nil
@@ -570,90 +567,6 @@ func parseImageRepo(name string) string {
 		return reference.Path(ref)
 	}
 	return ""
-}
-
-func (r *defaultResolver) resolveDocker(ctx context.Context, spec InputSpecDocker) (interface{}, error) {
-	cl := r.dockerCl
-	if cl == nil {
-		return nil, ErrIncompatibleEnvironment
-	}
-
-	var resolved []interface{}
-	switch spec.Kind {
-	case "image":
-		list, err := cl.ImageList(ctx, image.ListOptions{All: true})
-		if err != nil {
-			return nil, err
-		}
-		for _, im := range list {
-			image, err := cl.ImageInspect(ctx, im.ID)
-			if err != nil {
-				return nil, err
-			}
-			resolved = append(resolved, map[string]interface{}{
-				"id":      image.ID,
-				"tags":    image.RepoTags,
-				"inspect": image,
-			})
-		}
-	case "container":
-		list, err := cl.ContainerList(ctx, container.ListOptions{All: true})
-		if err != nil {
-			return nil, err
-		}
-		for _, cn := range list {
-			container, _, err := cl.ContainerInspectWithRaw(ctx, cn.ID, false)
-			if err != nil {
-				return nil, err
-			}
-			imageRepo := parseImageRepo(container.Config.Image)
-			resolved = append(resolved, map[string]interface{}{
-				"id":         container.ID,
-				"name":       container.Name,
-				"image":      container.Image,
-				"image_repo": imageRepo,
-				"inspect":    container,
-			})
-		}
-	case "network":
-		networks, err := cl.NetworkList(ctx, network.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		for _, nw := range networks {
-			resolved = append(resolved, map[string]interface{}{
-				"id":      nw.ID,
-				"name":    nw.Name,
-				"inspect": nw,
-			})
-		}
-	case "info":
-		info, err := cl.Info(ctx)
-		if err != nil {
-			return nil, err
-		}
-		resolved = append(resolved, map[string]interface{}{
-			"inspect": info,
-		})
-	case "version":
-		version, err := cl.ServerVersion(ctx)
-		if err != nil {
-			return nil, err
-		}
-		resolved = append(resolved, map[string]interface{}{
-			"version":       version.Version,
-			"apiVersion":    version.APIVersion,
-			"platform":      version.Platform.Name,
-			"experimental":  version.Experimental,
-			"os":            version.Os,
-			"arch":          version.Arch,
-			"kernelVersion": version.KernelVersion,
-		})
-	default:
-		return nil, fmt.Errorf("unsupported docker object kind '%q'", spec.Kind)
-	}
-
-	return resolved, nil
 }
 
 func (r *defaultResolver) resolveKubeClusterID(ctx context.Context) string {

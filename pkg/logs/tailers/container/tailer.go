@@ -16,8 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-
 	tagger "github.com/DataDog/datadog-agent/comp/core/tagger/def"
 	"github.com/DataDog/datadog-agent/comp/core/tagger/types"
 	auditor "github.com/DataDog/datadog-agent/comp/logs/auditor/def"
@@ -36,10 +34,21 @@ import (
 
 const defaultSleepDuration = 1 * time.Second
 
+// LogsOptions mirrors the subset of github.com/docker/docker/api/types/container.LogsOptions
+// used by the tailer, avoiding a direct dependency on github.com/docker/docker.
+type LogsOptions struct {
+	ShowStdout bool
+	ShowStderr bool
+	Follow     bool
+	Timestamps bool
+	Details    bool
+	Since      string
+}
+
 // DockerContainerLogInterface is an interface that exposes only the required function from DockerUtil
 // located at pkg/util/docker/docker_util.go
 type DockerContainerLogInterface interface {
-	ContainerLogs(ctx context.Context, container string, options container.LogsOptions) (io.ReadCloser, error)
+	ContainerLogs(ctx context.Context, container string, options LogsOptions) (io.ReadCloser, error)
 }
 
 func newAPILogReader(client kubelet.KubeUtilInterface, namespace string, podName string, containerName string) func(context.Context, time.Time) (io.ReadCloser, error) {
@@ -55,7 +64,7 @@ func newAPILogReader(client kubelet.KubeUtilInterface, namespace string, podName
 
 func newDockerLogReader(docker DockerContainerLogInterface, containerID string) func(context.Context, time.Time) (io.ReadCloser, error) {
 	return func(ctx context.Context, since time.Time) (io.ReadCloser, error) {
-		options := container.LogsOptions{
+		options := LogsOptions{
 			ShowStdout: true,
 			ShowStderr: true,
 			Follow:     true,
