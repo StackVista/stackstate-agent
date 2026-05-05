@@ -9,6 +9,6 @@ package compliance
 
 import "context"
 
-func newDockerClient(_ context.Context) (any, error) {
+func (r *defaultResolver) resolveDocker(_ context.Context, _ InputSpecDocker) (interface{}, error) {
 	return nil, ErrIncompatibleEnvironment
 }
