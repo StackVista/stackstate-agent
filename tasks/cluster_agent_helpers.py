@@ -21,8 +21,8 @@ def build_common(
     race,
     development,
     skip_assets,
-    go_mod="readonly",
-    major_version="7",
+    go_mod="vendor",
+    major_version="3",
     cover=False,
 ):
     """
@@ -45,7 +45,7 @@ def build_common(
         gcflags=gcflags,
         ldflags=ldflags,
         build_tags=build_tags,
-        bin_path=os.path.join(bin_path, bin_name(f"datadog-cluster-agent{bin_suffix}")),
+        bin_path=os.path.join(bin_path, bin_name(f"stackstate-cluster-agent{bin_suffix}")),
         env=env,
         coverage=cover,
     )

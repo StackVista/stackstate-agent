@@ -51,7 +51,7 @@ def build(ctx, byoc=False):
 
     env = {"GO111MODULE": "on"}
     build_tags = get_default_build_tags(build="otel-agent")
-    ldflags = get_version_ldflags(ctx, major_version='7')
+    ldflags = get_version_ldflags(ctx, major_version='3')
     ldflags += f' -X github.com/DataDog/datadog-agent/cmd/otel-agent/command.BYOC={byoc}'
     if os.environ.get("DELVE"):
         gcflags = "all=-N -l"

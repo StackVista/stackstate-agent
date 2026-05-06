@@ -6,6 +6,7 @@
 package collectors
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 	workloadmeta "github.com/DataDog/datadog-agent/comp/core/workloadmeta/def"
 	pkgconfigsetup "github.com/DataDog/datadog-agent/pkg/config/setup"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
@@ -127,6 +129,12 @@ func (c *WorkloadMetaCollector) processEvents(evBundle workloadmeta.EventBundle)
 
 		switch ev.Type {
 		case workloadmeta.EventTypeSet:
+
+			if entityID.Kind == workloadmeta.KindKubelet {
+				// No tags. Ignore
+				continue
+			}
+
 			taggerEntityID := common.BuildTaggerEntityID(entityID)
 
 			// keep track of children of this entity from previous
@@ -336,6 +344,12 @@ func (c *WorkloadMetaCollector) extractTagsFromPodEntity(pod *workloadmeta.Kuber
 	tagList.AddLow(tags.KubePriorityClass, pod.PriorityClass)
 	tagList.AddLow(tags.KubeQOS, pod.QOSClass)
 	tagList.AddLow(tags.KubeRuntimeClass, pod.RuntimeClass)
+
+	// [sts] add kube_cluster_name to all pod tags so vmagent relabel rules can
+	// derive cluster_name, _k8s_cluster_, and _scope_ labels on metrics
+	if clusterName := clustername.GetClusterName(context.TODO(), ""); clusterName != "" {
+		tagList.AddLow(tags.KubeClusterName, clusterName)
+	}
 
 	c.extractTagsFromPodLabels(pod, tagList)
 

@@ -8,6 +8,7 @@ package trigger
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	jsonEncoder "github.com/json-iterator/go"
@@ -364,11 +365,25 @@ func isLambdaRootStepFunctionPayload(event map[string]any) bool {
 	if serverlessVersion == nil {
 		return false
 	}
+	// Check for trace ID - try branded key first if in branded mode, then fallback to unbranded
 	traceId := json.GetNestedValue(ddData, "x-datadog-trace-id")
+	if os.Getenv("BRANDED") == "true" || os.Getenv("BRANDED") == "1" {
+		// In branded mode, check for x-stackstate-trace-id first
+		if brandedTraceId := json.GetNestedValue(ddData, "x-stackstate-trace-id"); brandedTraceId != nil {
+			traceId = brandedTraceId
+		}
+	}
 	if traceId == nil {
 		return false
 	}
+	// Check for tags - try branded key first if in branded mode, then fallback to unbranded
 	tags := json.GetNestedValue(ddData, "x-datadog-tags")
+	if os.Getenv("BRANDED") == "true" || os.Getenv("BRANDED") == "1" {
+		// In branded mode, check for x-stackstate-tags first
+		if brandedTags := json.GetNestedValue(ddData, "x-stackstate-tags"); brandedTags != nil {
+			tags = brandedTags
+		}
+	}
 	if tags == nil {
 		return false
 	}

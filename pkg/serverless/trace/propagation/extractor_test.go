@@ -11,6 +11,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -80,6 +81,22 @@ var (
 var (
 	headersMapNone  = map[string]string(nil)
 	headersMapEmpty = map[string]string{}
+	// headersMapAllBranded contains branded headers for input JSON (x-stackstate-*)
+	// When BRANDED=true, mapStackstateToDatadogHeaders converts these to x-datadog-* for propagator compatibility
+	headersMapAllBranded = map[string]string{
+		"x-stackstate-trace-id":               dd.trace.asStr,
+		"x-stackstate-parent-id":              dd.span.asStr,
+		"x-stackstate-sampling-priority":      dd.priority.asStr,
+		"x-stackstate-tags":                   "_dd.p.dm=-0",
+		"x-stackstate-span-id":                "1234",
+		"x-stackstate-invocation-error":       "true",
+		"x-stackstate-invocation-error-msg":   "oops",
+		"x-stackstate-invocation-error-type":  "RuntimeError",
+		"x-stackstate-invocation-error-stack": "pancakes",
+		"traceparent":                         "00-0000000000000000" + w3c.trace.asStr + "-" + w3c.span.asStr + "-01",
+		"tracestate":                          "dd=s:" + w3c.priority.asStr + ";t.dm:-0",
+	}
+	// headersMapAll contains x-datadog-* headers - this is what carriers return after mapping when BRANDED=true
 	headersMapAll   = map[string]string{
 		"x-datadog-trace-id":               dd.trace.asStr,
 		"x-datadog-parent-id":              dd.span.asStr,
@@ -93,6 +110,19 @@ var (
 		"traceparent":                      "00-0000000000000000" + w3c.trace.asStr + "-" + w3c.span.asStr + "-01",
 		"tracestate":                       "dd=s:" + w3c.priority.asStr + ";t.dm:-0",
 	}
+	// headersMapDDBranded contains branded headers for input JSON (x-stackstate-*)
+	headersMapDDBranded = map[string]string{
+		"x-stackstate-trace-id":               dd.trace.asStr,
+		"x-stackstate-parent-id":              dd.span.asStr,
+		"x-stackstate-sampling-priority":      dd.priority.asStr,
+		"x-stackstate-tags":                   "_dd.p.dm=-0",
+		"x-stackstate-span-id":                "1234",
+		"x-stackstate-invocation-error":       "true",
+		"x-stackstate-invocation-error-msg":   "oops",
+		"x-stackstate-invocation-error-type":  "RuntimeError",
+		"x-stackstate-invocation-error-stack": "pancakes",
+	}
+	// headersMapDD contains x-datadog-* headers - this is what carriers return after mapping when BRANDED=true
 	headersMapDD = map[string]string{
 		"x-datadog-trace-id":               dd.trace.asStr,
 		"x-datadog-parent-id":              dd.span.asStr,
@@ -111,11 +141,20 @@ var (
 
 	headersNone  = ""
 	headersEmpty = "{}"
+	// Use branded maps for input JSON strings when BRANDED=true
 	headersAll   = func() string {
+		if os.Getenv("BRANDED") == "true" || os.Getenv("BRANDED") == "1" {
+			hdr, _ := json.Marshal(headersMapAllBranded)
+			return string(hdr)
+		}
 		hdr, _ := json.Marshal(headersMapAll)
 		return string(hdr)
 	}()
 	headersDD = func() string {
+		if os.Getenv("BRANDED") == "true" || os.Getenv("BRANDED") == "1" {
+			hdr, _ := json.Marshal(headersMapDDBranded)
+			return string(hdr)
+		}
 		hdr, _ := json.Marshal(headersMapDD)
 		return string(hdr)
 	}()
@@ -894,9 +933,17 @@ func TestExtractorExtractFromLayer(t *testing.T) {
 		return hdr
 	}
 	allHeadersExcept := func(except string) http.Header {
+		// When BRANDED, dd*Header constants are x-stackstate-* but headersMapAll has x-datadog-* keys,
+		// so we must skip both forms to actually exclude the header.
+		alt := except
+		if strings.HasPrefix(except, "x-datadog-") {
+			alt = "x-stackstate-" + strings.TrimPrefix(except, "x-datadog-")
+		} else if strings.HasPrefix(except, "x-stackstate-") {
+			alt = "x-datadog-" + strings.TrimPrefix(except, "x-stackstate-")
+		}
 		hdr := http.Header{}
 		for k, v := range headersMapAll {
-			if k == except {
+			if k == except || k == alt {
 				continue
 			}
 			hdr.Set(k, v)
@@ -1034,6 +1081,20 @@ func TestExtractorExtractFromLayer(t *testing.T) {
 	}
 }
 
+// injectToLayerExpectedHeader returns the expected header keys for InjectToLayer output.
+// When BRANDED=true the extractor uses x-stackstate-* constants (canonicalized to X-Stackstate-*).
+func injectToLayerExpectedHeader(traceID, samplingPriority string) http.Header {
+	h := http.Header{}
+	if os.Getenv("BRANDED") == "true" || os.Getenv("BRANDED") == "1" {
+		h.Set("X-Stackstate-Trace-Id", traceID)
+		h.Set("X-Stackstate-Sampling-Priority", samplingPriority)
+	} else {
+		h.Set("X-Datadog-Trace-Id", traceID)
+		h.Set("X-Datadog-Sampling-Priority", samplingPriority)
+	}
+	return h
+}
+
 func TestInjectToLayer(t *testing.T) {
 	testcases := []struct {
 		name     string
@@ -1051,28 +1112,19 @@ func TestInjectToLayer(t *testing.T) {
 			name:     "empty-context",
 			propType: "datadog",
 			ctx:      new(TraceContext),
-			expHdr: http.Header{
-				"X-Datadog-Trace-Id":          []string{"0"},
-				"X-Datadog-Sampling-Priority": []string{"0"},
-			},
+			expHdr:   injectToLayerExpectedHeader("0", "0"),
 		},
 		{
 			name:     "dd-context-datadog-style",
 			propType: "datadog",
 			ctx:      ddTraceContext,
-			expHdr: http.Header{
-				"X-Datadog-Trace-Id":          []string{"1"},
-				"X-Datadog-Sampling-Priority": []string{"2"},
-			},
+			expHdr:   injectToLayerExpectedHeader("1", "2"),
 		},
 		{
 			name:     "dd-context-tracecontext-style",
 			propType: "tracecontext",
 			ctx:      ddTraceContext,
-			expHdr: http.Header{
-				"X-Datadog-Trace-Id":          []string{"1"},
-				"X-Datadog-Sampling-Priority": []string{"2"},
-			},
+			expHdr:   injectToLayerExpectedHeader("1", "2"),
 		},
 	}
 

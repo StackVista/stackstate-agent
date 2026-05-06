@@ -22,14 +22,17 @@ type senders struct {
 	agg           *BufferedAggregator // TODO(remy): do we really want to store this here?
 }
 
+var Senders *senders
+
 func newSenders(aggregator *BufferedAggregator) *senders {
-	return &senders{
+	Senders = &senders{
 		agg: aggregator,
 		senderPool: &checkSenderPool{
 			agg:     aggregator,
 			senders: make(map[checkid.ID]sender.Sender),
 		},
 	}
+	return Senders
 }
 
 // SetSender returns the passed sender with the passed ID.

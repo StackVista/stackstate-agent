@@ -30,7 +30,7 @@ def build(
     build_tags=None,
     race=False,
     rebuild=False,
-    major_version='7',
+    major_version='3',
     go_mod="readonly",
     static=False,
     fips_mode=False,

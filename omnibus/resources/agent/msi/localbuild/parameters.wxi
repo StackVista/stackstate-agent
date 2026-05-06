@@ -10,6 +10,5 @@
   <?define ResourcesDir="c:\dev\go\src\github.com\datadog\datadog-agent\omnibus\resources\agent\msi"?>
   <?define IncludeAPMInject= "false" ?>
   <?define Platform= "x64" ?>
-  <?define IncludeSysprobe="true" ?>
-  <?define IncludeProcmon="true" ?>
+  <?define IncludeSysprobe="false" ?>
 </Include>

@@ -21,6 +21,7 @@ import (
 	taggertypes "github.com/DataDog/datadog-agent/comp/core/tagger/types"
 	workloadmeta "github.com/DataDog/datadog-agent/comp/core/workloadmeta/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/gpu/nvidia"
 	pkgconfigsetup "github.com/DataDog/datadog-agent/pkg/config/setup"
 	ddnvml "github.com/DataDog/datadog-agent/pkg/gpu/safenvml"
@@ -167,7 +168,7 @@ func TestRunDoesNotError(t *testing.T) {
 		pkgconfigsetup.Datadog().SetWithoutSource("gpu.enabled", false)
 	})
 
-	err := checkGeneric.Configure(senderManager, integration.FakeConfigHash, []byte{}, []byte{}, "test")
+	err := checkGeneric.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test")
 	require.NoError(t, err)
 
 	require.NoError(t, checkGeneric.Run())

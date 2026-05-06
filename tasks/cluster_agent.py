@@ -15,14 +15,13 @@ from invoke.exceptions import Exit
 from tasks.build_tags import get_default_build_tags
 from tasks.cluster_agent_helpers import build_common, clean_common, refresh_assets_common, version_common
 from tasks.cws_instrumentation import BIN_PATH as CWS_INSTRUMENTATION_BIN_PATH
-from tasks.libs.releasing.version import load_dependencies
+from tasks.libs.releasing.version import load_stackstate_dependencies
 
 # constants
-BIN_PATH = os.path.join(".", "bin", "datadog-cluster-agent")
-AGENT_TAG = "datadog/cluster_agent:master"
-POLICIES_REPO = "https://github.com/DataDog/security-agent-policies.git"
+BIN_PATH = os.path.join(".", "bin", "stackstate-cluster-agent")
+AGENT_TAG = "stackstate/cluster_agent:master"
+POLICIES_REPO = "https://github.com/StackVista/security-agent-policies.git"
 CONTAINER_PLATFORM_MAPPING = {"aarch64": "arm64", "amd64": "amd64", "x86_64": "amd64"}
-
 
 @task
 def build(
@@ -34,7 +33,7 @@ def build(
     development=True,
     skip_assets=False,
     policies_version=None,
-    major_version='7',
+    major_version='3',
 ):
     """
     Build Cluster Agent
@@ -59,17 +58,17 @@ def build(
 
     if policies_version is None:
         print("Loading dependencies from release.json")
-        env = load_dependencies(ctx)
+        env = load_stackstate_dependencies(ctx)
         if "SECURITY_AGENT_POLICIES_VERSION" in env:
             policies_version = env["SECURITY_AGENT_POLICIES_VERSION"]
             print(f"Security Agent polices: {policies_version}")
 
-    build_context = "Dockerfiles/cluster-agent"
-    policies_path = f"{build_context}/security-agent-policies"
-    ctx.run(f"rm -rf {policies_path}")
-    ctx.run(f"git clone {POLICIES_REPO} {policies_path}")
-    if policies_version != "master":
-        ctx.run(f"cd {policies_path} && git checkout {policies_version}")
+    # build_context = "Dockerfiles/cluster-agent"
+    # policies_path = f"{build_context}/security-agent-policies"
+    # ctx.run(f"rm -rf {policies_path}")
+    # ctx.run(f"git clone {POLICIES_REPO} {policies_path}")
+    # if policies_version != "master":
+    #     ctx.run(f"cd {policies_path} && git checkout {policies_version}")
 
 
 @task
@@ -85,7 +84,7 @@ def clean(ctx):
     """
     Remove temporary objects and binary artifacts
     """
-    clean_common(ctx, "datadog-cluster-agent")
+    clean_common(ctx, "stackstate-cluster-agent")  # sts
 
 
 @task
@@ -100,7 +99,7 @@ def image_build(ctx, arch=None, tag=AGENT_TAG, push=False):
         print("Unable to determine architecture to build, please set `arch`", file=sys.stderr)
         raise Exit(code=1)
 
-    dca_binary = glob.glob(os.path.join(BIN_PATH, "datadog-cluster-agent"))
+    dca_binary = glob.glob(os.path.join(BIN_PATH, "stackstate-cluster-agent"))  # sts
     # get the last debian package built
     if not dca_binary:
         print(f"No bin found in {BIN_PATH}")
@@ -119,7 +118,7 @@ def image_build(ctx, arch=None, tag=AGENT_TAG, push=False):
     ctx.run(f"chmod +x {latest_cws_instrumentation_file}")
 
     build_context = "Dockerfiles/cluster-agent"
-    exec_path = f"{build_context}/datadog-cluster-agent"
+    exec_path = f"{build_context}/stackstate-cluster-agent"
     cws_instrumentation_base = f"{build_context}/cws-instrumentation"
     cws_instrumentation_exec_path = f"{cws_instrumentation_base}/cws-instrumentation.{arch}"
 

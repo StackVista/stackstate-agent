@@ -9,8 +9,6 @@ if linux_target?
 end
 if fips_mode?
   dependency 'openssl-fips-provider'
-else
-  dependency 'secret-generic-connector' unless heroku_target?
 end
 
 # Bundled cacerts file (is this a good idea?)
@@ -29,7 +27,8 @@ dependency 'libpcap' if linux_target? and !heroku_target? # system-probe depende
 # Include traps db file in snmp.d/traps_db/
 dependency 'snmp-traps'
 
-dependency 'datadog-agent-integrations-py3'
+# [STS] StackState integrations are declared in agent.rb (project level)
+# to avoid circular dependency: datadog-agent -> datadog-agent-dependencies -> integrations -> datadog-agent
 
 
 # Additional software

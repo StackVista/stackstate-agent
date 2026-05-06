@@ -22,6 +22,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	agentconfig "github.com/DataDog/datadog-agent/comp/core/config"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	ncmremote "github.com/DataDog/datadog-agent/pkg/networkconfigmanagement/remote"
 )
@@ -167,7 +168,7 @@ func TestCheck_Configure_ValidConfig(t *testing.T) {
 	check := createTestCheck(t)
 	senderManager := mocksender.CreateDefaultDemultiplexer()
 
-	err := check.Configure(senderManager, integration.FakeConfigHash, validConfig, []byte{}, "test")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, validConfig, integration.Data{}, "test")
 
 	require.NoError(t, err)
 	assert.NotNil(t, check.checkContext)
@@ -205,7 +206,7 @@ func TestCheck_Configure_InvalidConfig(t *testing.T) {
 			check := createTestCheck(t)
 			senderManager := mocksender.CreateDefaultDemultiplexer()
 
-			err := check.Configure(senderManager, integration.FakeConfigHash, tt.config, []byte{}, "test")
+			err := check.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, tt.config, integration.Data{}, "test")
 
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), tt.expectedError)
@@ -225,7 +226,7 @@ func TestCheck_Run_Success(t *testing.T) {
 	mockSender.On("Commit").Return()
 
 	// Configure the check
-	err := check.Configure(senderManager, integration.FakeConfigHash, validConfig, []byte{}, "test")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, validConfig, integration.Data{}, "test")
 	require.NoError(t, err)
 
 	// mock the time
@@ -256,7 +257,7 @@ func TestCheck_Run_ConnectionFailure(t *testing.T) {
 	senderManager := mocksender.CreateDefaultDemultiplexer()
 
 	// Configure the check
-	err := check.Configure(senderManager, integration.FakeConfigHash, validConfig, []byte{}, "test")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, validConfig, integration.Data{}, "test")
 	require.NoError(t, err)
 
 	// Set up mock remote client factory that fails to connect
@@ -276,7 +277,7 @@ func TestCheck_Run_ConfigRetrievalFailure(t *testing.T) {
 	senderManager := mocksender.CreateDefaultDemultiplexer()
 
 	// Configure the check
-	err := check.Configure(senderManager, integration.FakeConfigHash, validConfig, []byte{}, "test")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, validConfig, integration.Data{}, "test")
 	require.NoError(t, err)
 
 	// Set up mock remote client that fails config retrieval

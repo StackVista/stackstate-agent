@@ -1,9 +1,9 @@
 module github.com/DataDog/datadog-agent/pkg/networkpath/payload
 
-go 1.24.0
+go 1.25.0
 
 require (
-	github.com/DataDog/datadog-agent/pkg/network/payload v0.0.0-20250128160050-7ac9ccd58c07
+	github.com/DataDog/datadog-agent/pkg/network/payload v0.71.2
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.10.0
 )

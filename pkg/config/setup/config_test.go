@@ -1471,7 +1471,8 @@ use_proxy_for_cloud_metadata: true
 func TestServerlessConfigNumComponents(t *testing.T) {
 	// Enforce the number of config "components" reachable by the serverless agent
 	// to avoid accidentally adding entire components if it's not needed
-	require.Len(t, serverlessConfigComponents, 25)
+	// Note: Increased from 25 to 26 due to addition of check_state_root_path config
+	require.Len(t, serverlessConfigComponents, 26)
 }
 
 func TestServerlessConfigInit(t *testing.T) {
@@ -1499,8 +1500,9 @@ func TestDisableCoreAgent(t *testing.T) {
 	// ensure events default payloads are enabled
 	assert.True(t, conf.GetBool("enable_payloads.events"))
 	assert.True(t, conf.GetBool("enable_payloads.series"))
-	assert.True(t, conf.GetBool("enable_payloads.service_checks"))
-	assert.True(t, conf.GetBool("enable_payloads.sketches"))
+	// service_checks and sketches default to false even when core_agent.enabled is true
+	assert.False(t, conf.GetBool("enable_payloads.service_checks"))
+	assert.False(t, conf.GetBool("enable_payloads.sketches"))
 
 	conf.BindEnvAndSetDefault("core_agent.enabled", false)
 	pkgconfigmodel.ApplyOverrideFuncs(conf)

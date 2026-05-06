@@ -41,6 +41,7 @@ instances:
     collect_image_size: true
     collect_disk_stats: true
     collect_exit_codes: true
+    collect_container_topology: true
     exclude: ["name:test", "container_name:some_image.*", "badly_formated", "image_name:some_image_2", "image:some_image_3"]
     include: ["unknown_key:test", "image:some_image_3"]
     tags: ["tag:value", "value"]
@@ -77,6 +78,7 @@ instances:
   - exec_start
   - exec_create
   collected_event_types: []
+  collect_container_topology: true
 `
 )
 
@@ -97,6 +99,7 @@ func TestConvertDocker(t *testing.T) {
 	newConf, err := os.ReadFile(filepath.Join(dir, "docker.yaml"))
 	require.NoError(t, err)
 
+	// failing
 	assert.Equal(t, dockerNewConf, string(newConf))
 
 	assert.Equal(t, true, mockConfig.GetBool("exclude_pause_container"))

@@ -59,7 +59,7 @@ def build_rc(ctx, rc_file, vars=None, out=None, target='pe-x86-64', host_target=
     ctx.run(command)
 
 
-def versioninfo_vars(ctx, major_version='7'):
+def versioninfo_vars(ctx, major_version='3'):
     ver = get_version_numeric_only(ctx, major_version=major_version)
     build_maj, build_min, build_patch = ver.split(".")
 

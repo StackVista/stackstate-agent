@@ -11,6 +11,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"math"
 	"sort"
 	"strings"
@@ -95,8 +96,8 @@ var defaultFilteredEventTypes = []string{
 }
 
 // Configure parses the check configuration and init the check
-func (d *DockerCheck) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string) error {
-	err := d.CommonConfigure(senderManager, initConfig, config, source)
+func (d *DockerCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string) error {
+	err := d.CommonConfigure(senderManager, checkManager, initConfig, config, source)
 	if err != nil {
 		return err
 	}

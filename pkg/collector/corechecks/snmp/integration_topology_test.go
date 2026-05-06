@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	"github.com/gosnmp/gosnmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -58,7 +60,7 @@ profiles:
     definition_file: f5-big-ip.yaml
 `)
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := chk.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
+	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
 	assert.NoError(t, err)
 
 	sender := mocksender.NewMockSenderWithSenderManager(chk.ID(), senderManager)
@@ -828,7 +830,7 @@ profiles:
     definition_file: f5-big-ip.yaml
 `)
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := chk.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
+	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
 	assert.NoError(t, err)
 
 	sender := mocksender.NewMockSenderWithSenderManager(chk.ID(), senderManager)
@@ -1588,7 +1590,7 @@ profiles:
     definition_file: f5-big-ip.yaml
 `)
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := chk.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
+	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
 	assert.NoError(t, err)
 
 	sender := mocksender.NewMockSenderWithSenderManager(chk.ID(), senderManager)
@@ -2349,7 +2351,7 @@ profiles:
     definition_file: f5-big-ip.yaml
 `)
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := chk.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
+	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, rawInitConfig, "test")
 	assert.NoError(t, err)
 
 	sender := mocksender.NewMockSenderWithSenderManager(chk.ID(), senderManager)

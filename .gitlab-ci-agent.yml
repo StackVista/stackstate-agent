@@ -1,0 +1,608 @@
+image: ${BUILD_IMAGE}
+
+stages:
+  - manual
+  - prepare
+  - build
+  - test
+  - pre_release
+  - acceptance
+  - cleanup
+  - release
+
+######################### pipeline bricks
+
+.retrieve_linux_go_deps_script: &retrieve_linux_go_deps_script |
+  echo "~~~~~> Trying to retrieve_linux_go_deps"
+  ls *.tar.gz || true
+  [ -e "go-bin.tar.gz" ] && mkdir -p $GOPATH/bin && tar xzf go-bin.tar.gz -C $GOPATH/bin
+  [ -e "go-pkg.tar.gz.part.aa" ] && mkdir -p $GOPATH/pkg && cat go-pkg.tar.gz.part.* | tar xz  -C $GOPATH/pkg
+  [ -e "vendor.tar.gz" ] && mkdir vendor && tar xzf vendor.tar.gz -C vendor
+  rm -f go-bin.tar.gz go-pkg.tar.gz.part.* vendor.tar.gz || true
+  echo "~~~~~> /Trying..."
+
+# Used for rpm, which is dsiabled for now.
+#.configure_centos_env_script: &configure_centos_env_script |
+#  . /root/.gimme/envs/go1.16.7.env
+#  . /root/miniforge3/etc/profile.d/conda.sh || true
+#  conda activate $CONDA_ENV
+#  mkdir -p /go/src/github.com/StackVista
+#  rm -rf /go/src/github.com/StackVista/stackstate-agent || true
+#  ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
+#  . /usr/local/rvm/scripts/rvm
+#  export PATH=/go/bin:/usr/local/go/bin:$PATH
+#  eval $(gimme)
+
+.rename_datadog_stackvista: &rename_datadog_stackvista |
+  ./fix_package_paths.sh
+
+.configure_debian_env_script: &configure_debian_env_script |
+  . /root/miniforge3/etc/profile.d/conda.sh || true # TODO: check possibility to use bash from the start
+  conda activate $CONDA_ENV
+  mkdir -p /go/src/github.com/StackVista
+  rm -rf /go/src/github.com/StackVista/stackstate-agent || true
+  . /usr/local/rvm/scripts/rvm
+  ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
+
+
+######################### /pipeline bricks
+
+.artifacts_expire_in: &artifacts_expire_in
+  expire_in: 1 week
+
+before_script:
+  - *configure_debian_env_script
+  - *retrieve_linux_go_deps_script
+
+deps_deb:
+  stage: prepare
+  interruptible: true
+  tags:
+    - ${RUNNER_TAG_M}
+  cache:
+    key: "deps-deb-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
+    paths:
+      - vendor
+      - venv
+  script:
+    - export PATH=$PATH:/usr/local/go/bin
+    - go clean -modcache
+#    - *rename_datadog_stackvista
+    - conda activate $CONDA_ENV
+    - go work sync
+    - go work vendor
+    - inv -e deps --verbose
+    - go mod tidy
+    - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
+    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz . || echo "No vendor"
+  artifacts:
+    <<: *artifacts_expire_in
+    paths:
+      - $CI_PROJECT_DIR/version.txt
+      - $CI_PROJECT_DIR/vendor.tar.gz
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: always
+
+#deps_rpm:
+#  stage: prepare
+#  interruptible: true
+#  image: ${RPM_BUILD_IMAGE}
+#  tags:
+#    - ${RUNNER_TAG_M}
+#  cache:
+#    key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
+#    paths:
+#      - vendor
+#  before_script:
+#    - *configure_centos_env_script
+#  script:
+#    - conda activate $CONDA_ENV
+#    - inv -e deps --verbose
+#    - go mod tidy
+#    - go mod vendor
+#    - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
+#    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
+#    - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
+#    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz .
+#  artifacts:
+#    <<: *artifacts_expire_in
+#    paths:
+#      - $CI_PROJECT_DIR/version.txt
+#      - $CI_PROJECT_DIR/go-pkg.tar.gz
+#      - $CI_PROJECT_DIR/go-bin.tar.gz
+#      - $CI_PROJECT_DIR/vendor.tar.gz
+#  retry:
+#    max: 2
+#    when:
+#      - always
+#  rules:
+#    - *merge_train_always_manual
+
+## build stage
+
+unbranded_unit_tests:
+  stage: test
+  interruptible: true
+  needs:
+    - deps_deb
+  script:
+    - export PATH=$PATH:/usr/local/go/bin
+    - go clean -modcache
+#    - *rename_datadog_stackvista
+    - conda activate $CONDA_ENV
+    - go work sync
+    - go work vendor
+    - inv -e deps --verbose
+    # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
+    - inv deps
+    - export AGENT_GITHUB_ORG=DataDog
+    - export GITHUB_ORG=DataDog
+    - export BRANDED=false
+    - export AGENT_REPO_NAME=datadog-agent
+    - inv -e agent.build --race --major-version $MAJOR_VERSION
+    # TODO: check why formatting rules differ from previous step
+    - gofmt -l -w -s ./pkg ./cmd
+    - inv -e rtloader.test
+    - invoke install-tools
+    # STS: Go 1.25 no longer ships prebuilt tool binaries (covdata, etc.).
+    # When the toolchain is auto-downloaded at runtime the tool-resolution
+    # path is broken for `go test -cover` on packages without test files
+    # (golang/go#75031). Work around by building covdata into GOTOOLDIR.
+    - go build -o "$(go env GOTOOLDIR)/covdata" cmd/covdata
+    # STS: drop build tags for features StackState does not ship in the
+    # cluster-agent / node-agent images: oracle DB monitoring, trivy SBOM
+    # scanning, NVIDIA GPU/Jetson hardware support, the Datadog installer
+    # bundling, and host systemd integration (containers don't use systemd
+    # and our agent.build already runs with --build-exclude=systemd).
+    - export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
+    # STS: bump per-package -timeout from 180s to 600s. Tests like
+    # pkg/collector/corechecks/servicediscovery/apm.TestGoDetector shell out to
+    # `go build` to compile fixture binaries; with our cold modcache (we run
+    # `go clean -modcache` at the top of each job) those subprocesses can blow
+    # the 3-minute default on a busy runner.
+    - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600"
+    - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600
+  tags:
+    - ${RUNNER_TAG_XL}
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+  timeout: 120 minutes
+
+branded_unit_tests:
+  stage: test
+  interruptible: true
+  needs:
+    - deps_deb
+  script:
+    - export PATH=$PATH:/usr/local/go/bin
+    - go clean -modcache
+    #    - *rename_datadog_stackvista
+    - conda activate $CONDA_ENV
+    - go work sync
+    - go work vendor
+    - inv -e deps --verbose
+    # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
+    - inv deps
+    - export AGENT_GITHUB_ORG=DataDog
+    - export GITHUB_ORG=DataDog
+    - export BRANDED=true
+    - export AGENT_REPO_NAME=datadog-agent
+    - export OMNIBUS_FORCE_PACKAGES=true
+    - if [ "$(echo "${BRANDED}" | tr '[:upper:]' '[:lower:]')" = "true" ]; then ./fix_branding.sh; fi
+    - inv -e agent.build --race --major-version $MAJOR_VERSION
+    # TODO: check why formatting rules differ from previous step
+    - gofmt -l -w -s ./pkg ./cmd
+    - inv -e rtloader.test
+    - invoke install-tools
+    # STS: Go 1.25 no longer ships prebuilt tool binaries (covdata, etc.).
+    # When the toolchain is auto-downloaded at runtime the tool-resolution
+    # path is broken for `go test -cover` on packages without test files
+    # (golang/go#75031). Work around by building covdata into GOTOOLDIR.
+    - go build -o "$(go env GOTOOLDIR)/covdata" cmd/covdata
+    # STS: drop build tags for features StackState does not ship in the
+    # cluster-agent / node-agent images: oracle DB monitoring, trivy SBOM
+    # scanning, NVIDIA GPU/Jetson hardware support, the Datadog installer
+    # bundling, and host systemd integration (containers don't use systemd
+    # and our agent.build already runs with --build-exclude=systemd).
+    - export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
+    # STS: bump per-package -timeout from 180s to 600s. Tests like
+    # pkg/collector/corechecks/servicediscovery/apm.TestGoDetector shell out to
+    # `go build` to compile fixture binaries; with our cold modcache (we run
+    # `go clean -modcache` at the top of each job) those subprocesses can blow
+    # the 3-minute default on a busy runner.
+    - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600"
+    - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600
+  tags:
+    - ${RUNNER_TAG_XL}
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+  timeout: 120 minutes
+
+filename_linting:
+  stage: test
+  interruptible: true
+  tags:
+    - ${RUNNER_TAG_M}
+  needs:
+    - deps_deb
+  script:
+    - export PATH=$PATH:/usr/local/go/bin
+    - go clean -modcache
+#    - *rename_datadog_stackvista
+    - conda activate $CONDA_ENV
+    - inv -e deps --verbose
+    - go work sync
+    - go work vendor
+    - inv -e linter.filenames
+  rules:
+    - when: on_success
+  retry:
+    max: 2
+    when:
+      - always
+
+build_binaries:
+  stage: build
+  interruptible: true
+  needs:
+    - deps_deb
+  script:
+    - export PATH=$PATH:/usr/local/go/bin
+    - go clean -modcache
+#    - *rename_datadog_stackvista
+    - conda activate $CONDA_ENV
+    - go work sync
+    - go work vendor
+    - inv -e deps --verbose
+    - inv -e rtloader.make
+    - inv -e rtloader.install
+    - cd $SRC_PATH
+    - export AGENT_GITHUB_ORG=DataDog
+    - export GITHUB_ORG=DataDog
+    - export BRANDED=true
+    - export AGENT_REPO_NAME=datadog-agent
+    - if [ "$(echo "${BRANDED}" | tr '[:upper:]' '[:lower:]')" = "true" ]; then ./fix_branding.sh; fi
+    - inv -e agent.build --major-version $MAJOR_VERSION
+  tags:
+    - ${RUNNER_TAG_XL}
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+build_cluster_agent:
+  stage: build
+  interruptible: true
+  needs:
+    - deps_deb
+  script:
+    - export PATH=$PATH:/usr/local/go/bin
+    - go clean -modcache
+#    - *rename_datadog_stackvista
+    - conda activate $CONDA_ENV
+    - go work sync
+    - go work vendor
+    - inv -e deps --verbose
+    - export AGENT_GITHUB_ORG=DataDog
+    - export GITHUB_ORG=DataDog
+    - export BRANDED=true
+    - export AGENT_REPO_NAME=datadog-agent
+    - if [ "$(echo "${BRANDED}" | tr '[:upper:]' '[:lower:]')" = "true" ]; then ./fix_branding.sh; fi
+    - inv -e cluster-agent.build
+    - ls -la $CI_PROJECT_DIR/bin/
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/bin/stackstate-cluster-agent
+      - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
+      - $CI_PROJECT_DIR/version.txt
+    <<: *artifacts_expire_in
+  tags:
+    - ${RUNNER_TAG_XL}
+  rules:
+    - when: on_success
+  retry:
+    max: 2
+    when:
+      - always
+
+build_deb:
+  stage: build
+  interruptible: true
+  needs:
+    - deps_deb
+  tags:
+    - ${RUNNER_TAG_XL}
+  variables:
+    PACKAGE_ARCH: ${PACKAGE_ARCH}
+    DD_PKG_ARCH: ${DD_PKG_ARCH}
+    STS_PKG_ARCH: ${STS_PKG_ARCH}
+  cache:
+    key: "build-deb-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
+    paths:
+      - .omnibus
+      - .gems
+  script:
+    - export PATH=$PATH:/usr/local/go/bin
+    - export AGENT_GITHUB_ORG=DataDog
+    - export GITHUB_ORG=DataDog
+    - export BRANDED=true
+    - export AGENT_REPO_NAME=datadog-agent
+    - export OMNIBUS_FORCE_PACKAGES=true
+    - if [ "$(echo "${BRANDED}" | tr '[:upper:]' '[:lower:]')" = "true" ]; then ./fix_branding.sh; fi
+    # We move .omnibus out of the CI root because this seems to cause issues with git
+    # cloning in omnibus and operations on datadog-agent
+    - mv $CI_PROJECT_DIR/.omnibus /omnibus || mkdir -p /omnibus
+
+    - go clean -modcache
+#    - *rename_datadog_stackvista
+    - conda activate $CONDA_ENV
+    - go work sync
+    - go work vendor
+    - inv -e deps --verbose
+    - inv agent.version --major-version $MAJOR_VERSION
+    - cat version.txt || true
+    - source ./.gitlab-scripts/setup_artifact_registry.sh
+    - export LD_LIBRARY_PATH="/opt/stackstate-agent/embedded/lib/python3.12/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
+    - echo ${LD_LIBRARY_PATH}
+    - inv -e omnibus.build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version $MAJOR_VERSION
+
+    # Prepare outputs
+    - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
+    - cp -r $OMNIBUS_BASE_DIR/pkg $CI_PROJECT_DIR/outcomes
+    - cp -r $CI_PROJECT_DIR/Dockerfiles $CI_PROJECT_DIR/outcomes
+#    - cp -r /opt/stackstate-agent/embedded/bin/trace-agent  $CI_PROJECT_DIR/outcomes/binary/
+
+    - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles
+
+    # Prepare cache
+    # Drop packages for cache
+    - rm -rf /omnibus/pkg
+    # Drop agent for cache (will be resynced anyway)
+    - rm -rf /omnibus/src/datadog-agent
+    # Drop symlink because it will fail the build when coming from a cache
+    - rm /omnibus/src/datadog-agent/src/github.com/StackVista/stackstate-agent/vendor/github.com/coreos/etcd/cmd/etcd || echo "Not found"
+    - mv /omnibus $CI_PROJECT_DIR/.omnibus
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/outcomes/pkg/*.deb
+      - $CI_PROJECT_DIR/outcomes/pkg/*.json
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/cluster-agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
+      - $CI_PROJECT_DIR/version.txt
+    <<: *artifacts_expire_in
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+#build_rpm:
+#  stage: build
+#  interruptible: true
+#  image: ${RPM_BUILD_IMAGE}
+#  needs:
+#    - deps_rpm
+#  tags:
+#    - ${RUNNER_TAG_XL}
+#  cache:
+#    key: "build-rpm-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
+#    paths:
+#      - .omnibus
+#      - .gems
+#  before_script:
+#    - *configure_centos_env_script
+#    - *retrieve_linux_go_deps_script
+#  script:
+#    # We move .omnibus out of the CI root because this seems to cause issues with git
+#    # cloning in omnibus and operations on datadog-agent
+#    - mv $CI_PROJECT_DIR/.omnibus /omnibus || mkdir -p /omnibus
+#
+#    - conda activate $CONDA_ENV
+#    - inv agent.version --major-version $MAJOR_VERSION
+#    - cat version.txt || true
+#    - source ./.gitlab-scripts/setup_artifact_registry.sh
+#
+#    # TODO:  --python-runtimes "$PYTHON_RUNTIMES" --system-probe-bin=/tmp/system-probe --libbcc-tarball=/tmp/libbcc.tar.xz
+#    - inv -e omnibus.build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --skip-deps --major-version $MAJOR_VERSION
+#      #  - find $OMNIBUS_BASE_DIR/pkg -type f -name '*.rpm' ! -name '*dbg*.rpm' -print0 | xargs -0 -I '{}' rpm -i '{}'
+#    #  - find $OMNIBUS_BASE_DIR/pkg -type f -name '*dbg*.rpm' -print0 | xargs -0 -I '{}' rpm -i '{}'
+#
+#    # Prepare outputs
+#    - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles
+#    - cp -r $OMNIBUS_BASE_DIR/pkg $CI_PROJECT_DIR/outcomes
+#    - cp -r $CI_PROJECT_DIR/Dockerfiles $CI_PROJECT_DIR/outcomes
+#
+#    - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles
+#
+#    #    # Prepare cache
+#    #    # Drop packages for cache
+#    - rm -rf /omnibus/pkg
+#    #    # Drop agent for cache (will be resynced anyway)
+#    - rm -rf /omnibus/src/datadog-agent
+#    #    # Drop symlink because it will fail the build when coming from a cache
+#    - rm /omnibus/src/datadog-agent/src/github.com/StackVista/stackstate-agent/vendor/github.com/coreos/etcd/cmd/etcd || echo "Not found"
+#    - mv /omnibus $CI_PROJECT_DIR/.omnibus
+#  artifacts:
+#    paths:
+#      - $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+#      - $CI_PROJECT_DIR/outcomes/pkg/*.json
+#      - $CI_PROJECT_DIR/outcomes/Dockerfiles/agent
+#      - $CI_PROJECT_DIR/outcomes/Dockerfiles/cluster-agent
+#      - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
+#      - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
+#      - $CI_PROJECT_DIR/version.txt
+#    <<: *artifacts_expire_in
+#  retry:
+#    max: 2
+#    when:
+#      - always
+#  rules:
+#    - when: on_success
+
+## pre_release stage
+
+test_deb_renaming:
+  stage: test
+  interruptible: true
+  tags:
+    - ${RUNNER_TAG_M}
+  needs:
+    - build_deb
+  before_script: []
+  script:
+    - ./test/renaming/test_deb.sh $CI_PROJECT_DIR/outcomes/pkg/stackstate-agent_$MAJOR_VERSION*.deb
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+#test_rpm_renaming:
+#  stage: test
+#  interruptible: true
+#  image: ${RPM_BUILD_IMAGE}
+#  tags:
+#    - ${RUNNER_TAG_M}
+#  needs:
+#    - build_rpm
+#  before_script: []
+#  script:
+#    - ./test/renaming/test_rpm.sh $CI_PROJECT_DIR/outcomes/pkg/stackstate-agent-$MAJOR_VERSION*.rpm
+#  retry:
+#    max: 2
+#    when:
+#      - always
+#  rules:
+#    - when: on_success
+
+sign_deb:
+  stage: pre_release
+  interruptible: true
+  image: registry.tooling.stackstate.io/quay/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
+  before_script: []
+  tags:
+    - ${SIGN_RUNNER_TAG}
+  needs:
+    - deps_deb
+    - build_deb
+  script:
+    - source /usr/local/rvm/scripts/rvm
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/outcomes/pkg/*.deb
+      - $CI_PROJECT_DIR/outcomes/pkg/*.json
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/cluster-agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
+      - $CI_PROJECT_DIR/version.txt
+    <<: *artifacts_expire_in
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+pre_release_deb:
+  stage: pre_release
+  interruptible: true
+  tags:
+    - ${RUNNER_TAG_M}
+  needs:
+    - deps_deb
+    - build_deb
+    - sign_deb
+  script:
+    - source /usr/local/rvm/scripts/rvm
+#    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
+#    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
+    - cd $CI_PROJECT_DIR && inv release.generate-install -t
+#    - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
+    - cd $CI_PROJECT_DIR/cmd/agent && aws s3 cp ./install.sh s3://$STS_AWS_TEST_BUCKET/install.sh --acl public-read
+    - aws s3 ls s3://$STS_AWS_TEST_BUCKET/
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+#pre_release_rpm:
+#  stage: pre_release
+#  interruptible: true
+#  image: registry.tooling.stackstate.io/quay/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
+#  tags:
+#    - ${RUNNER_TAG_M}
+#  needs:
+#    - build_rpm
+#  before_script: []
+#  script:
+#    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
+#    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
+#  retry:
+#    max: 2
+#    when:
+#      - always
+#  rules:
+#    - when: on_success
+
+pre_release_main_agent_image: &pre_release_image
+  stage: pre_release
+  interruptible: true
+  image: ${REGISTRY_DOCKER_URL}/library/docker:24-git
+  needs:
+    - build_deb
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: ${REGISTRY_DOCKER_URL}/library/docker:24-dind
+      alias: docker
+  before_script: []
+  script:
+    - cd $CI_PROJECT_DIR
+    - export VERSION=`cat version.txt`
+    - cp ./outcomes/pkg/stackstate-agent_*_${PKG_ARCH_SUFFIX}.deb ./Dockerfiles/agent
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/Dockerfiles/agent $CI_COMMIT_SHORT_SHA "${DOCKER_ARCH}"
+  tags:
+    - ${RUNNER_TAG_M}
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+pre_release_cluster_agent_image:
+  <<: *pre_release_image
+  interruptible: true
+  needs:
+    - build_cluster_agent
+  script:
+    - cd $CI_PROJECT_DIR
+    - cp -r ./bin/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA "${DOCKER_ARCH}"
+  rules:
+    - when: on_success

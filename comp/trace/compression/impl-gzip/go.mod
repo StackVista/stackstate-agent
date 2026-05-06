@@ -1,8 +1,8 @@
 module github.com/DataDog/datadog-agent/comp/trace/compression/impl-gzip
 
-go 1.24.0
+go 1.25.0
 
-require github.com/DataDog/datadog-agent/comp/trace/compression/def v0.61.0
+require github.com/DataDog/datadog-agent/comp/trace/compression/def v0.71.2
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
 

@@ -32,6 +32,7 @@ func newSoftwareInventory(t *testing.T, enabled bool) (*softwareInventory, *mock
 
 	configComp := config.NewMock(t)
 	configComp.SetWithoutSource("software_inventory.enabled", enabled)
+	configComp.SetWithoutSource("inventories_enabled", true)
 
 	// Create the Requires struct manually
 	reqs := Requires{

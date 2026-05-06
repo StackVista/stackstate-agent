@@ -7,6 +7,7 @@
 package generic
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -62,14 +63,19 @@ func Factory(wmeta workloadmeta.Component, filterStore workloadfilter.Component,
 }
 
 // Configure parses the check configuration and init the check
-func (c *ContainerCheck) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string) error {
-	err := c.CommonConfigure(senderManager, initConfig, config, source)
+func (c *ContainerCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string) error {
+	err := c.CommonConfigure(senderManager, checkManager, initConfig, config, source)
+	if err != nil {
+		return err
+	}
+
+	err = c.instance.Parse(config)
 	if err != nil {
 		return err
 	}
 
 	c.processor = NewProcessor(metrics.GetProvider(option.New(c.store)), NewMetadataContainerAccessor(c.store), GenericMetricsAdapter{}, LegacyContainerFilter{FilterStore: c.filterStore, Store: c.store}, c.tagger, c.instance.ExtendedMemoryMetrics)
-	return c.instance.Parse(config)
+	return nil
 }
 
 // Run executes the check

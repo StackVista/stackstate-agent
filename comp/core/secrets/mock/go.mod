@@ -1,10 +1,10 @@
 module github.com/DataDog/datadog-agent/comp/core/secrets/mock
 
-go 1.24.0
+go 1.25.0
 
 require (
-	github.com/DataDog/datadog-agent/comp/core/secrets/def v0.0.0-00010101000000-000000000000
-	github.com/DataDog/datadog-agent/comp/core/secrets/utils v0.0.0-00010101000000-000000000000
+	github.com/DataDog/datadog-agent/comp/core/secrets/def v0.71.2
+	github.com/DataDog/datadog-agent/comp/core/secrets/utils v0.71.2
 	gopkg.in/yaml.v2 v2.4.0
 )
 

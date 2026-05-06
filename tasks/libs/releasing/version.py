@@ -268,7 +268,7 @@ def get_version(
     ctx,
     url_safe=False,
     git_sha_length=7,
-    major_version='7',
+    major_version='3',
     include_pipeline_id=False,
     pipeline_id=None,
     include_git=False,
@@ -281,33 +281,33 @@ def get_version(
             "E2E_PIPELINE_ID", os.getenv("CI_PIPELINE_ID")
         )  # If we are in an E2E pipeline, we should use the E2E pipeline ID
 
-    project_name = os.getenv("CI_PROJECT_NAME")
-    try:
-        agent_version_cache_file_exist = os.path.exists(AGENT_VERSION_CACHE_NAME)
-        if not agent_version_cache_file_exist:
-            if pipeline_id and pipeline_id.isdigit() and project_name == REPO_NAME:
-                result = ctx.run(
-                    f"aws s3 cp s3://dd-ci-artefacts-build-stable/datadog-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
-                    hide="stdout",
-                )
-                if "unable to locate credentials" in result.stderr.casefold():
-                    raise Exit("Permanent error: unable to locate credentials, retry the job", 42)
-                agent_version_cache_file_exist = True
+    # project_name = os.getenv("CI_PROJECT_NAME")
+    # try:
+    #     agent_version_cache_file_exist = os.path.exists(AGENT_VERSION_CACHE_NAME)
+    #     if not agent_version_cache_file_exist:
+    #         if pipeline_id and pipeline_id.isdigit() and project_name == REPO_NAME:
+    #             result = ctx.run(
+    #                 f"aws s3 cp s3://dd-ci-artefacts-build-stable/datadog-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
+    #                 hide="stdout",
+    #             )
+    #             if "unable to locate credentials" in result.stderr.casefold():
+    #                 raise Exit("Permanent error: unable to locate credentials, retry the job", 42)
+    #             agent_version_cache_file_exist = True
 
-        if agent_version_cache_file_exist:
-            with open(AGENT_VERSION_CACHE_NAME) as file:
-                cache_data = json.load(file)
+    #     if agent_version_cache_file_exist:
+    #         with open(AGENT_VERSION_CACHE_NAME) as file:
+    #             cache_data = json.load(file)
 
-            version, pre, commits_since_version, git_sha, pipeline_id = cache_data[major_version]
-            # Dev's versions behave the same as nightly
-            is_nightly = cache_data["nightly"] or cache_data["dev"]
+    #         version, pre, commits_since_version, git_sha, pipeline_id = cache_data[major_version]
+    #         # Dev's versions behave the same as nightly
+    #         is_nightly = cache_data["nightly"] or cache_data["dev"]
 
-            if pre and include_pre:
-                version = f"{version}-{pre}"
-    except (OSError, json.JSONDecodeError, IndexError) as e:
-        # If a cache file is found but corrupted we ignore it.
-        print(f"Error while recovering the version from {AGENT_VERSION_CACHE_NAME}: {e}", file=sys.stderr)
-        version = ""
+    #         if pre and include_pre:
+    #             version = f"{version}-{pre}"
+    # except (OSError, json.JSONDecodeError, IndexError) as e:
+    #     # If a cache file is found but corrupted we ignore it.
+    #     print(f"Error while recovering the version from {AGENT_VERSION_CACHE_NAME}: {e}", file=sys.stderr)
+    #     version = ""
     # If we didn't load the cache
     if not version:
         if pipeline_id:
@@ -342,7 +342,7 @@ def get_version(
     return str(version)
 
 
-def get_version_numeric_only(ctx, major_version='7'):
+def get_version_numeric_only(ctx, major_version='3'):
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
     version = ""
     pipeline_id = os.getenv("CI_PIPELINE_ID")
@@ -380,6 +380,15 @@ def load_dependencies(_):
         return {str(k): str(v) for k, v in versions[RELEASE_JSON_DEPENDENCIES].items()}
 
 
+def load_stackstate_dependencies(_):
+    with open("stackstate-deps.json", "r") as f:
+        versions = json.load(f)
+        print("Using the following build environment:")
+        for k, v in versions.items():
+            print("[dep_version]", str(k), str(v))
+        return {str(k):str(v) for k, v in versions.items()}
+
+
 def create_version_json(ctx, git_sha_length=7):
     """
     Generate a json cache file containing all needed variables used by get_version.
@@ -397,51 +406,75 @@ def create_version_json(ctx, git_sha_length=7):
         json.dump(packed_data, file, indent=4)
 
 
+# STS Replacement
+def get_git_branch_name(ctx):
+    """
+    Return the name of the current git branch
+    """
+    return ctx.run("git rev-parse --abbrev-ref HEAD", hide=True).stdout.strip()
+
+
 def query_version(ctx, major_version, git_sha_length=7, release=False):
-    # The describe string format is <tag>-<number of commits since the tag>-g<commit hash>
-    # e.g. 6.0.0-beta.0-1-g4f19118
-    #   - tag is 6.0.0-beta.0
-    #   - it has been one commit since the tag creation
-    #   - that commit hash is g4f19118
-    cmd = rf'git describe --tags --candidates=50 --match "{get_matching_pattern(ctx, major_version, release=release)}"'
-    if git_sha_length and isinstance(git_sha_length, int):
-        cmd += f" --abbrev={git_sha_length}"
-    described_version = ctx.run(cmd, hide=True).stdout.strip()
+    # The old way of doing it relied on a tag existing for the version, which is no longer the case.
+    # So, instead of doing that, something like this is needed:
+    branch = get_git_branch_name(ctx)
+    get_commit_count_cmd="git rev-list --count {}".format(branch)
+    commit_count = ctx.run(get_commit_count_cmd, hide=True).stdout.strip()
+    get_commit_short_sha_cmd=f"git rev-parse --short={git_sha_length} {branch}"
+    commit_short_sha = ctx.run(get_commit_short_sha_cmd, hide=True).stdout.strip()
+    # version=f"{major_version}.0.0-k8s.git.{commit_count}.{commit_short_sha}"
+    version = "3.71.2"
+    pre = "k8s"
+    pipeline_id = os.getenv("CI_PIPELINE_IID", None)
 
-    # for the example above, 6.0.0-beta.0-1-g4f19118, this will be 1
-    commit_number_match = DESCRIBE_PATTERN.match(described_version)
-    commit_number = 0
-    if commit_number_match:
-        commit_number = int(commit_number_match.group('commit_number'))
+    return version, pre, commit_count, commit_short_sha, pipeline_id
 
-    version_re = r"^v?(?P<version>\d+\.\d+\.\d+)(?:(?:-|\.)(?P<pre>[0-9A-Za-z.-]+))?"
-    if commit_number == 0:
-        version_re += r"(?P<git_sha>)$"
-    else:
-        version_re += r"-\d+-g(?P<git_sha>[0-9a-f]+)$"
 
-    version_match = re.match(version_re, described_version)
-
-    if not version_match:
-        raise Exception("Could not query valid version from tags of local git repository")
-
-    # version: for the tag 6.0.0-beta.0, this will match 6.0.0
-    # pre: for the output, 6.0.0-beta.0-1-g4f19118, this will match beta.0
-    # if there have been no commits since, it will be just 6.0.0-beta.0,
-    # and it will match beta.0
-    # git_sha: for the output, 6.0.0-beta.0-1-g4f19118, this will match g4f19118
-    version, pre, git_sha = version_match.group('version', 'pre', 'git_sha')
-
-    # When we're on a tag, `git describe --tags --candidates=50` doesn't include a commit sha.
-    # We need it, so we fetch it another way.
-    if not git_sha:
-        # The git sha shown by `git describe --tags --candidates=50` is the first 7 characters of the sha,
-        # therefore we keep the same number of characters.
-        git_sha = get_commit_sha(ctx)[:7]
-
-    pipeline_id = os.getenv("CI_PIPELINE_ID", None)
-
-    return version, pre, commit_number, git_sha, pipeline_id
+# def query_version(ctx, major_version, git_sha_length=7, release=False):
+#     # The describe string format is <tag>-<number of commits since the tag>-g<commit hash>
+#     # e.g. 6.0.0-beta.0-1-g4f19118
+#     #   - tag is 6.0.0-beta.0
+#     #   - it has been one commit since the tag creation
+#     #   - that commit hash is g4f19118
+#     cmd = rf'git describe --tags --candidates=50 --match "{get_matching_pattern(ctx, major_version, release=release)}"'
+#     if git_sha_length and isinstance(git_sha_length, int):
+#         cmd += f" --abbrev={git_sha_length}"
+#     described_version = ctx.run(cmd, hide=True).stdout.strip()
+#
+#     # for the example above, 6.0.0-beta.0-1-g4f19118, this will be 1
+#     commit_number_match = DESCRIBE_PATTERN.match(described_version)
+#     commit_number = 0
+#     if commit_number_match:
+#         commit_number = int(commit_number_match.group('commit_number'))
+#
+#     version_re = r"^v?(?P<version>\d+\.\d+\.\d+)(?:(?:-|\.)(?P<pre>[0-9A-Za-z.-]+))?"
+#     if commit_number == 0:
+#         version_re += r"(?P<git_sha>)$"
+#     else:
+#         version_re += r"-\d+-g(?P<git_sha>[0-9a-f]+)$"
+#
+#     version_match = re.match(version_re, described_version)
+#
+#     if not version_match:
+#         raise Exception("Could not query valid version from tags of local git repository")
+#
+#     # version: for the tag 6.0.0-beta.0, this will match 6.0.0
+#     # pre: for the output, 6.0.0-beta.0-1-g4f19118, this will match beta.0
+#     # if there have been no commits since, it will be just 6.0.0-beta.0,
+#     # and it will match beta.0
+#     # git_sha: for the output, 6.0.0-beta.0-1-g4f19118, this will match g4f19118
+#     version, pre, git_sha = version_match.group('version', 'pre', 'git_sha')
+#
+#     # When we're on a tag, `git describe --tags --candidates=50` doesn't include a commit sha.
+#     # We need it, so we fetch it another way.
+#     if not git_sha:
+#         # The git sha shown by `git describe --tags --candidates=50` is the first 7 characters of the sha,
+#         # therefore we keep the same number of characters.
+#         git_sha = get_commit_sha(ctx)[:7]
+#
+#     pipeline_id = os.getenv("CI_PIPELINE_ID", None)
+#
+#     return version, pre, commit_number, git_sha, pipeline_id
 
 
 def get_matching_pattern(ctx, major_version, release=False):

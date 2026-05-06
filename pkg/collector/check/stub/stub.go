@@ -11,6 +11,8 @@ package stub
 import (
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	diagnose "github.com/DataDog/datadog-agent/comp/core/diagnose/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -42,7 +44,7 @@ func (c *StubCheck) Stop() {}
 func (c *StubCheck) Cancel() {}
 
 // Configure is a noop
-func (c *StubCheck) Configure(sender.SenderManager, uint64, integration.Data, integration.Data, string) error {
+func (c *StubCheck) Configure(sender.SenderManager, handler.CheckManager, uint64, integration.Data, integration.Data, string) error {
 	return nil
 }
 

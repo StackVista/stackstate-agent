@@ -14,6 +14,7 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/DataDog/datadog-agent/comp/core"
+	"github.com/DataDog/datadog-agent/comp/core/config"
 	tagger "github.com/DataDog/datadog-agent/comp/core/tagger/def"
 	taggerfxmock "github.com/DataDog/datadog-agent/comp/core/tagger/fx-mock"
 	nooptagger "github.com/DataDog/datadog-agent/comp/core/tagger/impl-noop"
@@ -281,9 +282,18 @@ func createDemuxDepsWithOrchestratorFwd(
 	opts AgentDemultiplexerOptions,
 	orchestratorParams orchestratorForwarderImpl.Params,
 	eventPlatformParams eventplatformimpl.Params) aggregatorDeps {
+	// When orchestrator build tag is enabled, set orchestrator_explorer.enabled to true
+	// so the orchestrator forwarder is created (matching test expectations)
+	configOverrides := make(map[string]interface{})
+	if orchestratorForwarderSupport {
+		configOverrides["orchestrator_explorer.enabled"] = true
+	}
+
 	modules := fx.Options(
 		defaultforwarder.MockModule(),
 		core.MockBundle(),
+		// Override config component to enable orchestrator_explorer when build tag is enabled
+		fx.Replace(config.NewMockWithOverrides(t, configOverrides)),
 		orchestratorForwarderImpl.Module(orchestratorParams),
 		eventplatformimpl.Module(eventPlatformParams),
 		eventplatformreceiverimpl.Module(),

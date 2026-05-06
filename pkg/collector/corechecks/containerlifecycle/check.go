@@ -11,6 +11,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	"gopkg.in/yaml.v2"
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
@@ -52,14 +54,14 @@ type Check struct {
 }
 
 // Configure parses the check configuration and initializes the container_lifecycle check
-func (c *Check) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string) error {
 	if !pkgconfigsetup.Datadog().GetBool("container_lifecycle.enabled") {
 		return errors.New("collection of container lifecycle events is disabled")
 	}
 
 	var err error
 
-	err = c.CommonConfigure(senderManager, initConfig, config, source)
+	err = c.CommonConfigure(senderManager, checkManager, initConfig, config, source)
 	if err != nil {
 		return err
 	}

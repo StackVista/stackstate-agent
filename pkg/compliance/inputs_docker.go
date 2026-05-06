@@ -11,10 +11,9 @@ import (
 	"context"
 
 	dockerutil "github.com/DataDog/datadog-agent/pkg/util/docker"
-	docker "github.com/docker/docker/client"
 )
 
-func newDockerClient(ctx context.Context) (docker.APIClient, error) {
+func newDockerClient(ctx context.Context) (any, error) {
 	cl, err := dockerutil.ConnectToDocker(ctx)
 	if err != nil {
 		return nil, ErrIncompatibleEnvironment

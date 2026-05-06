@@ -139,95 +139,95 @@ build do
     mkdir Omnibus::Config.package_dir() unless Dir.exists?(Omnibus::Config.package_dir())
   end
 
-  platform = windows_arch_i386? ? "x86" : "x64"
-  command "dda inv -- -e trace-agent.build --install-path=#{install_dir} --major-version #{major_version_arg} --flavor #{flavor_arg}", :env => env
+#   platform = windows_arch_i386? ? "x86" : "x64"
+#   command "dda inv -- -e trace-agent.build --install-path=#{install_dir} --major-version #{major_version_arg} --flavor #{flavor_arg}", :env => env
 
-  if linux_target? and !heroku_target?
-      move "#{install_dir}/bin/installer/installer", "#{install_dir}/embedded/bin"
-  end
+#   if linux_target? and !heroku_target?
+    #   move "#{install_dir}/bin/installer/installer", "#{install_dir}/embedded/bin"
+#   end
 
-  if windows_target?
-    copy 'bin/trace-agent/trace-agent.exe', "#{install_dir}/bin/agent"
-  else
-    copy 'bin/trace-agent/trace-agent', "#{install_dir}/embedded/bin"
-  end
+#   if windows_target?
+#    copy 'bin/trace-agent/trace-agent.exe', "#{install_dir}/bin/agent"
+#   else
+#    copy 'bin/trace-agent/trace-agent', "#{install_dir}/embedded/bin"
+#  end
 
   # Process agent
-  if not heroku_target?
-    command "dda inv -- -e process-agent.build --install-path=#{install_dir} --major-version #{major_version_arg} --flavor #{flavor_arg}", :env => env
-  end
+#  if not heroku_target?
+#    command "dda inv -- -e process-agent.build --install-path=#{install_dir} --major-version #{major_version_arg} --flavor #{flavor_arg}", :env => env
+#  end
 
-  if windows_target?
-    copy 'bin/process-agent/process-agent.exe', "#{install_dir}/bin/agent"
-  elsif not heroku_target?
-    copy 'bin/process-agent/process-agent', "#{install_dir}/embedded/bin"
-  end
+#  if windows_target?
+#    copy 'bin/process-agent/process-agent.exe', "#{install_dir}/bin/agent"
+#  elsif not heroku_target?
+#    copy 'bin/process-agent/process-agent', "#{install_dir}/embedded/bin"
+#  end
 
   # System-probe
-  if sysprobe_enabled? || osx_target? || (windows_target? && do_windows_sysprobe != "")
-    if linux_target?
-      command "dda inv -- -e system-probe.build-sysprobe-binary #{fips_args} --install-path=#{install_dir}", env: env
-      command "!(objdump -p ./bin/system-probe/system-probe | egrep 'GLIBC_2\.(1[8-9]|[2-9][0-9])')"
-    else
-      command "dda inv -- -e system-probe.build #{fips_args}", env: env
-    end
+#  if sysprobe_enabled? || osx_target? || (windows_target? && do_windows_sysprobe != "")
+#    if linux_target?
+#      command "dda inv -- -e system-probe.build-sysprobe-binary #{fips_args} --install-path=#{install_dir}", env: env
+#      command "!(objdump -p ./bin/system-probe/system-probe | egrep 'GLIBC_2\.(1[8-9]|[2-9][0-9])')"
+#    else
+#      command "dda inv -- -e system-probe.build #{fips_args}", env: env
+#    end
 
-    if windows_target?
-      copy 'bin/system-probe/system-probe.exe', "#{install_dir}/bin/agent"
-    else
-      copy "bin/system-probe/system-probe", "#{install_dir}/embedded/bin"
-    end
+#    if windows_target?
+#      copy 'bin/system-probe/system-probe.exe', "#{install_dir}/bin/agent"
+#    else
+#      copy "bin/system-probe/system-probe", "#{install_dir}/embedded/bin"
+#    end
 
     # Add SELinux policy for system-probe
-    if debian_target? || redhat_target?
-      mkdir "#{conf_dir}/selinux"
-      command "dda inv -- -e selinux.compile-system-probe-policy-file --output-directory #{conf_dir}/selinux", env: env
-    end
+#    if debian_target? || redhat_target?
+#      mkdir "#{conf_dir}/selinux"
+#      command "dda inv -- -e selinux.compile-system-probe-policy-file --output-directory #{conf_dir}/selinux", env: env
+#    end
 
-    move 'bin/agent/dist/system-probe.yaml', "#{conf_dir}/system-probe.yaml.example"
-  end
+#    move 'bin/agent/dist/system-probe.yaml', "#{conf_dir}/system-probe.yaml.example"
+# end
 
   # System-probe eBPF files
-  if sysprobe_enabled?
-    mkdir "#{install_dir}/embedded/share/system-probe/ebpf"
-    mkdir "#{install_dir}/embedded/share/system-probe/ebpf/runtime"
-    mkdir "#{install_dir}/embedded/share/system-probe/ebpf/co-re"
-    mkdir "#{install_dir}/embedded/share/system-probe/ebpf/co-re/btf"
+#  if sysprobe_enabled?
+#    mkdir "#{install_dir}/embedded/share/system-probe/ebpf"
+#    mkdir "#{install_dir}/embedded/share/system-probe/ebpf/runtime"
+#    mkdir "#{install_dir}/embedded/share/system-probe/ebpf/co-re"
+#    mkdir "#{install_dir}/embedded/share/system-probe/ebpf/co-re/btf"
 
-    arch = `uname -m`.strip
-    if arch == "aarch64"
-      arch = "arm64"
-    end
-    copy "pkg/ebpf/bytecode/build/#{arch}/*.o", "#{install_dir}/embedded/share/system-probe/ebpf/"
-    delete "#{install_dir}/embedded/share/system-probe/ebpf/usm_events_test*.o"
-    copy "pkg/ebpf/bytecode/build/#{arch}/co-re/*.o", "#{install_dir}/embedded/share/system-probe/ebpf/co-re/"
-    copy "pkg/ebpf/bytecode/build/runtime/*.c", "#{install_dir}/embedded/share/system-probe/ebpf/runtime/"
-    copy "#{ENV['SYSTEM_PROBE_BIN']}/clang-bpf", "#{install_dir}/embedded/bin/clang-bpf"
-    copy "#{ENV['SYSTEM_PROBE_BIN']}/llc-bpf", "#{install_dir}/embedded/bin/llc-bpf"
-    copy "#{ENV['SYSTEM_PROBE_BIN']}/minimized-btfs.tar.xz", "#{install_dir}/embedded/share/system-probe/ebpf/co-re/btf/minimized-btfs.tar.xz"
+#    arch = `uname -m`.strip
+#    if arch == "aarch64"
+#      arch = "arm64"
+#    end
+#    copy "pkg/ebpf/bytecode/build/#{arch}/*.o", "#{install_dir}/embedded/share/system-probe/ebpf/"
+#    delete "#{install_dir}/embedded/share/system-probe/ebpf/usm_events_test*.o"
+#    copy "pkg/ebpf/bytecode/build/#{arch}/co-re/*.o", "#{install_dir}/embedded/share/system-probe/ebpf/co-re/"
+#    copy "pkg/ebpf/bytecode/build/runtime/*.c", "#{install_dir}/embedded/share/system-probe/ebpf/runtime/"
+#    copy "#{ENV['SYSTEM_PROBE_BIN']}/clang-bpf", "#{install_dir}/embedded/bin/clang-bpf"
+#    copy "#{ENV['SYSTEM_PROBE_BIN']}/llc-bpf", "#{install_dir}/embedded/bin/llc-bpf"
+#    copy "#{ENV['SYSTEM_PROBE_BIN']}/minimized-btfs.tar.xz", "#{install_dir}/embedded/share/system-probe/ebpf/co-re/btf/minimized-btfs.tar.xz"
 
-    copy 'pkg/ebpf/c/COPYING', "#{install_dir}/embedded/share/system-probe/ebpf/"
+#    copy 'pkg/ebpf/c/COPYING', "#{install_dir}/embedded/share/system-probe/ebpf/"
 
-  end
+#  end
 
   # Security agent
-  secagent_support = (not heroku_target?) and (not windows_target? or (ENV['WINDOWS_DDPROCMON_DRIVER'] and not ENV['WINDOWS_DDPROCMON_DRIVER'].empty?))
-  if secagent_support
-    command "dda inv -- -e security-agent.build #{fips_args} --install-path=#{install_dir} --major-version #{major_version_arg}", :env => env
-    if windows_target?
-      copy 'bin/security-agent/security-agent.exe', "#{install_dir}/bin/agent"
-    else
-      copy 'bin/security-agent/security-agent', "#{install_dir}/embedded/bin"
-    end
-    move 'bin/agent/dist/security-agent.yaml', "#{conf_dir}/security-agent.yaml.example"
-  end
+#  secagent_support = (not heroku_target?) and (not windows_target? or (ENV['WINDOWS_DDPROCMON_DRIVER'] and not ENV['WINDOWS_DDPROCMON_DRIVER'].empty?))
+#  if secagent_support
+#    command "dda inv -- -e security-agent.build #{fips_args} --install-path=#{install_dir} --major-version #{major_version_arg}", :env => env
+#    if windows_target?
+#      copy 'bin/security-agent/security-agent.exe', "#{install_dir}/bin/agent"
+#    else
+#      copy 'bin/security-agent/security-agent', "#{install_dir}/embedded/bin"
+#    end
+#    move 'bin/agent/dist/security-agent.yaml', "#{conf_dir}/security-agent.yaml.example"
+#  end
 
   # CWS Instrumentation
-  cws_inst_support = !heroku_target? && linux_target?
-  if cws_inst_support
-    command "dda inv -- -e cws-instrumentation.build #{fips_args}", :env => env
-    copy 'bin/cws-instrumentation/cws-instrumentation', "#{install_dir}/embedded/bin"
-  end
+#  cws_inst_support = !heroku_target? && linux_target?
+#  if cws_inst_support
+#    command "dda inv -- -e cws-instrumentation.build #{fips_args}", :env => env
+#    copy 'bin/cws-instrumentation/cws-instrumentation', "#{install_dir}/embedded/bin"
+#  end
 
   # APM Injection agent
   if windows_target?
