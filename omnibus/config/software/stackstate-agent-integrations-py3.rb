@@ -32,8 +32,8 @@ relative_path 'integrations-core'
 
 # [STS] Whitelist psycopg2-binary bundled shared libraries (vendored .so files
 # with their own dependencies that are not part of the agent's embedded env).
-whitelist_file "embedded/lib/python3.12/site-packages/psycopg2"
-whitelist_file "embedded/lib/python3.12/site-packages/psycopg2_binary.libs"
+whitelist_file "embedded/lib/python3.13/site-packages/psycopg2"
+whitelist_file "embedded/lib/python3.13/site-packages/psycopg2_binary.libs"
 
 source git: 'https://github.com/StackVista/stackstate-agent-integrations.git'
 

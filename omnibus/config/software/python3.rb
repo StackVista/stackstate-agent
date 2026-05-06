@@ -1,6 +1,6 @@
 name "python3"
 
-default_version "3.12.11"
+default_version "3.13.13"
 
 unless windows?
   dependency "libxcrypt"
@@ -14,16 +14,13 @@ end
 dependency "openssl3"
 
 source :url => "https://python.org/ftp/python/#{version}/Python-#{version}.tgz",
-       :sha256 => "7b8d59af8216044d2313de8120bfc2cc00a9bd2e542f15795e1d616c51faf3d6"
+       :sha256 => "f9cde7b0e2ec8165d7326e2a0f59ea2686ce9d0c617dbbb3d66a7e54d31b74b9"
 
 relative_path "Python-#{version}"
 
 build do
   # 2.0 is the license version here, not the python version
   license "Python-2.0"
-
-  # Apply CVE-2025-8194 patch to fix tarfile module vulnerability
-  patch source: "CVE-2025-8194-tarfile.patch"
 
   unless windows_target?
     env = with_standard_compiler_flags(with_embedded_path)
@@ -59,11 +56,11 @@ build do
     # Don't forward CC and CXX to python extensions Makefile, it's quite unlikely that any non default
     # compiler we use would end up being available in the system/docker image used by customers
     if linux_target? && env["CC"]
-      command "sed -i \"s/^CC=[[:space:]]*${CC}/CC=gcc/\" #{install_dir}/embedded/lib/python#{major}.#{minor}/config-3.12-*-linux-gnu/Makefile", :env => env
+      command "sed -i \"s/^CC=[[:space:]]*${CC}/CC=gcc/\" #{install_dir}/embedded/lib/python#{major}.#{minor}/config-3.13-*-linux-gnu/Makefile", :env => env
       command "sed -i \"s/${CC}/gcc/g\" #{install_dir}/embedded/lib/python#{major}.#{minor}/_sysconfigdata__linux_*-linux-gnu.py", :env => env
     end
     if linux_target? && env["CXX"]
-      command "sed -i \"s/^CXX=[[:space:]]*${CXX}/CC=g++/\" #{install_dir}/embedded/lib/python#{major}.#{minor}/config-3.12-*-linux-gnu/Makefile", :env => env
+      command "sed -i \"s/^CXX=[[:space:]]*${CXX}/CC=g++/\" #{install_dir}/embedded/lib/python#{major}.#{minor}/config-3.13-*-linux-gnu/Makefile", :env => env
       command "sed -i \"s/${CXX}/g++/g\" #{install_dir}/embedded/lib/python#{major}.#{minor}/_sysconfigdata__linux_*-linux-gnu.py", :env => env
     end
     delete "#{install_dir}/embedded/lib/python#{major}.#{minor}/test"
@@ -86,9 +83,6 @@ build do
   else
     dependency "vc_redist_14"
 
-    # Apply CVE-2025-6965 patch to upgrade SQLite to 3.50.4
-    patch source: "CVE-2025-6965-sqlite-3.50.4.patch"
-
     ###############################
     # Setup openssl dependency... #
     ###############################
@@ -99,7 +93,7 @@ build do
 
     # This is not necessarily the version we built, but the version
     # the Python build system expects.
-    openssl_version = "3.0.16.2"
+    openssl_version = "3.0.19"
     python_arch = "amd64"
 
     mkdir "externals\\openssl-bin-#{openssl_version}\\#{python_arch}\\include"
