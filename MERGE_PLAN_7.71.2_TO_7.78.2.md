@@ -11,30 +11,20 @@ Working plan for the upstream merge from DataDog Agent 7.71.2 to 7.78.2. This is
 
 ## Phase 0 — One-time setup
 
-- [ ] In the DataDog clone, fast-forward `main` and fetch tags:
-  ```bash
-  cd /home/louis/go/src/github.com/DataDog/datadog-agent
-  git pull --ff-only
-  git fetch origin --tags
-  ```
-- [ ] Confirm the `7.78.2` tag exists upstream (`git tag --list 7.78.2`). If not, the release hasn't been cut yet — pick the latest `7.78.x` available, or wait.
-- [ ] Add the StackState GitLab repo as a remote in the DataDog clone:
-  ```bash
-  git remote add stackstate git@gitlab.com:stackvista/agent/stackstate-agent.git
-  git fetch stackstate
-  ```
-- [ ] Confirm the integrations repo is on a feature branch ready for parallel work — this merge will need a corresponding integrations branch for Python dep bumps.
+- [x] In the DataDog clone, fast-forwarded `main` and fetched tags (`c22c35f45a4`, ~1300 commits caught up).
+- [x] Confirmed `origin/7.78.x` exists and inspected the tip — 8 commits past the `7.78.2` tag, includes 7.78.3-rc.1/rc.2 release.json bumps. Decision: take the branch tip (option C) to inherit the OTel CVE backport and other stability fixes; the RC release.json bumps are inert metadata.
+- [x] Added `stackstate` remote in the DataDog clone (`git@gitlab.com:stackvista/agent/stackstate-agent.git`) and fetched.
+- [x] Integrations repo on `stackstate-7.71.2`; will branch off when Python dep work is needed.
 
 ## Phase 1 — Pre-merge branch setup
 
 Following the recipe in UPSTREAM_MERGE.md "Pre-merge: branch setup".
 
-- [ ] **Push pristine DD 7.78.2 as `base-7.78.2`:**
+- [x] **Pushed `origin/7.78.x` tip as `base-7.78.2`** (commit `6e93cda2cb0`, 8 commits past the `7.78.2` tag — includes a CVE-2026-39883 OTel SDK backport, CWS retry queue fix, Windows code-signing cert thumbprint update, autoscaling burstable-mode backport, 7.78.3-rc.1/rc.2 release.json bumps, and an installer logging fix):
   ```bash
   cd /home/louis/go/src/github.com/DataDog/datadog-agent
-  git push stackstate 7.78.2:refs/heads/base-7.78.2
+  git push stackstate origin/7.78.x:refs/heads/base-7.78.2
   ```
-  (The `git fetch origin --tags` from Phase 0 already pulled the tag locally.)
 - [ ] **Fetch the new branch into the StackState fork:**
   ```bash
   cd /home/louis/go/src/github.com/StackVista/stackstate-agent

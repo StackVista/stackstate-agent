@@ -215,7 +215,7 @@ For a solo merge, fix-up commits go directly on `merged-<CURRENT>-to-<NEXT>`. Wh
 | `stackstate-<CURRENT>` | Current fork main (= `base-<CURRENT>` + all STS changes) | Already exists; this is the live main branch |
 | `common-ancestor-<CURRENT>-<NEXT>` | Output of `git merge-base base-<CURRENT> base-<NEXT>` — the upstream commit shared by both DD versions | New, this merge |
 | `backport-<CURRENT>-common-ancestor-<NEXT>` | `common-ancestor-...` + every StackState change from `stackstate-<CURRENT>` replayed on top | New, this merge |
-| `base-<NEXT>` | Pristine DD `<NEXT>` upstream commit (or the corresponding 7.x backport tip from DD) | New, this merge |
+| `base-<NEXT>` | Tip of DD's `<MAJOR.MINOR>.x` release branch at prep time, named after the latest released patch (NOT the version tag — see Prep commands note below) | New, this merge |
 | `merged-<CURRENT>-to-<NEXT>` | Result of merging `backport-...` into `base-<NEXT>` plus all conflict-resolution and fix-up commits | New, this merge |
 | `stackstate-<NEXT>` | Final post-merge state, becomes the new fork main | At cutover |
 
@@ -223,11 +223,15 @@ For a solo merge, fix-up commits go directly on `merged-<CURRENT>-to-<NEXT>`. Wh
 
 These assume a separate DataDog clone exists somewhere on disk (e.g., a clone of `https://github.com/DataDog/datadog-agent`). If you don't have one, clone it once — it's a large repo, treat it as a long-lived workspace.
 
+**Why the release branch tip and not the tag:** DataDog's release tags often point at release-prep commits that are off the `<MAJOR.MINOR>.x` branch line of history (changelog generators, version bumpers, etc.). Using a tag commit as `base-<NEXT>` can push `git merge-base base-<CURRENT> base-<NEXT>` further back in history than necessary — sometimes to the previous DD minor version's branch point — yielding a less useful three-way merge base. The `<MAJOR.MINOR>.x` branch tip is on the "real" line of history and matches what the previous merge cycle did (verify by `git branch -r --contains <previous base-* tip>`).
+
 ```bash
-# 1. In the DataDog clone: fetch the target tag and push it as base-<NEXT>
+# 1. In the DataDog clone: push the DD release-branch tip as base-<NEXT>.
+#    Name the branch after the latest released patch version (e.g., base-7.78.2,
+#    even when origin/7.78.x has moved a few backports past the 7.78.2 tag).
 cd /path/to/datadog-agent
-git fetch origin --tags
-git push <stackstate-gitlab-remote> <NEXT>:refs/heads/base-<NEXT>
+git fetch origin
+git push <stackstate-gitlab-remote> origin/<MAJOR.MINOR>.x:refs/heads/base-<NEXT>
 
 # 2. Back in the StackState fork: get the new base branch locally
 cd /path/to/stackstate-agent
