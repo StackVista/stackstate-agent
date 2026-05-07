@@ -28,6 +28,7 @@ import (
 	workloadmetafxmock "github.com/DataDog/datadog-agent/comp/core/workloadmeta/fx-mock"
 	workloadmetamock "github.com/DataDog/datadog-agent/comp/core/workloadmeta/mock"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	mockconfig "github.com/DataDog/datadog-agent/pkg/config/mock"
 	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
@@ -222,7 +223,7 @@ func getManifestBuffer(t *testing.T) *ManifestBuffer {
 
 	// Configure the check properly to get ExtraTags set
 	mockSenderManager := mocksender.CreateDefaultDemultiplexer()
-	_ = orchCheck.Configure(mockSenderManager, uint64(1), integration.Data{}, integration.Data{}, "test", "provider")
+	_ = orchCheck.Configure(mockSenderManager, handler.NewMockCheckManager(), uint64(1), integration.Data{}, integration.Data{}, "test", "provider")
 
 	// Override the cluster name for the test
 	orchCheck.orchestratorConfig.KubeClusterName = "buffer-cluster"

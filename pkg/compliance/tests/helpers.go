@@ -18,8 +18,6 @@ import (
 	"testing"
 	"text/template"
 
-	docker "github.com/docker/docker/client"
-
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/dynamic"
 
@@ -31,7 +29,7 @@ type suite struct {
 	hostname string
 	rootDir  string
 
-	dockerClient docker.APIClient
+	dockerClient any
 	auditClient  compliance.LinuxAuditClient
 	kubeClient   dynamic.Interface
 
@@ -67,7 +65,7 @@ func (s *suite) WithHostname(hostname string) *suite {
 	return s
 }
 
-func (s *suite) WithDockerClient(cl docker.APIClient) *suite {
+func (s *suite) WithDockerClient(cl any) *suite {
 	s.dockerClient = cl
 	return s
 }
@@ -110,7 +108,7 @@ func (s *suite) Run() {
 				options.LinuxAuditProvider = func(context.Context) (compliance.LinuxAuditClient, error) { return s.auditClient, nil }
 			}
 			if s.dockerClient != nil {
-				options.DockerProvider = func(context.Context) (docker.APIClient, error) { return s.dockerClient, nil }
+				options.DockerProvider = func(context.Context) (any, error) { return s.dockerClient, nil }
 			}
 			if s.kubeClient != nil {
 				options.KubernetesProvider = providerFromK8sClient(s.kubeClient)

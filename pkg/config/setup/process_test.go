@@ -58,6 +58,10 @@ func TestProcessDefaultConfig(t *testing.T) {
 			defaultValue: true,
 		},
 		{
+			key:          "process_config.run_in_core_agent.enabled",
+			defaultValue: false,
+		},
+		{
 			key:          "process_config.queue_size",
 			defaultValue: DefaultProcessQueueSize,
 		},

@@ -27,6 +27,7 @@ import (
 	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
 	pkgcollector "github.com/DataDog/datadog-agent/pkg/collector"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/connectivity"
 	"github.com/DataDog/datadog-agent/pkg/diagnose/ports"
 	"github.com/DataDog/datadog-agent/pkg/util/option"
@@ -112,7 +113,7 @@ func getLocalIntegrationConfigs(
 	ac.LoadAndRun(context.Background())
 
 	// Create the CheckScheduler, but do not attach it to AutoDiscovery.
-	pkgcollector.InitCheckScheduler(option.None[collector.Component](), aggregator.NewNoOpSenderManager(), option.None[integrations.Component](), tagger, filterStore)
+	pkgcollector.InitCheckScheduler(option.None[collector.Component](), aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), option.None[integrations.Component](), tagger, filterStore)
 
 	// Load matching configurations (should we use common.AC.GetAllConfigs())
 	waitCtx, cancelTimeout := context.WithTimeout(context.Background(), time.Duration(5*time.Second))

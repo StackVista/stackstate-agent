@@ -9,6 +9,8 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	tagger "github.com/DataDog/datadog-agent/comp/core/tagger/def"
 	"github.com/DataDog/datadog-agent/comp/core/tagger/types"
 	workloadfilter "github.com/DataDog/datadog-agent/comp/core/workloadfilter/def"
@@ -26,6 +28,7 @@ var checkContextMutex = sync.Mutex{}
 // per dependency used inside SubmitMetric like methods.
 type CheckContext struct {
 	senderManager sender.SenderManager
+	checkManager  handler.CheckManager
 	logReceiver   option.Option[integrations.Component]
 	tagger        tagger.Component
 	filter        workloadfilter.FilterBundle
@@ -55,11 +58,12 @@ func GetCheckContext() (*CheckContext, error) {
 }
 
 // InitializeCheckContext creates the context that can be later used for storing/retrieving checks context for submit functions
-func InitializeCheckContext(senderManager sender.SenderManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filterStore workloadfilter.Component) {
+func InitializeCheckContext(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filterStore workloadfilter.Component) {
 	checkContextMutex.Lock()
 	if checkCtx == nil {
 		checkCtx = &CheckContext{
 			senderManager: senderManager,
+			checkManager:  checkManager,
 			logReceiver:   logReceiver,
 			tagger:        tagger,
 			filter:        filterStore.GetContainerSharedMetricFilters(),
@@ -71,4 +75,28 @@ func InitializeCheckContext(senderManager sender.SenderManager, logReceiver opti
 	}
 
 	checkContextMutex.Unlock()
+}
+
+// Testing utilities - Made test execution mutexed to avoid race conditions during testing.
+var testMutex = sync.Mutex{}
+
+func withLockedCheckContext(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filterStore workloadfilter.Component) {
+	testMutex.Lock()
+	checkContextMutex.Lock()
+	if checkCtx != nil {
+		panic("CheckContext was left initialized")
+	}
+	checkContextMutex.Unlock()
+	InitializeCheckContext(senderManager, checkManager, logReceiver, tagger, filterStore)
+}
+
+func releaseCheckContext() {
+	checkContextMutex.Lock()
+	if checkCtx != nil {
+		checkCtx.checkManager.Stop()
+	}
+
+	checkCtx = nil
+	checkContextMutex.Unlock()
+	testMutex.Unlock()
 }

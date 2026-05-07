@@ -55,13 +55,23 @@ func newClusterNameData() *clusterNameData {
 
 var defaultClusterNameData *clusterNameData
 
-func init() {
-	defaultClusterNameData = newClusterNameData()
+// FlushProviderCatalog clears the ProviderCatalog
+func FlushProviderCatalog() {
+	ProviderCatalog = map[string]Provider{}
+}
+
+// PopulateProviderCatalog fills the ProviderCatalog with the available providers
+func PopulateProviderCatalog() {
 	ProviderCatalog = map[string]Provider{
 		"gce":   gce.GetClusterName,
 		"azure": azure.GetClusterName,
 		"ec2":   ec2tags.GetClusterName,
 	}
+}
+
+func init() {
+	defaultClusterNameData = newClusterNameData()
+	PopulateProviderCatalog()
 }
 
 func getClusterName(ctx context.Context, data *clusterNameData, hostname string) string {
@@ -76,21 +86,26 @@ func getClusterName(ctx context.Context, data *clusterNameData, hostname string)
 		data.clusterName = pkgconfigsetup.Datadog().GetString("cluster_name")
 		if data.clusterName != "" {
 			log.Infof("Got cluster name %s from config", data.clusterName)
-			// the host alias "hostname-clustername" must not exceed 255 chars
-			hostAlias := hostname + "-" + data.clusterName
-			if !validClusterName.MatchString(data.clusterName) || len(hostAlias) > 255 {
-				log.Errorf("\"%s\" isn't a valid cluster name. The cluster name can be up to 40 characters with the following restrictions:\n"+
-					"\t- must contain only lowercase letters, numbers, dots, hyphens and underscores, \n"+
-					"\t- must start with an alphanumeric character, \n"+
-					"\t- must end with an alphanumeric character, \n"+
-					"\t- must be FQDN-like, without a trailing period, \n"+
-					"and \"%s\" must not exceed 255 chars", data.clusterName, hostAlias)
-				log.Errorf("As a consequence, the cluster name provided by the config will be ignored")
-				data.clusterName = ""
-			} else if !IsRFC1123CompliantClusterName(data.clusterName) {
-				RFC1123CompliantClusterName := MakeClusterNameRFC1123Compliant(data.clusterName)
-				log.Warnf("Cluster name \"%s\" is not RFC 1123 compliant, it will be converted to \"%s\"", data.clusterName, RFC1123CompliantClusterName)
-				data.clusterName = RFC1123CompliantClusterName
+			// [sts] skip cluster name validation by default
+			skipFlagIsDefined := pkgconfigsetup.Datadog().IsSet("skip_validate_clustername")
+			skipValidateClusterName := !skipFlagIsDefined || pkgconfigsetup.Datadog().GetBool("skip_validate_clustername")
+			if !skipValidateClusterName {
+				// the host alias "hostname-clustername" must not exceed 255 chars
+				hostAlias := hostname + "-" + data.clusterName
+				if !validClusterName.MatchString(data.clusterName) || len(hostAlias) > 255 {
+					log.Errorf("\"%s\" isn't a valid cluster name. The cluster name can be up to 40 characters with the following restrictions:\n"+
+						"\t- must contain only lowercase letters, numbers, dots, hyphens and underscores, \n"+
+						"\t- must start with an alphanumeric character, \n"+
+						"\t- must end with an alphanumeric character, \n"+
+						"\t- must be FQDN-like, without a trailing period, \n"+
+						"and \"%s\" must not exceed 255 chars", data.clusterName, hostAlias)
+					log.Errorf("As a consequence, the cluster name provided by the config will be ignored")
+					data.clusterName = ""
+				} else if !IsRFC1123CompliantClusterName(data.clusterName) {
+					RFC1123CompliantClusterName := MakeClusterNameRFC1123Compliant(data.clusterName)
+					log.Warnf("Cluster name \"%s\" is not RFC 1123 compliant, it will be converted to \"%s\"", data.clusterName, RFC1123CompliantClusterName)
+					data.clusterName = RFC1123CompliantClusterName
+				}
 			}
 		}
 

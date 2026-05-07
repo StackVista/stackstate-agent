@@ -28,8 +28,7 @@ func isHostnameCanonicalForIntake(ctx context.Context, hostname string) bool {
 func warnIfNotCanonicalHostname(ctx context.Context, hostname string) {
 	if !isHostnameCanonicalForIntake(ctx, hostname) && !pkgconfigsetup.Datadog().GetBool("hostname_force_config_as_canonical") {
 		log.Warnf(
-			"Hostname '%s' defined in configuration will not be used as the in-app hostname. "+
-				"For more information: https://dtdg.co/agent-hostname-force-config-as-canonical",
+			"Hostname '%s' defined in configuration will not be used as the in-app hostname.",
 			hostname,
 		)
 	}
@@ -52,9 +51,9 @@ func warnAboutFQDN(ctx context.Context, hostname string) {
 	if !pkgconfigsetup.Datadog().GetBool("hostname_fqdn") && hostname == h && h != fqdn {
 		if runtime.GOOS != "windows" {
 			// REMOVEME: This should be removed when the default `hostname_fqdn` is set to true
-			log.Warnf("DEPRECATION NOTICE: The agent resolved your hostname as '%s'. However in a future version, it will be resolved as '%s' by default. To enable the future behavior, please enable the `hostname_fqdn` flag in the configuration. For more information: https://dtdg.co/flag-hostname-fqdn", h, fqdn)
+			log.Warnf("DEPRECATION NOTICE: The agent resolved your hostname as '%s'. However in a future version, it will be resolved as '%s' by default. To enable the future behavior, please enable the `hostname_fqdn` flag in the configuration.", h, fqdn)
 		} else { // OS is Windows
-			log.Warnf("The agent resolved your hostname as '%s', and will be reported this way to maintain compatibility with version 5. To enable reporting as '%s', please enable the `hostname_fqdn` flag in the configuration. For more information: https://dtdg.co/flag-hostname-fqdn", h, fqdn)
+			log.Warnf("The agent resolved your hostname as '%s', and will be reported this way to maintain compatibility with version 5. To enable reporting as '%s', please enable the `hostname_fqdn` flag in the configuration.", h, fqdn)
 		}
 	}
 }

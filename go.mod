@@ -492,6 +492,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/Showmax/go-fqdn v1.0.0 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
+	github.com/StackVista/stackstate-receiver-go-client v0.0.0-20251027145110-84e00b9623fc
 	github.com/alecthomas/participle v0.7.1 // indirect
 	github.com/alecthomas/participle/v2 v2.1.4 // indirect
 	github.com/antchfx/xmlquery v1.5.0 // indirect

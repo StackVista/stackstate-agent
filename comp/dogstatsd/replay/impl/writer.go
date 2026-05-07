@@ -18,6 +18,7 @@ import (
 	"time"
 
 	// Refactor relevant bits
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/zstd"
 	"github.com/spf13/afero"
 
@@ -29,7 +30,6 @@ import (
 	"github.com/DataDog/datadog-agent/comp/dogstatsd/packets"
 	replay "github.com/DataDog/datadog-agent/comp/dogstatsd/replay/def"
 	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo/core"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (

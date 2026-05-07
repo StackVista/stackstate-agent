@@ -164,7 +164,7 @@ func (c *APMCheck) run() error {
 }
 
 // Configure configures the APM check with the provided configuration
-func (c *APMCheck) Configure(_ sender.SenderManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
+func (c *APMCheck) Configure(_ sender.SenderManager, _ handler.CheckManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
 	var checkConf apmCheckConf
 	if err := yaml.Unmarshal(data, &checkConf); err != nil {
 		return err

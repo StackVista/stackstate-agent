@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"os"
 	"regexp"
 	"slices"
@@ -280,12 +281,12 @@ func netstatTCPExtCounters() (map[string]int64, error) {
 }
 
 // Configure configures the network checks
-func (c *NetworkCheck) Configure(senderManager sender.SenderManager, _ uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
+func (c *NetworkCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
 	if flavor.GetFlavor() == flavor.DefaultAgent && !pkgconfigsetup.Datadog().GetBool("network_check.use_core_loader") {
 		return fmt.Errorf("%w: network core check is disabled", check.ErrSkipCheckInstance)
 	}
 
-	err := c.CommonConfigure(senderManager, rawInitConfig, rawInstance, source, provider)
+	err := c.CommonConfigure(senderManager, checkManager, rawInitConfig, rawInstance, source, provider)
 	if err != nil {
 		return err
 	}

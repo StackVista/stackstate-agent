@@ -30,6 +30,7 @@ import (
 	workloadmeta "github.com/DataDog/datadog-agent/comp/core/workloadmeta/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/gpu/model"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/gpu/nvidia"
 	gpuspec "github.com/DataDog/datadog-agent/pkg/collector/corechecks/gpu/spec"
 	"github.com/DataDog/datadog-agent/pkg/config/env"
@@ -222,7 +223,7 @@ func TestRunDoesNotError(t *testing.T) {
 	WithGPUConfigEnabled(t)
 
 	check.containerProvider = mock_containers.NewMockContainerProvider(gomock.NewController(t))
-	err := checkGeneric.Configure(senderManager, integration.FakeConfigHash, []byte{}, []byte{}, "test", "provider")
+	err := checkGeneric.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	require.NoError(t, err)
 	// we need to cancel the check to make sure all resources and async workers are released
 	// before deinitializing the mock library at test cleanup

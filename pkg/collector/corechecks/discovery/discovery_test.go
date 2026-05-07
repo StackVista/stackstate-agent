@@ -16,6 +16,7 @@ import (
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 )
 
 func TestDiscoveryCheckRun(t *testing.T) {
@@ -32,7 +33,7 @@ func TestDiscoveryCheckRun(t *testing.T) {
 	check := newCheck()
 	senderManager := mocksender.CreateDefaultDemultiplexer()
 
-	err := check.Configure(senderManager, 0, integration.Data{}, integration.Data{}, "test", "provider")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), 0, integration.Data{}, integration.Data{}, "test", "provider")
 	require.NoError(t, err)
 
 	err = check.Run()
@@ -57,7 +58,7 @@ func TestDiscoveryCheckWarningsPersist(t *testing.T) {
 	check := newCheck()
 	senderManager := mocksender.CreateDefaultDemultiplexer()
 
-	err := check.Configure(senderManager, 0, integration.Data{}, integration.Data{}, "test", "provider")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), 0, integration.Data{}, integration.Data{}, "test", "provider")
 	require.NoError(t, err)
 
 	err = check.Run()
@@ -99,7 +100,7 @@ func TestProcessLogWarningStructure(t *testing.T) {
 	check := newCheck()
 	senderManager := mocksender.CreateDefaultDemultiplexer()
 
-	err := check.Configure(senderManager, 0, integration.Data{}, integration.Data{}, "test", "provider")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), 0, integration.Data{}, integration.Data{}, "test", "provider")
 	require.NoError(t, err)
 
 	err = check.Run()
@@ -135,7 +136,7 @@ func TestProcessLogWarningRemoval(t *testing.T) {
 	check := newCheck()
 	senderManager := mocksender.CreateDefaultDemultiplexer()
 
-	err := check.Configure(senderManager, 0, integration.Data{}, integration.Data{}, "test", "provider")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), 0, integration.Data{}, integration.Data{}, "test", "provider")
 	require.NoError(t, err)
 
 	err = check.Run()

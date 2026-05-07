@@ -446,6 +446,52 @@ func (_c *MetricSerializer_SendOrchestratorManifests_Call) RunAndReturn(run func
 	return _c
 }
 
+// SendJSONToV1Intake provides a mock function for the type MetricSerializer
+func (_mock *MetricSerializer) SendJSONToV1Intake(data interface{}) error {
+	ret := _mock.Called(data)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SendJSONToV1Intake")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(interface{}) error); ok {
+		r0 = rf(data)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MetricSerializer_SendJSONToV1Intake_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendJSONToV1Intake'
+type MetricSerializer_SendJSONToV1Intake_Call struct {
+	*mock.Call
+}
+
+// SendJSONToV1Intake is a helper method to define mock.On call
+//   - data interface{}
+func (_e *MetricSerializer_Expecter) SendJSONToV1Intake(data interface{}) *MetricSerializer_SendJSONToV1Intake_Call {
+	return &MetricSerializer_SendJSONToV1Intake_Call{Call: _e.mock.On("SendJSONToV1Intake", data)}
+}
+
+func (_c *MetricSerializer_SendJSONToV1Intake_Call) Run(run func(data interface{})) *MetricSerializer_SendJSONToV1Intake_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0])
+	})
+	return _c
+}
+
+func (_c *MetricSerializer_SendJSONToV1Intake_Call) Return(_a0 error) *MetricSerializer_SendJSONToV1Intake_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MetricSerializer_SendJSONToV1Intake_Call) RunAndReturn(run func(interface{}) error) *MetricSerializer_SendJSONToV1Intake_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SendOrchestratorMetadata provides a mock function for the type MetricSerializer
 func (_mock *MetricSerializer) SendOrchestratorMetadata(msgs []types.ProcessMessageBody, hostName string, clusterID string, payloadType int) error {
 	ret := _mock.Called(msgs, hostName, clusterID, payloadType)

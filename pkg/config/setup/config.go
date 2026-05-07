@@ -274,6 +274,7 @@ var commonConfigComponents = []func(pkgconfigmodel.Setup){
 	podman,
 	fleet,
 	autoscaling,
+	stackstate,
 }
 
 type configLibBackend struct {

@@ -26,6 +26,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/core/hostname/hostnameimpl"
 	"github.com/DataDog/datadog-agent/comp/forwarder/defaultforwarder"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/network-devices/cisco-sdwan/client"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/network-devices/cisco-sdwan/payload"
@@ -88,7 +89,7 @@ collect_bgp_neighbor_states: true
 
 	sender.On("Commit").Return()
 
-	err := chk.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig, []byte(``), "test", "provider")
+	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, integration.Data{}, "test", "provider")
 	require.NoError(t, err)
 
 	assert.Equal(t, 3*time.Minute, chk.Interval())
@@ -313,7 +314,7 @@ namespace: test
 
 	sender.On("Commit").Return()
 
-	err := chk.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig, []byte(``), "test", "provider")
+	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, integration.Data{}, "test", "provider")
 	require.NoError(t, err)
 
 	err = chk.Run()
@@ -374,7 +375,7 @@ collect_cloud_applications_metrics: false
 
 	sender.On("Commit").Return()
 
-	err := chk.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig, []byte(``), "test", "provider")
+	err := chk.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig, integration.Data{}, "test", "provider")
 	require.NoError(t, err)
 
 	err = chk.Run()

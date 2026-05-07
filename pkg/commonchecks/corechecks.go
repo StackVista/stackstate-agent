@@ -24,6 +24,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cloud/hostinfo"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/helm"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/ksm"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubeapi"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/orchestrator"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/containerimage"
@@ -94,6 +95,12 @@ func RegisterChecks(store workloadmeta.Component, filterStore workloadfilter.Com
 	// Flavor specific checks
 	corecheckLoader.RegisterCheck(load.CheckName, load.Factory())
 	corecheckLoader.RegisterCheck(kubernetesapiserver.CheckName, kubernetesapiserver.Factory(tagger))
+
+	// STS
+	corecheckLoader.RegisterCheck(kubeapi.KubernetesAPITopologyCheckName, kubeapi.KubernetesAPITopologyFactory())
+	corecheckLoader.RegisterCheck(kubeapi.KubernetesAPIEventsCheckName, kubeapi.KubernetesAPIEventsFactory())
+	corecheckLoader.RegisterCheck(kubeapi.KubernetesAPIMetricsCheckName, kubeapi.KubernetesAPIMetricsFactory())
+
 	corecheckLoader.RegisterCheck(ksm.CheckName, ksm.Factory(tagger, store))
 	corecheckLoader.RegisterCheck(helm.CheckName, helm.Factory())
 	corecheckLoader.RegisterCheck(pod.CheckName, pod.Factory(store, cfg, tagger))

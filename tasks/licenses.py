@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Utility functions for manipulating licenses
 """
@@ -192,11 +193,11 @@ def wwhrd_licenses(ctx):
                 continue
             license = ""
             package = ""
-            for val in line[index + len('msg="Found License"') :].split(" "):
+            for val in line[index + len('msg="Found License"'):].split(" "):
                 if val.startswith('license='):
-                    license = val[len('license=') :]
+                    license = val[len('license='):]
                 elif val.startswith('package='):
-                    package = val[len('package=') :]
+                    package = val[len('package='):]
                     if is_excluded(package):
                         print(f"Skipping {package} ({license}) excluded in .wwhrd.yml")
                     else:

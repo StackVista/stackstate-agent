@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"regexp"
 	"slices"
 	"strings"
@@ -232,6 +233,10 @@ type KSMConfig struct {
 	// PodCollectionMode defines how pods are collected.
 	// Accepted values are: "default", "node_kubelet", and "cluster_unassigned".
 	PodCollectionMode podCollectionMode `yaml:"pod_collection_mode"`
+
+	// CollectCRDMetrics enables collection of CustomResourceDefinition metrics.
+	// Requires RBAC permissions for apiextensions.k8s.io/customresourcedefinitions.
+	CollectCRDMetrics bool `yaml:"collect_crd_metrics"`
 }
 
 // KSMCheck wraps the config and the metric stores needed to run the check
@@ -290,11 +295,11 @@ func init() {
 }
 
 // Configure prepares the configuration of the KSM check instance
-func (k *KSMCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string, provider string) error {
+func (k *KSMCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string, provider string) error {
 	k.BuildID(integrationConfigDigest, config, initConfig)
 	k.agentConfig = pkgconfigsetup.Datadog()
 
-	err := k.CommonConfigure(senderManager, initConfig, config, source, provider)
+	err := k.CommonConfigure(senderManager, checkManager, initConfig, config, source, provider)
 	if err != nil {
 		return err
 	}
@@ -570,7 +575,6 @@ func (k *KSMCheck) discoverCustomResources(c *apiserver.APIClient, collectors []
 	// extended resource collectors always have a factory registered
 	factories := []customresource.RegistryFactory{
 		customresources.NewExtendedJobFactory(c),
-		customresources.NewCustomResourceDefinitionFactory(c),
 		customresources.NewAPIServiceFactory(c),
 		customresources.NewExtendedNodeFactory(c),
 		customresources.NewExtendedPodFactory(c),
@@ -582,6 +586,10 @@ func (k *KSMCheck) discoverCustomResources(c *apiserver.APIClient, collectors []
 		customresources.NewControllerRevisionRolloutFactory(c, k.rolloutTracker),
 	}
 
+	if k.instance.CollectCRDMetrics {
+		factories = append(factories, customresources.NewCustomResourceDefinitionFactory(c))
+	}
+
 	factories = manageResourcesReplacement(c, factories, resources)
 
 	clients := make(map[string]interface{}, len(factories))
@@ -590,12 +598,14 @@ func (k *KSMCheck) discoverCustomResources(c *apiserver.APIClient, collectors []
 		clients[f.Name()] = client
 	}
 
-	customResourceFactories := customresources.GetCustomResourceFactories(k.customResourceDiscoverer, k.instance.CustomResource, c)
-	customResourceClients, customResourceCollectors := customresources.GetCustomResourceClientsAndCollectors(customResourceFactories, c)
+	if len(k.instance.CustomResource.Spec.Resources) > 0 {
+		customResourceFactories := customresources.GetCustomResourceFactories(k.customResourceDiscoverer, k.instance.CustomResource, c)
+		customResourceClients, customResourceCollectors := customresources.GetCustomResourceClientsAndCollectors(customResourceFactories, c)
 
-	collectors = lo.Uniq(append(collectors, customResourceCollectors...))
-	maps.Copy(clients, customResourceClients)
-	factories = append(factories, customResourceFactories...)
+		collectors = lo.Uniq(append(collectors, customResourceCollectors...))
+		maps.Copy(clients, customResourceClients)
+		factories = append(factories, customResourceFactories...)
+	}
 
 	return customResources{
 		collectors: collectors,
@@ -768,7 +778,10 @@ func (k *KSMCheck) Cancel() {
 // processMetrics attaches tags and forwards metrics to the aggregator
 func (k *KSMCheck) processMetrics(sender sender.Sender, metrics map[string][]ksmstore.DDMetricsFam, labelJoiner *labelJoiner, now time.Time) {
 	for _, metricsList := range metrics {
-		for _, metricFamily := range metricsList {
+		// Create a new aggregated metric from all the reason metrics
+		aggregatedMetricList := aggregateStatusReasonMetrics(metricsList)
+
+		for _, metricFamily := range aggregatedMetricList {
 			// First check for aggregator, because the check use _labels metrics to aggregate values.
 			if aggregator, found := k.metricAggregators[metricFamily.Name]; found {
 				for _, m := range metricFamily.ListMetrics {
@@ -917,6 +930,7 @@ func (k *KSMCheck) metricFilter(m ksmstore.DDMetric) bool {
 	return m.Val == float64(1)
 }
 
+// [STS] build multiple tags for the original label key
 // buildTag applies the LabelsMapper config and returns the tag in a key:value string format
 // The second return value is the hostname of the metric if a 'node' or 'host' tag is found, empty string otherwise
 func (k *KSMCheck) buildTag(key, value string, lMapperOverride map[string]string) (tag, hostname string) {

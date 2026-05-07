@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"strings"
 	"sync"
 	"time"
@@ -101,10 +102,10 @@ func newCheck() check.Check {
 }
 
 // Configure configures the Helm check
-func (hc *HelmCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string, provider string) error {
+func (hc *HelmCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string, provider string) error {
 	hc.BuildID(integrationConfigDigest, config, initConfig)
 
-	err := hc.CommonConfigure(senderManager, initConfig, config, source, provider)
+	err := hc.CommonConfigure(senderManager, checkManager, initConfig, config, source, provider)
 	if err != nil {
 		return err
 	}

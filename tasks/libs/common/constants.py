@@ -1,6 +1,26 @@
+import os
+
 DEFAULT_INTEGRATIONS_CORE_BRANCH = "master"
-GITHUB_ORG = "DataDog"
-REPO_NAME = "datadog-agent"
+
+# Determine if this is a relocated build (case-insensitive check)
+_relocated_env = os.getenv("RELOCATED", "").lower()
+RELOCATED = _relocated_env == "true"
+
+# Set BRANDED flag (will be used later for application strings, env var names, etc.)
+if os.getenv("BRANDED") is not None:
+    BRANDED = os.getenv("BRANDED") == "true"
+else:
+    BRANDED = False
+
+# Determine GITHUB_ORG and REPO_NAME based on RELOCATED flag
+# If RELOCATED is true, use StackVista/stackstate-agent, otherwise use DataDog/datadog-agent
+if RELOCATED:
+    GITHUB_ORG = os.getenv('AGENT_GITHUB_ORG') or "StackVista"
+    REPO_NAME = os.getenv('AGENT_REPO_NAME') or "stackstate-agent"
+else:
+    GITHUB_ORG = os.getenv('AGENT_GITHUB_ORG') or "DataDog"
+    REPO_NAME = os.getenv('AGENT_REPO_NAME') or "datadog-agent"
+
 GITHUB_REPO_NAME = f"{GITHUB_ORG}/{REPO_NAME}"
 REPO_PATH = f"github.com/{GITHUB_REPO_NAME}"
 ALLOWED_REPO_NON_NIGHTLY_BRANCHES = {"dev", "stable", "beta", "none"}

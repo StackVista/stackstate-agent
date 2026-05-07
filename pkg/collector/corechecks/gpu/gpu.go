@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
@@ -120,13 +121,13 @@ func newCheckTelemetryMetrics(tm telemetry.Component) *checkTelemetryMetrics {
 }
 
 // Configure parses the check configuration and init the check
-func (c *Check) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
 	// Check if GPU check is enabled (follows SBOM pattern)
 	if !pkgconfigsetup.Datadog().GetBool("gpu.enabled") {
 		return errors.New("GPU check is disabled")
 	}
 
-	if err := c.CommonConfigure(senderManager, initConfig, config, source, provider); err != nil {
+	if err := c.CommonConfigure(senderManager, checkManager, initConfig, config, source, provider); err != nil {
 		return err
 	}
 

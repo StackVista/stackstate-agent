@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.yaml.in/yaml/v2"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -199,11 +200,11 @@ func (c *CiscoSdwanCheck) Run() error {
 }
 
 // Configure the Cisco SD-WAN check
-func (c *CiscoSdwanCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
+func (c *CiscoSdwanCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
 	// Must be called before c.CommonConfigure
 	c.BuildID(integrationConfigDigest, rawInstance, rawInitConfig)
 
-	err := c.CommonConfigure(senderManager, rawInitConfig, rawInstance, source, provider)
+	err := c.CommonConfigure(senderManager, checkManager, rawInitConfig, rawInstance, source, provider)
 	if err != nil {
 		return err
 	}

@@ -3,14 +3,30 @@ module github.com/DataDog/datadog-agent/pkg/orchestrator/model
 go 1.25.0
 
 require (
+<<<<<<< HEAD
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
+||||||| 20c9c848e4
+	github.com/DataDog/datadog-agent/pkg/util/log v0.64.0-devel
+=======
+	github.com/DataDog/datadog-agent/pkg/util/log v0.71.2
+>>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 )
 
 require (
+<<<<<<< HEAD
 	github.com/DataDog/datadog-agent/pkg/template v0.78.3-rc.2 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.78.3-rc.2 // indirect
 	github.com/DataDog/datadog-agent/pkg/version v0.78.3-rc.2 // indirect
+||||||| 20c9c848e4
+	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.62.3 // indirect
+	github.com/DataDog/datadog-agent/pkg/version v0.62.3 // indirect
+	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575 // indirect
+=======
+	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.71.2 // indirect
+	github.com/DataDog/datadog-agent/pkg/version v0.71.2 // indirect
+	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575 // indirect
+>>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/time v0.14.0 // indirect

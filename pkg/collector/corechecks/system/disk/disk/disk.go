@@ -104,7 +104,6 @@ func (c *Check) instanceConfigure(data integration.Data) error {
 		}
 	}
 
-	// Force exclusion of CDROM (iso9660) from disk check
 	c.cfg.excludedFilesystems = append(c.cfg.excludedFilesystems, "iso9660")
 
 	excludedDisks, found := conf["excluded_disks"]

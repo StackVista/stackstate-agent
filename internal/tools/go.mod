@@ -19,6 +19,7 @@ require (
 )
 
 require (
+<<<<<<< HEAD
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
@@ -40,6 +41,33 @@ require (
 	github.com/Antonboom/testifylint v1.6.4 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/Djarvur/go-err113 v0.1.1 // indirect
+||||||| 20c9c848e4
+	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
+	4d63.com/gochecknoglobals v0.2.1 // indirect
+	dario.cat/mergo v1.0.1 // indirect
+	github.com/4meepo/tagalign v1.3.4 // indirect
+	github.com/Abirdcfly/dupword v0.0.14 // indirect
+	github.com/Antonboom/errname v0.1.13 // indirect
+	github.com/Antonboom/nilnil v0.1.9 // indirect
+	github.com/Antonboom/testifylint v1.4.3 // indirect
+	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
+	github.com/Crocmagnon/fatcontext v0.4.0 // indirect
+	github.com/Djarvur/go-err113 v0.0.0-20210108212216-aea10b59be24 // indirect
+	github.com/GaijinEntertainment/go-exhaustruct/v3 v3.3.0 // indirect
+=======
+	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
+	4d63.com/gochecknoglobals v0.2.1 // indirect
+	dario.cat/mergo v1.0.1 // indirect
+	github.com/4meepo/tagalign v1.3.4 // indirect
+	github.com/Abirdcfly/dupword v0.0.14 // indirect
+	github.com/Antonboom/errname v0.1.13 // indirect
+	github.com/Antonboom/nilnil v0.1.9 // indirect
+	github.com/Antonboom/testifylint v1.4.3 // indirect
+	github.com/BurntSushi/toml v1.5.0 // indirect
+	github.com/Crocmagnon/fatcontext v0.4.0 // indirect
+	github.com/Djarvur/go-err113 v0.0.0-20210108212216-aea10b59be24 // indirect
+	github.com/GaijinEntertainment/go-exhaustruct/v3 v3.3.0 // indirect
+>>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/MirrexOne/unqueryvet v1.5.3 // indirect
@@ -71,6 +99,7 @@ require (
 	github.com/catenacyber/perfsprint v0.10.1 // indirect
 	github.com/ccojocar/zxcvbn-go v1.0.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+<<<<<<< HEAD
 	github.com/charithe/durationcheck v0.0.11 // indirect
 	github.com/charmbracelet/colorprofile v0.3.1 // indirect
 	github.com/charmbracelet/lipgloss v1.1.0 // indirect
@@ -84,6 +113,25 @@ require (
 	github.com/cyphar/filepath-securejoin v0.6.0 // indirect
 	github.com/daixiang0/gci v0.13.7 // indirect
 	github.com/dave/dst v0.27.3 // indirect
+||||||| 20c9c848e4
+	github.com/charithe/durationcheck v0.0.10 // indirect
+	github.com/chavacava/garif v0.1.0 // indirect
+	github.com/chigopher/pathlib v0.19.1 // indirect
+	github.com/ckaznocha/intrange v0.1.2 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
+	github.com/curioswitch/go-reassign v0.2.0 // indirect
+	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
+	github.com/daixiang0/gci v0.13.4 // indirect
+=======
+	github.com/charithe/durationcheck v0.0.10 // indirect
+	github.com/chavacava/garif v0.1.0 // indirect
+	github.com/chigopher/pathlib v0.19.1 // indirect
+	github.com/ckaznocha/intrange v0.1.2 // indirect
+	github.com/cloudflare/circl v1.6.3 // indirect
+	github.com/curioswitch/go-reassign v0.2.0 // indirect
+	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
+	github.com/daixiang0/gci v0.13.4 // indirect
+>>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/denis-tingaikin/go-header v0.5.0 // indirect
 	github.com/dgryski/go-minhash v0.0.0-20190315135803-ad340ca03076 // indirect
@@ -197,9 +245,21 @@ require (
 	github.com/nakabonne/nestif v0.3.1 // indirect
 	github.com/nishanths/exhaustive v0.12.0 // indirect
 	github.com/nishanths/predeclared v0.2.2 // indirect
+<<<<<<< HEAD
 	github.com/nunnatsa/ginkgolinter v0.22.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.27.5 // indirect
 	github.com/onsi/gomega v1.39.0 // indirect
+||||||| 20c9c848e4
+	github.com/nunnatsa/ginkgolinter v0.16.2 // indirect
+	github.com/olekukonko/tablewriter v0.0.5 // indirect
+	github.com/onsi/ginkgo/v2 v2.22.0 // indirect
+	github.com/onsi/gomega v1.36.1 // indirect
+=======
+	github.com/nunnatsa/ginkgolinter v0.16.2 // indirect
+	github.com/olekukonko/tablewriter v0.0.5 // indirect
+	github.com/onsi/ginkgo/v2 v2.23.3 // indirect
+	github.com/onsi/gomega v1.36.3 // indirect
+>>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	github.com/otiai10/copy v1.14.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
@@ -270,6 +330,7 @@ require (
 	go.augendre.info/arangolint v0.4.0 // indirect
 	go.augendre.info/fatcontext v0.9.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+<<<<<<< HEAD
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
@@ -286,6 +347,37 @@ require (
 	gonum.org/v1/gonum v0.17.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/neurosnap/sentences.v1 v1.0.7 // indirect
+||||||| 20c9c848e4
+	go.uber.org/zap v1.27.0 // indirect
+	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/exp v0.0.0-20250808145144-a408d31f581a // indirect
+	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
+	golang.org/x/mod v0.27.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/term v0.34.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/tools v0.36.0 // indirect
+	gonum.org/v1/gonum v0.16.0 // indirect
+	google.golang.org/protobuf v1.36.7 // indirect
+	gopkg.in/neurosnap/sentences.v1 v1.0.6 // indirect
+=======
+	go.uber.org/zap v1.27.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/exp v0.0.0-20250808145144-a408d31f581a // indirect
+	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
+	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/term v0.37.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
+	gonum.org/v1/gonum v0.16.0 // indirect
+	google.golang.org/protobuf v1.36.7 // indirect
+	gopkg.in/neurosnap/sentences.v1 v1.0.6 // indirect
+>>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
 	mvdan.cc/gofumpt v0.9.2 // indirect

@@ -175,6 +175,8 @@ def _hash_paths(hasher, paths: list[str]):
 
 
 def get_dd_api_key(ctx):
+    # Disabled - not needed for StackState builds
+    return ""
     if sys.platform == 'win32':
         cmd = f'aws.exe ssm get-parameter --region us-east-1 --name {os.environ["API_KEY_ORG2"]} --with-decryption --query "Parameter.Value" --out text'
     elif sys.platform == 'darwin':
@@ -223,6 +225,8 @@ def should_retry_bundle_install(res):
 
 
 def send_build_metrics(ctx, overall_duration):
+    # Disabled - not needed for StackState builds
+    return
     # We only want to generate those metrics from the CI
     src_dir = os.environ.get('CI_PROJECT_DIR')
     if sys.platform == 'win32':
@@ -321,6 +325,8 @@ def send_build_metrics(ctx, overall_duration):
 
 
 def send_cache_mutation_event(ctx, pipeline_id, job_name, job_id):
+    # Disabled - not needed for StackState builds
+    return
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json', 'DD-API-KEY': get_dd_api_key(ctx)}
     payload = {
         'title': 'omnibus cache mutated',
@@ -336,6 +342,8 @@ def send_cache_mutation_event(ctx, pipeline_id, job_name, job_id):
 
 
 def send_cache_miss_event(ctx, pipeline_id, job_name, job_id):
+    # Disabled - not needed for StackState builds
+    return
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json', 'DD-API-KEY': get_dd_api_key(ctx)}
     payload = {
         'title': 'omnibus cache miss',

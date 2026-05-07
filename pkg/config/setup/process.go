@@ -88,6 +88,12 @@ func setupProcesses(config pkgconfigmodel.Setup) {
 	procBindEnvAndSetDefault(config, "process_config.container_collection.enabled", true)
 	procBindEnvAndSetDefault(config, "process_config.process_collection.enabled", false)
 
+	// This allows for the process check to run in the core agent but is for linux only.
+	// [sts] Default to false: STS doesn't ship a process intake endpoint, so running
+	// process checks in the core agent would produce DNS/404 errors. The STS process
+	// agent is built and deployed separately (only in the debian package).
+	procBindEnvAndSetDefault(config, "process_config.run_in_core_agent.enabled", false)
+
 	config.BindEnv("process_config.process_dd_url", //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
 		"DD_PROCESS_CONFIG_PROCESS_DD_URL",
 		"DD_PROCESS_AGENT_PROCESS_DD_URL",

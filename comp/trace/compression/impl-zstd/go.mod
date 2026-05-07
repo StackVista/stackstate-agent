@@ -3,8 +3,16 @@ module github.com/DataDog/datadog-agent/comp/trace/compression/impl-zstd
 go 1.25.0
 
 require (
+<<<<<<< HEAD
 	github.com/DataDog/datadog-agent/comp/trace/compression/def v0.78.3-rc.2
 	github.com/DataDog/zstd v1.5.7
+||||||| 20c9c848e4
+	github.com/DataDog/datadog-agent/comp/trace/compression/def v0.61.0
+	github.com/DataDog/zstd v1.5.6
+=======
+	github.com/DataDog/datadog-agent/comp/trace/compression/def v0.71.2
+	github.com/DataDog/zstd v1.5.6
+>>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually

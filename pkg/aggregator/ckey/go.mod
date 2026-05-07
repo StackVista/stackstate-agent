@@ -3,9 +3,19 @@ module github.com/DataDog/datadog-agent/pkg/aggregator/ckey
 go 1.25.0
 
 require (
+<<<<<<< HEAD
 	github.com/DataDog/datadog-agent/pkg/tagset v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/sort v0.78.3-rc.2
 	github.com/stretchr/testify v1.11.1
+||||||| 20c9c848e4
+	github.com/DataDog/datadog-agent/pkg/tagset v0.60.0
+	github.com/DataDog/datadog-agent/pkg/util/sort v0.60.0
+	github.com/stretchr/testify v1.10.0
+=======
+	github.com/DataDog/datadog-agent/pkg/tagset v0.71.2
+	github.com/DataDog/datadog-agent/pkg/util/sort v0.71.2
+	github.com/stretchr/testify v1.10.0
+>>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	github.com/twmb/murmur3 v1.1.8
 )
 

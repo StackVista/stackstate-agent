@@ -2,7 +2,13 @@ module github.com/DataDog/datadog-agent/comp/trace/compression/impl-gzip
 
 go 1.25.0
 
+<<<<<<< HEAD
 require github.com/DataDog/datadog-agent/comp/trace/compression/def v0.78.3-rc.2
+||||||| 20c9c848e4
+require github.com/DataDog/datadog-agent/comp/trace/compression/def v0.61.0
+=======
+require github.com/DataDog/datadog-agent/comp/trace/compression/def v0.71.2
+>>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
 

@@ -21,6 +21,9 @@ if linux_target?
       " #{install_dir}/embedded/bin/curl"
   end
 end
+if fips_mode?
+  dependency 'openssl-fips-provider'
+end
 
 dependency 'datadog-agent-data-plane' if linux_target? && !heroku_target?
 
@@ -30,7 +33,15 @@ dependency 'cacerts'
 # Used for memory profiling with the `status py` agent subcommand
 dependency 'pympler'
 
-dependency 'datadog-agent-integrations-py3'
+dependency "systemd" if linux_target?
+
+dependency 'libpcap' if linux_target? and !heroku_target? # system-probe dependency
+
+# Include traps db file in snmp.d/traps_db/
+dependency 'snmp-traps'
+
+# [STS] StackState integrations are declared in agent.rb (project level)
+# to avoid circular dependency: datadog-agent -> datadog-agent-dependencies -> integrations -> datadog-agent
 
 build do
     command_on_repo_root "bazelisk run #{flavor_flag} -- //packages/agent/dependencies:install --destdir=#{install_dir}"

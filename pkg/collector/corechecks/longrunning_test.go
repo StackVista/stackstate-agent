@@ -16,6 +16,7 @@ import (
 	diagnose "github.com/DataDog/datadog-agent/comp/core/diagnose/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/stats"
 
@@ -35,8 +36,8 @@ func (m *mockLongRunningCheck) Stop() {
 	m.Called()
 }
 
-func (m *mockLongRunningCheck) Configure(senderManger sender.SenderManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string, provider string) error {
-	args := m.Called(senderManger, integrationConfigDigest, config, initConfig, source, provider)
+func (m *mockLongRunningCheck) Configure(senderManger sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, config, initConfig integration.Data, source string, provider string) error {
+	args := m.Called(senderManger, checkManager, integrationConfigDigest, config, initConfig, source, provider)
 	return args.Error(0)
 }
 

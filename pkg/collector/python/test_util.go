@@ -11,6 +11,12 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
+	nooptagger "github.com/DataDog/datadog-agent/comp/core/tagger/impl-noop"
+	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
+	"github.com/DataDog/datadog-agent/pkg/util/option"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -88,4 +94,18 @@ func mockRtloader(t *testing.T) {
 		pythonOnce = sync.Once{}
 		pyDestroyLock.Unlock()
 	})
+}
+
+func scopeInitCheckManager(manager handler.CheckManager) func() {
+	// Ensure any previous test context is cleaned up first
+	// We clean up checkCtx without locking testMutex since withLockedCheckContext will lock it
+	checkContextMutex.Lock()
+	if checkCtx != nil {
+		checkCtx.checkManager.Stop()
+		checkCtx = nil
+	}
+	checkContextMutex.Unlock()
+
+	withLockedCheckContext(aggregator.NewNoOpSenderManager(), manager, option.None[integrations.Component](), nooptagger.NewComponent())
+	return releaseCheckContext
 }

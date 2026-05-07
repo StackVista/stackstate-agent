@@ -7,12 +7,8 @@
 
 package compliance
 
-import (
-	"context"
+import "context"
 
-	docker "github.com/docker/docker/client"
-)
-
-func newDockerClient(_ context.Context) (docker.APIClient, error) {
+func newDockerClient(_ context.Context) (any, error) {
 	return nil, ErrIncompatibleEnvironment
 }

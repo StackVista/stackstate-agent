@@ -10,6 +10,7 @@ package pod
 import (
 	"context"
 	"errors"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 
 	"github.com/benbjohnson/clock"
 	"go.uber.org/atomic"
@@ -88,6 +89,7 @@ func newCheck(store workloadmeta.Component, cfg config.Component, tagger tagger.
 // nil check to allow for overrides
 func (c *Check) Configure(
 	senderManager sender.SenderManager,
+	checkManager handler.CheckManager,
 	integrationConfigDigest uint64,
 	data integration.Data,
 	initConfig integration.Data,
@@ -96,7 +98,7 @@ func (c *Check) Configure(
 ) error {
 	c.BuildID(integrationConfigDigest, data, initConfig)
 
-	err := c.CommonConfigure(senderManager, initConfig, data, source, provider)
+	err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source, provider)
 	if err != nil {
 		return err
 	}

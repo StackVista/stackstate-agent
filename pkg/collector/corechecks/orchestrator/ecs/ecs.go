@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"go.uber.org/atomic"
 
 	model "github.com/DataDog/agent-payload/v5/process"
@@ -77,6 +78,7 @@ func newCheck(store workloadmeta.Component, tagger tagger.Component) check.Check
 // nil check to allow for overrides
 func (c *Check) Configure(
 	senderManager sender.SenderManager,
+	checkManager handler.CheckManager,
 	integrationConfigDigest uint64,
 	data integration.Data,
 	initConfig integration.Data,
@@ -85,7 +87,7 @@ func (c *Check) Configure(
 ) error {
 	c.BuildID(integrationConfigDigest, data, initConfig)
 
-	err := c.CommonConfigure(senderManager, initConfig, data, source, provider)
+	err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source, provider)
 	if err != nil {
 		return err
 	}

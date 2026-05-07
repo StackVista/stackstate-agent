@@ -7,6 +7,7 @@
 package load
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/shirou/gopsutil/v4/load"
@@ -51,7 +52,7 @@ func TestLoadCheckLinux(t *testing.T) {
 	cpuInfo = CPUInfo
 	loadCheck := new(LoadCheck)
 	mock := mocksender.NewMockSender(loadCheck.ID())
-	loadCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	loadCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
 
 	var nbCPU float64
 	info, _ := cpuInfo()

@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1060,7 +1061,14 @@ func agent(config pkgconfigmodel.Setup) {
 	config.SetDefault("proxy.no_proxy", []string{})
 	config.BindEnvAndSetDefault("common_root", "", "DD_COMMON_ROOT") //nolint:forbidigo
 
-	config.BindEnvAndSetDefault("skip_ssl_validation", false)
+	// sts begin
+	stsSkipSSLValidationEnv := os.Getenv("STS_SKIP_SSL_VALIDATION")
+	stsSkipSSLValidation, err := strconv.ParseBool(stsSkipSSLValidationEnv)
+	if err != nil && len(stsSkipSSLValidationEnv) > 0 {
+		_ = log.Warnf("Could not parse `STS_SKIP_SSL_VALIDATION` environment variable to boolean: %v", err)
+	}
+	config.BindEnvAndSetDefault("skip_ssl_validation", stsSkipSSLValidation)
+	// sts end
 	config.BindEnvAndSetDefault("sslkeylogfile", "")
 	config.BindEnv("tls_handshake_timeout")    //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
 	config.BindEnv("http_dial_fallback_delay") //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
@@ -1430,13 +1438,14 @@ func serializer(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("serializer_experimental_use_v3_api.sketches.validate", false)
 	config.BindEnvAndSetDefault("serializer_experimental_use_v3_api.compression_level", 0)
 
-	config.BindEnvAndSetDefault("use_v2_api.series", true)
+	config.BindEnvAndSetDefault("use_v2_api.series", false) // [sts] STS receiver only supports v1 series API
 	// Serializer: allow user to blacklist any kind of payload to be sent
 	config.BindEnvAndSetDefault("enable_payloads.events", true)
 	config.BindEnvAndSetDefault("enable_payloads.series", true)
-	config.BindEnvAndSetDefault("enable_payloads.service_checks", true)
-	config.BindEnvAndSetDefault("enable_payloads.sketches", true)
+	config.BindEnvAndSetDefault("enable_payloads.service_checks", false) // [sts] disabled — STS receiver doesn't support this endpoint
+	config.BindEnvAndSetDefault("enable_payloads.sketches", false)       // [sts] disabled — STS receiver doesn't support this endpoint
 	config.BindEnvAndSetDefault("enable_payloads.json_to_v1_intake", true)
+	config.BindEnvAndSetDefault("enable_payloads.check_runs", false) // [sts] disabled — STS receiver doesn't support /api/v1/check_run
 }
 
 func aggregator(config pkgconfigmodel.Setup) {
@@ -1490,7 +1499,7 @@ func forwarder(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("forwarder_apikey_validation_interval", DefaultAPIKeyValidationInterval) // in minutes
 	config.BindEnvAndSetDefault("forwarder_num_workers", 1)
 	config.BindEnvAndSetDefault("forwarder_stop_timeout", 2)
-	config.BindEnvAndSetDefault("forwarder_max_concurrent_requests", 10)
+	config.BindEnvAndSetDefault("forwarder_max_concurrent_requests", 1) // [sts] must stay at 1 — concurrent requests cause topology snapshot reordering at the receiver
 	// Forwarder retry settings
 	config.BindEnvAndSetDefault("forwarder_backoff_factor", 2)
 	config.BindEnvAndSetDefault("forwarder_backoff_base", 2)

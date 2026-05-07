@@ -9,6 +9,7 @@ package sysprobeconfigimpl
 
 import (
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/config/mock"
 	"github.com/DataDog/datadog-agent/pkg/config/model"
 	"github.com/DataDog/datadog-agent/pkg/config/setup"
+	"github.com/DataDog/datadog-agent/pkg/ebpf/prebuilt"
+	sysconfig "github.com/DataDog/datadog-agent/pkg/system-probe/config"
 	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
 	"go.uber.org/fx"
 )
@@ -74,6 +77,20 @@ func newMock(deps mockDependencies, t testing.TB) sysprobeconfig.Component {
 	// setting
 	for k, v := range deps.Params.Overrides {
 		setup.SystemProbe().SetWithoutSource(k, v)
+	}
+
+	// Call Adjust() to set default values like allow_prebuilt_fallback
+	// This matches the behavior of the real system-probe config initialization
+	sysconfig.Adjust(setup.SystemProbe())
+
+	// On Linux, ensure allow_prebuilt_fallback is set correctly based on prebuilt.IsDeprecated()
+	// This is needed because Adjust() may use a no-op implementation if linux_bpf build tag is not present
+	if runtime.GOOS == "linux" {
+		cfg := setup.SystemProbe()
+		if !cfg.IsSet("system_probe_config.allow_prebuilt_fallback") {
+			// Set to true if prebuilt is not deprecated, false otherwise
+			cfg.SetWithoutSource("system_probe_config.allow_prebuilt_fallback", !prebuilt.IsDeprecated())
+		}
 	}
 
 	syscfg, err := setupConfig(deps.Params.sysProbeConfFilePath, deps.Params.fleetPoliciesDirPath)
