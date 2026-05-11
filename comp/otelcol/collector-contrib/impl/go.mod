@@ -4,7 +4,7 @@ module github.com/DataDog/datadog-agent/comp/otelcol/collector-contrib/impl
 
 go 1.25.0
 
-toolchain go1.25.9
+toolchain go1.25.10
 
 require (
 	github.com/DataDog/datadog-agent/comp/otelcol/collector-contrib/def v0.71.2

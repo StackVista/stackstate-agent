@@ -25,7 +25,7 @@ version("1.4.19") { source sha256: "3be4a26d825ffdfda52a56fc43246456989a3630093c
 
 ship_source_offer true
 
-source url: "https://ftp.gnu.org/gnu/m4/m4-#{version}.tar.gz"
+source url: "https://mirrors.ibiblio.org/gnu/m4/m4-#{version}.tar.gz"
 
 relative_path "m4-#{version}"
 

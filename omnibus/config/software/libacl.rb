@@ -24,7 +24,7 @@ dependency 'attr'
 
 ship_source_offer true
 
-source url: "http://download.savannah.nongnu.org/releases/acl/acl-#{version}.tar.xz"
+source url: "https://download-mirror.savannah.gnu.org/releases/acl/acl-#{version}.tar.xz"
 
 version("2.3.1") { source sha512: "7d02f05d17305f8587ab485395b00c7fdb8e44c1906d0d04b70a43a3020803e8b2b8c707abb6147f794867dfa87bd51769c2d3e11a3db55ecbd2006a6e6231dc" }
 

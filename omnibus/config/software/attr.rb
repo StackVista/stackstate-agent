@@ -24,7 +24,7 @@ version("2.5.1") { source sha512: "9e5555260189bb6ef2440c76700ebb813ff70582eb63d
 
 ship_source_offer true
 
-source url: "http://download.savannah.nongnu.org/releases/attr/attr-#{version}.tar.xz"
+source url: "https://download-mirror.savannah.gnu.org/releases/attr/attr-#{version}.tar.xz"
 
 relative_path "#{name}-#{version}"
 

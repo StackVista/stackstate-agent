@@ -25,7 +25,7 @@ version("1.47") { source sha256: "9e3c670966b96ecc746c28c2c419541e3bcb787d1a7393
 
 ship_source_offer true
 
-source url: "https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-#{version}.tar.bz2"
+source url: "https://mirrors.dotsrc.org/gcrypt/libgpg-error/libgpg-error-#{version}.tar.bz2"
 
 relative_path "libgpg-error-#{version}"
 
