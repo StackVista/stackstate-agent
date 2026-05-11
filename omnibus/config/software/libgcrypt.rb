@@ -27,7 +27,7 @@ version("1.10.2") { source sha256: "3b9c02a004b68c256add99701de00b383accccf37177
 
 ship_source_offer true
 
-source url: "https://www.gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-#{version}.tar.bz2"
+source url: "https://mirrors.dotsrc.org/gcrypt/libgcrypt/libgcrypt-#{version}.tar.bz2"
 
 relative_path "libgcrypt-#{version}"
 
