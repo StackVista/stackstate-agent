@@ -3,20 +3,8 @@ module github.com/DataDog/datadog-agent/comp/otelcol/otlp/components/metricsclie
 go 1.25.0
 
 require (
-<<<<<<< HEAD
 	github.com/DataDog/datadog-agent/pkg/trace v0.78.3-rc.2
 	github.com/DataDog/datadog-go/v5 v5.8.3
-||||||| 20c9c848e4
-	github.com/DataDog/datadog-agent/pkg/trace v0.64.0-devel.0.20250129182827-bab631c10d61
-	github.com/DataDog/datadog-go/v5 v5.6.0
-	github.com/stretchr/testify v1.10.0
-	go.opentelemetry.io/otel v1.37.0
-	go.opentelemetry.io/otel/metric v1.37.0
-	go.opentelemetry.io/otel/sdk/metric v1.37.0
-=======
-	github.com/DataDog/datadog-agent/pkg/trace v0.71.2
-	github.com/DataDog/datadog-go/v5 v5.6.0
->>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/metric v1.43.0
@@ -33,27 +21,11 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-<<<<<<< HEAD
-||||||| 20c9c848e4
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.37.0 // indirect
-=======
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
->>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-<<<<<<< HEAD
-||||||| 20c9c848e4
-	golang.org/x/sys v0.35.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
-=======
-	gopkg.in/yaml.v3 v3.0.1 // indirect
->>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually

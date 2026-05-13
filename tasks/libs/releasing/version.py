@@ -268,7 +268,7 @@ def get_version(
     ctx,
     url_safe=False,
     git_sha_length=7,
-    major_version='7',
+    major_version='3',  # [sts] StackState builds are major version 3
     include_pipeline_id=False,
     pipeline_id=None,
     include_git=False,
@@ -342,7 +342,7 @@ def get_version(
     return str(version)
 
 
-def get_version_numeric_only(ctx, major_version='7'):
+def get_version_numeric_only(ctx, major_version='3'):  # [sts] StackState builds are major version 3
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
     version = ""
     pipeline_id = os.getenv("CI_PIPELINE_ID")

@@ -26,6 +26,7 @@ import (
 	workloadfilter "github.com/DataDog/datadog-agent/comp/core/workloadfilter/def"
 	workloadfilterfxmock "github.com/DataDog/datadog-agent/comp/core/workloadfilter/fx-mock"
 	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
+	pkgaggregator "github.com/DataDog/datadog-agent/pkg/aggregator" // [sts] for NewNoOpSenderManager in inlined scopeInitCheckManager
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
@@ -227,7 +228,20 @@ func testSubmitServiceCheckEmptyHostame(t *testing.T) {
 func testSubmitEvent(t *testing.T) {
 	_, mockTransactionalBatcher, _, manager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(manager)
+	// [sts] Inlined scopeInitCheckManager (originally pkg/collector/python/test_util.go:99).
+	// Cleans any prior context, then locks a fresh CheckContext bound to `manager`. Returns
+	// releaseCheckContext as the cleanup func. Adapted to aggregator's 5-arg withLockedCheckContext
+	// (filterStore arg added in 7.78.2) and aggregator-package-private vars.
+	release := func() func() {
+		checkContextMutex.Lock()
+		if checkCtx != nil {
+			checkCtx.checkManager.Stop()
+			checkCtx = nil
+		}
+		checkContextMutex.Unlock()
+		withLockedCheckContext(pkgaggregator.NewNoOpSenderManager(), manager, option.None[integrations.Component](), nooptagger.NewComponent(), workloadfilterfxmock.SetupMockFilter(t))
+		return releaseCheckContext
+	}()
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-event-test"}
@@ -248,7 +262,12 @@ func testSubmitEvent(t *testing.T) {
 
 	checkId := C.CString(testCheck.String())
 
-	StartTransaction(checkId)
+	// [sts] Inlined StartTransaction (originally pkg/collector/python/transactional_api.go:31).
+	// pkg/collector/python imports pkg/collector/aggregator, so we can't import it back without
+	// a cycle. Direct CheckContext access works since we're now in the aggregator package.
+	if cc, err := GetCheckContext(); err == nil {
+		cc.checkManager.GetCheckHandler(checkid.ID(C.GoString(checkId))).StartTransaction()
+	}
 	SubmitEvent(checkId, &ev)
 
 	expectedEvent := event.Event{
@@ -323,10 +342,13 @@ func testSubmitEventPlatformEvent(t *testing.T) {
 	sender.AssertEventPlatformEvent(t, []byte("raw-event"), "dbm-sample")
 }
 
-// ScopeInitCheckContext releases and initializes a check context
+// ScopeInitCheckContext initializes a check context and returns a release
+// function the caller must defer.
+// [sts] Function added during the 7.71.2 -> 7.78.2 merge to inline the test
+// helper that DD removed from python/test_loader.go. Defensive cleanup of any
+// previous test's leaked context lives inside withLockedCheckContext now (so
+// the testMutex is acquired first and only released by the returned function).
 func ScopeInitCheckContext(senderManager sender.SenderManager, logReceiver option.Option[integrations.Component], taggerComp tagger.Component, filterStore workloadfilter.Component) func() {
-	// Ensure the check context is released before initializing a new one
-	releaseCheckContext()
 	checkManager := handler.NewCheckManager(batcher.NewMockBatcher(), transactionbatcher.NewMockTransactionalBatcher(), transactionmanager.NewMockTransactionManager())
 	withLockedCheckContext(senderManager, checkManager, logReceiver, taggerComp, filterStore)
 	return releaseCheckContext

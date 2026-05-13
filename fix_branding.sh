@@ -57,6 +57,11 @@ find "$DIR/pkg/util/log/setup/internal/seelog" -type d -name .git -prune -o -nam
 find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -i 's/0.datadog.pool.ntp.org/0.stackstate.pool.ntp.org/g' {} +
 find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -i 's/1.datadog.pool.ntp.org/1.stackstate.pool.ntp.org/g' {} +
 find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -i 's/2.datadog.pool.ntp.org/2.stackstate.pool.ntp.org/g' {} +
+# [sts] DD 7.78.x added comp/networkpath/npcollector connfilter with a wildcard
+# default exclusion `*.datadog.pool.ntp.org`. The 0/1/2 sed rules above brand
+# the test-data ntp domains, leaving the wildcard production filter mismatched.
+# Brand the wildcard so the filter still matches the branded test domains.
+find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -i 's/\*\.datadog\.pool\.ntp\.org/*.stackstate.pool.ntp.org/g' {} +
 find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -i 's/3.datadog.pool.ntp.org/3.stackstate.pool.ntp.org/g' {} +
 
 # HTML templates - brand Datadog Agent strings
@@ -64,11 +69,29 @@ find "$DIR/comp/core/gui" -type d -name .git -prune -o -name "vendor" -prune -o 
 find "$DIR/comp/core/gui" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.tmpl" -exec sed -i 's/Datadog Agent Manager/StackState Agent Manager/g' {} +
 
 # Fleet installer embedded gen files - brand paths in generated systemd service files
-# These files are pre-generated and embedded, so they need to be branded to match the branded template data
-find "$DIR/pkg/fleet/installer/packages/embedded/templates/gen" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.service" -exec sed -i 's|/opt/datadog-packages/datadog-agent|/opt/stackstate-packages/stackstate-agent|g' {} +
-find "$DIR/pkg/fleet/installer/packages/embedded/templates/gen" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.service" -exec sed -i 's|/opt/datadog-packages/datadog-agent-ddot|/opt/stackstate-packages/stackstate-agent-ddot|g' {} +
-find "$DIR/pkg/fleet/installer/packages/embedded/templates/gen" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.service" -exec sed -i 's|/opt/datadog-agent|/opt/stackstate-agent|g' {} +
-find "$DIR/pkg/fleet/installer/packages/embedded/templates/gen" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.service" -exec sed -i 's|/etc/datadog-agent-exp|/etc/stackstate-agent-exp|g' {} +
+# These files are pre-generated and embedded, so they need to be branded to match the branded template data.
+# [sts] DD 7.78.x renamed `templates/` -> `tmpl/` and added `tmpl/main_test.go`
+# (TestGenerationIsUpToDate) which regenerates from the *.tmpl sources and compares
+# byte-for-byte. The systemdTemplateData InstallDir/EtcDir constants in tmpl/main.go
+# get branded by the catch-all `s|/opt/datadog-agent|/opt/stackstate-agent|`
+# rule above (because main.go is *.go), so the regenerated content uses
+# branded paths. We must apply the SAME transformations to the on-disk gen
+# files so the byte comparison succeeds. Apply to both old and new paths.
+for gen_dir in "$DIR/pkg/fleet/installer/packages/embedded/templates/gen" "$DIR/pkg/fleet/installer/packages/embedded/tmpl/gen"; do
+    [ -d "$gen_dir" ] || continue
+    # Apply to both .service (systemd units) and .yaml (e.g. ddot-exp.yaml — the
+    # ddot agent's launcher config). Both are tested by TestGenerationIsUpToDate.
+    # Order matters: handle the longest, most specific patterns first so partial
+    # matches by later, broader rules don't shadow them.
+    find "$gen_dir" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f \( -name "*.service" -o -name "*.yaml" \) -exec sed -i 's|/opt/datadog-packages/datadog-agent-ddot|/opt/stackstate-packages/stackstate-agent-ddot|g' {} +
+    find "$gen_dir" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f \( -name "*.service" -o -name "*.yaml" \) -exec sed -i 's|/opt/datadog-packages/datadog-agent|/opt/stackstate-packages/stackstate-agent|g' {} +
+    find "$gen_dir" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f \( -name "*.service" -o -name "*.yaml" \) -exec sed -i 's|/opt/datadog-agent|/opt/stackstate-agent|g' {} +
+    # /etc/datadog-agent/managed/datadog-agent -> /etc/stackstate-agent/managed/stackstate-agent
+    # (mirror catch-all *.go rule so FleetPoliciesDir for stable* matches the regenerated content)
+    find "$gen_dir" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f \( -name "*.service" -o -name "*.yaml" \) -exec sed -i 's|/etc/datadog-agent/managed/datadog-agent|/etc/stackstate-agent/managed/stackstate-agent|g' {} +
+    find "$gen_dir" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f \( -name "*.service" -o -name "*.yaml" \) -exec sed -i 's|/etc/datadog-agent-exp|/etc/stackstate-agent-exp|g' {} +
+    find "$gen_dir" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f \( -name "*.service" -o -name "*.yaml" \) -exec sed -i 's|/etc/datadog-agent\b|/etc/stackstate-agent|g' {} +
+done
 # Brand managed directory path - must run before general /etc/datadog-agent replacement
 # Handle both unbranded (/etc/datadog-agent/managed/datadog-agent) and partially branded (/etc/stackstate-agent/managed/datadog-agent) cases
 # Run in two passes to ensure we catch the pattern regardless of execution order
@@ -303,6 +326,7 @@ ${DIR}/comp/networkdeviceconfig/impl
 ${DIR}/comp/networkpath/npcollector/npcollectorimpl
 ${DIR}/comp/rdnsquerier/impl
 ${DIR}/comp/snmptraps/config
+${DIR}/pkg/serializer
 ${DIR}/test/new-e2e/tests/installer/unix"
 
 # CONFIG_TEST_DIRS="${DIR}/cmd/
@@ -494,6 +518,16 @@ find "${DIR}/pkg/flare/common" -type d -name .git -prune -o -name "vendor" -prun
 
 # logs auto multiline detection tests should use branded env var
 find "${DIR}/pkg/logs/internal/decoder/auto_multiline_detection" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*_test.go" -exec sed -i 's/DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION_CUSTOM_SAMPLES/STS_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION_CUSTOM_SAMPLES/g' {} +
+# [sts] DD 7.78 added preprocessor/user_samples_test.go in a sibling package using
+# the same env var. Same rule, broader scope.
+find "${DIR}/pkg/logs/internal/decoder/preprocessor" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*_test.go" -exec sed -i 's/DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION_CUSTOM_SAMPLES/STS_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION_CUSTOM_SAMPLES/g' {} +
+# [sts] pkg/config/create/new_test.go uses DD_CONF_NODETREEMODEL via t.Setenv
+# (matching the production read in new.go which we already brand to STS_).
+# Brand the test env var so TestCreateFromEnv hits the branded read path.
+find "${DIR}/pkg/config/create" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*_test.go" -exec sed -i 's/DD_CONF_NODETREEMODEL/STS_CONF_NODETREEMODEL/g' {} +
+# [sts] pkg/config/structure/unmarshal_test TestUnmarshalKeyOnSliceOfMap sets
+# DD_TEST_VALUE which is then read via BindEnvAndSetDefault with the STS prefix.
+find "${DIR}/pkg/config/structure" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*_test.go" -exec sed -i 's/DD_TEST_VALUE/STS_TEST_VALUE/g' {} +
 
 # network config tests should use branded env vars (many DD_* vars)
 # Brand all DD_* environment variables in t.Setenv() calls to STS_*
@@ -774,16 +808,73 @@ find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -
 # URLs and TestComputeDomainsURL will fail.
 sed -i 's/datadoghq\\\.\[a-z\]+|ddog-gov/datadoghq\\.[a-z]+|stackstate\\.[a-z]+|ddog-gov/' "$DIR/comp/forwarder/defaultforwarder/forwarder_health.go"
 
-# Fix wellKnownSitesRe to recognize stackstate.io as a well-known site.
-# BuildURLWithPrefix adds a trailing FQDN dot only for well-known sites.
-# Without this, URLs like "https://app.stackstate.io" lack the trailing dot
-# that test assertions expect (e.g., "https://app.stackstate.io.").
-sed -i 's/ddog-gov\\.com\$/ddog-gov\\.com$|stackstate\\.io$/' "$DIR/pkg/config/utils/endpoints.go"
+# [sts] In DD 7.78.x the per-regex literals (wellKnownSitesRe, ddURLRegexp,
+# ddSiteFromHostnameRe) were refactored to share a single `ddDomainPattern`
+# const that lists `datad(?:oghq|0g)\.(?:com|eu)|ddog-gov\.com`. Extending the
+# const adds stackstate.io to *every* regex built from it, replacing the two
+# narrow per-regex sed rules used in 7.71.2 (which no longer match).
+# Without this, AddAgentVersionToDomain returns branded URLs unchanged and
+# BuildURLWithPrefix doesn't add the trailing FQDN dot — breaking
+# TestAddAgentVersionToDomain, TestExtractSiteFromURL, TestGetMultipleEndpoints*,
+# TestDefaultSite, TestCreateTransactionsWithLocal, TestBuildIntakeURL,
+# TestGetAPIDomain, TestBuildEndpoints (logs/serializer/connectivity) and friends.
+sed -i 's#`datad(?:oghq|0g)\\.(?:com|eu)|ddog-gov\\.com`#`datad(?:oghq|0g)\\.(?:com|eu)|ddog-gov\\.com|stackstate\\.io`#' "$DIR/pkg/config/utils/endpoints.go"
 
-# Fix ddURLRegexp to recognize stackstate.io as a known domain.
-# AddAgentVersionToDomain adds a version prefix to URLs matching this regex.
-# Without this, branded stackstate.io URLs won't get the version prefix.
-sed -i 's/ddog-gov\\.com)/ddog-gov\\.com|stackstate\\.io)/' "$DIR/pkg/config/utils/endpoints.go"
+# [sts] Test data in pkg/config/utils/endpoints_test.go uses uppercase/mixed-case
+# DATADOGHQ.COM in TestExtractSiteFromURL inputs to verify the function
+# lowercases hostnames before regex matching. The catch-all branding sed only
+# rewrites lowercase `datadoghq.com`, leaving the mixed-case test inputs as
+# `DATADOGHQ.COM` while branding the expected output to `stackstate.io` — the
+# function then matches `datadoghq.com` (post-lowercase) and the assertion
+# diverges. Brand the case-insensitive variants here so input and expected agree.
+sed -i 's/DATADOGHQ\.COM/STACKSTATE.IO/g; s/Datadoghq\.COM/Stackstate.IO/g' "$DIR/pkg/config/utils/endpoints_test.go"
+
+# [sts] In comp/core/remoteagentregistry/impl/client_test.go, sanitizeString test
+# inputs like "Datadog Agent v7.1 Test" get branded to "StackState Agent ..." by
+# the catch-all `Datadog Agent`->`StackState Agent` rule. The expected lowercase
+# form `datadog-agent-v7.1-test` isn't touched by any rule, so the test diverges.
+sed -i 's/datadog-agent-v7\.1-test/stackstate-agent-v7.1-test/g' "$DIR/comp/core/remoteagentregistry/impl/client_test.go"
+
+# [sts] pkg/fleet/installer/setup/config writes its config struct as YAML using a
+# `yaml:"dd_url,omitempty"` field tag. The CONFIG_TEST_DIRS gofmt loop rewrites
+# `"dd_url"` string literals but not the substring inside the backtick-quoted
+# struct tag, so production marshals `dd_url` while branded tests assert `sts_url`.
+sed -i 's/`yaml:"dd_url,omitempty"`/`yaml:"sts_url,omitempty"`/g' "$DIR/pkg/fleet/installer/setup/config/config.go"
+
+# [sts] Same package's tests embed YAML literals in backtick strings (e.g., `dd_url: "https://app.datadoghq.com"`).
+# Backtick contents aren't visited by the gofmt `"dd_url"` -> `"sts_url"` rewrite,
+# so the test heredocs keep saying `dd_url:` while the (now branded) production
+# code writes `sts_url:`. WriteConfig's YAML merge then leaves the original
+# `dd_url:` line intact, and the test's expected map (which DID get gofmt-branded
+# to `sts_url`) doesn't match. Sed-rewrite the heredocs to use `sts_url:` too.
+sed -i 's/^dd_url:/sts_url:/g; s/\bdd_url: /sts_url: /g' "$DIR/pkg/fleet/installer/setup/config/config_test.go"
+
+# [sts] Same package: the CONFIG_TEST_DIRS gofmt rule rewrites the quoted
+# `"https://app.datadoghq.com"` Go string literal to `"http://localhost:7077"`
+# in the expected-map assertions. The same URL appears unquoted-but-inside-
+# backticks in heredoc YAML (e.g., `dd_url: "https://app.datadoghq.com"`) where
+# gofmt can't reach it; the catch-all `datadoghq.com` -> `stackstate.io` sed
+# then leaves it as `https://app.stackstate.io` instead of localhost. Mirror the
+# gofmt rule with a sed targeted at the heredoc URLs so existing-YAML and
+# expected-map agree.
+sed -i 's|https://app\.stackstate\.io|http://localhost:7077|g' "$DIR/pkg/fleet/installer/setup/config/config_test.go"
+
+# [sts] cmd/agent/subcommands/otel TestResolvePackageURL asserts the default
+# install URL prefix `oci://install.datadoghq.com/`. The catch-all branding sed
+# rewrites that to `install.stackstate.io`, but production code goes through
+# pkg/fleet's oci.PackageURL which we deliberately keep at install.datadoghq.com
+# (see the install.stackstate.io -> install.datadoghq.com revert further up).
+# Mirror that revert in the test assertion so the test agrees with the
+# preserved production URL.
+find "$DIR/cmd/agent/subcommands/otel" -type f -name "*_test.go" -exec sed -i 's|install\.stackstate\.io|install.datadoghq.com|g' {} +
+
+# [sts] DD 7.78.x added comp/core/delegatedauth/api/delegated_auth.go with its own
+# domainURLRegexp that maps `agent.<site>` -> `api.<site>` for known DD domains.
+# Add `stackstate` to the (name)\.(tld) alternation alongside datadoghq/datad0g so
+# branded URLs *with* regional prefix (agent.us1.stackstate.io) preserve the
+# prefix and become `api.us1.stackstate.io`. Putting it in the gov-cloud literal
+# group (matches[4]) instead would drop the regional prefix.
+sed -i 's#(datadoghq|datad0g)\\.(com|eu)#(datadoghq|datad0g|stackstate)\\.(com|eu|io)#' "$DIR/comp/core/delegatedauth/api/delegated_auth.go"
 
 # Revert CRD API group in struct fields back to datadoghq.com.
 # gofmt changes the exact string "datadoghq.com" -> "stackstate.io" which
@@ -843,6 +934,16 @@ sed -i '/^func newTestNpCollector/,/var component/{/var component/i\\tagentConfi
 }' "$DIR/comp/networkpath/npcollector/npcollectorimpl/npcollector_testutils.go"
 # ---------------------------------------------------------------------------
 
+# [sts] Rename embedded e2e-framework microvms agent config so the post-branding
+# `//go:embed files/_stackstate.yaml` directive in run.go finds a matching file.
+# Without this, comp/trace, cmd/trace-agent, cmd/host-profiler, cmd/otel-agent,
+# cmd/serverless-init, pkg/serverless/trace and several test/e2e-framework
+# targets all hit `pattern files/_stackstate.yaml: no matching files found`
+# during `go test`. New in DD 7.78.x; not present in STS-7.71.2.
+[ -f "$DIR/test/e2e-framework/scenarios/aws/microVMs/microvms/files/_datadog.yaml" ] && mv "$DIR/test/e2e-framework/scenarios/aws/microVMs/microvms/files/_datadog.yaml" "$DIR/test/e2e-framework/scenarios/aws/microVMs/microvms/files/_stackstate.yaml"
+
+# ---------------------------------------------------------------------------
+
 # find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -Ei 's/stackstate\.([A-Z][a-zA-Z0-9]*)/datadog.\1/g' {} +
 # find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -i 's/stackstateConfFile/datadogConfFile/g' {} +
 # find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -i 's/stackstateInstalledIntegrationsPattern/datadogInstalledIntegrationsPattern/g' {} +
@@ -854,3 +955,69 @@ sed -i '/^func newTestNpCollector/,/var component/{/var component/i\\tagentConfi
 # find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -i 's/NewConfig("stackstate")/NewConfig("datadog")/g' {} +
 # find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.go" -exec sed -i 's/stackstate = /datadog = /g' {} +
 # ---------------------------------------------------------------------------
+
+# [sts] OTLP configcheck tests use DD_OTLP_CONFIG_* env vars; branded BindEnv
+# binds them under the STS_ prefix. Without rebranding the test keys, IsEnabled
+# returns false (the env var exists but doesn't map to the otlp_config setting).
+find "$DIR/comp/otelcol/otlp/configcheck" -type f -name "*_test.go" -exec sed -i 's/"DD_OTLP_CONFIG_/"STS_OTLP_CONFIG_/g' {} +
+
+# [sts] comp/core/autodiscovery/providers remote_config_test uses
+# DD_REMOTE_CONFIGURATION_AGENT_INTEGRATIONS_{ALLOW,BLOCK}_LIST env vars.
+# Branded BindEnv reads them under STS_; without rebranding the test keys,
+# the allow/block lists end up empty and TestGetRemoteConfigurationAllowedIntegrations* fails.
+find "$DIR/comp/core/autodiscovery/providers" -type f -name "*_test.go" -exec sed -i 's/"DD_REMOTE_CONFIGURATION_/"STS_REMOTE_CONFIGURATION_/g' {} +
+
+# [sts] env.IsContainerized() reads DOCKER_DD_AGENT in production code. STS-branded
+# tests (after the gofmt loop in CONFIG_TEST_DIRS) call t.Setenv("DOCKER_STS_AGENT", ...)
+# but production keeps reading DOCKER_DD_AGENT, so containerized-mode logic doesn't
+# trigger. New in DD 7.78.x: TestPrivateActionRunnerAllowedPaths*Containerized*.
+# Brand the production read so the rest of the agent (which already runs in STS-
+# branded containers setting DOCKER_STS_AGENT) detects containerization correctly.
+sed -i 's/os\.Getenv("DOCKER_DD_AGENT")/os.Getenv("DOCKER_STS_AGENT")/g' "$DIR/pkg/config/env/environment.go"
+# [sts] Tests outside CONFIG_TEST_DIRS that toggle DOCKER_DD_AGENT to simulate
+# containerized mode (rshell run_command_test, systemd systemd_test) need the
+# branded variable too; otherwise env.IsContainerized() (now reading DOCKER_STS_AGENT)
+# stays false even after t.Setenv.
+find "$DIR/pkg/privateactionrunner/bundles/remoteaction/rshell" -type f -name "*_test.go" -exec sed -i 's/"DOCKER_DD_AGENT"/"DOCKER_STS_AGENT"/g' {} +
+find "$DIR/pkg/collector/corechecks/systemd" -type f -name "*_test.go" -exec sed -i 's/"DOCKER_DD_AGENT"/"DOCKER_STS_AGENT"/g' {} +
+
+# [sts] comp/forwarder/defaultforwarder/forwarder_test.go calls
+# SetWithoutSource("dd_url", ...) — but production reads `sts_url` after branding
+# (see bindEnvAndSetLogsConfigKeys gofmt rewrite in pkg/config/setup). Brand the
+# test config key so the custom URL takes effect; otherwise the forwarder falls
+# back to the default branded site URL and TestCreateTransactionsWithLocal sees
+# version-prefixed default URLs instead of the test's custom https://example.test.
+find "$DIR/comp/forwarder/defaultforwarder" -type f -name "*_test.go" -exec sed -i 's/"dd_url"/"sts_url"/g' {} +
+
+# [sts] create.NewConfig("datadog", ...) and SetDatadog(create.NewConfig("datadog", ...))
+# get used in pkg/config/{setup,mock} to instantiate viper/ntm with config name
+# "datadog". That makes viper search for `datadog.yaml`/`datadog.conf` even in
+# branded mode. cmd/agent/common TestImport and cmd/agent/subcommands/diagnose
+# error with `Config File "datadog" Not Found` because the branded test dir only
+# contains `stackstate.yaml`. Brand the config name so viper looks for stackstate.
+sed -i 's/create\.NewConfig("datadog"/create.NewConfig("stackstate"/g' "$DIR/pkg/config/setup/config.go" "$DIR/pkg/config/mock/mock.go"
+
+
+# [sts] pkg/config/nodetreemodel comparator tests build viperConf+ntmConf with the
+# `STS` env prefix (after gofmt branding of constructBothConfigs). BindEnv calls
+# auto-prefix to STS_*, but the test sources also have several literal DD_*
+# strings (`DD_TEST3` in expected lists, `t.Setenv("DD_PORT", ...)`,
+# `t.Setenv("DD_MY_FEATURE_ENABLED", ...)`, `t.Setenv("DD_FRUIT_CHERRY_SEED_NUM", ...)`)
+# that gofmt's "DD_" -> "STS_" rewrite doesn't match (gofmt only matches whole
+# string literals, not substrings). Use sed for substring rewriting.
+find "$DIR/pkg/config/nodetreemodel" -type f -name "*_test.go" -exec sed -i 's/"DD_\([A-Z][A-Z0-9_]*\)"/"STS_\1"/g' {} +
+# [sts] Same test file uses substrings like `database_monitoring.samples.dd_url`,
+# `apm_config.telemetry.dd_url`, `runtime_security_config.endpoints.dd_url` inside
+# longer string literals (config keys). gofmt's `"dd_url" -> "sts_url"` doesn't
+# match substrings, but the production bindEnvAndSetLogsConfigKeys (in pkg/config/setup,
+# also rebranded) registers the key as ...sts_url. Brand the test substrings too so
+# expected and actual config keys agree in TestCompareEmptyConfigSection /
+# TestCompareIsConfigured. The second sed brands `dd_url:` keys inside heredoc
+# YAML literals (where the leading dot is absent).
+sed -i 's/\.dd_url/\.sts_url/g; s/\(  *\)dd_url:/\1sts_url:/g' "$DIR/pkg/config/nodetreemodel/compatibility_test.go"
+
+# [sts] host-profiler agentprovider compares generated config against golden YAML
+# files in td/. The catch-all `s/datadoghq.com/stackstate.io/g` only touches *.go,
+# leaving the YAML golden files unbranded; the actual (branded) config diverges.
+# Brand the golden YAMLs so expected matches what production code generates.
+find "$DIR/comp/host-profiler/collector/impl/agentprovider/td" -type f \( -name "*.yaml" -o -name "*.yml" \) -exec sed -i 's/datadoghq\.com/stackstate.io/g' {} +

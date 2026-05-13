@@ -608,7 +608,7 @@ tegrastats_path: %q
 use_sudo: true
 `, tt.path)
 
-			err := tegraCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, integration.Data(instanceConfig), nil, "test", "provider")
+			err := tegraCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data(instanceConfig), nil, "test", "provider")
 			if tt.hasInvalidChars {
 				assert.ErrorContains(t, err, "tegrastats_path contains invalid characters")
 			} else if !tt.isAbsolute {

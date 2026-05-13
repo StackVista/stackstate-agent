@@ -130,7 +130,7 @@ agent-x86:
   variables:
     <<: [*commonvariables, *agent_variables]
     ARCH: amd64
-    BUILD_IMAGE: ${REGISTRY_QUAY_URL}/stackstate/datadog_build_linux_x64:0cd01a13
+    BUILD_IMAGE: ${REGISTRY_QUAY_URL}/stackstate/datadog_build_linux_x64:4ed2400d
     RPM_BUILD_IMAGE: ${REGISTRY_QUAY_URL}/stackstate/datadog_build_rpm_x64:d74ccd55
     RUNNER_TAG_XL: sts-k8s-xl-runner
     RUNNER_TAG_M: sts-k8s-m-runner
@@ -154,7 +154,7 @@ agent-arm:
   variables:
     <<: [*commonvariables, *agent_variables]
     ARCH: arm64
-    BUILD_IMAGE: ${REGISTRY_QUAY_URL}/stackstate/datadog_build_linux_arm64:0cd01a13
+    BUILD_IMAGE: ${REGISTRY_QUAY_URL}/stackstate/datadog_build_linux_arm64:4ed2400d
     RPM_BUILD_IMAGE: ${REGISTRY_QUAY_URL}/stackstate/datadog_build_rpm_arm64:d74ccd55
     RUNNER_TAG_XL: sts-k8s-xl-arm64-runner
     RUNNER_TAG_M: sts-k8s-m-arm64-runner

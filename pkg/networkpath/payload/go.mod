@@ -3,18 +3,8 @@ module github.com/DataDog/datadog-agent/pkg/networkpath/payload
 go 1.25.0
 
 require (
-<<<<<<< HEAD
 	github.com/DataDog/datadog-agent/pkg/network/payload v0.78.3-rc.2
 	github.com/stretchr/testify v1.11.1
-||||||| 20c9c848e4
-	github.com/DataDog/datadog-agent/pkg/network/payload v0.0.0-20250128160050-7ac9ccd58c07
-	github.com/google/uuid v1.6.0
-	github.com/stretchr/testify v1.10.0
-=======
-	github.com/DataDog/datadog-agent/pkg/network/payload v0.71.2
-	github.com/google/uuid v1.6.0
-	github.com/stretchr/testify v1.10.0
->>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect

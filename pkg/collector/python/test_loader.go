@@ -389,7 +389,7 @@ func testLoadCustomCheckEmitsCheckReadyMetric(t *testing.T) {
 	senderManager := mocksender.CreateDefaultDemultiplexer()
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
-	loader, err := NewPythonCheckLoader(senderManager, logReceiver, tagger, nil)
+	loader, err := NewPythonCheckLoader(senderManager, handler.NewMockCheckManager(), logReceiver, tagger, nil) // [sts] checkManager arg added in 7.78.2
 	require.NoError(t, err)
 
 	// Setup for loading a custom check (not a wheel)
@@ -401,7 +401,7 @@ func testLoadCustomCheckEmitsCheckReadyMetric(t *testing.T) {
 	C.get_check_deprecated_check = newMockPyObjectPtr()
 	C.get_check_deprecated_return = 1
 
-	check, err := loader.Load(senderManager, conf, conf.Instances[0], 0)
+	check, err := loader.Load(senderManager, handler.NewMockCheckManager(), conf, conf.Instances[0], 0) // [sts] checkManager arg added in 7.78.2
 	runtime.SetFinalizer(check, nil)
 	require.NoError(t, err)
 

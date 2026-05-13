@@ -102,8 +102,8 @@ func NewKubernetesAPIEventsCheck(base core.CheckBase, instance *EventsConfig) *E
 }
 
 // Configure parses the check configuration and init the check.
-func (k *EventsCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string) error {
-	err := k.ConfigureKubeAPICheck(senderManager, checkManager, config, initConfig, source)
+func (k *EventsCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
+	err := k.ConfigureKubeAPICheck(senderManager, checkManager, config, initConfig, source, provider)
 	if err != nil {
 		return err
 	}

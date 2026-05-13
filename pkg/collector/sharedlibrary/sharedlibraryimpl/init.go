@@ -14,6 +14,7 @@ import (
 	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/loaders"
 	"github.com/DataDog/datadog-agent/pkg/collector/sharedlibrary/ffi"
 	pkgconfigsetup "github.com/DataDog/datadog-agent/pkg/config/setup"
@@ -25,9 +26,9 @@ import (
 func InitSharedLibraryChecksLoader() {
 	libFolderPath := pkgconfigsetup.Datadog().GetString("shared_library_check.library_folder_path")
 
-	factory := func(senderManager sender.SenderManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filter workloadfilter.Component) (check.Loader, int, error) {
+	factory := func(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filter workloadfilter.Component) (check.Loader, int, error) {
 		sharedLibraryLoader := ffi.NewSharedLibraryLoader(libFolderPath)
-		loader, err := newCheckLoader(senderManager, logReceiver, tagger, filter, sharedLibraryLoader)
+		loader, err := newCheckLoader(senderManager, checkManager, logReceiver, tagger, filter, sharedLibraryLoader)
 		priority := 40
 		return loader, priority, err
 	}

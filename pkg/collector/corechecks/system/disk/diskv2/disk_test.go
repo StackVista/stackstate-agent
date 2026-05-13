@@ -1336,7 +1336,7 @@ func TestGivenADiskCheckWithDefaultConfig_WhenPartitionDiscoveryTimeout_ThenErro
 	// Configure with a short timeout (1s) to keep the test fast.
 	senderManager := mocksender.CreateDefaultDemultiplexer()
 	config := integration.Data([]byte("timeout: 1"))
-	diskCheck.Configure(senderManager, integration.FakeConfigHash, config, nil, "test", "")
+	diskCheck.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, config, nil, "test", "")
 	m := mocksender.NewMockSenderWithSenderManager(diskCheck.ID(), senderManager)
 	m.SetupAcceptAll()
 
@@ -1484,9 +1484,9 @@ func TestGivenMultipleDiskInstances_WhenConfiguredWithDifferentTags_ThenEachInst
 `))
 	config2 := integration.Data([]byte(``))
 
-	err := check1.Configure(senderManager, 1, config1, nil, "test", "")
+	err := check1.Configure(senderManager, handler.NewMockCheckManager(), 1, config1, nil, "test", "")
 	require.NoError(t, err)
-	err = check2.Configure(senderManager, 2, config2, nil, "test", "")
+	err = check2.Configure(senderManager, handler.NewMockCheckManager(), 2, config2, nil, "test", "")
 	require.NoError(t, err)
 
 	assert.NotEqual(t, check1.ID(), check2.ID(),

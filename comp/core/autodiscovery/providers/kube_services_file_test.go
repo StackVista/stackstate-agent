@@ -3,7 +3,10 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build clusterchecks && kubeapiserver
+// [sts] Tightening to also require `cel`: the test uses CELSelector data structures and the
+// `kubeEndpointIdentifier` helper which lives in `kube_endpoints_file_test.go` (cel-tagged).
+// STS doesn't include `cel` in AGENT_TAGS so this DD-new test is skipped in STS builds.
+//go:build clusterchecks && kubeapiserver && cel
 
 package providers
 

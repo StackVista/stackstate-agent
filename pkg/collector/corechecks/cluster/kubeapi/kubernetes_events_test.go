@@ -340,7 +340,7 @@ event_categories:
   DarkMystery: V0ID
   EnsuringLoadBalancer: Activities
 `
-	err := evCheck.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(mappingOfCustomEvents), []byte(``), "test")
+	err := evCheck.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(mappingOfCustomEvents), []byte(``), "test", "") // [sts] provider arg added in 7.78.2
 	assert.NoError(t, err)
 
 	mockSender := mocksender.NewMockSender(evCheck.ID())

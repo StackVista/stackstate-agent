@@ -28,6 +28,9 @@ static void initHealthTests(rtloader_t *rtloader) {
 	set_submit_health_start_snapshot_cb(rtloader, submitHealthStartSnapshot);
 	set_submit_health_stop_snapshot_cb(rtloader, submitHealthStopSnapshot);
 }
+static inline void call_free(void* ptr) {
+    _free(ptr);
+}
 */
 import "C"
 
@@ -87,7 +90,7 @@ except Exception as e:
 	with open(r'%s', 'w') as f:
 		f.write("{}: {}\n".format(type(e).__name__, e))
 `, call, tmpfile.Name())))
-	defer C._free(unsafe.Pointer(code))
+	defer C.call_free(unsafe.Pointer(code))
 
 	runtime.LockOSThread()
 	state := C.ensure_gil(rtloader)

@@ -25,8 +25,8 @@ type CommonCheck struct {
 	ac                    *apiserver.APIClient
 }
 
-func (k *CommonCheck) ConfigureKubeAPICheck(senderManager sender.SenderManager, checkManager handler.CheckManager, config, initConfig integration.Data, source string) error {
-	return k.CommonConfigure(senderManager, checkManager, initConfig, config, source)
+func (k *CommonCheck) ConfigureKubeAPICheck(senderManager sender.SenderManager, checkManager handler.CheckManager, config, initConfig integration.Data, source string, provider string) error {
+	return k.CommonConfigure(senderManager, checkManager, initConfig, config, source, provider)
 }
 
 func (k *CommonCheck) InitKubeAPICheck() error {

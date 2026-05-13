@@ -4,6 +4,10 @@
 // Copyright 2016-2019 Datadog, Inc.
 //go:build kubeapiserver
 
+// [sts] DD 7.78.x bumped k8s client-go: serialization no longer emits empty
+// `metadata.creationTimestamp` keys in nested PodTemplate / JobTemplate maps.
+// Expected SourceProperties below were stripped of the now-absent keys.
+
 package topologycollectors
 
 import (
@@ -142,12 +146,10 @@ func cronJobV1B1SPPlusStatus2() *topology.Component {
 			"spec": map[string]interface{}{
 				"concurrencyPolicy": "Allow",
 				"jobTemplate": map[string]interface{}{
-					"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+					"metadata": map[string]interface{}{},
 					"spec": map[string]interface{}{
 						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": interface{}(nil),
-							},
+							"metadata": map[string]interface{}{},
 							"spec": map[string]interface{}{
 								"containers": []interface{}{
 									map[string]interface{}{
@@ -202,12 +204,10 @@ func cronJobV1B1SPPlusStatus1() *topology.Component {
 			"spec": map[string]interface{}{
 				"concurrencyPolicy": "Allow",
 				"jobTemplate": map[string]interface{}{
-					"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+					"metadata": map[string]interface{}{},
 					"spec": map[string]interface{}{
 						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": interface{}(nil),
-							},
+							"metadata": map[string]interface{}{},
 							"spec": map[string]interface{}{
 								"containers": []interface{}{
 									map[string]interface{}{
@@ -262,12 +262,10 @@ func cronJobV1SPPlusStatus() *topology.Component {
 			"spec": map[string]interface{}{
 				"concurrencyPolicy": "Allow",
 				"jobTemplate": map[string]interface{}{
-					"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+					"metadata": map[string]interface{}{},
 					"spec": map[string]interface{}{
 						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": interface{}(nil),
-							},
+							"metadata": map[string]interface{}{},
 							"spec": map[string]interface{}{
 								"containers": []interface{}{
 									map[string]interface{}{

@@ -3,32 +3,16 @@ module github.com/DataDog/datadog-agent/pkg/telemetry
 go 1.25.0
 
 require (
-<<<<<<< HEAD
 	github.com/DataDog/datadog-agent/comp/core/telemetry v0.78.3-rc.2
-||||||| 20c9c848e4
-	github.com/DataDog/datadog-agent/comp/core/telemetry v0.61.0
-=======
-	github.com/DataDog/datadog-agent/comp/core/telemetry v0.71.2
->>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	go.uber.org/atomic v1.11.0
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
 
 require (
-<<<<<<< HEAD
 	github.com/DataDog/datadog-agent/comp/def v0.78.3-rc.2 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/fxutil v0.78.3-rc.2 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/option v0.78.3-rc.2 // indirect
-||||||| 20c9c848e4
-	github.com/DataDog/datadog-agent/comp/def v0.61.0 // indirect
-	github.com/DataDog/datadog-agent/pkg/util/fxutil v0.61.0 // indirect
-	github.com/DataDog/datadog-agent/pkg/util/option v0.64.0-devel // indirect
-=======
-	github.com/DataDog/datadog-agent/comp/def v0.71.2 // indirect
-	github.com/DataDog/datadog-agent/pkg/util/fxutil v0.71.2 // indirect
-	github.com/DataDog/datadog-agent/pkg/util/option v0.71.2 // indirect
->>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

@@ -8,6 +8,7 @@
 package integrationtests
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler" // [sts] auto-inserted for NewMockCheckManager
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -144,7 +145,7 @@ func TestCheckRunWithRealHardware(t *testing.T) {
 	require.True(t, ok)
 	checkInternal.SetContainerProvider(mock_containers.NewMockContainerProvider(gomock.NewController(t)))
 
-	err = checkInstance.Configure(senderManager, integration.FakeConfigHash, []byte{}, []byte{}, "test", "provider")
+	err = checkInstance.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, []byte{}, []byte{}, "test", "provider")
 	require.NoError(t, err)
 	t.Cleanup(func() { checkInstance.Cancel() })
 

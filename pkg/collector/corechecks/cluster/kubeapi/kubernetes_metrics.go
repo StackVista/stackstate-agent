@@ -92,8 +92,8 @@ func (k *MetricsCheck) getClusterName() {
 }
 
 // Configure parses the check configuration and init the check.
-func (k *MetricsCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string) error {
-	err := k.CommonConfigure(senderManager, checkManager, initConfig, config, source)
+func (k *MetricsCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
+	err := k.CommonConfigure(senderManager, checkManager, initConfig, config, source, provider)
 	if err != nil {
 		return err
 	}

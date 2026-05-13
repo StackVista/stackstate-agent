@@ -5,7 +5,6 @@
 
 ## @env STS_API_KEY - string - required
 api_key:
-
 ## @param app_key - string - optional
 ## The application key used to access Datadog's programatic API.
 ## Create a new application key here: https://app.datadoghq.com/organization-settings/application-keys .
@@ -18,7 +17,6 @@ api_key:
 ## The host of the StackState intake server to send data to
 #
 sts_url:
-
 ## @param proxy - custom object - optional
 ## If you need a proxy to connect to the Internet, provide it here (default:
 ## disabled). You can use the 'no_proxy' list to specify hosts that should
@@ -815,16 +813,13 @@ sts_url:
 ## WARNING: disabling it on every Agent leads to display and billing issues.
 # [sts] disable metadata collection
 enable_metadata_collection: false
-
 # [sts] disable inventories, our backend doesn't support this payload
 inventories_enabled: false
-
 ## @param enable_gohai - boolean - optional - default: true
 ## @env DD_ENABLE_GOHAI - boolean - optional - default: true
 ## Enable the gohai collection of systems data.
 # [sts] disable gohai collection
 enable_gohai: false
-
 ## @param enable_signing_metadata_collection - boolean - optional - default: true
 ## @env DD_ENABLE_SIGNING_METADATA_COLLECTION - boolean - optional - default: true
 ## Enable the Linux package signing medatada collection.
@@ -3701,38 +3696,7 @@ enable_gohai: false
 ## @param skip_validate_clustername - boolean - optional - default: true
 ## Disables the kubernetes cluster name validation in the StackState cluster agent.
 skip_validate_clustername: true
-
 {{ end -}}
-{{- if .PrometheusScrape }}
-## @param prometheus_scrape - custom object - optional
-## This section configures the Autodiscovery based on the Prometheus annotations
-#
-# prometheus_scrape:
-
-#   # @param enabled - boolean - optional - default: false
-#   # @env DD_PROMETHEUS_SCRAPE_ENABLED - boolean - optional - default: false
-#   # Enables the prometheus config provider
-#
-#   enabled: false
-
-#   # @param service_endpoints - boolean - optional - default: false
-#   # @env DD_PROMETHEUS_SCRAPE_SERVICE_ENDPOINTS - boolean - optional - default: false
-#   # Enables Service Endpoints checks in the prometheus config provider
-#
-#   service_endpoints: false
-
-#   # @param checks - custom object - optional
-#   # @env DD_PROMETHEUS_SCRAPE_CHECKS - custom object - optional
-#   # Defines any extra prometheus/openmetrics check configurations to be handled by the prometheus config provider
-#
-#   checks: {}
-
-#   # @param version - integer - optional - default: 1
-#   # @env DD_PROMETHEUS_SCRAPE_VERSION - integer - optional - default: 1
-#   # Version of the openmetrics check to be scheduled by the Prometheus auto-discovery
-#
-#   version: 1
-{{- end -}}
 {{- if .CloudFoundry }}
 
 #######################################################
@@ -3835,7 +3799,6 @@ skip_validate_clustername: true
 #   apps_batch_size: 5000
 {{- end -}}
 {{- if .CoreAgent }}
-
 ###################################
 ## Network Devices Configuration ##
 ###################################

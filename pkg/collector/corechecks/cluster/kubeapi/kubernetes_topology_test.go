@@ -55,7 +55,7 @@ cluster_name: mycluster
 collect_topology: true
 csi_pv_mapper_enabled: true
 `
-		err := check.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(nothingIsDisabledConfig), nil, "")
+		err := check.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(nothingIsDisabledConfig), nil, "", "") // [sts] provider arg added in 7.78.2
 		assert.NoError(t, err)
 
 		err = check.Run()
@@ -89,7 +89,7 @@ resources:
   cronjobs: false
   secrets: false
 `
-	err := check.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(allResourcesAreDisabledConfig), nil, "")
+	err := check.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(allResourcesAreDisabledConfig), nil, "", "") // [sts] provider arg added in 7.78.2
 	assert.NoError(t, err)
 
 	err = check.Run()
@@ -102,7 +102,7 @@ func testConfigParsed(t *testing.T, input string, expected TopologyConfig) {
 	opt := KubernetesAPITopologyFactory()
 	factory, _ := opt.Get()
 	check := factory().(*TopologyCheck)
-	err := check.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(input), []byte(""), "whatever")
+	err := check.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(input), []byte(""), "whatever", "") // [sts] provider arg added in 7.78.2
 	assert.NoError(t, err)
 	assert.EqualValues(t, &expected, check.instance)
 }

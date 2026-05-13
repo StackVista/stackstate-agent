@@ -48,8 +48,8 @@ func warnDisabledResource(name string, additionalWarning string, isEnabled bool)
 }
 
 // Configure parses the check configuration and init the check.
-func (t *TopologyCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string) error {
-	err := t.ConfigureKubeAPICheck(senderManager, checkManager, config, initConfig, source)
+func (t *TopologyCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
+	err := t.ConfigureKubeAPICheck(senderManager, checkManager, config, initConfig, source, provider)
 	if err != nil {
 		return err
 	}

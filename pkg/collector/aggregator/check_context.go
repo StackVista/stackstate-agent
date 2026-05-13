@@ -82,9 +82,16 @@ var testMutex = sync.Mutex{}
 
 func withLockedCheckContext(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filterStore workloadfilter.Component) {
 	testMutex.Lock()
+	// [sts] Defensive cleanup: if a previous test left a context behind (e.g.,
+	// test panicked between ScopeInitCheckContext returning and `defer release()`
+	// being registered), reset state instead of panicking — a panic here while
+	// holding checkContextMutex would deadlock subsequent test runs of this
+	// binary. Adopting the cleanup behavior also removes the need for the
+	// pre-init defensive call in ScopeInitCheckContext.
 	checkContextMutex.Lock()
 	if checkCtx != nil {
-		panic("CheckContext was left initialized")
+		checkCtx.checkManager.Stop()
+		checkCtx = nil
 	}
 	checkContextMutex.Unlock()
 	InitializeCheckContext(senderManager, checkManager, logReceiver, tagger, filterStore)

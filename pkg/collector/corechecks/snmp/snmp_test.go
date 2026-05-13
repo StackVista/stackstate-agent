@@ -2725,9 +2725,9 @@ namespace: namespace
 	}, false).Once()
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := check1.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig1, []byte(``), "test", "provider")
+	err := check1.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig1, []byte(``), "test", "provider")
 	assert.Nil(t, err)
-	err = check2.Configure(senderManager, integration.FakeConfigHash, rawInstanceConfig2, []byte(``), "test", "provider")
+	err = check2.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, rawInstanceConfig2, []byte(``), "test", "provider")
 	assert.Nil(t, err)
 
 	mockScanManager.AssertExpectations(t)

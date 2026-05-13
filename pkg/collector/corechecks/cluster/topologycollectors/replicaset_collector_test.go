@@ -4,6 +4,10 @@
 // Copyright 2016-2019 Datadog, Inc.
 //go:build kubeapiserver
 
+// [sts] DD 7.78.x bumped k8s client-go: serialization no longer emits empty
+// `metadata.creationTimestamp` keys in nested PodTemplate / JobTemplate maps.
+// Expected SourceProperties below were stripped of the now-absent keys.
+
 package topologycollectors
 
 import (
@@ -72,8 +76,7 @@ func TestReplicaSetCollector(t *testing.T) {
 						"replicas": float64(1),
 						"selector": nil,
 						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": nil},
+							"metadata": map[string]interface{}{},
 							"spec": map[string]interface{}{
 								"containers": nil,
 							},
@@ -128,8 +131,7 @@ func TestReplicaSetCollector(t *testing.T) {
 						"replicas": float64(1),
 						"selector": nil,
 						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": nil},
+							"metadata": map[string]interface{}{},
 							"spec": map[string]interface{}{
 								"containers": nil,
 							},
@@ -185,8 +187,7 @@ func TestReplicaSetCollector(t *testing.T) {
 						"replicas": float64(1),
 						"selector": nil,
 						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": nil},
+							"metadata": map[string]interface{}{},
 							"spec": map[string]interface{}{
 								"containers": nil,
 							},

@@ -99,7 +99,7 @@ func TestCommonConfigureMinCollectionInterval(t *testing.T) {
 	mockSender := mocksender.NewMockSender(mycheck.ID())
 
 	mockSender.On("DisableDefaultHostname", true).Return().Once()
-	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), nil, []byte(legacyInstance), "test")
+	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), nil, []byte(legacyInstance), "test", "") // [sts] provider arg added in 7.78.2
 	assert.NoError(t, err)
 	assert.Equal(t, 60*time.Second, mycheck.Interval())
 }
@@ -115,7 +115,7 @@ func TestCommonConfigureClashMinCollectionInterval(t *testing.T) {
 	mockSender := mocksender.NewMockSender(mycheck.ID())
 
 	mockSender.On("DisableDefaultHostname", true).Return().Once()
-	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), nil, []byte(legacyInstanceClash), "test")
+	err := mycheck.CommonConfigure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), nil, []byte(legacyInstanceClash), "test", "") // [sts] provider arg added in 7.78.2
 	assert.NoError(t, err)
 	assert.Equal(t, 30*time.Second, mycheck.Interval())
 }

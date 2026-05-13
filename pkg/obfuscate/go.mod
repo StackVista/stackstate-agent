@@ -3,16 +3,8 @@ module github.com/DataDog/datadog-agent/pkg/obfuscate
 go 1.25.0
 
 require (
-<<<<<<< HEAD
 	github.com/DataDog/datadog-go/v5 v5.8.3
 	github.com/DataDog/go-sqllexer v0.2.1
-||||||| 20c9c848e4
-	github.com/DataDog/datadog-go/v5 v5.6.0
-	github.com/DataDog/go-sqllexer v0.1.6
-=======
-	github.com/DataDog/datadog-go/v5 v5.6.0
-	github.com/DataDog/go-sqllexer v0.1.8
->>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	github.com/outcaste-io/ristretto v0.2.3
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/atomic v1.11.0
@@ -30,16 +22,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-<<<<<<< HEAD
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-||||||| 20c9c848e4
-	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-=======
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
->>>>>>> origin/backport-7.71.2-common-ancestor-7.78.2
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 

@@ -662,7 +662,7 @@ func TestNTPUsesResponseTimestamp(t *testing.T) {
 
 	ntpCheck := new(NTPCheck)
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	ntpCheck.Configure(senderManager, integration.FakeConfigHash, ntpCfg, ntpInitCfg, "test", "provider")
+	ntpCheck.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, ntpCfg, ntpInitCfg, "test", "provider")
 
 	mockSender := mocksender.NewMockSenderWithSenderManager(ntpCheck.ID(), senderManager)
 

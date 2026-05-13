@@ -66,4 +66,41 @@ func stackstate(config pkgconfigmodel.Setup) {
 	// [sts] disable periodic connectivity checker — STS receiver does not support all DD endpoints,
 	// causing 404s in receiver logs every 10 minutes
 	config.BindEnvAndSetDefault("connectivity_checker.enabled", false)
+
+	// [sts] STS-specific kubernetes collector toggles. Registered in 7.71.2's
+	// pkg/config/setup/config.go and migrated here when DD 7.78.x split per-component
+	// init functions. Read by pkg/collector/corechecks/cluster/kubeapi/{kubernetes_topology_config,kubernetes_metrics}.go
+	// and asserted by pkg/config/legacy/kubernetes_test.go TestConvertKubernetes.
+	config.BindEnvAndSetDefault("collect_kubernetes_metrics", false)
+	config.BindEnvAndSetDefault("collect_kubernetes_topology", false)
+	config.BindEnvAndSetDefault("collect_kubernetes_timeout", 10)
+	config.BindEnvAndSetDefault("configmap_max_datasize", 0)
+	config.BindEnvAndSetDefault("kubernetes_csi_pv_mapper_enabled", false)
+
+	// [sts] Tolerate kubelet TLS verification failures and insecure transports.
+	// STS clusters often run with self-signed kubelet certs; the DD default
+	// (false) breaks discovery on those clusters. Read by
+	// pkg/util/kubernetes/kubelet/kubelet_client.go.
+	config.BindEnvAndSetDefault("kubelet_fallback_to_unverified_tls", true)
+	config.BindEnvAndSetDefault("kubelet_fallback_to_insecure", true)
+}
+
+// GetMaxCapacity returns the maximum amount of elements per batch for the transactionbatcher.
+// [sts]
+func GetMaxCapacity(config pkgconfigmodel.Reader) int {
+	if config.IsSet("batcher_capacity") {
+		return config.GetInt("batcher_capacity")
+	}
+	return DefaultBatcherBufferSize
+}
+
+// GetTxManagerConfig returns the transaction manager configuration: buffer size, ticker interval,
+// timeout duration, eviction duration.
+// [sts]
+func GetTxManagerConfig(config pkgconfigmodel.Reader) (int, time.Duration, time.Duration, time.Duration) {
+	txBufferSize := Datadog().GetInt("transaction_manager_channel_buffer_size")
+	txTickerInterval := time.Second * time.Duration(config.GetInt("transaction_ticket_interval_seconds"))
+	txTimeoutDuration := time.Second * time.Duration(config.GetInt("transaction_timeout_duration_seconds"))
+	txEvictionDuration := time.Second * time.Duration(config.GetInt("transaction_eviction_duration_seconds"))
+	return txBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration
 }

@@ -35,7 +35,7 @@ func TestReportClusterQuotas(t *testing.T) {
 	opt := KubernetesAPIMetricsFactory()
 	factory, _ := opt.Get()
 	kubeAPIMetricsCheck := factory().(*MetricsCheck)
-	err = kubeAPIMetricsCheck.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, instanceCfg, initCfg, "test")
+	err = kubeAPIMetricsCheck.Configure(aggregator.NewNoOpSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, instanceCfg, initCfg, "test", "") // [sts] provider arg added in 7.78.2
 	require.NoError(t, err)
 
 	mocked := mocksender.NewMockSender(kubeAPIMetricsCheck.ID())

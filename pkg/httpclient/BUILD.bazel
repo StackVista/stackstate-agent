@@ -1,0 +1,13 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "httpclient",
+    srcs = ["client.go"],
+    importpath = "github.com/DataDog/datadog-agent/pkg/httpclient",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_datadog_datadog_agent_pkg_config_setup//:setup",
+        "@com_github_datadog_datadog_agent_pkg_util_log//:log",
+        "@com_github_stackvista_stackstate_receiver_go_client//pkg/httpclient",
+    ],
+)

@@ -343,7 +343,7 @@ func TestCheck_FindMatchingProfile(t *testing.T) {
 
 	// Configure the check
 	profile.SetConfdPathAndCleanProfiles()
-	err := check.Configure(senderManager, integration.FakeConfigHash, validConfig, baseInitConfig, "test", "provider")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, validConfig, baseInitConfig, "test", "provider")
 	require.NoError(t, err)
 
 	// mock the time
@@ -413,7 +413,7 @@ func TestCheck_FindMatchingProfile_Error(t *testing.T) {
 
 	// Configure the check
 	profile.SetConfdPathAndCleanProfiles()
-	err := check.Configure(senderManager, integration.FakeConfigHash, validConfig, baseInitConfig, "test", "provider")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, validConfig, baseInitConfig, "test", "provider")
 	require.NoError(t, err)
 
 	// mock the time

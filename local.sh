@@ -15,7 +15,7 @@ else
 fi
 
 export PYTHON_RUNTIMES="3"
-export BRANDED=true
+export BRANDED=${BRANDED:-true}
 export OMNIBUS_FORCE_PACKAGES=true
 
 WHAT=$1
@@ -57,7 +57,7 @@ if [ "${WHAT}" = "SHELL" ]; then
         -e REGISTRY="${REGISTRY}" \
         -e ORG="${ORG:-stackstate}" \
         --workdir=${PWD} \
-        registry.tooling.stackstate.io/quay/stackstate/datadog_build_linux_x64:0cd01a13 bash
+        registry.tooling.stackstate.io/quay/stackstate/datadog_build_linux_x64:4ed2400d bash
 fi
 
 # Prepare a copy of the agent in the SRC_DIR to make sure that in a containerized environment the source directory
@@ -139,7 +139,7 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "DEPS_DEB" ] || [ "${WHAT}" = "UP_TO_C
         go work vendor
     fi
 
-    inv agent.version --major-version 3 -u > version.txt
+    inv agent.version -u > version.txt
     echo "          ---                      ---"
     echo "          --- Agent Version String ---"
     echo "          ---                      ---"
@@ -181,7 +181,7 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_AGENT" ] || [ "${WHAT}" = "UP_T
     inv -e rtloader.install
     echo " ******** --- Building agent       ---"
     # shellcheck disable=SC2164
-    inv -e agent.build --major-version "3"
+    inv -e agent.build
 
     cd "$CI_PROJECT_DIR" || exit
 fi
@@ -197,11 +197,11 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_DEB" ] || [ "${WHAT}" = "UP_TO_
     echo "          --- Building deb package  ---"
     echo "          ---                      ---"
     mv "$SRC_PATH"/.omnibus /omnibus || mkdir -p /omnibus
-    inv agent.version --major-version 3
+    inv agent.version
     cat version.txt || true
     source setup_artifact_registry.sh
     export OMNIBUS_BASE_DIR="/.omnibus"
-    inv -e omnibus.build --gem-path $SRC_PATH/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $SRC_PATH/vendor --skip-deps --skip-sign --major-version 3
+    inv -e omnibus.build --gem-path $SRC_PATH/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $SRC_PATH/vendor --skip-deps --skip-sign
 
         # Prepare outputs
     mkdir -p $SRC_PATH/outcomes/pkg && mkdir -p $SRC_PATH/outcomes/dockerfiles && mkdir -p $SRC_PATH/outcomes/binary
@@ -234,13 +234,13 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "UNIT_TESTS" ] || [ "${WHAT}" = "UP_TO
     echo "          --- Running Unit Tests   ---"
     echo "          ---                      ---"
 
-    inv -e agent.build --race --major-version $MAJOR_VERSION
+    inv -e agent.build --race
     # TODO: check why formatting rules differ from previous step
     # - gofmt -l -w -s ./pkg ./cmd
     inv -e rtloader.test
     invoke install-tools
-    echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION"
-    inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION
+    echo "inv -e test --coverage --race --profile --cpus 4"
+    inv -e test --coverage --race --profile --cpus 4
 
     cd "$CI_PROJECT_DIR" || exit
 fi

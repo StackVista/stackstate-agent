@@ -9,6 +9,9 @@ package python
 
 import (
 	"encoding/json"
+	"unsafe"
+
+	"github.com/DataDog/datadog-agent/pkg/collector/aggregator"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -70,7 +73,7 @@ func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C
 	rawHostname := C.GoString(hostname)
 	rawValue := float64(value)
 	rawTimestamp := int64(timestamp)
-	rawTags := cStringArrayToSlice(tags)
+	rawTags := aggregator.CStringArrayToSlice(unsafe.Pointer(tags))
 
 	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetric{
 		Name:      rawName,
