@@ -73,7 +73,7 @@ deps_deb:
     - go work vendor
     - inv -e deps --verbose
     - go mod tidy
-    - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
+    - inv agent.version -u > version.txt  # [sts] DD 7.78 removed --major-version from inv agent.version
     - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz . || echo "No vendor"
   artifacts:
     <<: *artifacts_expire_in
@@ -104,7 +104,7 @@ deps_deb:
 #    - inv -e deps --verbose
 #    - go mod tidy
 #    - go mod vendor
-#    - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
+#    - inv agent.version -u > version.txt  # [sts] DD 7.78 removed --major-version from inv agent.version
 #    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
 #    - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
 #    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz .
@@ -143,7 +143,7 @@ unbranded_unit_tests:
     - export GITHUB_ORG=DataDog
     - export BRANDED=false
     - export AGENT_REPO_NAME=datadog-agent
-    - inv -e agent.build --race --major-version $MAJOR_VERSION
+    - inv -e agent.build --race
     # TODO: check why formatting rules differ from previous step
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
@@ -164,8 +164,8 @@ unbranded_unit_tests:
     # `go build` to compile fixture binaries; with our cold modcache (we run
     # `go clean -modcache` at the top of each job) those subprocesses can blow
     # the 3-minute default on a busy runner.
-    - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600"
-    - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600
+    - echo "inv -e test --coverage --race --profile --cpus 4 --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600"
+    - inv -e test --coverage --race --profile --cpus 4 --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600
   tags:
     - ${RUNNER_TAG_XL}
   retry:
@@ -197,7 +197,7 @@ branded_unit_tests:
     - export AGENT_REPO_NAME=datadog-agent
     - export OMNIBUS_FORCE_PACKAGES=true
     - if [ "$(echo "${BRANDED}" | tr '[:upper:]' '[:lower:]')" = "true" ]; then ./fix_branding.sh; fi
-    - inv -e agent.build --race --major-version $MAJOR_VERSION
+    - inv -e agent.build --race
     # TODO: check why formatting rules differ from previous step
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
@@ -218,8 +218,8 @@ branded_unit_tests:
     # `go build` to compile fixture binaries; with our cold modcache (we run
     # `go clean -modcache` at the top of each job) those subprocesses can blow
     # the 3-minute default on a busy runner.
-    - echo "inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600"
-    - inv -e test --coverage --race --profile --cpus 4 --major-version $MAJOR_VERSION --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600
+    - echo "inv -e test --coverage --race --profile --cpus 4 --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600"
+    - inv -e test --coverage --race --profile --cpus 4 --build-exclude=$STS_UT_BUILD_EXCLUDE --timeout=600
   tags:
     - ${RUNNER_TAG_XL}
   retry:
@@ -274,7 +274,7 @@ build_binaries:
     - export BRANDED=true
     - export AGENT_REPO_NAME=datadog-agent
     - if [ "$(echo "${BRANDED}" | tr '[:upper:]' '[:lower:]')" = "true" ]; then ./fix_branding.sh; fi
-    - inv -e agent.build --major-version $MAJOR_VERSION
+    - inv -e agent.build
   tags:
     - ${RUNNER_TAG_XL}
   retry:
@@ -353,12 +353,12 @@ build_deb:
     - go work sync
     - go work vendor
     - inv -e deps --verbose
-    - inv agent.version --major-version $MAJOR_VERSION
+    - inv agent.version  # [sts] DD 7.78 removed --major-version from inv agent.version
     - cat version.txt || true
     - source ./.gitlab-scripts/setup_artifact_registry.sh
     - export LD_LIBRARY_PATH="/opt/stackstate-agent/embedded/lib/python3.12/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
     - echo ${LD_LIBRARY_PATH}
-    - inv -e omnibus.build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version $MAJOR_VERSION
+    - inv -e omnibus.build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign
 
     # Prepare outputs
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
@@ -415,12 +415,12 @@ build_deb:
 #    - mv $CI_PROJECT_DIR/.omnibus /omnibus || mkdir -p /omnibus
 #
 #    - conda activate $CONDA_ENV
-#    - inv agent.version --major-version $MAJOR_VERSION
+#    - inv agent.version
 #    - cat version.txt || true
 #    - source ./.gitlab-scripts/setup_artifact_registry.sh
 #
 #    # TODO:  --python-runtimes "$PYTHON_RUNTIMES" --system-probe-bin=/tmp/system-probe --libbcc-tarball=/tmp/libbcc.tar.xz
-#    - inv -e omnibus.build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --skip-deps --major-version $MAJOR_VERSION
+#    - inv -e omnibus.build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --skip-deps
 #      #  - find $OMNIBUS_BASE_DIR/pkg -type f -name '*.rpm' ! -name '*dbg*.rpm' -print0 | xargs -0 -I '{}' rpm -i '{}'
 #    #  - find $OMNIBUS_BASE_DIR/pkg -type f -name '*dbg*.rpm' -print0 | xargs -0 -I '{}' rpm -i '{}'
 #
