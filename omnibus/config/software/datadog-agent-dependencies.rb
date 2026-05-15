@@ -25,7 +25,12 @@ if fips_mode?
   dependency 'openssl-fips-provider'
 end
 
-dependency 'datadog-agent-data-plane' if linux_target? && !heroku_target?
+# [sts] DD's saluki/agent-data-plane is a separate Rust binary for high-throughput
+# DogStatsD intake to Datadog. STS forwards via stackstate-receiver-go-client and
+# has no integration with Saluki. Dep also pulls from binaries.ddbuild.io (DD-private)
+# which STS CI cannot reach reliably. Dropped per matching 7.71.2 behavior (which
+# never had this dep). See also: removal of init-scripts entries, .rb software def,
+# release.json hashes, and tmpl/ systemd units.
 
 # Bundled cacerts file (is this a good idea?)
 dependency 'cacerts'

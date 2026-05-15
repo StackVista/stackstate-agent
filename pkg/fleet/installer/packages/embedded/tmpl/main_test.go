@@ -10,7 +10,6 @@ import (
 	"embed"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -30,8 +29,12 @@ func TestGenerationIsUpToDate(t *testing.T) {
 		t.Skip("TestGenerationIsUpToDate is known to fail on the macOS Gitlab runners.")
 	}
 
-	generated := filepath.Join(os.TempDir(), "gen")
-	os.MkdirAll(generated, 0755)
+	// [sts] Use t.TempDir() so each invocation gets a clean directory. The original
+	// `filepath.Join(os.TempDir(), "gen")` + `os.MkdirAll` reuses a stable path
+	// across runs, so files written by a prior test (e.g. before a unit was removed
+	// from systemdUnits map) leak in and cause "file does not exist" mismatches
+	// against the current embed.FS. t.TempDir is auto-cleaned at end of test.
+	generated := t.TempDir()
 
 	err := generate(generated)
 	assert.NoError(t, err)
