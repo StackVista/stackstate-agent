@@ -16,7 +16,8 @@ api_key:
 ## @env STS_URL - string - required
 ## The host of the StackState intake server to send data to
 #
-sts_url:
+# sts_url:
+
 ## @param proxy - custom object - optional
 ## If you need a proxy to connect to the Internet, provide it here (default:
 ## disabled). You can use the 'no_proxy' list to specify hosts that should

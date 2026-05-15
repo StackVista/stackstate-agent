@@ -247,10 +247,15 @@ func NewComponent(reqs Requires) (Provides, error) {
 	// Initialize check runner (must be after comp is created as it needs the reporter interface)
 	comp.checkRunner = newCheckRunner(reqs.Log, comp)
 
-	// Register built-in health checks from issue modules
-	for _, check := range issueRegistry.GetBuiltInChecks() {
-		if err := comp.RegisterCheck(check.ID, check.Name, check.CheckFn, check.Interval); err != nil {
-			reqs.Log.Warn("Failed to register health check " + check.ID + ": " + err.Error())
+	// Register built-in health checks from issue modules.
+	// [sts] Tests can opt out via `health_platform.skip_builtin_checks=true` so
+	// they can assert on exact issue counts without the auto-Docker check (which
+	// fires on Start in unpredictable ways across CI / local container envs).
+	if !reqs.Config.GetBool("health_platform.skip_builtin_checks") {
+		for _, check := range issueRegistry.GetBuiltInChecks() {
+			if err := comp.RegisterCheck(check.ID, check.Name, check.CheckFn, check.Interval); err != nil {
+				reqs.Log.Warn("Failed to register health check " + check.ID + ": " + err.Error())
+			}
 		}
 	}
 

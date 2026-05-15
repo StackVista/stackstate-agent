@@ -71,6 +71,10 @@ func (m *mockLifecycle) Stop(ctx context.Context) error {
 func testRequires(t *testing.T, lifecycle *mockLifecycle) Requires {
 	cfg := config.NewMock(t)
 	cfg.SetWithoutSource("health_platform.enabled", true)
+	// [sts] Skip the auto-registered Docker Socket Permissions check; it fires
+	// on Start with unpredictable outcome across CI / container envs and would
+	// throw off exact-count assertions.
+	cfg.SetWithoutSource("health_platform.skip_builtin_checks", true)
 	// Use temp directory to avoid test interference
 	cfg.SetWithoutSource("run_path", t.TempDir())
 
@@ -93,6 +97,8 @@ func testRequires(t *testing.T, lifecycle *mockLifecycle) Requires {
 func testRequiresWithRunPath(t *testing.T, lifecycle *mockLifecycle, runPath string) Requires {
 	cfg := config.NewMock(t)
 	cfg.SetWithoutSource("health_platform.enabled", true)
+	// [sts] Skip the auto-registered Docker check (see testRequires).
+	cfg.SetWithoutSource("health_platform.skip_builtin_checks", true)
 	cfg.SetWithoutSource("run_path", runPath)
 
 	if lifecycle == nil {
@@ -108,28 +114,6 @@ func testRequiresWithRunPath(t *testing.T, lifecycle *mockLifecycle, runPath str
 		Telemetry: nooptelemetry.GetCompatComponent(),
 		Hostname:  hostnameMock,
 	}
-}
-
-// dockerAutoCheckID is the ID of the auto-registered Docker Socket Permissions
-// health check (see comp/healthplatform/impl/issues/dockerpermissions). Once the
-// check runner starts, this check fires once immediately, and on most CI/test
-// environments produces an issue (no docker socket / wrong perms). Tests that
-// assert exact issue counts call clearAutoCheckIssues right after lifecycle.Start
-// to drop that issue so their assertions only see what the test itself reported.
-// [sts]
-const dockerAutoCheckID = "docker-socket-permissions"
-
-// clearAutoCheckIssues waits for any auto-registered health check to publish its
-// issue (deterministically signaled via GetIssueForCheck), then clears it so the
-// remaining test logic can reason about its own ReportIssue calls in isolation.
-// [sts]
-func clearAutoCheckIssues(t *testing.T, comp healthplatform.Component) {
-	t.Helper()
-	require.Eventually(t, func() bool {
-		return comp.GetIssueForCheck(dockerAutoCheckID) != nil
-	}, 2*time.Second, 10*time.Millisecond,
-		"expected the auto-registered Docker check to publish an issue before clearing it")
-	comp.ClearIssuesForCheck(dockerAutoCheckID)
 }
 
 // TestNewComponent tests component initialization
@@ -156,7 +140,6 @@ func TestReportIssue(t *testing.T) {
 	// Start the component
 	err = lifecycle.Start(context.Background())
 	require.NoError(t, err)
-	clearAutoCheckIssues(t, comp) // [sts] drop the auto-Docker check's issue
 
 	// Report an issue
 	err = comp.ReportIssue(
@@ -204,7 +187,6 @@ func TestIssueResolution(t *testing.T) {
 	// Start the component
 	err = lifecycle.Start(context.Background())
 	require.NoError(t, err)
-	clearAutoCheckIssues(t, comp) // [sts] drop the auto-Docker check's issue
 
 	// Report an issue
 	err = comp.ReportIssue(
@@ -532,7 +514,6 @@ func TestGetIssuesHandlerWithIssues(t *testing.T) {
 	// Start the component
 	err = lifecycle.Start(context.Background())
 	require.NoError(t, err)
-	clearAutoCheckIssues(t, provides.Comp) // [sts] drop the auto-Docker check's issue
 
 	// Get the implementation to access the handler
 	impl, ok := provides.Comp.(*healthPlatformImpl)
@@ -624,11 +605,6 @@ func TestPersistenceStateTransitions(t *testing.T) {
 
 	err = lifecycle.Start(context.Background())
 	require.NoError(t, err)
-	// [sts] drop the auto-Docker check's issue and synchronize with its goroutine
-	// (this test reads impl.persistedIssues directly without locking; without
-	// waiting for the auto-check goroutine to settle we'd hit a -race detector
-	// fault in addition to the assertion divergence).
-	clearAutoCheckIssues(t, provides.Comp)
 
 	// 1. Report a new issue -> state should be "new"
 	err = provides.Comp.ReportIssue("check-1", "Check 1", &healthplatformpayload.IssueReport{
@@ -712,7 +688,6 @@ func TestPersistenceAcrossRestart(t *testing.T) {
 
 	err = lifecycle1.Start(context.Background())
 	require.NoError(t, err)
-	clearAutoCheckIssues(t, provides1.Comp) // [sts] drop the auto-Docker check's issue
 
 	// Report issue 1 and issue 2
 	err = provides1.Comp.ReportIssue("check-1", "Check 1", &healthplatformpayload.IssueReport{
@@ -754,7 +729,6 @@ func TestPersistenceAcrossRestart(t *testing.T) {
 
 	err = lifecycle2.Start(context.Background())
 	require.NoError(t, err)
-	clearAutoCheckIssues(t, provides2.Comp) // [sts] drop the auto-Docker check's issue from the second start
 
 	// Verify issues were loaded (check-1 and check-3 should be active, check-2 resolved)
 	count, _ := provides2.Comp.GetAllIssues()
