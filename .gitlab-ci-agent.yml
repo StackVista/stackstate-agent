@@ -330,6 +330,14 @@ build_deb:
     PACKAGE_ARCH: ${PACKAGE_ARCH}
     DD_PKG_ARCH: ${DD_PKG_ARCH}
     STS_PKG_ARCH: ${STS_PKG_ARCH}
+    # [sts] DD 7.78 added Bazel-based dependency builds in
+    # omnibus/config/software/datadog-agent-dependencies.rb (bazelisk run @nghttp2//:install,
+    # @curl//:install, //packages/agent/dependencies:install). bazelisk requires
+    # XDG_CACHE_HOME to be a valid directory in CI; without it the omnibus build
+    # fails with "🔴 XDG_CACHE_HOME () must denote a directory in CI!" during the
+    # openssl3 build step. Mirrors DD's .gitlab/build/bazel/defs.yml pattern.
+    XDG_CACHE_HOME: "$CI_PROJECT_DIR/.cache"
+    BAZELISK_HOME: "$CI_PROJECT_DIR/.cache/bazelisk"
   cache:
     key: "build-deb-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
     paths:

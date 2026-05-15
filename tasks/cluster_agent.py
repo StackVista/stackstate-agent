@@ -19,9 +19,9 @@ from tasks.cws_instrumentation import BIN_PATH as CWS_INSTRUMENTATION_BIN_PATH
 from tasks.libs.dependencies import get_effective_dependencies_env
 
 # constants
-BIN_PATH = os.path.join(".", "bin", "datadog-cluster-agent")
-AGENT_TAG = "datadog/cluster_agent:master"
-POLICIES_REPO = "https://github.com/DataDog/security-agent-policies.git"
+BIN_PATH = os.path.join(".", "bin", "stackstate-cluster-agent")  # [sts] CI artifacts + pre_release expect this exact path
+AGENT_TAG = "stackstate/cluster_agent:master"  # [sts]
+POLICIES_REPO = "https://github.com/StackVista/security-agent-policies.git"  # [sts] STS fork
 CONTAINER_PLATFORM_MAPPING = {"aarch64": "arm64", "amd64": "amd64", "x86_64": "amd64"}
 
 
@@ -91,7 +91,7 @@ def clean(ctx):
     """
     Remove temporary objects and binary artifacts
     """
-    clean_common(ctx, "datadog-cluster-agent")
+    clean_common(ctx, "stackstate-cluster-agent")  # [sts]
 
 
 @task
@@ -106,7 +106,7 @@ def image_build(ctx, arch=None, tag=AGENT_TAG, push=False):
         print("Unable to determine architecture to build, please set `arch`", file=sys.stderr)
         raise Exit(code=1)
 
-    dca_binary = glob.glob(os.path.join(BIN_PATH, "datadog-cluster-agent"))
+    dca_binary = glob.glob(os.path.join(BIN_PATH, "stackstate-cluster-agent"))  # [sts]
     # get the last debian package built
     if not dca_binary:
         print(f"No bin found in {BIN_PATH}")
@@ -129,7 +129,7 @@ def image_build(ctx, arch=None, tag=AGENT_TAG, push=False):
         secret_generic_connector.build(ctx)
 
     build_context = "Dockerfiles/cluster-agent"
-    exec_path = f"{build_context}/datadog-cluster-agent"
+    exec_path = f"{build_context}/stackstate-cluster-agent"  # [sts]
     cws_instrumentation_base = f"{build_context}/cws-instrumentation"
     cws_instrumentation_exec_path = f"{cws_instrumentation_base}/cws-instrumentation.{arch}"
     secret_connector_dest = f"{build_context}/secret-generic-connector"
