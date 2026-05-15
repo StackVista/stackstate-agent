@@ -3,8 +3,12 @@
 ## Basic Configuration ##
 #########################
 
+## @param api_key - string - required
 ## @env STS_API_KEY - string - required
+## The StackState API key used by your Agent to submit metrics and events to StackState.
+## Create or rotate keys via your StackState administration console.
 api_key:
+
 ## @param app_key - string - optional
 ## The application key used to access Datadog's programatic API.
 ## Create a new application key here: https://app.datadoghq.com/organization-settings/application-keys .
@@ -14,9 +18,11 @@ api_key:
 
 ## @param sts_url - string - required
 ## @env STS_URL - string - required
-## The host of the StackState intake server to send data to
-#
-# sts_url:
+## The host of the StackState intake server to send data to.
+## This is normally the externally reachable URL of your StackState receiver
+## (for example, https://intake.example.com). It overrides any "site"
+## resolution and must be set for the agent to forward data to StackState.
+sts_url:
 
 ## @param proxy - custom object - optional
 ## If you need a proxy to connect to the Internet, provide it here (default:
