@@ -220,6 +220,17 @@ find "$DIR" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -
 find "$DIR/pkg/config/setup" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*test*.go" -exec sed -i 's/NewConfig("test")/NewConfig("stackstate")/g' {} +
 # Replace DATADOG_CLUSTER_AGENT_IMAGE in Python test files (tasks/gotest.py)
 find "$DIR/tasks" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.py" -exec sed -i 's/DATADOG_CLUSTER_AGENT_IMAGE/STACKSTATE_CLUSTER_AGENT_IMAGE/g' {} +
+
+# [sts] tasks/agent.py — STS-specific build-pipeline patches that get reverted on every
+# upstream merge unless we re-apply them here. fix_branding.sh runs in PREP before
+# `inv -e agent.build` and `omnibus.build`, so the rewritten file drives the build.
+# Patterns are anchored to avoid rewriting runtime defaults (lines ~382/~399 in current
+# 7.78 — agent.check/agent.run config_path defaults) which STS intentionally leaves
+# as datadog.yaml. Ntp-removal stays as a manual patch (it's a deletion, not a rename).
+sed -i 's|"./cmd/agent/dist/datadog.yaml"|"./cmd/agent/dist/stackstate.yaml"|g' "$DIR/tasks/agent.py"
+sed -i 's|os.path.join(dist_folder, "datadog.yaml")|os.path.join(dist_folder, "stackstate.yaml")|g' "$DIR/tasks/agent.py"
+sed -i 's|BIN_PATH, "dd-agent"|BIN_PATH, "sts-agent"|g' "$DIR/tasks/agent.py"
+sed -i "s|f'datadog-agent\\*_{arch}.deb'|f'stackstate-agent*_{arch}.deb'|g" "$DIR/tasks/agent.py"
 # Replace DD_CLUSTER_AGENT_KUBERNETES_SERVICE_NAME value in YAML manifest files
 find "$DIR/Dockerfiles/manifests" -type d -name .git -prune -o -name "vendor" -prune -o -name "pbgo" -prune -o -type f -name "*.yaml" -exec sed -i '/DD_CLUSTER_AGENT_KUBERNETES_SERVICE_NAME/,/value:/ s/value: datadog-cluster-agent/value: stackstate-cluster-agent/g' {} +
 
