@@ -70,7 +70,7 @@ AGENT_CORECHECKS = [
     "kubernetes_apiserver",
     "load",
     "memory",
-    "ntp",
+    # [sts] "ntp", Disabled because we do not use it and it breaks in self-hosted environments, see https://stackstate.atlassian.net/browse/STAC-22341
     "oom_kill",
     "oracle",
     "oracle-dbm",
@@ -289,7 +289,7 @@ def render_config(ctx, env, flavor, skip_assets, build_tags, development, window
     if flavor.is_iot():
         build_type = "iot-agent"
 
-    generate_config(ctx, build_type=build_type, output_file="./cmd/agent/dist/datadog.yaml", env=env)
+    generate_config(ctx, build_type=build_type, output_file="./cmd/agent/dist/stackstate.yaml", env=env)  # [sts] STS renames the rendered config
 
     # On Linux and MacOS, render the system-probe configuration file template
     if sys.platform != 'win32' or windows_sysprobe:
@@ -323,13 +323,13 @@ def refresh_assets(_, build_tags, development=True, flavor=AgentFlavor.base.name
     if not flavor.is_iot():
         shutil.copy("./cmd/agent/dist/dd-agent", os.path.join(dist_folder, "dd-agent"))
         # copy the dd-agent placeholder to the bin folder
-        bin_ddagent = os.path.join(BIN_PATH, "dd-agent")
+        bin_ddagent = os.path.join(BIN_PATH, "sts-agent")  # [sts]
         shutil.move(os.path.join(dist_folder, "dd-agent"), bin_ddagent)
 
     # System probe not supported on windows
     if sys.platform != 'win32' or windows_sysprobe:
         shutil.copy("./cmd/agent/dist/system-probe.yaml", os.path.join(dist_folder, "system-probe.yaml"))
-    shutil.copy("./cmd/agent/dist/datadog.yaml", os.path.join(dist_folder, "datadog.yaml"))
+    shutil.copy("./cmd/agent/dist/stackstate.yaml", os.path.join(dist_folder, "stackstate.yaml"))  # [sts]
 
     shutil.copy("./cmd/agent/dist/security-agent.yaml", os.path.join(dist_folder, "security-agent.yaml"))
 
@@ -416,7 +416,7 @@ def image_build(ctx, arch='amd64', base_dir="omnibus", skip_tests=False, tag=Non
     build_context = "Dockerfiles/agent"
     base_dir = base_dir or os.environ["OMNIBUS_BASE_DIR"]
     pkg_dir = os.path.join(base_dir, 'pkg')
-    deb_glob = f'datadog-agent*_{arch}.deb'
+    deb_glob = f'stackstate-agent*_{arch}.deb'  # [sts]
     dockerfile_path = f"{build_context}/Dockerfile"
     list_of_files = glob.glob(os.path.join(pkg_dir, deb_glob))
     # get the last debian package built
