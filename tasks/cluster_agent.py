@@ -64,13 +64,16 @@ def build(
             policies_version = env["SECURITY_AGENT_POLICIES_VERSION"]
             print(f"Security Agent polices: {policies_version}")
 
-    build_context = "Dockerfiles/cluster-agent"
-    policies_path = f"{build_context}/security-agent-policies"
-    if force_policies_clone or not os.path.isdir(policies_path):
-        ctx.run(f"rm -rf {policies_path}")
-        ctx.run(f"git clone --branch={policies_version} --depth=1 {POLICIES_REPO} {policies_path}")
-    else:
-        print(f"Reusing existing security-agent-policies at {policies_path}")
+    # [sts] STS does not ship security-agent compliance policies. Upstream clones
+    # POLICIES_REPO into Dockerfiles/cluster-agent/security-agent-policies here;
+    # we skip it entirely (the StackVista fork was never published — clone 404s).
+    # build_context = "Dockerfiles/cluster-agent"
+    # policies_path = f"{build_context}/security-agent-policies"
+    # if force_policies_clone or not os.path.isdir(policies_path):
+    #     ctx.run(f"rm -rf {policies_path}")
+    #     ctx.run(f"git clone --branch={policies_version} --depth=1 {POLICIES_REPO} {policies_path}")
+    # else:
+    #     print(f"Reusing existing security-agent-policies at {policies_path}")
 
     # Build secret-generic-connector so it is shipped with the cluster agent.
     # Use same flavor as cluster-agent: FIPS when GOEXPERIMENT=boringcrypto (CI FIPS jobs).
