@@ -30,10 +30,15 @@ end
 
 relative_path 'integrations-core'
 
-# [STS] Whitelist psycopg2-binary bundled shared libraries (vendored .so files
+# [sts] Whitelist psycopg2-binary bundled shared libraries (vendored .so files
 # with their own dependencies that are not part of the agent's embedded env).
-whitelist_file "embedded/lib/python3.12/site-packages/psycopg2"
-whitelist_file "embedded/lib/python3.12/site-packages/psycopg2_binary.libs"
+# Path version MUST match the embedded python (omnibus/config/software/python3.rb default_version).
+# Easy merge-time regression — DD bumps python_version constants in their integration recipe
+# (currently 3.13) while these literal STS paths can drift. After every merge: grep these for
+# the major.minor and confirm it matches python3.rb default_version.
+python_version = "3.13"  # [sts] keep in sync with omnibus/config/software/python3.rb default_version
+whitelist_file "embedded/lib/python#{python_version}/site-packages/psycopg2"
+whitelist_file "embedded/lib/python#{python_version}/site-packages/psycopg2_binary.libs"
 
 source git: 'https://github.com/StackVista/stackstate-agent-integrations.git'
 
