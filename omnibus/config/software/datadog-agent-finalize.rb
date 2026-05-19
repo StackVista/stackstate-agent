@@ -73,9 +73,13 @@ build do
                   move "#{install_dir}/etc/datadog-agent/selinux", "#{output_config_dir}/etc/datadog-agent/selinux"
                 end
               end
-              move "#{install_dir}/etc/datadog-agent/security-agent.yaml.example", "#{output_config_dir}/etc/datadog-agent", :force=>true
-              move "#{install_dir}/etc/datadog-agent/runtime-security.d", "#{output_config_dir}/etc/datadog-agent", :force=>true
-              move "#{install_dir}/etc/datadog-agent/compliance.d", "#{output_config_dir}/etc/datadog-agent"
+              # [sts] STS does not ship the security agent. Upstream moves
+              # security-agent.yaml.example, runtime-security.d, and compliance.d
+              # out of install_dir here; we don't build/ship any of those (the
+              # datadog-security-agent-policies dep was dropped from agent.rb in
+              # 7.78 and STS doesn't restore it — STS doesn't run the security
+              # agent or its CWS/compliance checks). See memory:
+              # cluster-agent-policies-clone.md for the broader STS position.
             end
 
             # Create the installer symlink if the file doesn't already exist
