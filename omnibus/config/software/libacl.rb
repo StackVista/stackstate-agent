@@ -24,7 +24,9 @@ dependency 'attr'
 
 ship_source_offer true
 
-source url: "https://download-mirror.savannah.gnu.org/releases/acl/acl-#{version}.tar.xz"
+# [sts] swapped from download-mirror.savannah.gnu.org (times out from CI runners; even download.savannah.gnu.org itself returns 502)
+# mirrorservice.org is a fast UK academic CDN; content-addressed by sha512 below so URL change is safe.
+source url: "https://www.mirrorservice.org/sites/download.savannah.gnu.org/releases/acl/acl-#{version}.tar.xz"
 
 version("2.3.1") { source sha512: "7d02f05d17305f8587ab485395b00c7fdb8e44c1906d0d04b70a43a3020803e8b2b8c707abb6147f794867dfa87bd51769c2d3e11a3db55ecbd2006a6e6231dc" }
 

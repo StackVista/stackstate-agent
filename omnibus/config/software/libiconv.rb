@@ -20,7 +20,9 @@ default_version "1.14"
 
 dependency "libgcc"
 
-source :url => "https://ftp.gnu.org/gnu/libiconv/libiconv-#{version}.tar.gz",
+# [sts] swapped from ftp.gnu.org (times out from CI runners)
+# mirrorservice.org is a fast UK academic CDN; content-addressed by md5 below so URL change is safe.
+source :url => "https://www.mirrorservice.org/sites/ftp.gnu.org/gnu/libiconv/libiconv-#{version}.tar.gz",
        :md5 => 'e34509b1623cec449dfeb73d7ce9c6c6'
 
 relative_path "libiconv-#{version}"

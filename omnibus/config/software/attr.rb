@@ -24,7 +24,9 @@ version("2.5.1") { source sha512: "9e5555260189bb6ef2440c76700ebb813ff70582eb63d
 
 ship_source_offer true
 
-source url: "https://download-mirror.savannah.gnu.org/releases/attr/attr-#{version}.tar.xz"
+# [sts] swapped from download-mirror.savannah.gnu.org (times out from CI runners; even download.savannah.gnu.org itself returns 502)
+# mirrorservice.org is a fast UK academic CDN; content-addressed by sha512 above so URL change is safe.
+source url: "https://www.mirrorservice.org/sites/download.savannah.gnu.org/releases/attr/attr-#{version}.tar.xz"
 
 relative_path "#{name}-#{version}"
 
