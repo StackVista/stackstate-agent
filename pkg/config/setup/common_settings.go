@@ -822,7 +822,9 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("otelcollector.installation_method", "")
 
 	// inventories
-	config.BindEnvAndSetDefault("inventories_enabled", true)
+	// [sts] Default to false: STS receiver doesn't support the /api/v1/metadata endpoint,
+	// so inventory payloads would produce 404 errors. Can be re-enabled via config/env if needed.
+	config.BindEnvAndSetDefault("inventories_enabled", false)
 	config.BindEnvAndSetDefault("inventories_configuration_enabled", true)             // controls the agent configurations
 	config.BindEnvAndSetDefault("inventories_checks_configuration_enabled", true)      // controls the checks configurations
 	config.BindEnvAndSetDefault("inventories_collect_cloud_provider_account_id", true) // collect collection of `cloud_provider_account_id`
@@ -1411,7 +1413,9 @@ func telemetry(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("telemetry.dogstatsd.listeners_channel_latency_buckets", []string{})
 
 	// Agent Telemetry
-	config.BindEnvAndSetDefault("agent_telemetry.enabled", true)
+	// [sts] Default to false: STS receiver doesn't support the instrumentation-telemetry-intake endpoint,
+	// so agent telemetry payloads would produce DNS/connection errors. Can be re-enabled via config/env if needed.
+	config.BindEnvAndSetDefault("agent_telemetry.enabled", false)
 	// default compression first setup inside the next bindEnvAndSetLogsConfigKeys() function ...
 	bindEnvAndSetLogsConfigKeys(config, "agent_telemetry.")
 	// ... and overridden by the following two lines - do not switch these 3 lines order

@@ -48,14 +48,14 @@ COPY --from=software /usr/bin/grep /usr/bin/grep
 #
 RUN echo "$user:x:1000:1000::/home/$user:/bin/bash" >> /etc/passwd && \
     echo "$user:x:1000:" >> /etc/group && \
-    mkdir -p /var/log/stackstate/ /var/log/stackstate-agent/ /conf.d && \
+    mkdir -p /var/log/stackstate/ /var/log/stackstate-agent/ /conf.d /opt/stackstate-agent/run/ && \
     touch /var/log/stackstate/.placeholder && \
     touch /var/log/stackstate-agent/.placeholder && \
     touch /tmp/.placeholder && \
     mkdir /home/$user && \
     chown -R $user:$user /home/$user && \
-    chown -R stackstate-agent:root /etc/stackstate-agent/ /var/log/stackstate/ /var/log/stackstate-agent/ /conf.d /tmp/ && \
-    chmod g+r,g+w,g+X -R /etc/stackstate-agent/ /var/log/stackstate/ /var/log/stackstate-agent/ /conf.d /tmp/
+    chown -R stackstate-agent:root /etc/stackstate-agent/ /var/log/stackstate/ /var/log/stackstate-agent/ /conf.d /tmp/ /opt/stackstate-agent/run/ && \
+    chmod g+r,g+w,g+X -R /etc/stackstate-agent/ /var/log/stackstate/ /var/log/stackstate-agent/ /conf.d /tmp/ /opt/stackstate-agent/run/
 
 USER 1000:1000
 # Incompatible with the custom metrics API on port 443
