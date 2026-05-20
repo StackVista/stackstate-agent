@@ -146,6 +146,20 @@ Upstream Datadog merges can silently drop StackState-specific code blocks (usual
 - **What:** Forces `use_v2_api.series` to `false`
 - **Why:** The StackState receiver only supports the v1 series API.
 
+### Config: `inventories_enabled` override
+- **File:** `pkg/config/setup/common_settings.go` (around line 825)
+- **What:** Defaults `inventories_enabled` to `false` (DD's default is `true`).
+- **Why:** The StackState receiver doesn't expose `/api/v1/metadata`. Leaving inventories enabled means the host, hostgpu, inventoryagent, inventoryhost, inventorychecks, packagesigning, systemprobe, securityagent, haagent (and `hostsysteminfo` in 7.78+) bundle modules all POST payloads that get 404'd. Wasted CPU + bandwidth + log spam.
+- **Symptom if missing:** hundreds of `/api/v1/metadata` 404 ERROR lines per beest run (baseline with the override is ~14-21 from the cluster-agent's own pre-payload calls).
+- **Re-enable via config/env if needed.**
+
+### Config: `agent_telemetry.enabled` override
+- **File:** `pkg/config/setup/common_settings.go` (around line 1416)
+- **What:** Defaults `agent_telemetry.enabled` to `false` (DD's default is `true`).
+- **Why:** STS doesn't operate an `instrumentation-telemetry-intake.<site>` endpoint. Leaving it enabled means agents try to flush self-telemetry to a DNS-unresolvable hostname every 30s+15min.
+- **Symptom if missing:** `failed to flush agent telemetry session: ... dial tcp: lookup instrumentation-telemetry-intake.stackstate.io.: no such host` ERROR lines on every flush.
+- **Re-enable via config/env if needed (and provide an actual intake endpoint).**
+
 ### Topology event serialization
 - **File:** `pkg/serializer/internal/metrics/events.go`
 - **What:** Serializes `EventContext` field in event payloads
