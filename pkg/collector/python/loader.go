@@ -106,6 +106,16 @@ type PythonCheckLoader struct {
 // NewPythonCheckLoader creates an instance of the Python checks loader
 func NewPythonCheckLoader(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filter workloadfilter.Component) (*PythonCheckLoader, error) {
 	collectoraggregator.InitializeCheckContext(senderManager, checkManager, logReceiver, tagger, filter)
+	// [sts] DD 7.78 refactored the check context into a new package
+	// (collectoraggregator.InitializeCheckContext above). But STS-specific Python
+	// APIs in topology_api.go / state_api.go / health_api.go / telemetry_api.go
+	// still call THIS package's local getCheckContext() which reads a SEPARATE
+	// package-private checkCtx variable. Without this call, every Python check's
+	// SubmitComponent / SubmitRelation / SubmitEvent / SubmitState / SubmitHealth
+	// silently logs "Python check context was not set" and drops the payload —
+	// breaking topology + health entirely. See beest test
+	// test_agent_integration_sample_topology for the symptom.
+	initializeCheckContext(senderManager, checkManager, logReceiver, tagger)
 	return &PythonCheckLoader{
 		logReceiver: logReceiver,
 	}, nil
