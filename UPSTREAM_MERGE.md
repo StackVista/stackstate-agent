@@ -160,6 +160,24 @@ Upstream Datadog merges can silently drop StackState-specific code blocks (usual
 - **Symptom if missing:** `failed to flush agent telemetry session: ... dial tcp: lookup instrumentation-telemetry-intake.stackstate.io.: no such host` ERROR lines on every flush.
 - **Re-enable via config/env if needed (and provide an actual intake endpoint).**
 
+### Config: silent value-only STS overrides in `common_settings.go` (9 keys)
+
+DD periodically flips these from STS's preferred value back to DD's default. None had `[sts]` comments in 7.71.2, so they're invisible to `[sts]`-grep sweeps. Restore each with a new `[sts]` comment.
+
+| Key | STS value | DD default | Symptom if reverted |
+|---|---|---|---|
+| `orchestrator_explorer.enabled` | `false` | `true` | 8 RBAC "Failed to watch" + orchestrator.stackstate.io DNS |
+| `remote_configuration.enabled` | `false` | `true` | "mkdir /opt/stackstate-agent/run/remote-config.db: permission denied" |
+| `container_image.enabled` | `false` | `true` | container-image SBOM payloads to absent intake |
+| `container_lifecycle.enabled` | `false` | `true` | container lifecycle events to absent intake |
+| `cluster_checks.advanced_dispatching_enabled` | `false` | `true` | "cannot get runner IP from http headers" WARN |
+| `cluster_checks.rebalance_with_utilization` | `false` | `true` | pairs with advanced_dispatching |
+| `kubernetes_kubelet_host` | `os.Getenv("STS_KUBERNETES_KUBELET_HOST")` | `""` | slow kubelet auto-discovery |
+| `kubelet_cache_pods_duration` | `5` | `0` | no /pods cache, more kubelet load |
+| `disk_check.use_core_loader` | `false` | `true` | DD's new core loader vs STS Python check |
+
+**Sweep on every merge** with the value-diff script in memory `upstream-merge-validation-pitfalls.md` §3h. The `[sts]`-grep sweep alone is insufficient — silent value-only diffs survive it.
+
 ### Topology event serialization
 - **File:** `pkg/serializer/internal/metrics/events.go`
 - **What:** Serializes `EventContext` field in event payloads
