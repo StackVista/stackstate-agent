@@ -70,7 +70,8 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	// If true, then new version of disk v2 check will be used.
 	// Otherwise, the python version of disk check will be used.
 	config.BindEnvAndSetDefault("use_diskv2_check", true)
-	config.BindEnvAndSetDefault("disk_check.use_core_loader", true)
+	// [sts] Default to false: STS uses the Python disk check, not DD's new core (Go) loader.
+	config.BindEnvAndSetDefault("disk_check.use_core_loader", false)
 
 	// the darwin and bsd network check has not been ported from python
 	if runtime.GOOS == "linux" || runtime.GOOS == "windows" {
@@ -572,8 +573,11 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("cluster_checks.unscheduled_check_threshold", 60) // value in seconds
 	config.BindEnvAndSetDefault("cluster_checks.cluster_tag_name", "cluster_name")
 	config.BindEnvAndSetDefault("cluster_checks.extra_tags", []string{})
-	config.BindEnvAndSetDefault("cluster_checks.advanced_dispatching_enabled", true)
-	config.BindEnvAndSetDefault("cluster_checks.rebalance_with_utilization", true)
+	// [sts] Default to false: STS cluster-checks use simple dispatching.
+	// Advanced dispatching requires runner IP propagation that the STS helm chart doesn't set up,
+	// producing the WARN "cannot get runner IP from http headers" on every cluster check.
+	config.BindEnvAndSetDefault("cluster_checks.advanced_dispatching_enabled", false)
+	config.BindEnvAndSetDefault("cluster_checks.rebalance_with_utilization", false)
 	config.BindEnvAndSetDefault("cluster_checks.rebalance_min_percentage_improvement", 10) // Experimental. Subject to change. Rebalance only if the distribution found improves the current one by this.
 	config.BindEnvAndSetDefault("cluster_checks.clc_runners_port", 5005)
 	config.BindEnvAndSetDefault("cluster_checks.exclude_checks", []string{})
@@ -713,7 +717,11 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	config.BindEnv("provider_kind") //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
 
 	// Orchestrator Explorer DCA and core agent
-	config.BindEnvAndSetDefault("orchestrator_explorer.enabled", true)
+	// [sts] Default to false: STS receiver does not expose an orchestrator intake
+	// (the cluster-agent's orchestrator forwarder targets the hardcoded https://orchestrator.<site>
+	// which STS doesn't operate, producing DNS errors). Also avoids the 8 RBAC k8s watch
+	// resources DD 7.78 added that the helm-chart ClusterRole doesn't grant. Re-enable per env if needed.
+	config.BindEnvAndSetDefault("orchestrator_explorer.enabled", false)
 	// enabling/disabling the environment variables & command scrubbing from the container specs
 	// this option will potentially impact the CPU usage of the agent
 	config.BindEnvAndSetDefault("orchestrator_explorer.container_scrubbing.enabled", true)
@@ -737,11 +745,13 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("auto_team_tag_collection", true)
 
 	// Container lifecycle configuration
-	config.BindEnvAndSetDefault("container_lifecycle.enabled", true)
+	// [sts] Default to false: STS receiver doesn't expose a container-lifecycle intake.
+	config.BindEnvAndSetDefault("container_lifecycle.enabled", false)
 	bindEnvAndSetLogsConfigKeys(config, "container_lifecycle.")
 
 	// Container image configuration
-	config.BindEnvAndSetDefault("container_image.enabled", true)
+	// [sts] Default to false: STS receiver doesn't expose a container-image (SBOM) intake.
+	config.BindEnvAndSetDefault("container_image.enabled", false)
 	bindEnvAndSetLogsConfigKeys(config, "container_image.")
 
 	// Remote process collector
@@ -1279,7 +1289,10 @@ func fips(config pkgconfigmodel.Setup) {
 
 func remoteconfig(config pkgconfigmodel.Setup) {
 	// Remote config
-	config.BindEnvAndSetDefault("remote_configuration.enabled", true)
+	// [sts] Default to false: STS does not operate a remote-config backend
+	// (the cluster-agent's "permission denied" mkdir on /opt/stackstate-agent/run/remote-config.db
+	// is the visible symptom when this is on). Re-enable per env if needed.
+	config.BindEnvAndSetDefault("remote_configuration.enabled", false)
 	config.BindEnvAndSetDefault("remote_configuration.key", "")
 	config.BindEnv("remote_configuration.api_key")   //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
 	config.BindEnv("remote_configuration.rc_dd_url") //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
@@ -1896,7 +1909,10 @@ func cri(config pkgconfigmodel.Setup) {
 
 func kubernetes(config pkgconfigmodel.Setup) {
 	// Kubernetes
-	config.BindEnvAndSetDefault("kubernetes_kubelet_host", "")
+	// [sts] Default sourced from STS_KUBERNETES_KUBELET_HOST env var (STS-specific override
+	// helmchart sets to the node's internal IP via downward API). DD's default is "" which then
+	// requires kubelet auto-discovery — slower + sometimes wrong.
+	config.BindEnvAndSetDefault("kubernetes_kubelet_host", os.Getenv("STS_KUBERNETES_KUBELET_HOST"))
 	config.BindEnvAndSetDefault("kubernetes_kubelet_nodename", "")
 	config.BindEnvAndSetDefault("eks_fargate", false)
 	config.BindEnvAndSetDefault("kubelet_use_api_server", false)
@@ -1917,7 +1933,9 @@ func kubernetes(config pkgconfigmodel.Setup) {
 	// Cache TTL for pod lists in the kubelet client. Set to 0 because it's only
 	// used by workloadmeta that already defines its own pull frequency and has
 	// its own storage, so no need for an extra cache.
-	config.BindEnvAndSetDefault("kubelet_cache_pods_duration", 0)
+	// [sts] Default to 5: STS uses active 5s caching of /pods. DD's new 0 means "no cache"
+	// (relies on workloadmeta's own polling), which STS doesn't use the same way.
+	config.BindEnvAndSetDefault("kubelet_cache_pods_duration", 5)
 	config.BindEnvAndSetDefault("kubernetes_collect_metadata_tags", true)
 	config.BindEnvAndSetDefault("kubernetes_use_endpoint_slices", false)
 	config.BindEnvAndSetDefault("kubernetes_metadata_tag_update_freq", 60) // Polling frequency of the Agent to the DCA in seconds (gets the local cache if the DCA is disabled)
