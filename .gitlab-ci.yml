@@ -112,7 +112,7 @@ variables: &commonvariables
     allow_failure: true
   # Else, if there is a valid MR internal ID, manually execute this step
   - if: $CI_MERGE_REQUEST_IID
-    when: manual
+    when: on_success
     allow_failure: true
   # Else, if there is an open merge request (but no MR IID), never execute this step
   # This is the magic, here we skip the pipeline for commits when an MR is open. The rules before this make sure
@@ -200,10 +200,6 @@ beest_trigger_verification:
     AGENT_HASH_UNDER_TEST: "$CI_COMMIT_SHORT_SHA"
     TRIGGER_AGENT_X86_TESTS: "true"
   rules:
-    # If the commit message contains [beest], auto-trigger on success so we don't have
-    # to click through the pipeline UI on every iteration. Otherwise stay manual.
-    - if: $CI_COMMIT_MESSAGE =~ /\[beest\]/
-      when: on_success
     - *pipline_on_commit_or_mr_manual
   trigger:
     project: stackvista/integrations/beest
