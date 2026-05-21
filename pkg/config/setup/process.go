@@ -159,7 +159,14 @@ func setupProcesses(config pkgconfigmodel.Setup) {
 	procBindEnvAndSetDefault(config, "process_config.ignore_zombie_processes", false)
 
 	// Process Discovery Check
-	config.BindEnvAndSetDefault("process_config.process_discovery.enabled", true,
+	// [sts] Default to false: STS receiver doesn't expose a /api/v1/discovery process intake
+	// (the forwarder targets https://process.<site>/api/v1/discovery which STS doesn't operate,
+	// producing DNS lookup failures on every check run). Previously masked by the helm chart's
+	// deprecated STS_PROCESS_AGENT_ENABLED=false which globally disabled the process agent —
+	// after helm-charts dropped that in favor of granular process_collection / container_collection
+	// flags, this discovery check ran unguarded. STS process-agent is built separately for the deb
+	// package and ships its own intake config there. Re-enable per env if needed.
+	config.BindEnvAndSetDefault("process_config.process_discovery.enabled", false,
 		"DD_PROCESS_CONFIG_PROCESS_DISCOVERY_ENABLED",
 		"DD_PROCESS_AGENT_PROCESS_DISCOVERY_ENABLED",
 		"DD_PROCESS_CONFIG_DISCOVERY_ENABLED", // Also bind old environment variables
