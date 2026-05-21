@@ -200,6 +200,10 @@ beest_trigger_verification:
     AGENT_HASH_UNDER_TEST: "$CI_COMMIT_SHORT_SHA"
     TRIGGER_AGENT_X86_TESTS: "true"
   rules:
+    # If the commit message contains [beest], auto-trigger on success so we don't have
+    # to click through the pipeline UI on every iteration. Otherwise stay manual.
+    - if: $CI_COMMIT_MESSAGE =~ /\[beest\]/
+      when: on_success
     - *pipline_on_commit_or_mr_manual
   trigger:
     project: stackvista/integrations/beest
