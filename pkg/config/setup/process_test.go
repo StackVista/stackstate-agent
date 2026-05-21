@@ -42,8 +42,10 @@ func TestProcessDefaultConfig(t *testing.T) {
 			defaultValue: false,
 		},
 		{
+			// [sts] STS defaults to false — receiver doesn't expose /api/v1/discovery.
+			// See pkg/config/setup/process.go and UPSTREAM_MERGE.md.
 			key:          "process_config.process_discovery.enabled",
-			defaultValue: true,
+			defaultValue: false,
 		},
 		{
 			key:          "process_config.process_discovery.interval",

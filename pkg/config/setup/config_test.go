@@ -44,8 +44,10 @@ func TestDefaults(t *testing.T) {
 	assert.Equal(t, []string{"aws", "gcp", "azure", "alibaba", "oracle", "ibm"}, config.GetStringSlice("cloud_provider_metadata"))
 
 	// Testing process-agent defaults
+	// [sts] process_config.process_discovery.enabled defaulted to false — STS receiver doesn't
+	// expose /api/v1/discovery. See pkg/config/setup/process.go and UPSTREAM_MERGE.md.
 	assert.Equal(t, map[string]interface{}{
-		"enabled":        true,
+		"enabled":        false,
 		"hint_frequency": 60,
 		"interval":       4 * time.Hour,
 	}, config.GetStringMap("process_config.process_discovery"))
