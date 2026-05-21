@@ -331,7 +331,14 @@ func (k *KSMCheck) Configure(senderManager sender.SenderManager, checkManager ha
 	k.mergeLabelsMapper(defaultLabelsMapper())
 
 	// Start custom resource discovery if not
-	if k.instance.PodCollectionMode != nodeKubeletPodCollection {
+	// [sts] Only start the CR discoverer when there's actually a custom resource configured
+	// or CRD metrics are explicitly requested. DD 7.78 added this unconditional discovery path
+	// which watches `apiextensions.k8s.io/v1/customresourcedefinitions` — the STS helm-chart
+	// ClusterRole doesn't grant that, producing "Failed to watch ... forbidden" cluster-agent
+	// log spam. Mirrors the gating in Fix #5 / kubernetes_state.go:601 (used by both the
+	// discoverer-USE path below and now its INIT path here). See helm-chart-fixes.md Fix #5.
+	if k.instance.PodCollectionMode != nodeKubeletPodCollection &&
+		(k.instance.CollectCRDMetrics || len(k.instance.CustomResource.Spec.Resources) > 0) {
 		k.customResourceDiscoverer = customresources.StartDiscovery()
 	}
 
