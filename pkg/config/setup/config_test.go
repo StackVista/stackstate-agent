@@ -1159,8 +1159,11 @@ func TestLogDefaults(t *testing.T) {
 
 func TestClusterCheckDefaults(t *testing.T) {
 	conf := newTestConf(t)
-	require.True(t, conf.GetBool("cluster_checks.advanced_dispatching_enabled"))
-	require.True(t, conf.GetBool("cluster_checks.rebalance_with_utilization"))
+	// [sts] STS defaults both to false (the STS helm chart doesn't set up runner-IP
+	// propagation that advanced_dispatching requires; rebalance_with_utilization is paired).
+	// See common_settings.go and UPSTREAM_MERGE.md "Config: silent value-only STS overrides".
+	require.False(t, conf.GetBool("cluster_checks.advanced_dispatching_enabled"))
+	require.False(t, conf.GetBool("cluster_checks.rebalance_with_utilization"))
 }
 
 var testExampleConf = []byte(`
