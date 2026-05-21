@@ -741,7 +741,11 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("orchestrator_explorer.terminated_pods.enabled", true)
 	config.BindEnvAndSetDefault("orchestrator_explorer.terminated_pods_improved.enabled", false)
 	config.BindEnvAndSetDefault("orchestrator_explorer.custom_resources.ootb.enabled", true)
-	config.BindEnvAndSetDefault("orchestrator_explorer.kubelet_config_check.enabled", true, "DD_ORCHESTRATOR_EXPLORER_KUBELET_CONFIG_CHECK_ENABLED")
+	// [sts] Default to false: pairs with orchestrator_explorer.enabled=false above. With orchestration
+	// disabled, the orchestrator_kubelet_config check's core loader refuses to load it and the Python
+	// fallback can't find the module — producing a one-shot startup ERROR per node-agent. DD release
+	// note `orch-kubelet-config-respect-flag-24e26c336a1c8ef0.yaml` documents this flag as the gate.
+	config.BindEnvAndSetDefault("orchestrator_explorer.kubelet_config_check.enabled", false, "DD_ORCHESTRATOR_EXPLORER_KUBELET_CONFIG_CHECK_ENABLED")
 	config.BindEnvAndSetDefault("auto_team_tag_collection", true)
 
 	// Container lifecycle configuration
