@@ -160,6 +160,12 @@ Upstream Datadog merges can silently drop StackState-specific code blocks (usual
 - **Symptom if missing:** `failed to flush agent telemetry session: ... dial tcp: lookup instrumentation-telemetry-intake.stackstate.io.: no such host` ERROR lines on every flush.
 - **Re-enable via config/env if needed (and provide an actual intake endpoint).**
 
+### Config: `process_config.process_discovery.enabled` override
+- **File:** `pkg/config/setup/process.go` (around line 162)
+- **What:** Defaults `process_config.process_discovery.enabled` to `false` (DD default is `true`).
+- **Why:** STS receiver doesn't expose `/api/v1/discovery` — the process_discovery check posts there every 4h and the agent gets DNS lookup failures for `https://process.<site>/api/v1/discovery`. Previously masked by the helm chart's deprecated `STS_PROCESS_AGENT_ENABLED=false` which globally disabled the process agent. helm-charts commits `28ac7745`+`92742361` correctly moved to granular `STS_PROCESS_CONFIG_{PROCESS,CONTAINER}_COLLECTION_ENABLED=false`, but those only cover two of the three internal gates — process_discovery had to be disabled at the agent level.
+- **Symptom if missing:** `Post "https://process.stackstate.io./api/v1/discovery": dial tcp: lookup process.stackstate.io.: no such host` ERROR lines every check cycle on both node-agent and cluster-check-agent.
+
 ### Config: silent value-only STS overrides in `common_settings.go` (9 keys)
 
 DD periodically flips these from STS's preferred value back to DD's default. None had `[sts]` comments in 7.71.2, so they're invisible to `[sts]`-grep sweeps. Restore each with a new `[sts]` comment.
