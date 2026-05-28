@@ -55,7 +55,12 @@ func initializeCheckContext(senderManager sender.SenderManager, checkManager han
 		}
 
 		if _, ok := logReceiver.Get(); !ok {
-			log.Warn("Log receiver not provided. Logs from integrations will not be collected.")
+			// [sts] Downgraded from Warn to Info: see matching change in
+			// pkg/collector/aggregator/check_context.go. Both initializers fire at
+			// startup (STS retains this legacy context alongside DD's new one —
+			// see loader.go:109), so this would otherwise produce two WARN entries
+			// per agent boot for an expected STS configuration state.
+			log.Info("Log receiver not provided. Logs from integrations will not be collected.")
 		}
 	}
 

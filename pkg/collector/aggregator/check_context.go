@@ -70,7 +70,11 @@ func InitializeCheckContext(senderManager sender.SenderManager, checkManager han
 		}
 
 		if _, ok := logReceiver.Get(); !ok {
-			log.Warn("Log receiver not provided. Logs from integrations will not be collected.")
+			// [sts] Downgraded from Warn to Info: regulated customers (military, banks)
+			// raise tickets on WARN entries. STS doesn't wire up the integration-logs
+			// pipeline by default, so this fires at every agent start — it's expected
+			// configuration state, not a problem.
+			log.Info("Log receiver not provided. Logs from integrations will not be collected.")
 		}
 	}
 

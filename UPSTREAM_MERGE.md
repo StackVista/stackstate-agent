@@ -213,6 +213,12 @@ DD periodically flips these from STS's preferred value back to DD's default. Non
 - **Symptom if reverted:** Recurring `Error from the agent http API server: http: superfluous response.WriteHeader call from ... (handler_telemetry.go:87)` WARN bursts in the cluster-agent log, especially around the node-agent's periodic `getCheckConfigs` / `getAllEndpointsCheckConfigs` polls.
 - **Regression test:** `TestWithTelemetryWrapper_WriteBeforeWriteHeader_NoDuplicateHeader` in `handler_telemetry_test.go` — counts `WriteHeader` forwards on a wrapping `countingResponseWriter`; must equal 1.
 
+### Check-context "Log receiver not provided" downgraded from Warn to Info
+- **Files:** `pkg/collector/aggregator/check_context.go`, `pkg/collector/python/check_context.go`
+- **What:** Both files emit `"Log receiver not provided. Logs from integrations will not be collected."` at startup when no log receiver is wired in. STS doesn't configure the integration-logs pipeline by default, so this fires every agent boot — and fires *twice* because STS retains the legacy python-package check context alongside DD 7.78's new aggregator-package one (see `pkg/collector/python/loader.go:109-117` for the rationale). STS downgrades both to `log.Info`.
+- **Why:** Customer-facing log noise. Same regulated-customer driver as the `telemetryWriterWrapper` patch — this is the expected STS configuration state, not a problem worth flagging at WARN.
+- **Symptom if reverted:** Two `WARN ... Log receiver not provided. Logs from integrations will not be collected.` lines per agent startup, one from each package.
+
 ### Test stability patches we carry on top of upstream
 
 `pkg/logs/client/http/worker_pool_test.go` carries an STS-specific `driveUntil` helper plus an `absDuration` utility, used to absorb a goroutine-scheduling race in `TestRetryableError`, `TestNonRetryableError`, and `TestWorkerCounts`. Without these, the tests flake on busy CI runners with off-by-one worker counts and millisecond-level `assert.InDelta` mismatches on `virtualLatency`. **An upstream merge into `pkg/logs/client/http/` may overwrite this patch — verify the helpers are still present and the `Test*` functions still call `driveUntil(...)` rather than the original fixed-iteration loops.** The original assertions (`for i := 0; i < 100; i++ { pool.run(...) }; require.Equal(t, 8, pool.inUseWorkers)`) compile but flake in CI.
