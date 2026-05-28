@@ -95,3 +95,16 @@ func (w *telemetryWriterWrapper) WriteHeader(statusCode int) {
 
 	w.setSpanTags(statusCode)
 }
+
+// [sts] Override Write so the wrapper's wroteHeader flag tracks the implicit
+// WriteHeader(200) that Go's stdlib triggers when a handler calls Write before
+// WriteHeader. Without this, the wrapper's flag stays false, and the next
+// explicit WriteHeader forwards a duplicate to the underlying ResponseWriter,
+// producing a "superfluous response.WriteHeader call" warning at WARN level.
+// Upstream DD does not implement Write on this wrapper.
+func (w *telemetryWriterWrapper) Write(b []byte) (int, error) {
+	if !w.wroteHeader {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(b)
+}

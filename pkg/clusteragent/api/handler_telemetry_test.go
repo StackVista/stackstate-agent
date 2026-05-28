@@ -83,6 +83,41 @@ func TestWithTelemetryWrapper_5xxSetsErrorTag(t *testing.T) {
 	assert.Equal(t, true, spans[0].Tag("error"))
 }
 
+// [sts] Regression test for the "superfluous response.WriteHeader call" warning.
+// Reproduces the handler pattern (Write before explicit WriteHeader) that, without
+// the Write override on telemetryWriterWrapper, would forward two WriteHeader calls
+// to the underlying ResponseWriter and trip Go's stdlib double-write detector.
+func TestWithTelemetryWrapper_WriteBeforeWriteHeader_NoDuplicateHeader(t *testing.T) {
+	th := &TelemetryHandler{
+		handlerName: "writeFirstHandler",
+		handler: func(w http.ResponseWriter, _ *http.Request) {
+			_, _ = w.Write([]byte("ok"))
+			w.WriteHeader(http.StatusOK)
+		},
+	}
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	rec := httptest.NewRecorder()
+	counter := &countingResponseWriter{ResponseWriter: rec}
+	th.handle(counter, req)
+
+	assert.Equal(t, 1, counter.headerWrites, "wrapper must forward WriteHeader to the underlying ResponseWriter exactly once")
+	assert.Equal(t, "ok", rec.Body.String())
+}
+
+// countingResponseWriter counts how many times WriteHeader is forwarded to
+// the underlying ResponseWriter. Used to detect duplicate-header bugs that
+// httptest.ResponseRecorder alone would not flag.
+type countingResponseWriter struct {
+	http.ResponseWriter
+	headerWrites int
+}
+
+func (c *countingResponseWriter) WriteHeader(code int) {
+	c.headerWrites++
+	c.ResponseWriter.WriteHeader(code)
+}
+
 func TestWithTelemetryWrapper_4xxSetsErrorTag(t *testing.T) {
 	mt := mocktracer.Start()
 	defer mt.Stop()
