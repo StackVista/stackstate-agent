@@ -70,7 +70,14 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	// If true, then new version of disk v2 check will be used.
 	// Otherwise, the python version of disk check will be used.
 	config.BindEnvAndSetDefault("use_diskv2_check", true)
-	// [sts] Default to false: STS uses the Python disk check, not DD's new core (Go) loader.
+	// [sts] STAC-24908: kept at DD's default of false on 7.78+ because use_diskv2_check
+	// above is already true, which makes the v2 Go core disk check load. Flipping this
+	// to true would also load the v1 Go core check, producing duplicate system.disk.*
+	// emissions (both implementations share the same metric names). The disk.d default
+	// config in cmd/agent/dist/conf.d/ is retained in the Dockerfile so autodiscovery
+	// can find it at runtime. Regression covered by TestDiskCheckAtLeastOneLoaderEnabled.
+	// (On 7.71.2 this was true rather than false, because use_diskv2_check did not exist
+	// there yet — see the STAC-24908 fix on stackstate-7.71.2 for that history.)
 	config.BindEnvAndSetDefault("disk_check.use_core_loader", false)
 
 	// the darwin and bsd network check has not been ported from python

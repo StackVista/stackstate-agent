@@ -53,6 +53,48 @@ func TestDefaults(t *testing.T) {
 	}, config.GetStringMap("process_config.process_discovery"))
 }
 
+// [sts] STAC-24908: regression test for missing host disk metrics.
+// Two independent regressions in 2026 left the agent silently emitting no
+// system.disk.* metrics:
+//  1. DD upstream (PR #36526, commit 7c0538448a) gated the Go core disk check
+//     behind disk_check.use_core_loader, defaulted to false.
+//  2. The STS Dockerfile then deleted conf.d/disk.d from the image because
+//     "the check fails to load anyway" - closing off the opt-in path.
+//
+// On 7.78+ a third knob entered the mix: use_diskv2_check (DD default true)
+// makes the v2 Go core check load even when use_core_loader is false. So this
+// test asserts the actual invariant — "at least one disk loader is enabled"
+// — rather than pinning either knob, since flipping both would cause
+// duplicate emissions (v1 and v2 share metric names).
+//
+// The test also fails fast if disk.d/conf.yaml.default disappears from the
+// agent's dist tree (which is what populates /etc/stackstate-agent/conf.d at
+// runtime via the omnibus build).
+func TestDiskCheckAtLeastOneLoaderEnabled(t *testing.T) {
+	config := newTestConf(t)
+
+	useCoreLoader := config.GetBool("disk_check.use_core_loader")
+	useDiskv2 := config.GetBool("use_diskv2_check")
+	assert.True(t, useCoreLoader || useDiskv2,
+		"at least one of disk_check.use_core_loader (v1 Go core) or use_diskv2_check "+
+			"(v2 Go core) must default to true; otherwise neither disk check loader will "+
+			"run on STS (which does not ship the Python integration) and no "+
+			"system.disk.* metrics will be emitted. Got use_core_loader=%v, "+
+			"use_diskv2_check=%v", useCoreLoader, useDiskv2)
+	assert.False(t, useCoreLoader && useDiskv2,
+		"both v1 and v2 disk loaders are enabled (use_core_loader=true AND "+
+			"use_diskv2_check=true); they share metric names so this would produce "+
+			"duplicate system.disk.* emissions. Pick exactly one.")
+
+	confPath := filepath.Join("..", "..", "..", "cmd", "agent", "dist", "conf.d", "disk.d", "conf.yaml.default")
+	_, err := os.Stat(confPath)
+	assert.NoError(t, err,
+		"cmd/agent/dist/conf.d/disk.d/conf.yaml.default must exist; without it "+
+			"autodiscovery will not schedule the disk check at runtime even when "+
+			"the Go core loader is enabled. Also verify Dockerfiles/agent/Dockerfile "+
+			"does not delete the disk.d directory after dpkg extraction.")
+}
+
 func TestUnexpectedUnicode(t *testing.T) {
 	keyYaml := "api_\u202akey: fakeapikey\n"
 	valueYaml := "api_key: fa\u202akeapikey\n"
