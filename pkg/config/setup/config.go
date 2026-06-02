@@ -352,7 +352,14 @@ func InitConfig(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("python_lazy_loading", true)
 
 	// If false, the core check will be skipped.
-	config.BindEnvAndSetDefault("disk_check.use_core_loader", false)
+	// [sts] STAC-24908: default to true for disk so the Go core disk check runs.
+	// STS does not ship the Python `datadog_checks_disk` integration, so leaving
+	// this at DD's `false` default means neither loader fires and the agent
+	// silently emits no `system.disk.*` metrics. Customers (incl. SUSE tech
+	// support's own dashboards) depend on these metrics. Keeping
+	// network_check.use_core_loader at DD's default for now — flip if/when the
+	// equivalent `system.net.*` regression surfaces.
+	config.BindEnvAndSetDefault("disk_check.use_core_loader", true)
 	config.BindEnvAndSetDefault("network_check.use_core_loader", false)
 
 	// If true, then the go loader will be prioritized over the python loader.

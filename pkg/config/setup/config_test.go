@@ -53,6 +53,35 @@ func TestDefaults(t *testing.T) {
 	}, config.GetStringMap("process_config.process_discovery"))
 }
 
+// [sts] STAC-24908: regression test for missing host disk metrics.
+// Two independent regressions in 2026 left the agent silently emitting no
+// system.disk.* metrics:
+//  1. DD upstream (PR #36526, commit 7c0538448a) gated the Go core disk check
+//     behind disk_check.use_core_loader, defaulted to false.
+//  2. The STS Dockerfile then deleted conf.d/disk.d from the image because
+//     "the check fails to load anyway" - closing off the opt-in path.
+//
+// This test fails fast if either layer regresses: the config default flips
+// back to false, OR the disk.d default config file disappears from the
+// agent's dist tree (which is what populates /etc/stackstate-agent/conf.d
+// at runtime via the omnibus build).
+func TestDiskCheckDefaultEnabled(t *testing.T) {
+	config := newTestConf(t)
+
+	assert.True(t, config.GetBool("disk_check.use_core_loader"),
+		"disk_check.use_core_loader must default to true; STS does not ship the "+
+			"Python disk integration, so disabling the Go core check leaves the "+
+			"agent with nothing to load and no system.disk.* metrics will be emitted")
+
+	confPath := filepath.Join("..", "..", "..", "cmd", "agent", "dist", "conf.d", "disk.d", "conf.yaml.default")
+	_, err := os.Stat(confPath)
+	assert.NoError(t, err,
+		"cmd/agent/dist/conf.d/disk.d/conf.yaml.default must exist; without it "+
+			"autodiscovery will not schedule the disk check at runtime even when "+
+			"the Go core loader is enabled. Also verify Dockerfiles/agent/Dockerfile "+
+			"does not delete the disk.d directory after dpkg extraction.")
+}
+
 func TestUnexpectedUnicode(t *testing.T) {
 	keyYaml := "api_\u202akey: fakeapikey\n"
 	valueYaml := "api_key: fa\u202akeapikey\n"
