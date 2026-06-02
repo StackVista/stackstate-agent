@@ -18,9 +18,6 @@ RUN dpkg -x /stackstate-agent*_${ARCH}.deb . \
     usr/lib/x86_64-linux-gnu/libsystemd.so.0.21.0 \
  && find opt/stackstate-agent/ -iname "*.a" -delete \
  && rm -rf opt/stackstate-agent/bin/agent/dist/jmx \
-    # [sts] remove disk check config — Go core check is disabled by default and no Python module is shipped
-    opt/stackstate-agent/bin/agent/dist/conf.d/disk.d \
-    etc/stackstate-agent/conf.d/disk.d \
  && mkdir conf.d checks.d
 
 # Configuration:
