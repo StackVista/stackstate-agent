@@ -1361,6 +1361,11 @@ func TestDiskCheckWithoutCoreLoader(t *testing.T) {
 
 	cfg := configmock.New(t)
 	cfg.Set("disk_check.use_core_loader", false, configmodel.SourceAgentRuntime)
+	// [sts] STAC-24908: pin use_diskv2_check=false explicitly because STS flipped
+	// its default to true. The test's intent — "v2 skips when neither loader is
+	// enabled" — needs both knobs pinned in the setup; without this it would
+	// pass on upstream defaults but fail on the STS branch.
+	cfg.Set("use_diskv2_check", false, configmodel.SourceAgentRuntime)
 
 	diskFactory := diskv2.Factory()
 	diskCheckFunc, ok := diskFactory.Get()

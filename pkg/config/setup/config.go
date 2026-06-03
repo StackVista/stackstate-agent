@@ -360,7 +360,16 @@ func InitConfig(config pkgconfigmodel.Setup) {
 
 	// If true, then new version of disk v2 check will be used.
 	// Otherwise, the old version of disk check will be used (maintaining backward compatibility).
-	config.BindEnvAndSetDefault("use_diskv2_check", false)
+	// [sts] STAC-24908: default to true so the v2 Go core disk check loads and emits
+	// system.disk.* metrics. STS does not ship the Python `datadog_checks_disk`
+	// integration, so without one of the two Go-core options enabled the agent
+	// silently emits no disk metrics at all. v2 is preferred over v1 here because
+	// (a) it's what DD ships as the 7.78 default, so we align with the upcoming
+	// merge branch; (b) v2 adds `system.disk.utilized`, `system.fs.inodes.utilized`,
+	// and the optional `disk.read_write` service check. Mutually exclusive with
+	// disk_check.use_core_loader=true (would load both v1 and v2 → duplicate
+	// metrics). Regression: TestDiskCheckAtLeastOneLoaderEnabled.
+	config.BindEnvAndSetDefault("use_diskv2_check", true)
 
 	// If true, then new version of network v2 check will be used.
 	// Otherwise, the old version of network check will be used (maintaining backward compatibility).
