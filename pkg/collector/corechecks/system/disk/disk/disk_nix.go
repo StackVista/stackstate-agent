@@ -149,6 +149,15 @@ func (c *Check) sendDiskMetrics(sender sender.Sender, ioCounter disk.IOCountersS
 
 // Configure the disk check
 func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
+	// [sts] STAC-24908 diagnostic: should NOT fire on the merge branch
+	// (use_diskv2_check=true → registration registers diskv2, not v1). If it
+	// does, registration registered v1, meaning cfg.GetBool at registration
+	// returned false despite our default of true.
+	log.Infof("[sts-debug] disk.Configure (v1) called: flavor=%v use_core_loader=%v source=%q",
+		flavor.GetFlavor(),
+		pkgconfigsetup.Datadog().GetBool("disk_check.use_core_loader"),
+		source,
+	)
 	if flavor.GetFlavor() == flavor.DefaultAgent && !pkgconfigsetup.Datadog().GetBool("disk_check.use_core_loader") {
 		return fmt.Errorf("%w: disk core check is disabled", check.ErrSkipCheckInstance)
 	}

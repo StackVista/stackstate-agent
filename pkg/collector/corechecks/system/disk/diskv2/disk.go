@@ -187,10 +187,21 @@ func (c *Check) Run() error {
 
 // Configure parses the check configuration and init the check
 func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
+	// [sts] STAC-24908 diagnostic: confirm v2 Configure is called at all and
+	// what the gate sees at this exact moment. Removed once the v2-doesnt-load
+	// regression on 7.78.2 is root-caused.
+	log.Infof("[sts-debug] diskv2.Configure called: flavor=%v use_core_loader=%v use_diskv2_check=%v source=%q provider=%q",
+		flavor.GetFlavor(),
+		pkgconfigsetup.Datadog().GetBool("disk_check.use_core_loader"),
+		pkgconfigsetup.Datadog().GetBool("use_diskv2_check"),
+		source, provider,
+	)
 	if flavor.GetFlavor() == flavor.DefaultAgent && !pkgconfigsetup.Datadog().GetBool("disk_check.use_core_loader") && !pkgconfigsetup.Datadog().GetBool("use_diskv2_check") {
 		// if use_diskv2_check, then do not skip the core check
+		log.Infof("[sts-debug] diskv2.Configure returning ErrSkipCheckInstance (gate condition true)")
 		return fmt.Errorf("%w: disk core check is disabled", check.ErrSkipCheckInstance)
 	}
+	log.Infof("[sts-debug] diskv2.Configure: gate passed, proceeding with BuildID + CommonConfigure ...")
 
 	// Must be called before CommonConfigure so each instance gets a unique
 	// check ID and therefore its own sender, preventing custom tags set on
