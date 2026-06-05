@@ -68,8 +68,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/winproc"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/systemd"
 	telemetryCheck "github.com/DataDog/datadog-agent/pkg/collector/corechecks/telemetry"
-	pkgflavor "github.com/DataDog/datadog-agent/pkg/util/flavor"
-	pkglog "github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // RegisterChecks registers all core checks
@@ -119,22 +117,6 @@ func RegisterChecks(store workloadmeta.Component, filterStore workloadfilter.Com
 	corecheckLoader.RegisterCheck(nvidia.CheckName, nvidia.Factory())
 	corecheckLoader.RegisterCheck(oracle.CheckName, oracle.Factory())
 	corecheckLoader.RegisterCheck(oracle.OracleDbmCheckName, oracle.Factory())
-	// [sts] STAC-24908 diagnostic: prints what cfg sees at registration time
-	// for the disk knobs. v2 of the disk check has stopped scheduling on the
-	// 7.78.2 merge branch despite (a) registration code being identical to
-	// 7.71.2's (where v2 loads fine), (b) defaults matching DD's stock
-	// 7.78.2 (both flags true), and (c) the static Configure gate suggesting
-	// the load should succeed. This log line tells us what's actually true at
-	// runtime; remove once the root cause is identified.
-	pkglog.Infof("[sts-debug] disk registration: use_diskv2_check=%v disk_check.use_core_loader=%v "+
-		"prioritize_go_check_loader=%v use_diskv2_check_isSet=%v use_core_loader_isSet=%v flavor=%v",
-		cfg.GetBool("use_diskv2_check"),
-		cfg.GetBool("disk_check.use_core_loader"),
-		cfg.GetBool("prioritize_go_check_loader"),
-		cfg.IsSet("use_diskv2_check"),
-		cfg.IsSet("disk_check.use_core_loader"),
-		pkgflavor.GetFlavor(),
-	)
 	if cfg.GetBool("use_diskv2_check") {
 		corecheckLoader.RegisterCheck(disk.CheckName, diskv2.Factory())
 	} else {
