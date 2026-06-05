@@ -63,6 +63,7 @@ AGENT_CORECHECKS = [
     "cri",
     "snmp",
     "docker",
+    "disk",
     "file_handle",
     "go_expvar",
     "io",
