@@ -173,20 +173,6 @@ func (cp *configPoller) collectOnce(ctx context.Context, provider types.Collecti
 		log.Debugf("%v provider: no configuration change", cp.provider)
 	}
 
-	// [sts] STAC-24908 diagnostic: list the names of every config the
-	// provider just handed us, plus a hint about which downstream path each
-	// will take. v2 disk check isn't loading on the 7.78.2 merge branch
-	// despite registration succeeding and the conf.d/disk.d/conf.yaml.default
-	// file shipping in the image. This line tells us whether disk is even in
-	// the file_provider's output, and whether it gets routed to the template
-	// path (needs AD service match — which would silently never fire) or the
-	// direct path (which always schedules unless secrets decryption fails).
-	for i, c := range newConfigs {
-		isTemplate := len(c.ADIdentifiers) > 0 || len(c.AdvancedADIdentifiers) > 0
-		log.Infof("[sts-debug] %v provider config[%d/%d]: name=%q instances=%d ADIdentifiers=%v MetricConfig?=%v template?=%v",
-			cp.provider, i+1, len(newConfigs), c.Name, len(c.Instances), c.ADIdentifiers, c.MetricConfig != nil, isTemplate)
-	}
-
 	// Process removed configs first to handle the case where a
 	// container churn would result in the same configuration hash.
 	ac.processRemovedConfigs(removedConfigs)
@@ -210,9 +196,6 @@ func (cp *configPoller) collectOnce(ctx context.Context, provider types.Collecti
 
 		config.Provider = cp.provider.String()
 		changes := ac.processNewConfig(config)
-		// [sts] STAC-24908 diagnostic: report what processNewConfig decided.
-		log.Infof("[sts-debug] processNewConfig %q returned: schedule=%d unschedule=%d",
-			config.Name, len(changes.Schedule), len(changes.Unschedule))
 		ac.applyChanges(changes)
 	}
 
