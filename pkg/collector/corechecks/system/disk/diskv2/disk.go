@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"regexp"
 	"runtime"
 	"strings"
@@ -599,6 +600,17 @@ func (c *Check) getDiskUsageWithTimeout(mountpoint string) (*gopsutil_disk.Usage
 func (c *Check) getPartitionUsage(partition gopsutil_disk.PartitionStat) *gopsutil_disk.UsageStat {
 	usage, err := c.getDiskUsageWithTimeout(partition.Mountpoint)
 	if err != nil {
+		// [sts] Permission-denied is the expected outcome on Kubernetes for per-pod CSI
+		// mounts and volume-subpath bind mounts that the kubelet exposed in the node-agent's
+		// mount table but locked down to the owning pod. The check correctly skips them
+		// (returns nil), but the WARN floods cluster-agent logs at dozens-per-collection
+		// frequency. Real problems (NFS hangs, FS corruption, stuck mounts) surface as
+		// other errno values and continue to WARN. Keeping the upstream message verbatim
+		// in the WARN branch for grep-compatibility with existing playbooks.
+		if errors.Is(err, fs.ErrPermission) {
+			log.Debugf("Skipping permission-denied mountpoint %s: %s", partition.Mountpoint, err)
+			return nil
+		}
 		log.Warnf("Unable to get disk metrics for %s: %s. You can exclude this mountpoint in the settings if it is invalid.", partition.Mountpoint, err)
 		return nil
 	}
