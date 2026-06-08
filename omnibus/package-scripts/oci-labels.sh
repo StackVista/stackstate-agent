@@ -37,9 +37,10 @@ usage: oci-labels.sh --image-name NAME --tag TAG --title TITLE \
                      [--product NAME] [--source-url URL] [--documentation-url URL]
 
 Exactly one of --base-image or --dockerfile must be supplied. With --dockerfile,
-the first FROM line that does not reference a previously-defined build stage is
-used as the external base image. This keeps the label in sync with the
-Dockerfile and avoids drift from a hardcoded value.
+each FROM is resolved through stage references and the last one wins; this is
+the external base image of the stage Docker/kaniko ships by default (no
+--target). Keeps the label in sync with the Dockerfile without a hardcoded
+value.
 
 When --base-digest is provided, the buildx call to resolve the base image
 digest is skipped. Required when running inside a container without docker
@@ -96,10 +97,13 @@ if [[ -n "$dockerfile" ]]; then
   fi
   base_image="$(awk '
     toupper($1) == "FROM" {
-      img = $2
-      if (toupper($3) == "AS") stages[$4] = 1
-      if (!(img in stages)) { print img; exit }
+      src = $2; dst = ""
+      if (toupper($3) == "AS") dst = $4
+      resolved = (src in stage_base) ? stage_base[src] : src
+      if (dst != "") stage_base[dst] = resolved
+      last = resolved
     }
+    END { print last }
   ' "$dockerfile")"
   if [[ -z "$base_image" ]]; then
     echo "oci-labels.sh: could not find an external FROM line in $dockerfile" >&2
