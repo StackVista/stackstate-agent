@@ -38,12 +38,14 @@ instances:
     #
   - use_mount: false
 
-    ## @param excluded_filesystems - list of strings - optional - default: tmpfs
-    ## This parameters instructs the check to ignore disks using these filesystems.
+    ## @param file_system_exclude - list of strings - optional - default: tmpfs
+    ## This parameter instructs the check to ignore disks using these filesystems.
     ## Note: On some linux distributions, rootfs is found and tagged as a device.
     ## Add rootfs here to exclude.
+    ## [sts] Renamed from the deprecated `excluded_filesystems`; the diskv2 check warns
+    ## on every startup when the old key is used. Functionally equivalent.
     #
-    excluded_filesystems:
+    file_system_exclude:
       - tmpfs
       - squashfs
 
