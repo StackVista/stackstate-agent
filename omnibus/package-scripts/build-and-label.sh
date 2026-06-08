@@ -4,26 +4,23 @@
 #
 # Owns the per-image title/description/component/image-name lookup keyed off the
 # Dockerfile directory basename, so the existing publish_image.sh call signature
-# stays unchanged.
+# stays unchanged. The base image label is derived from the Dockerfile FROM line
+# by oci-labels.sh itself.
 #
 # Usage:
 #   build-and-label.sh --build-tag <REPO:TAG> --dockerfile-path <DIR> \
-#                      [--base-image REF] [--build-arg NAME=VALUE ...]
-#
-# When --base-image is supplied it overrides FROM parsing.
+#                      [--build-arg NAME=VALUE ...]
 
 set -euo pipefail
 
 build_tag=""
 dockerfile_path=""
-base_image_override=""
 build_args=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --build-tag)        build_tag=$2;             shift 2 ;;
     --dockerfile-path)  dockerfile_path=$2;       shift 2 ;;
-    --base-image)       base_image_override=$2;   shift 2 ;;
     --build-arg)        build_args+=("--build-arg" "$2"); shift 2 ;;
     *) echo "build-and-label.sh: unknown argument: $1" >&2; exit 64 ;;
   esac
@@ -62,16 +59,6 @@ case "$(basename "$dockerfile_path")" in
     ;;
 esac
 
-if [[ -n "$base_image_override" ]]; then
-  base_image="$base_image_override"
-else
-  base_image="$(awk 'toupper($1) == "FROM" { last = $2 } END { print last }' "${dockerfile_path}/Dockerfile")"
-  if [[ -z "$base_image" ]]; then
-    echo "build-and-label.sh: could not parse FROM line in ${dockerfile_path}/Dockerfile" >&2
-    exit 1
-  fi
-fi
-
 # BUILD_TAG has the form "<repo>:<tag>". The tag is what goes into
 # org.opencontainers.image.version and the ref.name suffix.
 tag="${build_tag##*:}"
@@ -84,7 +71,7 @@ mapfile -t labels < <(
     --title "$title" \
     --description "$description" \
     --component "$component" \
-    --base-image "$base_image"
+    --dockerfile "${dockerfile_path}/Dockerfile"
 )
 
 docker build "${labels[@]}" "${build_args[@]}" \
