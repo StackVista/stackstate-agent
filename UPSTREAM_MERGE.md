@@ -226,6 +226,33 @@ DD periodically flips these from STS's preferred value back to DD's default. Non
 - **Why:** Customer-facing log noise. Same regulated-customer driver as the `telemetryWriterWrapper` patch — this is the expected STS configuration state, not a problem worth flagging at WARN.
 - **Symptom if reverted:** Two `WARN ... Log receiver not provided. Logs from integrations will not be collected.` lines per agent startup, one from each package.
 
+### Cluster-agent server.go: errorLog filter for "superfluous WriteHeader"
+- **File:** `cmd/cluster-agent/api/server.go` — `superfluousWriteHeaderFilteringWriter` struct + wrapping of `logWriter` before it's passed to `stdLog.New(...)`.
+- **What:** Wraps the `io.Writer` passed to `http.Server.ErrorLog` so any line containing `"superfluous response.WriteHeader call"` is dropped before reaching seelog. This is a belt-and-suspenders companion to the `telemetryWriterWrapper.Write` override above. The structural override fixes the wrapper's bookkeeping; this filter catches double-WriteHeader paths the wrapper can't reach (panic recovery middleware, direct `ResponseWriter.Write` bypasses, anything downstream that calls `WriteHeader` on the underlying writer twice).
+- **Why:** The `Write` override alone does not silence every path that produces the WARN. In the 7.78.2 cycle, sandbox soak revealed that the WARN was actually firing through a *cluster-checks dispatch* path tied to a failing check (aws_topology), which goes through different middleware than the wrapper covers. The filter is a small, low-risk insurance policy that guarantees the warning never appears regardless of which handler path produced it.
+- **Symptom if reverted:** WARN bursts return on any handler that triggers a double-WriteHeader, *especially* when a cluster-check fails to load and the cluster-agent's reporting handshake with the checks-agent fires repeatedly.
+- **Verify on the merged branch:** `grep -n superfluousWriteHeaderFilteringWriter cmd/cluster-agent/api/server.go` — expect the struct definition at the bottom of the file plus the `&superfluousWriteHeaderFilteringWriter{inner: logWriter}` wrapping near the `errorLog := stdLog.New(...)` call.
+
+### Disk default config: `file_system_exclude` instead of deprecated `excluded_filesystems`
+- **File:** `cmd/agent/dist/conf.d/disk.d/conf.yaml.default`
+- **What:** The default disk-check config ships with `file_system_exclude: [tmpfs, squashfs]` instead of the upstream `excluded_filesystems` key. Both keys map to the same internal config field, but the diskv2 check emits a deprecation WARN at every node-agent startup when the old key is used.
+- **Why:** Single-line deprecation noise that fires on every node, and DD will re-introduce the old key on every merge.
+- **Symptom if reverted:** `WARN ... excluded_filesystems is deprecated and will be removed in a future release. Please use file_system_exclude instead.` once per node-agent startup.
+
+### Workloadmeta startup race log severity downgrade
+- **Files:**
+  - `comp/core/workloadmeta/impl/store.go` — `"no workloadmeta collector ready after %s, starting pull loop anyway"` was `Warnf`, downgrade to `Infof`.
+  - `comp/core/autodiscovery/autodiscoveryimpl/autoconfig.go` — `"Workloadmeta collectors are not ready after %d retries: ..., starting check scheduler controller anyway."` was `Errorf`, downgrade to `Infof`.
+- **What:** On EKS/GKE/etc., the kubelet workloadmeta collector takes longer than the autoconfig retry window to become ready. Both code paths log a single message at startup and then self-recover — neither is actionable.
+- **Why:** Each fires exactly once per agent startup; combined they account for one WARN + one ERROR per pod boot. Customer telemetry / paging picks them up despite being benign.
+- **Symptom if reverted:** One ERROR + one WARN per agent startup mentioning workloadmeta readiness.
+
+### Diskv2: demote permission-denied mountpoint WARN to DEBUG
+- **File:** `pkg/collector/corechecks/system/disk/diskv2/disk.go` — `getPartitionUsage`.
+- **What:** When `disk.Usage(mountpoint)` fails, upstream logs `WARN Unable to get disk metrics for <mountpoint>: <err>`. STS adds an `errors.Is(err, fs.ErrPermission)` branch that downgrades the EACCES case to `Debugf`. Real disk problems (NFS hangs, FS corruption, stuck mounts) surface as other errno values and continue to WARN with the original message.
+- **Why:** On any Kubernetes cluster, the kubelet exposes per-pod CSI mounts and `volume-subpaths/` bind mounts in the node-agent's mount table but locks their permissions down to the owning pod's UID. The check correctly skips them (returns `nil`), but the upstream WARN fires dozens of times *per collection cycle* — hundreds per minute under steady state. A chart-side mount-path exclusion regex was considered and rejected: it would silently drop legitimate metrics on customers running CSI drivers with looser permissions, and it would fail to match on RKE2/K3s clusters where kubelet lives at a different root path. A permission-aware demotion in the source is path- and topology-agnostic.
+- **Symptom if reverted:** 400+ disk-metric WARN lines per node-agent per minute on any Kubernetes deployment with CSI-backed PVCs or `subPath:` mounts.
+
 ### Test stability patches we carry on top of upstream
 
 `pkg/logs/client/http/worker_pool_test.go` carries an STS-specific `driveUntil` helper plus an `absDuration` utility, used to absorb a goroutine-scheduling race in `TestRetryableError`, `TestNonRetryableError`, and `TestWorkerCounts`. Without these, the tests flake on busy CI runners with off-by-one worker counts and millisecond-level `assert.InDelta` mismatches on `virtualLatency`. **An upstream merge into `pkg/logs/client/http/` may overwrite this patch — verify the helpers are still present and the `Test*` functions still call `driveUntil(...)` rather than the original fixed-iteration loops.** The original assertions (`for i := 0; i < 100; i++ { pool.run(...) }; require.Equal(t, 8, pool.inUseWorkers)`) compile but flake in CI.
@@ -344,9 +371,80 @@ Pre-merge branch setup (above) is a prerequisite. By the time you're here, `merg
 3. Iterate on CI until `branded_unit_tests` and `unbranded_unit_tests` pass on both x86 and ARM
 4. **Verify all StackState-specific code blocks** (see "StackState-Specific Code That Can Be Lost During Merge" above)
 5. Run integration tests (beest) against the produced container images
-6. **Deploy to sandbox and verify metric enrichment** (cluster_name, _k8s_cluster_, _scope_ labels present)
+6. **Deploy to sandbox and verify metric enrichment + log noise floor** (see "Sandbox soak validation" below)
 7. Fix any runtime issues
 8. **Open the cutover MR**: source `merged-<CURRENT>-to-<NEXT>` → target `stackstate-<NEXT>` (which already exists from prep step 6 with the SUSE customization commit on it). Title pattern from MR !387: "Our changes on top of <NEXT> into base". Once that merges, `stackstate-<NEXT>` becomes the new fork main and the four-repo coordination in "Cutover" below kicks in.
+
+## Sandbox soak validation
+
+The merge-branch image is validated against a real customer-shaped cluster (sandbox-main) before cutover. This catches three classes of issue that CI + beest don't surface:
+
+- **Live workload noise**: helm-deployed agents on a busy cluster reveal log spam that idle integration tests miss (disk EACCES on per-pod CSI mounts, repeated cluster-checks dispatch loops, etc.).
+- **Vestigial config**: per-cluster values.yaml overrides that have been silently broken for years (in the 7.78.2 cycle, sandbox-main's `aws_topology` override had been failing every collection since ~2023, hidden behind log severity).
+- **Production receiver path validation**: sandbox-main forwards to a real receiver, so payload-rejection issues (compression, `internalHostname`, v1/v2 API gates) surface as 400/404 rather than being masked by mock receivers.
+
+### Deploying the soak
+
+Sandbox-main is ArgoCD-managed via `stackvista/agent-promoter` (now on GitHub). To soak a merge-branch image:
+
+1. **Wait for a successful merged-results pipeline on the agent MR.** GitLab's `merge_request_event` pipelines build images tagged with the MR-merge commit SHA (10 chars). Capture the SHA from the pipeline page or via the GitLab API (`/api/v4/projects/<id>/merge_requests/<iid>/pipelines`). Do NOT use the source-branch tip SHA — that image won't exist in the registry because no source-branch pipeline runs.
+2. **Open a soak PR on `StackVista/agent-promoter`** that bumps `image.tag` in `deploy/argocd/sandbox-main/apps/suse-observability-agent/values.yaml` for `checksAgent`, `clusterAgent`, and `nodeAgent.containers.agent` (three places). Leave `processAgent` at chart default — separate release cadence. Use a branch name like `STAC-NNNNN-sandbox-soak-<sha10>`.
+3. **Merge the soak PR.** ArgoCD picks up the change within its sync window (typically a few minutes); helm chart's checksum annotation on the ConfigMap triggers cluster-agent pod rotation; checks-agent and node-agents follow as their image tags resolve.
+4. **Verify pod rotation:**
+   ```bash
+   kubectl get pods -n monitoring -l app.kubernetes.io/instance=suse-observability-dev-agent \
+     -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.creationTimestamp}{"\t"}{.spec.containers[0].image}{"\n"}{end}' \
+     | grep -E 'cluster-agent|checks-agent|node-agent'
+   ```
+   Confirm all three components show the new tag and recent `creationTimestamp`.
+
+### Soak triage
+
+After ~30 minutes of soak (enough for the disk check, kubernetes events, cluster-checks polling, and a process-agent flush cycle to have run multiple times), run the three triage one-liners:
+
+```bash
+# cluster-agent — deduplicated WARN/ERROR (excluding known event-mapper noise)
+kubectl logs -n monitoring <cluster-agent-pod> \
+  | grep -E ' (WARN|ERROR|FATAL) ' \
+  | awk -F '|' '{print $3"|"$5}' | awk -F ' in ' '{print $1}' \
+  | sed 's/^[[:space:]]*//' | sort | uniq -c | sort -rn | head -15
+
+# checks-agent (same shape)
+kubectl logs -n monitoring <checks-agent-pod> -c suse-observability-agent | <same pipeline>
+
+# node-agent main container
+kubectl logs -n monitoring <node-agent-pod> -c node-agent | <same pipeline>
+```
+
+**Expected baseline** with all log-noise patches applied (the four entries in "StackState-Specific Code That Can Be Lost During Merge" labelled cluster-agent server.go, disk default config, workloadmeta startup race, and diskv2 EACCES demotion):
+
+| Pod | Expected non-startup WARN/ERROR | Acceptable |
+|---|---|---|
+| cluster-agent | 0 | Single-occurrence event-mapper "unknown reason" WARNs as Kubernetes emits novel event types are expected and fine. |
+| checks-agent | 0 (silent after startup) | One startup-race line per pod boot is acceptable. |
+| node-agent main | 0 | Anything from `pkg/collector/corechecks/system/disk/diskv2/disk.go:602` should be EACCES-demoted to DEBUG; if it shows up at WARN something regressed. |
+| node-agent process-agent | 2 startup lines (CPU/memory threshold WARN — known disused feature) | Transient receiver 502s on rolling deploys are OK. |
+
+If a noise pattern fires repeatedly during steady state, treat it as a regression and check the "StackState-Specific Code That Can Be Lost During Merge" entries first — most production log noise is a regression of one of those patches, not a new issue.
+
+## Log noise triage methodology
+
+Lessons accumulated across cycles, generalizing the discovery workflow above.
+
+**Triage in four buckets, in order:**
+- **A. Known noise** — entries that match documented patterns (per-pod CSI EACCES, event-mapper unknown reasons, startup workloadmeta race, etc.). Verify the relevant STS patch is in place; if not, restore it.
+- **B. Vestigial config** — entries pointing at checks/endpoints/integrations that no longer exist. Often the loudest production noise comes from per-cluster `values.yaml` overrides that have been broken for years (the 7.78.2 cycle's `aws_topology` was this).
+- **C. Cascade noise** — a single root failure that produces many derived WARNs (the WriteHeader spam was caused by failing aws_topology cluster-check dispatch, not a generic upstream bug).
+- **D. Real regressions** — anything left after the first three buckets is the real signal.
+
+**Correlated ERROR + WARN often share a root cause.** When you see a steady ERROR and a steady WARN at similar rates, fix the ERROR first and re-measure rather than chasing both independently. In the 7.78.2 cycle, removing the `aws_topology` ERROR silenced the `superfluous WriteHeader` WARN simultaneously, with no agent code change required — they were both symptoms of the same failing cluster-check dispatch.
+
+**Fix at the right layer.** Choices in order of preference for log-noise patches:
+1. **In-agent severity demotion** when the condition is benign-by-design (workloadmeta startup race, EACCES on locked-down mounts). Path- and topology-agnostic; works on every cluster.
+2. **In-agent error filter on the stdlib path** when the noise is structural and the wrapper-level fix is incomplete (errorLog filter on cluster-agent's http.Server).
+3. **Default-config rename** when the warning is a deprecation that's purely cosmetic (the `excluded_filesystems` → `file_system_exclude` rename).
+4. **Helm chart exclusion regex** — *avoid* unless you're confident the same path/permission pattern holds across every customer cluster topology. Mount path regexes that work on EKS often break on RKE2/K3s/OpenShift; permission-based filters miss customers with looser security contexts.
+5. **Sandbox values.yaml change** for vestigial overrides — the cheapest fix when the noise is purely a sandbox configuration mistake.
 
 ## Cutover: switching the fork's main branch
 
