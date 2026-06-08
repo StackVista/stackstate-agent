@@ -87,7 +87,9 @@ func (w *workloadmeta) start(ctx context.Context) {
 		case <-w.firstCollectorReady:
 			w.log.Debug("at least one workloadmeta collector ready, starting pull loop")
 		case <-time.After(firstPullWaitTimeout):
-			w.log.Warnf("no workloadmeta collector ready after %s, starting pull loop anyway", firstPullWaitTimeout)
+			// [sts] Downgraded from Warn: this is a benign startup race; the pull loop self-recovers
+			// once any collector becomes ready. Fires once per startup, never re-fires.
+			w.log.Infof("no workloadmeta collector ready after %s, starting pull loop anyway", firstPullWaitTimeout)
 		case <-ctx.Done():
 			pullTicker.Stop()
 			w.unsubscribeAll()
