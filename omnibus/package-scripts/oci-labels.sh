@@ -108,7 +108,7 @@ fi
 # is actually pushed to quay.io. Matches apply-oci-labels and OciLabels.compute.
 ref_name="registry.rancher.com/suse-observability/${image_name}:${tag}"
 if [[ -z "$readme_url" ]]; then
-  readme_url="${source_url%/}/-/blob/stackstate-7.71.2/README.md"
+  readme_url="$source_url"
 fi
 revision="${CI_COMMIT_SHA:-$(git rev-parse HEAD)}"
 source="${CI_PROJECT_URL:-$source_url}"
