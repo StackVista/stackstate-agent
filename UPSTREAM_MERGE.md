@@ -460,6 +460,7 @@ Once the merge branch has clean CI, sandbox verification is healthy, and the tea
 - Set the new branch as the GitLab default branch (Settings → Repository → Branch defaults).
 - Update protected branches: add the new branch, optionally remove the old one (or keep it for a grace period).
 - The branch name pattern `stackstate-<DD-version>` is the convention; keep it.
+- **`stackstate-deps.json` — flip `STACKSTATE_INTEGRATIONS_VERSION` from the transition branch to the released integrations tag.** During the merge cycle, this field holds the work-in-progress integrations branch (e.g., `transition-7.71.2-7.78.2`) so iterative changes flow through to agent builds without retagging. For the cutover-built release, it must hold a **TAG**, not a branch — tags pin reproducibly while branches drift. Tag naming convention from the integrations repo: `<DD-major>.<DD-minor>.<DD-patch>-<release>`, e.g., `7.78.2-1` (where `-1` is the integrations release-cut counter for that DD patch). Verify the tag exists in `stackstate-agent-integrations` and resolves to the merge commit of the transition-branch PR before flipping. **Easy mistake to make:** pinning to the long-lived release branch (e.g., `stackstate-7.78.2`) instead of the tag — superficially "works" because the next agent build pulls the right commits, but loses reproducibility (later commits on that branch drift the agent build silently).
 
 ### 2. agent-promoter (`stackvista/devops/agent-promoter`)
 
