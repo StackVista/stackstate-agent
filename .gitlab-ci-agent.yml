@@ -580,7 +580,10 @@ pre_release_main_agent_image: &pre_release_image
   services:
     - name: ${REGISTRY_DOCKER_URL}/library/docker:24-dind
       alias: docker
-  before_script: []
+  before_script:
+    # docker:24-git is Alpine and ships ash only; build-and-label.sh and
+    # oci-labels.sh require bash (mapfile, [[ ]], ${!var}, arrays).
+    - apk add --no-cache bash
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
