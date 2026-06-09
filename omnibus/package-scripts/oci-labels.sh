@@ -5,13 +5,6 @@
 # Capture and splice with:
 #   mapfile -t labels < <(./omnibus/package-scripts/oci-labels.sh --image-name ... )
 #   docker build "${labels[@]}" ...
-#
-# Mirrors the canonical SUSE Observability label set documented in
-# stackstate-mission-control's official-plans/docker-image-oci-labels.md §4.
-# Cross-repo references (kept in sync by convention):
-#   - stackgraph: scripts/oci-labels.sh (canonical bash helper)
-#   - GitHub Actions composite: image-pipeline/.github/actions/apply-oci-labels
-#   - sbt helper: stackstate-sbt-build/src/main/scala/com/stackstate/sbt/oci/OciLabels.scala
 
 set -euo pipefail
 
