@@ -16,6 +16,7 @@ package python
 */
 import "C"
 import (
+	collectoraggregator "github.com/DataDog/datadog-agent/pkg/collector/aggregator"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
@@ -30,7 +31,7 @@ import (
 func SetState(id *C.char, key *C.char, state *C.char) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -39,7 +40,7 @@ func SetState(id *C.char, key *C.char, state *C.char) {
 	stateKey := C.GoString(key)
 	stateValue := C.GoString(state)
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SetState(stateKey, stateValue)
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SetState(stateKey, stateValue)
 }
 
 // GetState get the current state
@@ -49,13 +50,13 @@ func GetState(id *C.char, key *C.char) *C.char {
 	goCheckID := C.GoString(id)
 	stateKey := C.GoString(key)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return nil
 	}
 
-	getStateResult := checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).GetState(stateKey)
+	getStateResult := checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).GetState(stateKey)
 
 	return C.CString(getStateResult)
 }

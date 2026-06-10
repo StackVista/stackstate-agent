@@ -36,7 +36,7 @@ func testSetAndGetState(t *testing.T) {
 
 	_, _, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{

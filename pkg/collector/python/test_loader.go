@@ -172,7 +172,7 @@ func testLoadCustomCheck(t *testing.T) {
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger, nil)
@@ -217,7 +217,7 @@ func testLoadWheelCheck(t *testing.T) {
 	tagger := nooptagger.NewComponent()
 	filterStore := workloadfilterfxmock.SetupMockFilter(t)
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger, filterStore)

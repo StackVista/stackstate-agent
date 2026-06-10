@@ -22,7 +22,7 @@ import "C"
 func testComponentTopology(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-component-test"}
@@ -83,7 +83,7 @@ func testComponentTopology(t *testing.T) {
 func testRelationTopology(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-relation-test"}
@@ -147,7 +147,7 @@ func testRelationTopology(t *testing.T) {
 func testStartSnapshotCheck(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-start-snapshot"}
@@ -185,7 +185,7 @@ func testStartSnapshotCheck(t *testing.T) {
 func testStopSnapshotCheck(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-stop-snapshot"}
@@ -225,7 +225,7 @@ func testStopSnapshotCheck(t *testing.T) {
 func testDeleteTopologyElement(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-delete-element"}

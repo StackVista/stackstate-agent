@@ -8,6 +8,7 @@
 package python
 
 import (
+	collectoraggregator "github.com/DataDog/datadog-agent/pkg/collector/aggregator"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
@@ -31,13 +32,13 @@ import "C"
 func StartTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
 	}
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).StartTransaction()
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).StartTransaction()
 }
 
 // StopTransaction stops a transaction
@@ -46,13 +47,13 @@ func StartTransaction(id *C.char) {
 func StopTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
 	}
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).StopTransaction()
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).StopTransaction()
 }
 
 // DiscardTransaction cancels a transaction
@@ -61,7 +62,7 @@ func StopTransaction(id *C.char) {
 func DiscardTransaction(id *C.char, reason *C.char) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -69,7 +70,7 @@ func DiscardTransaction(id *C.char, reason *C.char) {
 
 	goReason := C.GoString(reason)
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).DiscardTransaction(goReason)
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).DiscardTransaction(goReason)
 }
 
 // SetTransactionState sets a state for a transaction
@@ -78,7 +79,7 @@ func DiscardTransaction(id *C.char, reason *C.char) {
 func SetTransactionState(id *C.char, key *C.char, state *C.char) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -87,5 +88,5 @@ func SetTransactionState(id *C.char, key *C.char, state *C.char) {
 	keyValue := C.GoString(key)
 	stateValue := C.GoString(state)
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SetTransactionState(keyValue, stateValue)
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SetTransactionState(keyValue, stateValue)
 }

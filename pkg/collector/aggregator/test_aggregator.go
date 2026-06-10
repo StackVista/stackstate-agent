@@ -353,3 +353,15 @@ func ScopeInitCheckContext(senderManager sender.SenderManager, logReceiver optio
 	withLockedCheckContext(senderManager, checkManager, logReceiver, taggerComp, filterStore)
 	return releaseCheckContext
 }
+
+// ScopeInitCheckContextWithCheckManager is the same as ScopeInitCheckContext but
+// lets the caller supply a check manager directly (rather than using a default mock
+// over the standard mock batchers). Returns a release function the caller must defer.
+// [sts] Added for STS Python API tests (pkg/collector/python/test_*_api.go) that
+// need to inject custom CheckManager mocks per test. Lets them migrate off the
+// legacy pkg/collector/python/check_context.go scaffolding and route through the
+// canonical aggregator.CheckContext (STAC-24699).
+func ScopeInitCheckContextWithCheckManager(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], taggerComp tagger.Component, filterStore workloadfilter.Component) func() {
+	withLockedCheckContext(senderManager, checkManager, logReceiver, taggerComp, filterStore)
+	return releaseCheckContext
+}

@@ -9,6 +9,7 @@ package python
 
 import (
 	"encoding/json"
+	collectoraggregator "github.com/DataDog/datadog-agent/pkg/collector/aggregator"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/util"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -34,7 +35,7 @@ import "C"
 func SubmitHealthCheckData(id *C.char, _ *C.health_stream_t, data *C.char) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -46,7 +47,7 @@ func SubmitHealthCheckData(id *C.char, _ *C.health_stream_t, data *C.char) {
 
 	if err == nil {
 		if !healthPayload.Data.IsEmpty() {
-			checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitHealthCheckData(healthPayload.Stream, healthPayload.Data)
+			checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitHealthCheckData(healthPayload.Stream, healthPayload.Data)
 		} else {
 			_ = log.Errorf("Empty json submitted to as check data, this is not allowed, data will not be forwarded.")
 		}
@@ -62,7 +63,7 @@ func SubmitHealthCheckData(id *C.char, _ *C.health_stream_t, data *C.char) {
 func SubmitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expirySeconds C.int, repeatIntervalSeconds C.int) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -70,7 +71,7 @@ func SubmitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expi
 
 	_stream := convertStream(healthStream)
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitHealthStartSnapshot(_stream, int(repeatIntervalSeconds), int(expirySeconds))
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitHealthStartSnapshot(_stream, int(repeatIntervalSeconds), int(expirySeconds))
 }
 
 // SubmitHealthStopSnapshot stops a health snapshot
@@ -79,7 +80,7 @@ func SubmitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expi
 func SubmitHealthStopSnapshot(id *C.char, healthStream *C.health_stream_t) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -87,7 +88,7 @@ func SubmitHealthStopSnapshot(id *C.char, healthStream *C.health_stream_t) {
 
 	_stream := convertStream(healthStream)
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitHealthStopSnapshot(_stream)
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitHealthStopSnapshot(_stream)
 }
 
 func convertStream(healthStream *C.health_stream_t) health.Stream {

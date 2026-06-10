@@ -21,7 +21,7 @@ import "C"
 func testStartTransaction(t *testing.T) {
 	_, _, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-start-transaction"}
@@ -40,7 +40,7 @@ func testStartTransaction(t *testing.T) {
 func testDiscardTransaction(t *testing.T) {
 	_, _, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-cancel-transaction"}
@@ -71,7 +71,7 @@ func testDiscardTransaction(t *testing.T) {
 func testStopTransaction(t *testing.T) {
 	_, mockTransactionalBatcher, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-stop-transaction"}
@@ -104,7 +104,7 @@ func testStopTransaction(t *testing.T) {
 func testSetTransactionState(t *testing.T) {
 	_, _, mockTransactionalManager, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-set-transaction-state"}

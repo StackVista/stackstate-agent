@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/aggregator"
+	collectoraggregator "github.com/DataDog/datadog-agent/pkg/collector/aggregator"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/metrics/event"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -39,7 +39,7 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 
 	var err error
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -51,7 +51,7 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 
 	if err == nil {
 		// [sts] send events via die check handler
-		checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitEvent(topologyEvent)
+		checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitEvent(topologyEvent)
 	} else {
 		_ = log.Errorf("Empty topology event not sent. Raw: %v, Json: %v, Error: %v", rawEvent,
 			topologyEvent.String(), err)
@@ -63,7 +63,7 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 //export SubmitRawMetricsData
 func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C.char, hostname *C.char, timestamp C.longlong) {
 	goCheckID := C.GoString(checkID)
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -73,9 +73,9 @@ func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C
 	rawHostname := C.GoString(hostname)
 	rawValue := float64(value)
 	rawTimestamp := int64(timestamp)
-	rawTags := aggregator.CStringArrayToSlice(unsafe.Pointer(tags))
+	rawTags := collectoraggregator.CStringArrayToSlice(unsafe.Pointer(tags))
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetric{
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetric{
 		Name:      rawName,
 		Timestamp: rawTimestamp,
 		HostName:  rawHostname,

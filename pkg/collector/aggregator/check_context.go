@@ -38,6 +38,16 @@ func (cc *CheckContext) Tag(entityID types.EntityID, cardinality types.TagCardin
 	return cc.tagger.Tag(entityID, cardinality)
 }
 
+// [sts] GetCheckManager exposes the package-private checkManager so STS Python API
+// files (pkg/collector/python/{topology,state,health,telemetry,transactional}_api.go)
+// can route SubmitComponent / SubmitRelation / SubmitEvent / SubmitState / etc. through
+// the canonical aggregator.CheckContext. Previously those files used a parallel
+// package-private global in pkg/collector/python/check_context.go that DD deprecated;
+// exposing this accessor lets STS migrate to DD's canonical context (STAC-24699).
+func (cc *CheckContext) GetCheckManager() handler.CheckManager {
+	return cc.checkManager
+}
+
 func (cc *CheckContext) GetLogReceiver() (integrations.Component, bool) {
 	return cc.logReceiver.Get()
 }

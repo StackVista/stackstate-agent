@@ -10,6 +10,7 @@ package python
 import (
 	"encoding/json"
 	"fmt"
+	collectoraggregator "github.com/DataDog/datadog-agent/pkg/collector/aggregator"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
@@ -34,7 +35,7 @@ import "C"
 func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternalID *C.char, _ignoredComponentType *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -50,7 +51,7 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternal
 	err = json.Unmarshal([]byte(rawComponent), &component)
 
 	if err == nil {
-		checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitComponent(_instance, component)
+		checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitComponent(_instance, component)
 	} else {
 		_ = log.Errorf("Empty topology component not sent. Raw: %v, Json: %v, Error: %v", rawComponent,
 			component.JSONString(), err)
@@ -63,7 +64,7 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternal
 func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID *C.char, _ignoredTargetID *C.char, _ignoredRelationType *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -80,7 +81,7 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID 
 
 	if err == nil {
 		relation.ExternalID = fmt.Sprintf("%s-%s-%s", relation.SourceID, relation.Type.Name, relation.TargetID)
-		checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitRelation(_instance, relation)
+		checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitRelation(_instance, relation)
 	} else {
 		_ = log.Errorf("Empty topology relation not sent. Raw: %v, Json: %v, Error: %v", rawRelation,
 			relation.JSONString(), err)
@@ -93,7 +94,7 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID 
 func SubmitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -104,7 +105,7 @@ func SubmitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitStartSnapshot(_instance)
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitStartSnapshot(_instance)
 }
 
 // SubmitStopSnapshot stops a snapshot
@@ -113,7 +114,7 @@ func SubmitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 func SubmitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -124,7 +125,7 @@ func SubmitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitStopSnapshot(_instance)
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitStopSnapshot(_instance)
 }
 
 // SubmitDelete deletes a topology element
@@ -133,7 +134,7 @@ func SubmitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 func SubmitDelete(id *C.char, instanceKey *C.instance_key_t, topoElementID *C.char) {
 	goCheckID := C.GoString(id)
 
-	checkContext, err := getCheckContext()
+	checkContext, err := collectoraggregator.GetCheckContext()
 	if err != nil {
 		log.Errorf("Python check context: %v", err)
 		return
@@ -146,5 +147,5 @@ func SubmitDelete(id *C.char, instanceKey *C.instance_key_t, topoElementID *C.ch
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	checkContext.checkManager.GetCheckHandler(checkid.ID(goCheckID)).SubmitDelete(_instance, topologyElementID)
+	checkContext.GetCheckManager().GetCheckHandler(checkid.ID(goCheckID)).SubmitDelete(_instance, topologyElementID)
 }

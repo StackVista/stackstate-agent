@@ -40,7 +40,7 @@ var expectedCheckData = health.CheckData{
 func testHealthCheckData(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-health-check-data"}
@@ -94,7 +94,7 @@ func testHealthCheckData(t *testing.T) {
 func testHealthStartSnapshot(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-health-start-snapshot"}
@@ -131,7 +131,7 @@ func testHealthStartSnapshot(t *testing.T) {
 func testHealthStopSnapshot(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-health-stop-snapshot"}
@@ -167,7 +167,7 @@ func testHealthStopSnapshot(t *testing.T) {
 func testNoSubStream(t *testing.T) {
 	_, mockTransactionalBatcher, _, checkManager := handler.SetupMockTransactionalComponents()
 
-	release := scopeInitCheckManager(checkManager)
+	release := scopeInitCheckManager(t, checkManager)
 	defer release()
 
 	testCheck := &test.STSTestCheck{Name: "check-id-health-no-sub-stream"}
