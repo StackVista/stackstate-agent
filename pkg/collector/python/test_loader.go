@@ -258,6 +258,10 @@ func testLoadHACheck(t *testing.T) {
 	checkManager := handler.NewMockCheckManager()
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
+
+	release := scopeInitCheckManager(t, checkManager)
+	defer release()
+
 	loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger, nil)
 	assert.Nil(t, err)
 
@@ -348,6 +352,10 @@ func testLoadError(t *testing.T) {
 	checkManager := handler.NewMockCheckManager()
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
+
+	release := scopeInitCheckManager(t, checkManager)
+	defer release()
+
 	loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger, nil)
 	require.NoError(t, err)
 
@@ -387,9 +395,14 @@ func testLoadCustomCheckEmitsCheckReadyMetric(t *testing.T) {
 	pkgconfigsetup.Datadog().SetWithoutSource("disable_py3_validation", false)
 
 	senderManager := mocksender.CreateDefaultDemultiplexer()
+	checkManager := handler.NewMockCheckManager()
 	logReceiver := option.None[integrations.Component]()
 	tagger := nooptagger.NewComponent()
-	loader, err := NewPythonCheckLoader(senderManager, handler.NewMockCheckManager(), logReceiver, tagger, nil) // [sts] checkManager arg added in 7.78.2
+
+	release := scopeInitCheckManager(t, checkManager)
+	defer release()
+
+	loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger, nil) // [sts] checkManager arg added in 7.78.2
 	require.NoError(t, err)
 
 	// Setup for loading a custom check (not a wheel)
