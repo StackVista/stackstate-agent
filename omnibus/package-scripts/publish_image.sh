@@ -21,7 +21,13 @@ BUILD_TAG="${IMAGE_REPO}:${IMAGE_TAG}"
 docker login -u "${quay_user}" -p "${quay_password}" "${REGISTRY}"
 docker login -u "${REGISTRY_USER}" -p "${REGISTRY_PASSWORD}" "${REGISTRY_HOST}"
 
-docker build --build-arg ARCH="${ARCH}" --build-arg S6_ARCH="${S6_ARCH}" -t "${BUILD_TAG}" "${DOCKERFILE_PATH}"
+# Splice canonical SUSE Observability OCI labels via build-and-label.sh; the
+# wrapper wraps docker build with --label flags resolved by oci-labels.sh.
+bash "$(dirname "$0")/build-and-label.sh" \
+  --build-tag "${BUILD_TAG}" \
+  --dockerfile-path "${DOCKERFILE_PATH}" \
+  --build-arg "ARCH=${ARCH}" \
+  --build-arg "S6_ARCH=${S6_ARCH}"
 
 
 DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
