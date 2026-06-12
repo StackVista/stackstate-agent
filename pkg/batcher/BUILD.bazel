@@ -1,0 +1,35 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "batcher",
+    srcs = [
+        "batch_builder.go",
+        "batcher.go",
+        "mock_batcher.go",
+        "topology_builder.go",
+    ],
+    importpath = "github.com/DataDog/datadog-agent/pkg/batcher",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_datadog_datadog_agent_pkg_config_setup//:setup",
+        "@com_github_datadog_datadog_agent_pkg_serializer//:serializer",
+        "@com_github_datadog_datadog_agent_pkg_util_log//:log",
+        "@com_github_stackvista_stackstate_receiver_go_client//pkg/model/health",
+        "@com_github_stackvista_stackstate_receiver_go_client//pkg/model/telemetry",
+        "@com_github_stackvista_stackstate_receiver_go_client//pkg/model/topology",
+    ],
+)
+
+go_test(
+    name = "batcher_test",
+    srcs = ["batcher_test.go"],
+    embed = [":batcher"],
+    deps = [
+        "@com_github_datadog_datadog_agent_pkg_config_setup//:setup",
+        "@com_github_datadog_datadog_agent_pkg_serializer//:serializer",
+        "@com_github_stackvista_stackstate_receiver_go_client//pkg/model/health",
+        "@com_github_stackvista_stackstate_receiver_go_client//pkg/model/telemetry",
+        "@com_github_stackvista_stackstate_receiver_go_client//pkg/model/topology",
+        "@com_github_stretchr_testify//assert",
+    ],
+)

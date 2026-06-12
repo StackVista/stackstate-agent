@@ -12,6 +12,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/util/option"
@@ -58,8 +59,8 @@ func newCheck() check.Check {
 }
 
 // Configure handles initial configuration/initialization of the check
-func (c *Check) Configure(senderManager sender.SenderManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
-	if err := c.CommonConfigure(senderManager, initConfig, data, source, provider); err != nil {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
+	if err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source, provider); err != nil {
 		return err
 	}
 

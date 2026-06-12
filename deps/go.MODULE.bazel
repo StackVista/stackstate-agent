@@ -11,6 +11,7 @@ use_repo_rule("//bazel/repo:bazelify_go_work.bzl", "bazelify_go_work")(name = "b
 go_deps.from_file(go_work = "@bazelify_go_work//:go.work")
 use_repo(
     go_deps,
+    "cat_dario_mergo",
     "cc_mvdan_sh_v3",
     "com_github_aarzilli_whydeadcode",
     "com_github_acobaugh_osrelease",
@@ -283,7 +284,6 @@ use_repo(
     "com_github_hashicorp_vault_api_auth_userpass",
     "com_github_hectane_go_acl",
     "com_github_iceber_iouring_go",
-    "com_github_imdario_mergo",
     "com_github_invopop_jsonschema",
     "com_github_jackc_pgx_v5",
     "com_github_jarcoal_httpmock",
@@ -337,6 +337,7 @@ use_repo(
     "com_github_pahanini_go_grpc_bidirectional_streaming_example",
     "com_github_patrickmn_go_cache",
     "com_github_pierrec_lz4_v4",
+    "com_github_pkg_errors",
     "com_github_planetscale_vtprotobuf",
     "com_github_pmezard_go_difflib",
     "com_github_prometheus_client_golang",
@@ -363,6 +364,7 @@ use_repo(
     "com_github_spf13_cast",
     "com_github_spf13_cobra",
     "com_github_spf13_pflag",
+    "com_github_stackvista_stackstate_receiver_go_client",
     "com_github_stormcat24_protodep",
     "com_github_streadway_amqp",
     "com_github_stretchr_testify",
@@ -392,6 +394,7 @@ use_repo(
     "com_github_yusufpapurcu_wmi",
     "com_gitlab_gitlab_org_api_client_go",
     "in_gopkg_datadog_dd_trace_go_v1",
+    "in_gopkg_yaml_v2",
     "in_gopkg_yaml_v3",
     "in_gopkg_zorkian_go_datadog_api_v2",
     "in_yaml_go_yaml_v2",
@@ -497,6 +500,7 @@ use_repo(
     "org_uber_go_multierr",
     "org_uber_go_zap",
     "org_uber_go_zap_exp",
+    "tools_gotest",
     "tools_gotest_gotestsum",
 )
 

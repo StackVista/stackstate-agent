@@ -12,6 +12,7 @@ import (
 	"expvar"
 	"fmt"
 	"strconv"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"strings"
 	"sync"
 	"unsafe"
@@ -72,8 +73,8 @@ const (
 const PythonCheckLoaderName string = "python"
 
 func init() {
-	factory := func(senderManager sender.SenderManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filter workloadfilter.Component) (check.Loader, int, error) {
-		loader, err := NewPythonCheckLoader(senderManager, logReceiver, tagger, filter)
+	factory := func(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filter workloadfilter.Component) (check.Loader, int, error) {
+		loader, err := NewPythonCheckLoader(senderManager, checkManager, logReceiver, tagger, filter)
 		return loader, 20, err
 	}
 	loaders.RegisterLoader(factory)
@@ -103,8 +104,8 @@ type PythonCheckLoader struct {
 }
 
 // NewPythonCheckLoader creates an instance of the Python checks loader
-func NewPythonCheckLoader(senderManager sender.SenderManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filter workloadfilter.Component) (*PythonCheckLoader, error) {
-	collectoraggregator.InitializeCheckContext(senderManager, logReceiver, tagger, filter)
+func NewPythonCheckLoader(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filter workloadfilter.Component) (*PythonCheckLoader, error) {
+	collectoraggregator.InitializeCheckContext(senderManager, checkManager, logReceiver, tagger, filter)
 	return &PythonCheckLoader{
 		logReceiver: logReceiver,
 	}, nil
@@ -125,7 +126,7 @@ func (*PythonCheckLoader) Name() string {
 
 // Load tries to import a Python module with the same name found in config.Name, searches for
 // subclasses of the AgentCheck class and returns the corresponding Check
-func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, config integration.Config, instance integration.Data, instanceIndex int) (check.Check, error) {
+func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, checkManager handler.CheckManager, config integration.Config, instance integration.Data, instanceIndex int) (check.Check, error) {
 	if pkgconfigsetup.Datadog().GetBool("python_lazy_loading") {
 		pythonOnce.Do(func() {
 			InitPython(common.GetPythonPaths()...)
@@ -246,7 +247,7 @@ func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, config int
 		}
 	}
 
-	c, err := NewPythonCheck(senderManager, moduleName, checkClass, goHASupported)
+	c, err := NewPythonCheck(senderManager, checkManager, moduleName, checkClass, goHASupported)
 	if err != nil {
 		return c, err
 	}
@@ -256,7 +257,7 @@ func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, config int
 		configSource = configSource + "[" + strconv.Itoa(instanceIndex) + "]"
 	}
 	// The GIL should be unlocked at this point, `check.Configure` uses its own stickyLock and stickyLocks must not be nested
-	if err := c.Configure(senderManager, configDigest, instance, config.InitConfig, configSource, config.Provider); err != nil {
+	if err := c.Configure(senderManager, checkManager, configDigest, instance, config.InitConfig, configSource, config.Provider); err != nil {
 		C.rtloader_decref(rtloader, checkClass)
 		C.rtloader_decref(rtloader, checkModule)
 
@@ -278,6 +279,10 @@ func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, config int
 	C.rtloader_decref(rtloader, checkModule)
 
 	log.Debugf("python loader: done loading check %s (version %s)", moduleName, wheelVersion)
+
+	// [sts] register check handler
+	checkManager.RegisterCheckHandler(c, config.InitConfig, instance)
+
 	return c, nil
 }
 

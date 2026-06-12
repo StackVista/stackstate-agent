@@ -5,7 +5,7 @@
 
 // Imported from https://github.com/aquasecurity/trivy/blob/main/pkg/fanal/image/daemon/image.go
 
-//go:build trivy && (docker || containerd || crio)
+//go:build trivy && (containerd || crio)
 
 package trivy
 
@@ -18,8 +18,6 @@ import (
 	"sync"
 	"time"
 
-	dimage "github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	dockerspec "github.com/moby/docker-image-spec/specs-go/v1"
@@ -32,7 +30,7 @@ var mu sync.Mutex
 
 type opener func() (v1.Image, error)
 
-type imageSave func(context.Context, []string, ...client.ImageSaveOption) (io.ReadCloser, error)
+type imageSave func(context.Context, []string) (io.ReadCloser, error)
 
 func imageOpener(ctx context.Context, collector, ref string, f *os.File, imageSave imageSave) opener {
 	return func() (v1.Image, error) {
@@ -68,7 +66,7 @@ type image struct {
 	v1.Image
 	name    string
 	opener  opener
-	inspect dimage.InspectResponse
+	inspect imageInspect
 	history []v1.History
 }
 
@@ -219,7 +217,7 @@ func (img *image) imageConfig(config *dockerspec.DockerOCIImageConfig) v1.Config
 	return c
 }
 
-func configHistory(dhistory []dimage.HistoryResponseItem) []v1.History {
+func configHistory(dhistory []imageHistoryItem) []v1.History {
 	// Fill only required metadata
 	var history []v1.History
 
@@ -237,7 +235,7 @@ func configHistory(dhistory []dimage.HistoryResponseItem) []v1.History {
 	return history
 }
 
-func emptyLayer(history dimage.HistoryResponseItem) bool {
+func emptyLayer(history imageHistoryItem) bool {
 	if history.Size != 0 {
 		return false
 	}

@@ -22,6 +22,7 @@ import (
 	corecheckLoader "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/helm"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/ksm"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubeapi"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/orchestrator"
 )
@@ -33,4 +34,9 @@ func RegisterChecks(store workloadmeta.Component, _ workloadfilter.Component, ta
 	corecheckLoader.RegisterCheck(ksm.CheckName, ksm.Factory(tagger, store))
 	corecheckLoader.RegisterCheck(helm.CheckName, helm.Factory())
 	corecheckLoader.RegisterCheck(orchestrator.CheckName, orchestrator.Factory(store, cfg, tagger))
+
+	// STS
+	corecheckLoader.RegisterCheck(kubeapi.KubernetesAPITopologyCheckName, kubeapi.KubernetesAPITopologyFactory())
+	corecheckLoader.RegisterCheck(kubeapi.KubernetesAPIEventsCheckName, kubeapi.KubernetesAPIEventsFactory())
+	corecheckLoader.RegisterCheck(kubeapi.KubernetesAPIMetricsCheckName, kubeapi.KubernetesAPIMetricsFactory())
 }

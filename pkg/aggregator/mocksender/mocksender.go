@@ -10,6 +10,7 @@ package mocksender
 import (
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/metrics/event" // [sts] needed by SentEvents field on MockSender
 	"github.com/stretchr/testify/mock"
 
 	"github.com/DataDog/datadog-agent/comp/core/hostname/hostnameimpl"
@@ -69,6 +70,7 @@ type MockSender struct {
 	mock.Mock
 	senderManager sender.SenderManager
 	checkTags     []string
+	SentEvents    event.Events // [sts] populated by Event() so STS tests can assert on emitted events
 }
 
 // GetSenderManager returns the instance of sender.SenderManager

@@ -24,6 +24,7 @@ import (
 	workloadmeta "github.com/DataDog/datadog-agent/comp/core/workloadmeta/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/orchestrator"
 	oconfig "github.com/DataDog/datadog-agent/pkg/orchestrator/config"
@@ -91,6 +92,7 @@ func newCheck(store workloadmeta.Component, cfg config.Component, tagger tagger.
 // Configure the kubelet_config check
 func (c *Check) Configure(
 	senderManager sender.SenderManager,
+	checkManager handler.CheckManager,
 	integrationConfigDigest uint64,
 	data integration.Data,
 	initConfig integration.Data,
@@ -99,7 +101,7 @@ func (c *Check) Configure(
 ) error {
 	c.BuildID(integrationConfigDigest, data, initConfig)
 
-	err := c.CommonConfigure(senderManager, initConfig, data, source, provider)
+	err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source, provider)
 	if err != nil {
 		return err
 	}

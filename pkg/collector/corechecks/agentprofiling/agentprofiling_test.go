@@ -23,6 +23,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/core/flare/types"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 )
 
 // createTestCheck creates a check instance with the given configuration
@@ -39,7 +40,8 @@ terminate_agent_on_threshold: %t`, memoryThreshold, cpuThreshold, ticketID, user
 
 	initConfig := []byte("")
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := check.Configure(senderManager, integration.FakeConfigHash, configData, initConfig, "test", "provider")
+	checkManager := handler.NewMockCheckManager()
+	err := check.Configure(senderManager, checkManager, integration.FakeConfigHash, configData, initConfig, "test", "provider")
 	require.NoError(t, err)
 
 	return check
@@ -104,7 +106,7 @@ cpu_threshold: %d`, memoryThreshold, cpuThreshold))
 
 	initConfig := []byte("")
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := check.Configure(senderManager, integration.FakeConfigHash, configData, initConfig, "test", "provider")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, configData, initConfig, "test", "provider")
 	require.NoError(t, err)
 
 	return check
@@ -257,7 +259,7 @@ user_email: "user@example.com"`)
 
 	initConfig := []byte("")
 	senderManager := mocksender.CreateDefaultDemultiplexer()
-	err := check.Configure(senderManager, integration.FakeConfigHash, configData, initConfig, "test", "provider")
+	err := check.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, configData, initConfig, "test", "provider")
 	require.NoError(t, err)
 
 	// First attempt fails

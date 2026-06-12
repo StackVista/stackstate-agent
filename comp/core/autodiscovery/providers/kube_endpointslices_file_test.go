@@ -3,7 +3,12 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build clusterchecks && kubeapiserver
+// [sts] Test file is fundamentally CEL-dependent: init() calls integration.CreateMatchingProgram
+// which is a noop without `cel` build tag (returns empty celADID, panics the assertion). Even the
+// non-CEL test functions (BuildConfigStore, StoreInsertEndpointSlice, StoreGenerateConfigs, etc.)
+// have sub-tests using cel templates. Tightening to also require `cel` so STS (which doesn't ship
+// cel) skips this DD-new-in-7.78.2 test entirely instead of failing at package init.
+//go:build clusterchecks && kubeapiserver && cel
 
 package providers
 

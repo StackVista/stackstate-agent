@@ -15,8 +15,6 @@ import (
 	cfvm "github.com/DataDog/datadog-agent/comp/core/workloadmeta/collectors/internal/cloudfoundry/vm"
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta/collectors/internal/containerd"
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta/collectors/internal/crio"
-	"github.com/DataDog/datadog-agent/comp/core/workloadmeta/collectors/internal/docker"
-	"github.com/DataDog/datadog-agent/comp/core/workloadmeta/collectors/internal/ecs"
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta/collectors/internal/kubeapiserver"
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta/collectors/internal/kubelet"
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta/collectors/internal/kubemetadata"
@@ -32,8 +30,6 @@ func getCollectorOptions() []fx.Option {
 		cfvm.GetFxOptions(),
 		containerd.GetFxOptions(),
 		crio.GetFxOptions(),
-		docker.GetFxOptions(),
-		ecs.GetFxOptions(),
 		kubeapiserver.GetFxOptions(),
 		kubelet.GetFxOptions(),
 		kubemetadata.GetFxOptions(),

@@ -18,8 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-
 	"github.com/DataDog/datadog-agent/comp/logs/agent/config"
 	"github.com/DataDog/datadog-agent/pkg/logs/internal/decoder"
 	"github.com/DataDog/datadog-agent/pkg/logs/internal/tag"
@@ -309,7 +307,7 @@ func (c *fakeDockerClient) AddEntry(testIOReader io.ReadCloser, err error) {
 	})
 }
 
-func (c *fakeDockerClient) ContainerLogs(context.Context, string, container.LogsOptions) (io.ReadCloser, error) {
+func (c *fakeDockerClient) ContainerLogs(context.Context, string, LogsOptions) (io.ReadCloser, error) {
 	if c.counter >= len(c.entries) {
 		c.counter = 0
 	}

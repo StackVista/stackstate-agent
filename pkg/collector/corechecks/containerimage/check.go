@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"go.yaml.in/yaml/v2"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	tagger "github.com/DataDog/datadog-agent/comp/core/tagger/def"
@@ -108,12 +109,12 @@ func Factory(store workloadmeta.Component, tagger tagger.Component) option.Optio
 }
 
 // Configure parses the check configuration and initializes the container_image check
-func (c *Check) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
 	if !pkgconfigsetup.Datadog().GetBool("container_image.enabled") {
 		return errors.New("collection of container images is disabled")
 	}
 
-	if err := c.CommonConfigure(senderManager, initConfig, config, source, provider); err != nil {
+	if err := c.CommonConfigure(senderManager, checkManager, initConfig, config, source, provider); err != nil {
 		return err
 	}
 

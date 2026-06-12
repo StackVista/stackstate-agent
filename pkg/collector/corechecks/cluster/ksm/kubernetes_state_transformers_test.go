@@ -1025,9 +1025,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:CrashLoopBackOff"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:CrashLoopBackOff"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:CrashLoopBackOff"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -1046,9 +1047,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ErrImagePull"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ErrImagePull"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:ErrImagePull"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -1067,9 +1069,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ImagePullBackoff"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ImagePullBackoff"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:ImagePullBackoff"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -1088,9 +1091,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCreating"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCreating"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCreating"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -1109,9 +1113,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:CreateContainerError"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:CreateContainerError"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:CreateContainerError"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -1130,9 +1135,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:CreateContainerConfigError"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:CreateContainerConfigError"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:CreateContainerConfigError"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -1151,9 +1157,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:InvalidImageName"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:InvalidImageName"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:InvalidImageName"},
+				numberOfCalls: 1,
 			},
 		},
 	}
@@ -1216,9 +1223,10 @@ func Test_containerTerminatedReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCannotRun"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.terminated",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCannotRun"},
+				name:          "kubernetes_state.container.status_report.count.terminated",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCannotRun"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -1237,9 +1245,10 @@ func Test_containerTerminatedReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:Error"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.terminated",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:Error"},
+				name:          "kubernetes_state.container.status_report.count.terminated",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:Error"},
+				numberOfCalls: 1,
 			},
 		},
 	}

@@ -43,6 +43,12 @@ import (
 )
 
 func getProvides(t *testing.T, confOverrides map[string]any, sysprobeConfOverrides map[string]any) provides {
+	if confOverrides == nil {
+		confOverrides = map[string]any{}
+	}
+	if _, ok := confOverrides["inventories_enabled"]; !ok {
+		confOverrides["inventories_enabled"] = true
+	}
 	return newInventoryAgentProvider(
 		fxutil.Test[dependencies](
 			t,

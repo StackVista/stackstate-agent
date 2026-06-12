@@ -17,6 +17,7 @@ import (
 	diagnose "github.com/DataDog/datadog-agent/comp/core/diagnose/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/defaults"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
 	"github.com/DataDog/datadog-agent/pkg/collector/check/stats"
 	"github.com/DataDog/datadog-agent/pkg/collector/sharedlibrary/ffi"
@@ -144,7 +145,7 @@ func (*Check) GetWarnings() []error {
 }
 
 // Configure the shared library check from YAML data
-func (c *Check) Configure(_ sender.SenderManager, integrationConfigDigest uint64, instanceConfig integration.Data, initConfig integration.Data, source string, provider string) error {
+func (c *Check) Configure(_ sender.SenderManager, _ handler.CheckManager, integrationConfigDigest uint64, instanceConfig integration.Data, initConfig integration.Data, source string, provider string) error {
 	c.id = checkid.BuildID(c.String(), integrationConfigDigest, instanceConfig, initConfig)
 
 	commonOptions := integration.CommonInstanceConfig{}

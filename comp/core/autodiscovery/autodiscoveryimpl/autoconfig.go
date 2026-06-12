@@ -173,7 +173,11 @@ func newAutoConfig(deps dependencies) autodiscovery.Component {
 			return nil, nil
 		}, backoff.WithBackOff(expBackoff), backoff.WithMaxElapsedTime(wmetaCheckMaxElapsedTime))
 		if err != nil {
-			deps.Log.Errorf("Workloadmeta collectors are not ready after %d retries: %s, starting check scheduler controller anyway.", retries, err)
+			// [sts] Downgraded from Errorf: this is a startup race on EKS/GKE where the
+			// kubelet workloadmeta collector takes longer than the autoconfig retry window
+			// to become ready. The autoconfig falls back to starting the scheduler anyway,
+			// and once the collector comes up checks are scheduled normally. Not an error.
+			deps.Log.Infof("Workloadmeta collectors are not ready after %d retries: %s, starting check scheduler controller anyway.", retries, err)
 			schController.Start()
 		}
 	}()

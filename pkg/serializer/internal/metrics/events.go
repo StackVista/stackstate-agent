@@ -6,6 +6,7 @@
 package metrics
 
 import (
+	"encoding/json"
 	"slices"
 	"sort"
 
@@ -224,6 +225,60 @@ func (e *eventsMarshaler2) writeEvent(ev *event.Event) {
 		s.WriteMore()
 		s.WriteObjectField("event_type")
 		s.WriteString(ev.EventType)
+	}
+	// [sts] Serialize EventContext so topology events reach the STS backend
+	if ev.EventContext != nil {
+		s.WriteMore()
+		s.WriteObjectField("context")
+		s.WriteObjectStart()
+		if ev.EventContext.SourceIdentifier != "" {
+			s.WriteObjectField("source_identifier")
+			s.WriteString(ev.EventContext.SourceIdentifier)
+			s.WriteMore()
+		}
+		s.WriteObjectField("element_identifiers")
+		s.WriteArrayStart()
+		for i, id := range ev.EventContext.ElementIdentifiers {
+			if i > 0 {
+				s.WriteMore()
+			}
+			s.WriteString(id)
+		}
+		s.WriteArrayEnd()
+		s.WriteMore()
+		s.WriteObjectField("source")
+		s.WriteString(ev.EventContext.Source)
+		s.WriteMore()
+		s.WriteObjectField("category")
+		s.WriteString(ev.EventContext.Category)
+		if ev.EventContext.Data != nil {
+			s.WriteMore()
+			s.WriteObjectField("data")
+			dataBytes, err := json.Marshal(ev.EventContext.Data)
+			if err == nil {
+				s.WriteRaw(string(dataBytes))
+			} else {
+				s.WriteObjectStart()
+				s.WriteObjectEnd()
+			}
+		}
+		s.WriteMore()
+		s.WriteObjectField("source_links")
+		s.WriteArrayStart()
+		for i, link := range ev.EventContext.SourceLinks {
+			if i > 0 {
+				s.WriteMore()
+			}
+			s.WriteObjectStart()
+			s.WriteObjectField("title")
+			s.WriteString(link.Title)
+			s.WriteMore()
+			s.WriteObjectField("url")
+			s.WriteString(link.URL)
+			s.WriteObjectEnd()
+		}
+		s.WriteArrayEnd()
+		s.WriteObjectEnd()
 	}
 	s.WriteObjectEnd()
 }

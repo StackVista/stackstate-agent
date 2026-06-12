@@ -16,6 +16,7 @@ import (
 	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/sharedlibrary/ffi"
 	"github.com/DataDog/datadog-agent/pkg/util/option"
 )
@@ -28,7 +29,7 @@ type CheckLoader struct {
 	loader ffi.LibraryLoader
 }
 
-func newCheckLoader(_ sender.SenderManager, _ option.Option[integrations.Component], _ tagger.Component, _ workloadfilter.Component, loader ffi.LibraryLoader) (*CheckLoader, error) {
+func newCheckLoader(_ sender.SenderManager, _ handler.CheckManager, _ option.Option[integrations.Component], _ tagger.Component, _ workloadfilter.Component, loader ffi.LibraryLoader) (*CheckLoader, error) {
 	return &CheckLoader{
 		loader: loader,
 	}, nil
@@ -44,7 +45,7 @@ func (*CheckLoader) String() string {
 }
 
 // Load returns a Shared Library check
-func (sl *CheckLoader) Load(senderManager sender.SenderManager, config integration.Config, instance integration.Data, _ int) (check.Check, error) {
+func (sl *CheckLoader) Load(senderManager sender.SenderManager, checkManager handler.CheckManager, config integration.Config, instance integration.Data, _ int) (check.Check, error) {
 	// we need to dynamically compute the shared libraries path because their extensions are platform dependent
 	// we could also have collisions with existing shared libraries
 	libPath := sl.loader.ComputeLibraryPath(config.Name)
@@ -64,7 +65,7 @@ func (sl *CheckLoader) Load(senderManager sender.SenderManager, config integrati
 	configDigest := config.FastDigest()
 
 	// pass the configuration to the check
-	if err := c.Configure(senderManager, configDigest, instance, config.InitConfig, config.Source, config.Provider); err != nil {
+	if err := c.Configure(senderManager, checkManager, configDigest, instance, config.InitConfig, config.Source, config.Provider); err != nil {
 		return c, err
 	}
 

@@ -9,6 +9,8 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	tagger "github.com/DataDog/datadog-agent/comp/core/tagger/def"
 	"github.com/DataDog/datadog-agent/comp/core/tagger/types"
 	workloadfilter "github.com/DataDog/datadog-agent/comp/core/workloadfilter/def"
@@ -26,6 +28,7 @@ var checkContextMutex = sync.Mutex{}
 // per dependency used inside SubmitMetric like methods.
 type CheckContext struct {
 	senderManager sender.SenderManager
+	checkManager  handler.CheckManager
 	logReceiver   option.Option[integrations.Component]
 	tagger        tagger.Component
 	filter        workloadfilter.FilterBundle
@@ -33,6 +36,16 @@ type CheckContext struct {
 
 func (cc *CheckContext) Tag(entityID types.EntityID, cardinality types.TagCardinality) ([]string, error) {
 	return cc.tagger.Tag(entityID, cardinality)
+}
+
+// [sts] GetCheckManager exposes the package-private checkManager so STS Python API
+// files (pkg/collector/python/{topology,state,health,telemetry,transactional}_api.go)
+// can route SubmitComponent / SubmitRelation / SubmitEvent / SubmitState / etc. through
+// the canonical aggregator.CheckContext. Previously those files used a parallel
+// package-private global in pkg/collector/python/check_context.go that DD deprecated;
+// exposing this accessor lets STS migrate to DD's canonical context (STAC-24699).
+func (cc *CheckContext) GetCheckManager() handler.CheckManager {
+	return cc.checkManager
 }
 
 func (cc *CheckContext) GetLogReceiver() (integrations.Component, bool) {
@@ -55,20 +68,56 @@ func GetCheckContext() (*CheckContext, error) {
 }
 
 // InitializeCheckContext creates the context that can be later used for storing/retrieving checks context for submit functions
-func InitializeCheckContext(senderManager sender.SenderManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filterStore workloadfilter.Component) {
+func InitializeCheckContext(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filterStore workloadfilter.Component) {
 	checkContextMutex.Lock()
 	if checkCtx == nil {
 		checkCtx = &CheckContext{
 			senderManager: senderManager,
+			checkManager:  checkManager,
 			logReceiver:   logReceiver,
 			tagger:        tagger,
 			filter:        filterStore.GetContainerSharedMetricFilters(),
 		}
 
 		if _, ok := logReceiver.Get(); !ok {
-			log.Warn("Log receiver not provided. Logs from integrations will not be collected.")
+			// [sts] Downgraded from Warn to Info: regulated customers (military, banks)
+			// raise tickets on WARN entries. STS doesn't wire up the integration-logs
+			// pipeline by default, so this fires at every agent start — it's expected
+			// configuration state, not a problem.
+			log.Info("Log receiver not provided. Logs from integrations will not be collected.")
 		}
 	}
 
 	checkContextMutex.Unlock()
+}
+
+// Testing utilities - Made test execution mutexed to avoid race conditions during testing.
+var testMutex = sync.Mutex{}
+
+func withLockedCheckContext(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filterStore workloadfilter.Component) {
+	testMutex.Lock()
+	// [sts] Defensive cleanup: if a previous test left a context behind (e.g.,
+	// test panicked between ScopeInitCheckContext returning and `defer release()`
+	// being registered), reset state instead of panicking — a panic here while
+	// holding checkContextMutex would deadlock subsequent test runs of this
+	// binary. Adopting the cleanup behavior also removes the need for the
+	// pre-init defensive call in ScopeInitCheckContext.
+	checkContextMutex.Lock()
+	if checkCtx != nil {
+		checkCtx.checkManager.Stop()
+		checkCtx = nil
+	}
+	checkContextMutex.Unlock()
+	InitializeCheckContext(senderManager, checkManager, logReceiver, tagger, filterStore)
+}
+
+func releaseCheckContext() {
+	checkContextMutex.Lock()
+	if checkCtx != nil {
+		checkCtx.checkManager.Stop()
+	}
+
+	checkCtx = nil
+	checkContextMutex.Unlock()
+	testMutex.Unlock()
 }

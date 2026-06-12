@@ -6,6 +6,7 @@
 package uptime
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/shirou/gopsutil/v4/host"
@@ -28,7 +29,7 @@ func TestUptimeCheckLinux(t *testing.T) {
 	mockSender.On("FinalizeCheckServiceTag").Return()
 
 	uptimeCheck := new(Check)
-	uptimeCheck.Configure(mockSender.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	uptimeCheck.Configure(mockSender.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
 
 	// reset the check ID for the sake of correctness
 	mocksender.SetSender(mockSender, uptimeCheck.ID())

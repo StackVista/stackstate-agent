@@ -21,6 +21,7 @@ import (
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/ebpf/probe/noisyneighbor/model"
 	pkgconfigsetup "github.com/DataDog/datadog-agent/pkg/config/setup"
@@ -57,8 +58,8 @@ func (c *NoisyNeighborConfig) Parse(data []byte) error {
 	return yaml.Unmarshal(data, c)
 }
 
-func (n *NoisyNeighborCheck) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
-	if err := n.CommonConfigure(senderManager, initConfig, config, source, provider); err != nil {
+func (n *NoisyNeighborCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
+	if err := n.CommonConfigure(senderManager, checkManager, initConfig, config, source, provider); err != nil {
 		return err
 	}
 	if err := n.config.Parse(config); err != nil {

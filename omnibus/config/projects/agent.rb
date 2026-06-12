@@ -8,19 +8,14 @@ require "./lib/omnibus/packagers/tarball.rb"
 flavor = ENV['AGENT_FLAVOR']
 output_config_dir = ENV["OUTPUT_CONFIG_DIR"]
 
-if flavor.nil? || flavor == 'base'
-  name 'agent'
-  package_name 'datadog-agent'
-else
-  name "agent-#{flavor}"
-  package_name "datadog-#{flavor}-agent"
-end
+name 'agent'
+package_name 'stackstate-agent'
 license "Apache-2.0"
 license_file "../LICENSE"
 
 third_party_licenses "../LICENSE-3rdparty.csv"
 
-homepage 'http://www.datadoghq.com'
+homepage 'http://www.stackstate.com'
 
 if ENV.has_key?("OMNIBUS_WORKERS_OVERRIDE")
   COMPRESSION_THREADS = ENV["OMNIBUS_WORKERS_OVERRIDE"].to_i
@@ -81,7 +76,7 @@ else
       runtime_script_dependency :pre, "shadow"
     end
   else
-    maintainer 'Datadog Packages <package@datadoghq.com>'
+    maintainer 'StackState <info@stackstate.com>'
   end
 
   if debian_target?
@@ -123,14 +118,14 @@ build_version ENV['PACKAGE_VERSION']
 
 build_iteration 1
 
-description 'Datadog Monitoring Agent
- The Datadog Monitoring Agent is a lightweight process that monitors system
- processes and services, and sends information back to your Datadog account.
+description 'StackState Monitoring Agent
+ The StackState Monitoring Agent is a lightweight process that monitors system
+ processes and services, and sends information back to your StackState account.
  .
  This package installs and runs the advanced Agent daemon, which queues and
  forwards metrics from your applications as well as system services.
  .
- See http://www.datadoghq.com/ for more information
+ See http://www.stackstate.com/ for more information
 '
 
 # ------------------------------------
@@ -141,7 +136,7 @@ description 'Datadog Monitoring Agent
 package :deb do
   skip_packager !do_package
   vendor 'Datadog <package@datadoghq.com>'
-  epoch 1
+  # epoch 1
   license 'Apache License Version 2.0'
   section 'utils'
   priority 'extra'
@@ -227,6 +222,8 @@ if do_build
   # Datadog agent
   dependency 'datadog-agent'
 
+  # [STS] Use StackState integrations instead of Datadog integrations
+  dependency 'stackstate-agent-integrations-py3'
   # this dependency puts few files out of the omnibus install dir and move them
   # in the final destination. This way such files will be listed in the packages
   # manifest and owned by the package manager. This is the only point in the build
@@ -250,12 +247,12 @@ elsif do_package
 end
 
 # version manifest is based on the built softwares.
-# When packaging, we only build 2, which causes very incomplete manifests
-# to be generated. However, we build correct ones during the build stage, which
-# gets extracted in the correct location in the "package-artifacts" recipe.
-# By disabling manifest generation during packaging jobs, we ensure the manifest we
-# will package is the correct one
-disable_version_manifest do_package
+# When packaging-only (using pre-built tarballs), we disable manifest generation
+# because manifests should come from the tarballs. However, when doing a full build,
+# we always generate manifests.
+# By disabling manifest generation during packaging-only jobs, we ensure the manifest we
+# will package is the correct one from the build stage.
+disable_version_manifest (do_package && !do_build)
 
 
 if linux_target?
@@ -309,10 +306,6 @@ if windows_target?
     "#{install_dir}\\datadog-installer.exe"
   ]
 
-  if not fips_mode?
-    # TODO(ACTP-XXX): PAR is not enabled in Gov yet
-    GO_BINARIES << "#{install_dir}\\bin\\agent\\privateactionrunner.exe"
-  end
 
   if not windows_arch_i386? and ENV['WINDOWS_DDPROCMON_DRIVER'] and not ENV['WINDOWS_DDPROCMON_DRIVER'].empty?
     GO_BINARIES << "#{install_dir}\\bin\\agent\\security-agent.exe"

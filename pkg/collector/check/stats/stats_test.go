@@ -92,6 +92,7 @@ func TestNewStats(t *testing.T) {
 
 func TestNewStatsStateTelemetryInitialized(t *testing.T) {
 	mockConfig := configmock.New(t)
+	mockConfig.SetWithoutSource("telemetry.enabled", true)
 	mockConfig.SetWithoutSource("telemetry.checks", "*")
 
 	NewStats(newMockCheck(), healthplatformmock.Mock(t))

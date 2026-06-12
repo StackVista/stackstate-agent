@@ -311,6 +311,10 @@ func TestSendV1ServiceChecks(t *testing.T) {
 
 			compressor := metricscompressionimpl.NewCompressorReq(metricscompressionimpl.Requires{Cfg: mockConfig}).Comp
 			s := NewSerializer(f, nil, compressor, mockConfig, logmock.New(t), "testhost")
+
+            // [sts] service checks are disabled by default for StackState
+	        s.enableServiceChecks = true
+
 			matcher := createJSONPayloadMatcher(`[{"check":"","host_name":"","timestamp":0,"status":0,"message":"","tags":null}]`, s)
 			f.On("SubmitV1CheckRuns", matcher, s.jsonExtraHeadersWithCompression).Return(nil).Times(1)
 
@@ -445,6 +449,7 @@ func TestSendSketch(t *testing.T) {
 			f := setupMockForwarder(t)
 			mockConfig := configmock.New(t)
 			mockConfig.SetWithoutSource("use_v2_api.series", true) // default value, but just to be sure
+			mockConfig.SetWithoutSource("enable_payloads.sketches", true) // enable sketches for this test
 			mockConfig.SetWithoutSource("serializer_compressor_kind", tc.kind)
 
 			compressor := metricscompressionimpl.NewCompressorReq(metricscompressionimpl.Requires{Cfg: mockConfig}).Comp

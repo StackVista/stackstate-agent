@@ -11,6 +11,7 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/shirou/gopsutil/v4/mem"
@@ -123,7 +124,7 @@ pgsteal_direct 450
 
 	mock.On("FinalizeCheckServiceTag").Return().Times(1)
 	mock.On("Commit").Return().Times(1)
-	memCheck.Configure(mock.GetSenderManager(), 0, nil, nil, "", "")
+	memCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), 0, nil, nil, "", "")
 	err := memCheck.Run()
 	require.Nil(t, err)
 
@@ -157,7 +158,7 @@ func TestMemoryCheckFreebsd(t *testing.T) {
 	mock.On("Rate", "system.swap.swap_out", 22.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("FinalizeCheckServiceTag").Return().Times(1)
 	mock.On("Commit").Return().Times(1)
-	memCheck.Configure(mock.GetSenderManager(), 0, nil, nil, "", "")
+	memCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), 0, nil, nil, "", "")
 	err := memCheck.Run()
 	require.Nil(t, err)
 
@@ -189,7 +190,7 @@ func TestMemoryCheckDarwin(t *testing.T) {
 	mock.On("Rate", "system.swap.swap_out", 22.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("FinalizeCheckServiceTag").Return().Times(1)
 	mock.On("Commit").Return().Times(1)
-	memCheck.Configure(mock.GetSenderManager(), 0, nil, nil, "", "")
+	memCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), 0, nil, nil, "", "")
 
 	err := memCheck.Run()
 	require.Nil(t, err)
@@ -209,7 +210,7 @@ func TestMemoryError(t *testing.T) {
 
 	runtimeOS = "linux"
 	mock.On("FinalizeCheckServiceTag").Return().Times(1)
-	memCheck.Configure(mock.GetSenderManager(), 0, nil, nil, "", "")
+	memCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), 0, nil, nil, "", "")
 	err := memCheck.Run()
 	assert.NotNil(t, err)
 
@@ -249,7 +250,7 @@ func TestSwapMemoryError(t *testing.T) {
 	mock.On("FinalizeCheckServiceTag").Return().Times(1)
 	mock.On("Commit").Return().Times(1)
 
-	memCheck.Configure(mock.GetSenderManager(), 0, nil, nil, "", "")
+	memCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), 0, nil, nil, "", "")
 	err := memCheck.Run()
 	require.Nil(t, err)
 
@@ -276,7 +277,7 @@ func TestVirtualMemoryError(t *testing.T) {
 	mock.On("FinalizeCheckServiceTag").Return().Times(1)
 	mock.On("Commit").Return().Times(1)
 
-	memCheck.Configure(mock.GetSenderManager(), 0, nil, nil, "", "")
+	memCheck.Configure(mock.GetSenderManager(), handler.NewMockCheckManager(), 0, nil, nil, "", "")
 	err := memCheck.Run()
 	require.Nil(t, err)
 

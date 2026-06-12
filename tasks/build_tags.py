@@ -83,36 +83,37 @@ ALL_TAGS = {
 ### Tag inclusion lists
 
 # AGENT_TAGS lists the tags needed when building the agent.
+# [sts] STS does not compile docker SDK code, trivy SBOM scanning, shared-library
+# Go check loader, system-probe checks, or CEL filters into the main agent binary.
+# Adds bundle_installer (STS-specific), grpcnotrace + no_dynamic_plugins for size/footprint hardening.
 AGENT_TAGS = {
+    "bundle_installer",
     "consul",
     "containerd",
     "cri",
-    "datadog.no_waf",
     "crio",
-    "docker",
+    "datadog.no_waf",
     "ec2",
     "etcd",
     "fargateprocess",
+    "grpcnotrace",
     "jetson",
     "jmx",
     "kubeapiserver",
     "kubelet",
     "ncm",
     "netcgo",
+    "no_dynamic_plugins",
     "nvml",
     "oracle",
     "orchestrator",
     "otlp",
     "podman",
     "python",
-    "sharedlibrarycheck",
     "systemd",
-    "systemprobechecks",
-    "trivy",
     "zk",
     "zlib",
     "zstd",
-    "cel",
 }
 
 # AGENT_HEROKU_TAGS lists the tags for Heroku agent build
@@ -144,40 +145,43 @@ AGENT_HEROKU_TAGS = AGENT_TAGS.difference(
 FIPS_TAGS = {"goexperiment.systemcrypto", "requirefips"}
 
 # CLUSTER_AGENT_TAGS lists the tags needed when building the cluster-agent
+# [sts] STS removes cel; adds grpcnotrace.
 CLUSTER_AGENT_TAGS = {
     "clusterchecks",
     "datadog.no_waf",
+    "grpcnotrace",
     "kubeapiserver",
     "orchestrator",
     "zlib",
     "zstd",
     "ec2",
-    "cel",
 }
 
 # CLUSTER_AGENT_CLOUDFOUNDRY_TAGS lists the tags needed when building the cloudfoundry cluster-agent
 CLUSTER_AGENT_CLOUDFOUNDRY_TAGS = {"clusterchecks", "cel"}
 
 # DOGSTATSD_TAGS lists the tags needed when building dogstatsd
-DOGSTATSD_TAGS = {"containerd", "docker", "kubelet", "podman", "zlib", "zstd"}
+DOGSTATSD_TAGS = {"containerd", "grpcnotrace", "no_dynamic_plugins", "kubelet", "podman", "zlib", "zstd"}  # [sts] removes docker; adds grpcnotrace, no_dynamic_plugins
 
 # IOT_AGENT_TAGS lists the tags needed when building the IoT agent
-IOT_AGENT_TAGS = {"jetson", "systemd", "zlib", "zstd"}
+IOT_AGENT_TAGS = {"grpcnotrace", "jetson", "otlp", "systemd", "zlib", "zstd"}  # [sts] adds grpcnotrace, otlp
 
 # INSTALLER_TAGS lists the tags needed when building the installer
-INSTALLER_TAGS = {"ec2"}
+INSTALLER_TAGS = {"ec2", "kubelet"}  # [sts] adds kubelet
 
 # PROCESS_AGENT_TAGS lists the tags necessary to build the process-agent
+# [sts] STS removes docker; adds grpcnotrace, no_dynamic_plugins.
 PROCESS_AGENT_TAGS = {
     "containerd",
     "cri",
     "crio",
     "datadog.no_waf",
     "ec2",
-    "docker",
     "fargateprocess",
+    "grpcnotrace",
     "kubelet",
     "netcgo",
+    "no_dynamic_plugins",
     "podman",
     "zlib",
     "zstd",
@@ -193,10 +197,11 @@ PROCESS_AGENT_HEROKU_TAGS = {
 }
 
 # SECURITY_AGENT_TAGS lists the tags necessary to build the security agent
+# [sts] STS removes docker; adds grpcnotrace.
 SECURITY_AGENT_TAGS = {
     "netcgo",
     "datadog.no_waf",
-    "docker",
+    "grpcnotrace",
     "zlib",
     "zstd",
     "ec2",
@@ -228,13 +233,16 @@ SYSTEM_PROBE_TAGS = {
 }
 
 # TRACE_AGENT_TAGS lists the tags that have to be added when the trace-agent
+# [sts] STS removes docker, kubeapiserver-NO wait keep kubeapiserver; STS adds grpcnotrace, no_dynamic_plugins.
 TRACE_AGENT_TAGS = {
-    "docker",
     "containerd",
     "datadog.no_waf",
+    "grpcnotrace",
+    "kubeapiserver",
     "kubelet",
-    "otlp",
     "netcgo",
+    "no_dynamic_plugins",
+    "otlp",
     "podman",
 }
 

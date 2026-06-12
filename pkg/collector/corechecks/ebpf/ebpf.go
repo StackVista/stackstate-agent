@@ -10,6 +10,7 @@ package ebpf
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"strings"
 
 	"go.yaml.in/yaml/v2"
@@ -62,8 +63,8 @@ func (c *EBPFCheckConfig) Parse(data []byte) error {
 }
 
 // Configure parses the check configuration and init the check
-func (m *EBPFCheck) Configure(senderManager sender.SenderManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
-	if err := m.CommonConfigure(senderManager, initConfig, config, source, provider); err != nil {
+func (m *EBPFCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, config, initConfig integration.Data, source string, provider string) error {
+	if err := m.CommonConfigure(senderManager, checkManager, initConfig, config, source, provider); err != nil {
 		return err
 	}
 	if err := m.config.Parse(config); err != nil {

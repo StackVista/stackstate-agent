@@ -88,6 +88,12 @@ func setupProcesses(config pkgconfigmodel.Setup) {
 	procBindEnvAndSetDefault(config, "process_config.container_collection.enabled", true)
 	procBindEnvAndSetDefault(config, "process_config.process_collection.enabled", false)
 
+	// This allows for the process check to run in the core agent but is for linux only.
+	// [sts] Default to false: STS doesn't ship a process intake endpoint, so running
+	// process checks in the core agent would produce DNS/404 errors. The STS process
+	// agent is built and deployed separately (only in the debian package).
+	procBindEnvAndSetDefault(config, "process_config.run_in_core_agent.enabled", false)
+
 	config.BindEnv("process_config.process_dd_url", //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
 		"DD_PROCESS_CONFIG_PROCESS_DD_URL",
 		"DD_PROCESS_AGENT_PROCESS_DD_URL",
@@ -153,7 +159,14 @@ func setupProcesses(config pkgconfigmodel.Setup) {
 	procBindEnvAndSetDefault(config, "process_config.ignore_zombie_processes", false)
 
 	// Process Discovery Check
-	config.BindEnvAndSetDefault("process_config.process_discovery.enabled", true,
+	// [sts] Default to false: STS receiver doesn't expose a /api/v1/discovery process intake
+	// (the forwarder targets https://process.<site>/api/v1/discovery which STS doesn't operate,
+	// producing DNS lookup failures on every check run). Previously masked by the helm chart's
+	// deprecated STS_PROCESS_AGENT_ENABLED=false which globally disabled the process agent —
+	// after helm-charts dropped that in favor of granular process_collection / container_collection
+	// flags, this discovery check ran unguarded. STS process-agent is built separately for the deb
+	// package and ships its own intake config there. Re-enable per env if needed.
+	config.BindEnvAndSetDefault("process_config.process_discovery.enabled", false,
 		"DD_PROCESS_CONFIG_PROCESS_DISCOVERY_ENABLED",
 		"DD_PROCESS_AGENT_PROCESS_DISCOVERY_ENABLED",
 		"DD_PROCESS_CONFIG_DISCOVERY_ENABLED", // Also bind old environment variables

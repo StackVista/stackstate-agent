@@ -55,13 +55,12 @@ func TestHasAWSCredentialsInEnvironment(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// Set up environment
-			if tc.accessKeyID != "" {
-				t.Setenv("AWS_ACCESS_KEY_ID", tc.accessKeyID)
-			}
-			if tc.secretAccessKey != "" {
-				t.Setenv("AWS_SECRET_ACCESS_KEY", tc.secretAccessKey)
-			}
+			// [sts] Always set both env vars (even to empty), otherwise the
+			// runner's inherited AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+			// (set by GitLab Runner for S3 caching) leak through and the
+			// "neither / only one set" cases fail with expected:false / actual:true.
+			t.Setenv("AWS_ACCESS_KEY_ID", tc.accessKeyID)
+			t.Setenv("AWS_SECRET_ACCESS_KEY", tc.secretAccessKey)
 
 			result := HasAWSCredentialsInEnvironment()
 			assert.Equal(t, tc.expected, result)

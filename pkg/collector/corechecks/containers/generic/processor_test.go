@@ -81,7 +81,7 @@ func TestProcessorRunFullStatsLinux(t *testing.T) {
 			assert.NoError(t, err)
 
 			expectedTags := []string{"runtime:docker", "container_id:cID100"}
-			mockSender.AssertNumberOfCalls(t, "Rate", 20)
+			mockSender.AssertNumberOfCalls(t, "Rate", 21)
 			mockSender.AssertNumberOfCalls(t, "Gauge", 17+func() int {
 				if tt.extendedMetrics {
 					return 10 // 10 comes from extended set
@@ -100,6 +100,7 @@ func TestProcessorRunFullStatsLinux(t *testing.T) {
 			mockSender.AssertMetric(t, "Rate", "container.cpu.usage", 100, "", expectedTags)
 			mockSender.AssertMetric(t, "Rate", "container.cpu.user", 300, "", expectedTags)
 			mockSender.AssertMetric(t, "Rate", "container.cpu.system", 200, "", expectedTags)
+            mockSender.AssertMetric(t, "Rate", "container.cpu.elapsed.periods", 500, "", expectedTags)
 			mockSender.AssertMetric(t, "Rate", "container.cpu.throttled", 100, "", expectedTags)
 			mockSender.AssertMetric(t, "Rate", "container.cpu.throttled.periods", 0, "", expectedTags)
 			mockSender.AssertMetric(t, "Rate", "container.cpu.partial_stall", 96000, "", expectedTags)

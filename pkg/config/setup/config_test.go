@@ -44,11 +44,55 @@ func TestDefaults(t *testing.T) {
 	assert.Equal(t, []string{"aws", "gcp", "azure", "alibaba", "oracle", "ibm"}, config.GetStringSlice("cloud_provider_metadata"))
 
 	// Testing process-agent defaults
+	// [sts] process_config.process_discovery.enabled defaulted to false — STS receiver doesn't
+	// expose /api/v1/discovery. See pkg/config/setup/process.go and UPSTREAM_MERGE.md.
 	assert.Equal(t, map[string]interface{}{
-		"enabled":        true,
+		"enabled":        false,
 		"hint_frequency": 60,
 		"interval":       4 * time.Hour,
 	}, config.GetStringMap("process_config.process_discovery"))
+}
+
+// [sts] STAC-24908: regression test for missing host disk metrics.
+// Two independent regressions in 2026 left the agent silently emitting no
+// system.disk.* metrics:
+//  1. DD upstream (PR #36526, commit 7c0538448a) gated the Go core disk check
+//     behind disk_check.use_core_loader, defaulted to false.
+//  2. The STS Dockerfile then deleted conf.d/disk.d from the image because
+//     "the check fails to load anyway" - closing off the opt-in path.
+//
+// On 7.78+ DD enables BOTH `use_diskv2_check` AND `disk_check.use_core_loader`
+// by default. Empirically v2 does NOT load with only one of them set
+// (beest 2026-06-02 verified): both are required for v2 to schedule despite
+// the static gate suggesting otherwise. So the test asserts at least one is
+// true (any positive combination keeps disk loading; both true matches DD's
+// stock 7.78.2 default and is what we ship). Registration in
+// pkg/commonchecks/corechecks.go is `if/else` so only one factory ever
+// registers under "disk" — no duplicate-emission risk from both flags being
+// true.
+//
+// The test also fails fast if disk.d/conf.yaml.default disappears from the
+// agent's dist tree (which is what populates /etc/stackstate-agent/conf.d at
+// runtime via the omnibus build).
+func TestDiskCheckAtLeastOneLoaderEnabled(t *testing.T) {
+	config := newTestConf(t)
+
+	useCoreLoader := config.GetBool("disk_check.use_core_loader")
+	useDiskv2 := config.GetBool("use_diskv2_check")
+	assert.True(t, useCoreLoader || useDiskv2,
+		"at least one of disk_check.use_core_loader or use_diskv2_check must "+
+			"default to true; otherwise no disk check loader will run on STS "+
+			"(which does not ship the Python integration) and no system.disk.* "+
+			"metrics will be emitted. Got use_core_loader=%v, "+
+			"use_diskv2_check=%v", useCoreLoader, useDiskv2)
+
+	confPath := filepath.Join("..", "..", "..", "cmd", "agent", "dist", "conf.d", "disk.d", "conf.yaml.default")
+	_, err := os.Stat(confPath)
+	assert.NoError(t, err,
+		"cmd/agent/dist/conf.d/disk.d/conf.yaml.default must exist; without it "+
+			"autodiscovery will not schedule the disk check at runtime even when "+
+			"the Go core loader is enabled. Also verify Dockerfiles/agent/Dockerfile "+
+			"does not delete the disk.d directory after dpkg extraction.")
 }
 
 func TestUnexpectedUnicode(t *testing.T) {
@@ -1159,8 +1203,11 @@ func TestLogDefaults(t *testing.T) {
 
 func TestClusterCheckDefaults(t *testing.T) {
 	conf := newTestConf(t)
-	require.True(t, conf.GetBool("cluster_checks.advanced_dispatching_enabled"))
-	require.True(t, conf.GetBool("cluster_checks.rebalance_with_utilization"))
+	// [sts] STS defaults both to false (the STS helm chart doesn't set up runner-IP
+	// propagation that advanced_dispatching requires; rebalance_with_utilization is paired).
+	// See common_settings.go and UPSTREAM_MERGE.md "Config: silent value-only STS overrides".
+	require.False(t, conf.GetBool("cluster_checks.advanced_dispatching_enabled"))
+	require.False(t, conf.GetBool("cluster_checks.rebalance_with_utilization"))
 }
 
 var testExampleConf = []byte(`
@@ -1394,7 +1441,8 @@ additional_endpoints:
 func TestServerlessConfigNumComponents(t *testing.T) {
 	// Enforce the number of config "components" reachable by the serverless agent
 	// to avoid accidentally adding entire components if it's not needed
-	require.Len(t, commonConfigComponents, 24)
+	// [sts] HEAD's 24 + 1 (stackstate) = 25
+	require.Len(t, commonConfigComponents, 25)
 }
 
 func TestServerlessConfigInit(t *testing.T) {
@@ -1422,8 +1470,9 @@ func TestDisableCoreAgent(t *testing.T) {
 	// ensure events default payloads are enabled
 	assert.True(t, conf.GetBool("enable_payloads.events"))
 	assert.True(t, conf.GetBool("enable_payloads.series"))
-	assert.True(t, conf.GetBool("enable_payloads.service_checks"))
-	assert.True(t, conf.GetBool("enable_payloads.sketches"))
+	// service_checks and sketches default to false even when core_agent.enabled is true
+	assert.False(t, conf.GetBool("enable_payloads.service_checks"))
+	assert.False(t, conf.GetBool("enable_payloads.sketches"))
 
 	conf.BindEnvAndSetDefault("core_agent.enabled", false)
 	pkgconfigmodel.ApplyOverrideFuncs(conf)

@@ -10,6 +10,7 @@ package nvidia
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -181,8 +182,8 @@ func (c *JetsonCheck) Run() error {
 }
 
 // Configure the GPU check
-func (c *JetsonCheck) Configure(senderManager sender.SenderManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
-	err := c.CommonConfigure(senderManager, initConfig, data, source, provider)
+func (c *JetsonCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
+	err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source, provider)
 	if err != nil {
 		return err
 	}

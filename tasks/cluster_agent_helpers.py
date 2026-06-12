@@ -39,7 +39,7 @@ def build_common(
         gcflags=gcflags,
         ldflags=ldflags,
         build_tags=build_tags,
-        bin_path=os.path.join(bin_path, bin_name(f"datadog-cluster-agent{bin_suffix}")),
+        bin_path=os.path.join(bin_path, bin_name(f"stackstate-cluster-agent{bin_suffix}")),  # [sts] image entrypoint PATH includes /opt/stackstate-agent/bin/stackstate-cluster-agent/ and execs `stackstate-cluster-agent` — binary inside the dir MUST match that name
         env=env,
         check_deadcode=os.getenv("DEPLOY_AGENT") == "true",
         coverage=cover,

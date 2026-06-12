@@ -715,7 +715,11 @@ func TestRefreshAllowlistFromContainer(t *testing.T) {
 	_, err := resolver.RefreshNow()
 	require.NoError(t, err)
 	slices.Sort(changes)
-	assert.Equal(t, changes, []string{
+	// [sts] After branding, `datadog.yaml` becomes `stackstate.yaml`, which
+	// sorts AFTER `postgres:1234` (rather than before, as `datadog.yaml` did).
+	// Use ElementsMatch so the assertion is order-independent and survives
+	// future branding moves without manual reordering.
+	assert.ElementsMatch(t, changes, []string{
 		"handle1/datadog.yaml/[something additional_endpoints]",
 		"handle1/postgres:1234/[db_password]",
 		"handle2/postgres:1234/[db_password_2]",

@@ -11,11 +11,13 @@ sending commands and receiving infos.
 package api
 
 import (
+	"bytes"
 	"context"
 	"crypto/subtle"
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	stdLog "log"
 	"net"
 	"net/http"
@@ -132,7 +134,14 @@ func StartServer(ctx context.Context, w workloadmeta.Component, taggerComp tagge
 	})
 
 	timeout := pkgconfigsetup.Datadog().GetDuration("cluster_agent.server.idle_timeout_seconds") * time.Second
-	errorLog := stdLog.New(logWriter, "Error from the agent http API server: ", 0) // log errors to seelog
+	// [sts] Wrap logWriter so the "superfluous response.WriteHeader call" lines that the
+	// stdlib net/http server emits when a handler triggers a double WriteHeader are dropped
+	// before they reach seelog. The underlying ResponseWriter discards the second header
+	// (so it's functionally benign), but the WARN fires many times per second under normal
+	// cluster-agent traffic and dominates the log. The telemetryWriterWrapper Write()
+	// override in pkg/clusteragent/api/handler_telemetry.go is the structural fix; this is
+	// the belt-and-suspenders silencer for any code path the override can't reach.
+	errorLog := stdLog.New(&superfluousWriteHeaderFilteringWriter{inner: logWriter}, "Error from the agent http API server: ", 0) // log errors to seelog
 	srv := helpers.NewMuxedGRPCServer(
 		listener.Addr().String(),
 		tlsConfig,
@@ -217,4 +226,19 @@ func isExternalPath(path string) bool {
 		strings.HasPrefix(path, "/api/v1/tags/node/") && len(strings.Split(path, "/")) == 6 ||
 		strings.HasPrefix(path, "/api/v1/tags/pod/") && (len(strings.Split(path, "/")) == 6 || len(strings.Split(path, "/")) == 8) ||
 		strings.HasPrefix(path, "/api/v1/uid/node/") && len(strings.Split(path, "/")) == 6
+}
+
+// [sts] superfluousWriteHeaderFilteringWriter wraps the upstream agent log writer to drop
+// "superfluous response.WriteHeader call" lines that the stdlib net/http server emits when a
+// handler causes the wrapped ResponseWriter's WriteHeader to be called twice. See the comment
+// at the errorLog construction site for context.
+type superfluousWriteHeaderFilteringWriter struct {
+	inner io.Writer
+}
+
+func (w *superfluousWriteHeaderFilteringWriter) Write(p []byte) (int, error) {
+	if bytes.Contains(p, []byte("superfluous response.WriteHeader call")) {
+		return len(p), nil
+	}
+	return w.inner.Write(p)
 }

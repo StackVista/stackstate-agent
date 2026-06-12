@@ -4,6 +4,8 @@
 // Copyright 2016-2020 Datadog, Inc.
 
 // Package model holds model related files
+//go:build linux
+
 package model
 
 import "github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"

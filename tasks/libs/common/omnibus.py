@@ -49,7 +49,7 @@ ENV_PASSHTROUGH = {
     'rvm_bin_path': 'rvm / Ruby stuff to make sure Omnibus itself runs correctly',
     'rvm_prefix': 'rvm / Ruby stuff to make sure Omnibus itself runs correctly',
     'rvm_version': 'rvm / Ruby stuff to make sure Omnibus itself runs correctly',
-    'AGENT_DATA_PLANE_VERSION': 'Agent Data Plane Version',
+    # [sts] AGENT_DATA_PLANE_VERSION dropped — Saluki not shipped, see omnibus/config/software/datadog-agent-dependencies.rb
 }
 
 OS_SPECIFIC_ENV_PASSTHROUGH = {
@@ -90,10 +90,7 @@ OS_SPECIFIC_ENV_PASSTHROUGH = {
         'RPM_GPG_KEY': 'Used to sign packages',
         'RPM_GPG_KEY_NAME': 'Used to sign packages',
         'RPM_SIGNING_PASSPHRASE': 'Used to sign packages',
-        'AGENT_DATA_PLANE_HASH_LINUX_AMD64': 'Agent Data Plane Hash for Linux AMD64',
-        'AGENT_DATA_PLANE_HASH_LINUX_ARM64': 'Agent Data Plane Hash for Linux ARM64',
-        'AGENT_DATA_PLANE_HASH_FIPS_LINUX_AMD64': 'Agent Data Plane Hash for FIPS Linux AMD64',
-        'AGENT_DATA_PLANE_HASH_FIPS_LINUX_ARM64': 'Agent Data Plane Hash for FIPS Linux ARM64',
+        # [sts] AGENT_DATA_PLANE_HASH_* dropped — Saluki not shipped
     },
     'darwin': {
         'APPLE_ACCOUNT': 'Apple developer account used for notarization',
@@ -175,6 +172,8 @@ def _hash_paths(hasher, paths: list[str]):
 
 
 def get_dd_api_key(ctx):
+    # Disabled - not needed for StackState builds
+    return ""
     if sys.platform == 'win32':
         cmd = f'aws.exe ssm get-parameter --region us-east-1 --name {os.environ["API_KEY_ORG2"]} --with-decryption --query "Parameter.Value" --out text'
     elif sys.platform == 'darwin':
@@ -223,6 +222,8 @@ def should_retry_bundle_install(res):
 
 
 def send_build_metrics(ctx, overall_duration):
+    # Disabled - not needed for StackState builds
+    return
     # We only want to generate those metrics from the CI
     src_dir = os.environ.get('CI_PROJECT_DIR')
     if sys.platform == 'win32':
@@ -321,6 +322,8 @@ def send_build_metrics(ctx, overall_duration):
 
 
 def send_cache_mutation_event(ctx, pipeline_id, job_name, job_id):
+    # Disabled - not needed for StackState builds
+    return
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json', 'DD-API-KEY': get_dd_api_key(ctx)}
     payload = {
         'title': 'omnibus cache mutated',
@@ -336,6 +339,8 @@ def send_cache_mutation_event(ctx, pipeline_id, job_name, job_id):
 
 
 def send_cache_miss_event(ctx, pipeline_id, job_name, job_id):
+    # Disabled - not needed for StackState builds
+    return
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json', 'DD-API-KEY': get_dd_api_key(ctx)}
     payload = {
         'title': 'omnibus cache miss',

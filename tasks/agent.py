@@ -63,6 +63,7 @@ AGENT_CORECHECKS = [
     "cri",
     "snmp",
     "docker",
+    "disk",
     "file_handle",
     "go_expvar",
     "io",
@@ -70,7 +71,7 @@ AGENT_CORECHECKS = [
     "kubernetes_apiserver",
     "load",
     "memory",
-    "ntp",
+    # [sts] "ntp", Disabled because we do not use it and it breaks in self-hosted environments, see https://stackstate.atlassian.net/browse/STAC-22341
     "oom_kill",
     "oracle",
     "oracle-dbm",

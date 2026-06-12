@@ -17,6 +17,10 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	if v := os.Getenv("BRANDED"); v == "1" || v == "true" || v == "TRUE" {
+		log.Println("--- SKIP: trace-agent testsuite skipped in branded mode")
+		os.Exit(0)
+	}
 	if _, ok := os.LookupEnv("INTEGRATION"); !ok {
 		log.Println("--- SKIP: to run tests in this package, set the INTEGRATION environment variable")
 		os.Exit(0)

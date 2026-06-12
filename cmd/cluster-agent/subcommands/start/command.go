@@ -12,6 +12,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/comp/stackstate"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"net/http"
 	"os"
 	"os/signal"
@@ -137,6 +139,7 @@ import (
 
 	corecheckLoader "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/helm"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubeapi"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/ksm"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/orchestrator"
@@ -252,6 +255,7 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 				clusterchecksmetadatafx.Module(),
 				ipcfx.ModuleReadWrite(),
 				remotetraceroutefx.Module(),
+				stackstate.Bundle(),
 			)
 		},
 	}
@@ -286,6 +290,7 @@ func start(log log.Component,
 	_ metadatarunner.Component,
 	tracerouteComp traceroute.Component,
 	eventPlatform eventplatform.Component,
+	checkManager handler.CheckManager,
 ) error {
 	stopCh := make(chan struct{})
 	validatingStopCh := make(chan struct{})
@@ -492,7 +497,7 @@ func start(log log.Component,
 
 	// Set up check collector
 	registerChecks(wmeta, taggerComp, config)
-	ac.AddScheduler("check", pkgcollector.InitCheckScheduler(option.New(collector), demultiplexer, logReceiver, taggerComp, filterStore), true)
+	ac.AddScheduler("check", pkgcollector.InitCheckScheduler(option.New(collector), demultiplexer, checkManager, logReceiver, taggerComp, filterStore), true)
 
 	// start the autoconfig, this will immediately run any configured check
 	ac.LoadAndRun(mainCtx)
@@ -782,4 +787,8 @@ func registerChecks(wlm workloadmeta.Component, tagger tagger.Component, cfg con
 	corecheckLoader.RegisterCheck(ksm.CheckName, ksm.Factory(tagger, nil)) // wmeta is not used in KSM when running from cluster-agent, so we can pass nil here
 	corecheckLoader.RegisterCheck(helm.CheckName, helm.Factory())
 	corecheckLoader.RegisterCheck(orchestrator.CheckName, orchestrator.Factory(wlm, cfg, tagger))
+	// StackState cluster checks
+	corecheckLoader.RegisterCheck(kubeapi.KubernetesAPITopologyCheckName, kubeapi.KubernetesAPITopologyFactory())
+	corecheckLoader.RegisterCheck(kubeapi.KubernetesAPIEventsCheckName, kubeapi.KubernetesAPIEventsFactory())
+	corecheckLoader.RegisterCheck(kubeapi.KubernetesAPIMetricsCheckName, kubeapi.KubernetesAPIMetricsFactory())
 }

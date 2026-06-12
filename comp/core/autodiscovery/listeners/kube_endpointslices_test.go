@@ -350,6 +350,11 @@ func TestProcessEndpointSliceNilPorts(t *testing.T) {
 }
 
 func TestKubeEndpointSlicesFiltering(t *testing.T) {
+	// [sts] Test exercises the cel_workload_exclude config option, which only
+	// filters when the `cel` build tag is set. STS doesn't include `cel` in
+	// AGENT_TAGS, so the workloadfilter is a no-op pass-through and the
+	// exclusion-based assertions don't fire. Skip until/unless STS adopts CEL.
+	t.Skip("[sts] cel_workload_exclude requires the cel build tag; STS doesn't ship cel")
 	kubeEndpointExcludeConfig := `
 cel_workload_exclude:
   - products: ["metrics"]

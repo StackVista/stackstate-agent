@@ -25,6 +25,7 @@ import (
 
 func setupClusterAgentConfig(t *testing.T) config.Component {
 	conf := config.NewMock(t)
+	conf.Set("inventories_enabled", true, model.SourceUnknown)
 	conf.Set("admission_controller.enabled", true, model.SourceUnknown)
 	conf.Set("admission_controller.inject_config.enabled", true, model.SourceUnknown)
 	conf.Set("admission_controller.inject_tags.enabled", true, model.SourceUnknown)
