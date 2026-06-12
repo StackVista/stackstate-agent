@@ -23,7 +23,7 @@ skip_transitive_dependency_licensing true
 dependency "zlib" unless windows?
 dependency "cacerts"
 
-default_version "3.5.6"
+default_version "3.5.7"
 
 source url: "https://www.openssl.org/source/openssl-#{version}.tar.gz", extract: :lax_tar
 
@@ -42,6 +42,7 @@ version("3.4.1") { source sha256: "002a2d6b30b58bf4bea46c43bdd96365aaf8daa6c4287
 version("3.5.2") { source sha256: "c53a47e5e441c930c3928cf7bf6fb00e5d129b630e0aa873b08258656e7345ec" }
 version("3.5.4") { source sha256: "967311f84955316969bdb1d8d4b983718ef42338639c621ec4c34fddef355e99" }
 version("3.5.6") { source sha256: "deae7c80cba99c4b4f940ecadb3c3338b13cb77418409238e57d7f31f2a3b736" }
+version("3.5.7") { source sha256: "a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8" }
 
 relative_path "openssl-#{version}"
 
