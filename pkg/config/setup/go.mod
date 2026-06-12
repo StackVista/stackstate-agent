@@ -22,8 +22,8 @@ require (
 	github.com/DataDog/datadog-agent/pkg/util/system v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/winutil v0.78.3-rc.2
 	github.com/stretchr/testify v1.11.1
-	go.yaml.in/yaml/v2 v2.4.3
-	golang.org/x/sys v0.42.0
+	go.yaml.in/yaml/v2 v2.4.4
+	golang.org/x/sys v0.45.0
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -64,9 +64,9 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
