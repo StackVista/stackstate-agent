@@ -25,7 +25,6 @@ require (
 	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 )
 
@@ -208,3 +207,5 @@ replace (
 	github.com/DataDog/datadog-agent/test/new-e2e => ../../../../../test/new-e2e
 	github.com/DataDog/datadog-agent/test/otel => ../../../../../test/otel
 )
+
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.0.2

@@ -26,3 +26,5 @@ require (
 	golang.org/x/sys v0.45.0 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 )
+
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.0.2
