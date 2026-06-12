@@ -22,6 +22,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/telemetry v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/compression v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/json v0.78.3-rc.2
+	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/quantile v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/testutil v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/version v0.78.3-rc.2
@@ -72,7 +73,6 @@ require (
 	github.com/DataDog/datadog-agent/pkg/util/flavor v0.78.3-rc.2 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/fxutil v0.78.3-rc.2 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/http v0.78.3-rc.2 // indirect
-	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/option v0.78.3-rc.2 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/pointer v0.78.3-rc.2 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.78.3-rc.2 // indirect

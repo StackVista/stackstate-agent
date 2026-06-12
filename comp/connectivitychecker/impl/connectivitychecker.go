@@ -59,6 +59,13 @@ func NewComponent(reqs Requires) (Provides, error) {
 		collectCancel:  collectCancel,
 	}
 
+	// sts begin - allow disabling periodic connectivity checks via config
+	if !reqs.Config.GetBool("connectivity_checker.enabled") {
+		reqs.Log.Info("Connectivity checker disabled via configuration")
+		return Provides{Comp: comp}, nil
+	}
+	// sts end
+
 	reqs.Lifecycle.Append(compdef.Hook{OnStart: comp.start, OnStop: comp.stop})
 	reqs.Config.OnUpdate(func(_ string, _ model.Source, _, _ any, _ uint64) { comp.restartTimer() })
 

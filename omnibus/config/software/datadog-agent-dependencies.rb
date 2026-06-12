@@ -2,38 +2,46 @@ name 'datadog-agent-dependencies'
 
 description "Enforce building dependencies as soon as possible so they can be cached"
 
-if heroku_target?
-  flavor_flag = "--//packages/agent:flavor=heroku"
-else
-  flavor_flag = fips_mode? ? "--//packages/agent:flavor=fips" : ""
-end
-
 # Linux-specific dependencies
 if linux_target?
-  build do
-    command_on_repo_root "bazelisk run #{flavor_flag} -- @nghttp2//:install --destdir='#{install_dir}'"
-    command_on_repo_root "bazelisk run #{flavor_flag} -- //bazel/rules:replace_prefix --prefix '#{install_dir}/embedded'" \
-      " #{install_dir}/embedded/lib/libnghttp2.so"
-
-    command_on_repo_root "bazelisk run #{flavor_flag} -- @curl//:install --destdir='#{install_dir}'"
-    command_on_repo_root "bazelisk run #{flavor_flag} -- //bazel/rules:replace_prefix --prefix '#{install_dir}/embedded'" \
-      " #{install_dir}/embedded/lib/libcurl.so" \
-      " #{install_dir}/embedded/bin/curl"
-  end
+  dependency 'procps-ng'
+  dependency 'curl'
 end
-
-dependency 'datadog-agent-data-plane' if linux_target? && !heroku_target?
+if fips_mode?
+  dependency 'openssl-fips-provider'
+end
 
 # Bundled cacerts file (is this a good idea?)
 dependency 'cacerts'
 
+# External agents
+dependency 'jmxfetch'
+
 # Used for memory profiling with the `status py` agent subcommand
 dependency 'pympler'
 
-dependency 'datadog-agent-integrations-py3'
+dependency "systemd" if linux_target?
 
-build do
-    command_on_repo_root "bazelisk run #{flavor_flag} -- //packages/agent/dependencies:install --destdir=#{install_dir}"
+dependency 'libpcap' if linux_target? and !heroku_target? # system-probe dependency
+
+# Include traps db file in snmp.d/traps_db/
+dependency 'snmp-traps'
+
+# [STS] StackState integrations are declared in agent.rb (project level)
+# to avoid circular dependency: datadog-agent -> datadog-agent-dependencies -> integrations -> datadog-agent
+
+
+# Additional software
+if windows_target?
+  if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+    dependency 'datadog-windows-filter-driver'
+  end
+  if ENV['WINDOWS_APMINJECT_MODULE'] and not ENV['WINDOWS_APMINJECT_MODULE'].empty?
+    dependency 'datadog-windows-apminject'
+  end
+  if ENV['WINDOWS_DDPROCMON_DRIVER'] and not ENV['WINDOWS_DDPROCMON_DRIVER'].empty?
+    dependency 'datadog-windows-procmon-driver'
+  end
 end
 
 build do

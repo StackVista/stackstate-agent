@@ -304,6 +304,12 @@ func TestProcessAgentChecks(t *testing.T) {
 	ipcComp := ipcmock.New(t)
 
 	t.Run("without process-agent running", func(t *testing.T) {
+		// [sts] STS defaults process_config.process_discovery.enabled to false; this test relies on
+		// the discovery check being attempted (so the flare collector writes the error file).
+		// Explicitly enable it for the test, matching the behaviour of the other subtests below.
+		cfg := configmock.New(t)
+		cfg.SetWithoutSource("process_config.process_discovery.enabled", true)
+
 		mock := flarehelpers.NewFlareBuilderMock(t, false)
 
 		remoteProvider := RemoteFlareProvider{

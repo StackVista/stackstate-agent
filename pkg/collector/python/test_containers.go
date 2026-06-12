@@ -31,7 +31,12 @@ func testIsContainerExcluded(t *testing.T) {
 	mockConfig.SetWithoutSource("container_exclude", []string{"image:bar", "kube_namespace:black"})
 	mockConfig.SetWithoutSource("container_include", "kube_namespace:white")
 	filterStore := workloadfilterfxmock.SetupMockFilter(t)
-	collectoraggregator.ScopeInitCheckContext(sender.GetSenderManager(), logReceiver, tagger, filterStore)
+	// [sts] ScopeInitCheckContext locks testMutex and returns a release function
+	// the caller MUST defer. Discarding it (the original of this line) leaks the
+	// mutex and deadlocks every subsequent ScopeInitCheckContext call in the
+	// same test binary (e.g., TestTags hangs waiting for the lock).
+	release := collectoraggregator.ScopeInitCheckContext(sender.GetSenderManager(), logReceiver, tagger, filterStore)
+	defer release()
 
 	assert.Equal(t, C.int(1), IsContainerExcluded(C.CString("foo"), C.CString("bar"), C.CString("ns")))
 	assert.Equal(t, C.int(0), IsContainerExcluded(C.CString("foo"), C.CString("bar"), C.CString("white")))

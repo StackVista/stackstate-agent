@@ -15,6 +15,7 @@ import (
 	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/loaders"
 	pkgconfigsetup "github.com/DataDog/datadog-agent/pkg/config/setup"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -61,7 +62,7 @@ func (*GoCheckLoader) Name() string {
 }
 
 // Load returns a Go check
-func (gl *GoCheckLoader) Load(senderManger sender.SenderManager, config integration.Config, instance integration.Data, instanceIndex int) (check.Check, error) {
+func (gl *GoCheckLoader) Load(senderManger sender.SenderManager, checkManager handler.CheckManager, config integration.Config, instance integration.Data, instanceIndex int) (check.Check, error) {
 	var c check.Check
 
 	factory, found := catalog[config.Name]
@@ -76,7 +77,7 @@ func (gl *GoCheckLoader) Load(senderManger sender.SenderManager, config integrat
 	if instanceIndex >= 0 {
 		configSource = fmt.Sprintf("%s[%d]", configSource, instanceIndex)
 	}
-	if err := c.Configure(senderManger, config.FastDigest(), instance, config.InitConfig, configSource, config.Provider); err != nil {
+	if err := c.Configure(senderManger, checkManager, config.FastDigest(), instance, config.InitConfig, configSource, config.Provider); err != nil {
 		if errors.Is(err, check.ErrSkipCheckInstance) {
 			return c, err
 		}
@@ -93,7 +94,7 @@ func (gl *GoCheckLoader) String() string {
 }
 
 func init() {
-	factory := func(sender.SenderManager, option.Option[integrations.Component], tagger.Component, workloadfilter.Component) (check.Loader, int, error) {
+	factory := func(sender.SenderManager, handler.CheckManager, option.Option[integrations.Component], tagger.Component, workloadfilter.Component) (check.Loader, int, error) {
 		loader, err := NewGoCheckLoader()
 		priority := 30
 		if pkgconfigsetup.Datadog().GetBool("prioritize_go_check_loader") {

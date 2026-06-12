@@ -8,8 +8,10 @@
 package apiserver
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "k8s.io/api/core/v1"
 	discv1 "k8s.io/api/discovery/v1"
@@ -65,4 +67,14 @@ func SearchTargetPerNameInEndpointSlices(slices []*discv1.EndpointSlice, targetN
 // EntityForEndpoints builds entity strings for Endpoints
 func EntityForEndpoints(namespace, name, ip string) string {
 	return fmt.Sprintf("%s%s/%s/%s", kubeEndpointIDPrefix, namespace, name, ip)
+}
+
+// GetEndpoints retrieves all the endpoints in the Kubernetes cluster across all namespaces.
+func (c *APIClient) GetEndpoints() ([]v1.Endpoints, error) {
+	endpointList, err := c.Cl.CoreV1().Endpoints(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return []v1.Endpoints{}, err
+	}
+
+	return endpointList.Items, nil
 }

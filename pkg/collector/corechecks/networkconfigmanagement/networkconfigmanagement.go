@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/networkconfigmanagement/profile"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/benbjohnson/clock"
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
@@ -116,7 +117,7 @@ func (c *Check) Run() error {
 }
 
 // Configure sets up the check with the provided configuration and sender manager
-func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
 	var err error
 
 	// Load/parse the configuration for the device instance
@@ -127,7 +128,7 @@ func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigD
 
 	// Must be called before v.CommonConfigure
 	c.BuildID(integrationConfigDigest, rawInstance, rawInitConfig)
-	err = c.CommonConfigure(senderManager, rawInitConfig, rawInstance, source, provider)
+	err = c.CommonConfigure(senderManager, checkManager, rawInitConfig, rawInstance, source, provider)
 	if err != nil {
 		return fmt.Errorf("common configure failed: %w", err)
 	}

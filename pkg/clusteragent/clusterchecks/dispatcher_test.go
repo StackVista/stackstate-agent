@@ -610,6 +610,8 @@ func TestExtraTags(t *testing.T) {
 			mockConfig.SetWithoutSource("cluster_checks.cluster_tag_name", tc.tagNameConfig)
 
 			clustername.ResetClusterName()
+			clustername.FlushProviderCatalog()
+			defer clustername.PopulateProviderCatalog()
 			dispatcher := newDispatcher(fakeTagger)
 			assert.EqualValues(t, tc.expected, dispatcher.extraTags)
 		})

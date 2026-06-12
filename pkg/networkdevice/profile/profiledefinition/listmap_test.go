@@ -7,9 +7,11 @@ package profiledefinition
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/invopop/jsonschema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 )
 
@@ -59,9 +61,11 @@ func TestListMap_JSONSchema(t *testing.T) {
 	schemaJSON, err := json.MarshalIndent(schema, "", "  ")
 	require.NoError(t, err)
 
-	expectedSchema := `
+	moduleName := fmt.Sprintf("%s/%s", getEnv("AGENT_GITHUB_ORG", "StackVista"), getEnv("AGENT_REPO_NAME", "stackstate-agent"))
+
+	expectedSchema := fmt.Sprintf(`
 {
-  "$id": "https://github.com/DataDog/datadog-agent/pkg/networkdevice/profile/profiledefinition/example-struct",
+  "$id": "https://github.com/%s/pkg/networkdevice/profile/profiledefinition/example-struct",
   "$ref": "#/$defs/ExampleStruct",
   "$defs": {
     "ExampleStruct": {
@@ -97,6 +101,14 @@ func TestListMap_JSONSchema(t *testing.T) {
     }
   }
 }
-`
+`, moduleName)
 	assert.JSONEq(t, expectedSchema, string(schemaJSON))
+}
+
+func getEnv(key string, dfault string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		value = dfault
+	}
+	return value
 }

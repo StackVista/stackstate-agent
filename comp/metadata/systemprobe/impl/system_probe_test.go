@@ -58,6 +58,7 @@ func getSystemProbeComp(t *testing.T, enableConfig bool) *systemprobe {
 	l := logmock.New(t)
 
 	cfg := config.NewMock(t)
+	cfg.Set("inventories_enabled", true, model.SourceUnknown)
 	cfg.Set("inventories_configuration_enabled", enableConfig, model.SourceUnknown)
 
 	r := Requires{

@@ -10,6 +10,10 @@ import (
 	"context"
 	"errors"
 	_ "expvar" // Blank import used because this isn't directly used in this file
+
+	"github.com/DataDog/datadog-agent/comp/stackstate"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	"net/http"
 	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
 	"os"
@@ -138,6 +142,7 @@ import (
 	"github.com/DataDog/datadog-agent/comp/metadata/inventorychecks"
 	"github.com/DataDog/datadog-agent/comp/metadata/inventoryhost"
 	"github.com/DataDog/datadog-agent/comp/metadata/packagesigning"
+	"github.com/DataDog/datadog-agent/comp/metadata/resources/resourcesimpl"
 	"github.com/DataDog/datadog-agent/comp/metadata/runner"
 	securityagentmetadata "github.com/DataDog/datadog-agent/comp/metadata/securityagent/def"
 	systemprobemetadata "github.com/DataDog/datadog-agent/comp/metadata/systemprobe/def"
@@ -192,7 +197,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/flavor"
 	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
 	"github.com/DataDog/datadog-agent/pkg/util/fxutil/logging"
-	"github.com/DataDog/datadog-agent/pkg/util/installinfo"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection"
 	pkglog "github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/util/option"
@@ -238,6 +242,7 @@ func Commands(globalParams *command.GlobalParams) []*cobra.Command {
 			fxinstrumentation.Module(),
 			getSharedFxOption(),
 			getPlatformModules(),
+			stackstate.Bundle(),
 		)
 	}
 
@@ -312,6 +317,7 @@ func run(log log.Component,
 	ipc ipc.Component,
 	snmpScanManager snmpscanmanager.Component,
 	traceroute traceroute.Component,
+	checkManager handler.CheckManager,
 ) error {
 	defer func() {
 		stopAgent(cfg, sysprobeConf)
@@ -375,6 +381,7 @@ func run(log log.Component,
 		snmpScanManager,
 		traceroute,
 		healthplatformComp,
+		checkManager,
 	); err != nil {
 		return err
 	}
@@ -503,6 +510,10 @@ func getSharedFxOption() fx.Option {
 		}),
 		logs.Bundle(),
 		langDetectionClimpl.Module(),
+		// [sts] Disable the gohai 'resources' metadata provider. The StackState receiver parses
+		// the resources field but never consumes it, while rejecting the payload with HTTP 400
+		// because it lacks the top-level internalHostname required by /intake/.
+		fx.Supply(resourcesimpl.Disabled()),
 		metadata.Bundle(),
 		orchestratorForwarderImpl.Module(orchestratorForwarderImpl.NewDefaultParams()),
 		eventplatformimpl.Module(eventplatformimpl.NewDefaultParams()),
@@ -603,6 +614,7 @@ func startAgent(
 	snmpScanManager snmpscanmanager.Component,
 	traceroute traceroute.Component,
 	healthplatformComp healthplatform.Component,
+	checkManager handler.CheckManager,
 ) error {
 	var err error
 
@@ -682,7 +694,8 @@ func startAgent(
 	}
 
 	// Append version and timestamp to version history log file if this Agent is different than the last run version
-	installinfo.LogVersionHistory()
+	// [STS] we don't need this feature
+	// installinfo.LogVersionHistory()
 
 	// TODO: (components) - Until the checks are components we set there context so they can depends on components.
 	check.InitializeInventoryChecksContext(invChecks)
@@ -693,7 +706,7 @@ func startAgent(
 
 	// Set up check collector
 	commonchecks.RegisterChecks(wmeta, filterStore, tagger, cfg, telemetry, rcclient, flare, snmpScanManager, traceroute)
-	ac.AddScheduler("check", pkgcollector.InitCheckScheduler(option.New(collectorComponent), demultiplexer, logReceiver, tagger, filterStore), true)
+	ac.AddScheduler("check", pkgcollector.InitCheckScheduler(option.New(collectorComponent), demultiplexer, checkManager, logReceiver, tagger, filterStore), true)
 
 	demultiplexer.AddAgentStartupTelemetry(version.AgentVersion)
 

@@ -20,6 +20,7 @@ import (
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
 	pkgconfigsetup "github.com/DataDog/datadog-agent/pkg/config/setup"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -130,8 +131,8 @@ func (c *Check) freebsdSpecificVirtualMemoryCheck(v *mem.VirtualMemoryStat) erro
 }
 
 // Configure configures the memory check
-func (c *Check) Configure(senderManager sender.SenderManager, _ uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
-	err := c.CommonConfigure(senderManager, rawInitConfig, rawInstance, source, provider)
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
+	err := c.CommonConfigure(senderManager, checkManager, rawInitConfig, rawInstance, source, provider)
 	if err != nil {
 		return err
 	}

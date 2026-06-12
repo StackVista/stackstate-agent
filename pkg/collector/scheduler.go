@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	yaml "go.yaml.in/yaml/v2"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -61,19 +62,21 @@ type CheckScheduler struct {
 	loaders        []check.Loader
 	collector      option.Option[collector.Component]
 	senderManager  sender.SenderManager
+	checkManager   handler.CheckManager
 	m              sync.RWMutex
 }
 
 // InitCheckScheduler creates and returns a check scheduler
-func InitCheckScheduler(collector option.Option[collector.Component], senderManager sender.SenderManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filterStore filter.Component) *CheckScheduler {
+func InitCheckScheduler(collector option.Option[collector.Component], senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], tagger tagger.Component, filterStore filter.Component) *CheckScheduler {
 	checkScheduler = &CheckScheduler{
 		collector:      collector,
 		senderManager:  senderManager,
+		checkManager:   checkManager,
 		configToChecks: make(map[string][]checkid.ID),
-		loaders:        make([]check.Loader, 0, len(loaders.LoaderCatalog(senderManager, logReceiver, tagger, filterStore))),
+		loaders:        make([]check.Loader, 0, len(loaders.LoaderCatalog(senderManager, checkManager, logReceiver, tagger, filterStore))),
 	}
 	// add the check loaders
-	for _, loader := range loaders.LoaderCatalog(senderManager, logReceiver, tagger, filterStore) {
+	for _, loader := range loaders.LoaderCatalog(senderManager, checkManager, logReceiver, tagger, filterStore) {
 		checkScheduler.addLoader(loader)
 		log.Debugf("Added %s to Check Scheduler", loader)
 	}
@@ -206,7 +209,7 @@ func (s *CheckScheduler) getChecks(config integration.Config) ([]check.Check, er
 				log.Debugf("Loader name %v does not match, skip loader %v for check %v", selectedInstanceLoader, loader.Name(), config.Name)
 				continue
 			}
-			c, err := loader.Load(s.senderManager, config, instance, instanceIndex)
+			c, err := loader.Load(s.senderManager, s.checkManager, config, instance, instanceIndex)
 			if err == nil {
 				log.Debugf("%v: successfully loaded check '%s'", loader, config.Name)
 				checks = append(checks, c)

@@ -40,6 +40,12 @@ import (
 )
 
 func getTestInventoryChecks(t *testing.T, coll option.Option[collector.Component], logAgent option.Option[logagent.Component], overrides map[string]any) *inventorychecksImpl {
+	if overrides == nil {
+		overrides = map[string]any{}
+	}
+	if _, ok := overrides["inventories_enabled"]; !ok {
+		overrides["inventories_enabled"] = true
+	}
 	p := newInventoryChecksProvider(
 		fxutil.Test[dependencies](
 			t,

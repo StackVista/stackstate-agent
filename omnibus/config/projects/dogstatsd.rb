@@ -28,7 +28,7 @@ if ohai['platform'] == "windows"
   # Note: this is the path used by Omnibus to build the agent, the final install
   # dir will be determined by the Windows installer. This path must not contain
   # spaces because Omnibus doesn't quote the Git commands it launches.
-  install_dir "C:/opt/datadog-dogstatsd/"
+  install_dir "C:/opt/stackstate-dogstatsd/"
   maintainer 'Datadog Inc.' # Windows doesn't want our e-mail address :(
 else
   install_dir ENV["INSTALL_DIR"] || '/opt/datadog-dogstatsd'
@@ -208,13 +208,6 @@ if linux_target?
       package_scripts_path "#{Omnibus::Config.project_root}/package-scripts/dogstatsd-rpm"
     end
   end
-end
-
-if linux_target?
-  extra_package_file '/etc/init/datadog-dogstatsd.conf'
-  extra_package_file '/lib/systemd/system/datadog-dogstatsd.service'
-  extra_package_file '/etc/datadog-dogstatsd/'
-  extra_package_file '/var/log/datadog/'
 end
 
 exclude '\.git*'

@@ -12,6 +12,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/DataDog/datadog-agent/comp/stackstate"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -204,6 +206,8 @@ func MakeCommand(globalParamsGetter func() GlobalParams) *cobra.Command {
 					},
 				),
 				statusimpl.Module(),
+				stackstate.Bundle(),
+
 				// TODO(components): this is a temporary hack as the StartServer() method of the API package was previously called with nil arguments
 				// This highlights the fact that the API Server created by JMX (through ExecJmx... function) should be different from the ones created
 				// in others commands such as run.
@@ -272,6 +276,7 @@ func run(
 	logReceiver option.Option[integrations.Component],
 	ipc ipc.Component,
 	traceroute traceroute.Component,
+	checkManager handler.CheckManager,
 ) error {
 	previousIntegrationTracing := false
 	previousIntegrationTracingExhaustive := false
@@ -318,7 +323,7 @@ func run(
 
 	// Create the CheckScheduler, but do not attach it to
 	// AutoDiscovery.
-	pkgcollector.InitCheckScheduler(collector, demultiplexer, logReceiver, tagger, filterStore)
+	pkgcollector.InitCheckScheduler(collector, demultiplexer, checkManager, logReceiver, tagger, filterStore)
 
 	allConfigs, err := getAllCheckConfigs(ac, *cliParams)
 	if err != nil {

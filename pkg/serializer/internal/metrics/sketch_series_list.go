@@ -8,7 +8,6 @@ package metrics
 import (
 	"bytes"
 	"expvar"
-
 	"github.com/richardartoul/molecule"
 
 	"github.com/DataDog/datadog-agent/comp/core/config"

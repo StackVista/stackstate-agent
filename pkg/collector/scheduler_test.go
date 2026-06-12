@@ -6,6 +6,7 @@
 package collector
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -45,7 +46,7 @@ func (l *MockCoreLoader) Name() string {
 }
 
 // Load loads a check
-func (l *MockCoreLoader) Load(_ sender.SenderManager, config integration.Config, _ integration.Data, _ int) (check.Check, error) {
+func (l *MockCoreLoader) Load(_ sender.SenderManager, _ handler.CheckManager, config integration.Config, _ integration.Data, _ int) (check.Check, error) {
 	mockCheck := MockCheck{Name: config.Name, LoaderName: l.Name()}
 	return &mockCheck, nil
 }
@@ -57,7 +58,7 @@ func (l *MockPythonLoader) Name() string {
 }
 
 // Load loads a check
-func (l *MockPythonLoader) Load(_ sender.SenderManager, config integration.Config, _ integration.Data, _ int) (check.Check, error) {
+func (l *MockPythonLoader) Load(_ sender.SenderManager, _ handler.CheckManager, config integration.Config, _ integration.Data, _ int) (check.Check, error) {
 	mockCheck := MockCheck{Name: config.Name, LoaderName: l.Name()}
 	return &mockCheck, nil
 }

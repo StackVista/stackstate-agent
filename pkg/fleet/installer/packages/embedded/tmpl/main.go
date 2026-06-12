@@ -127,8 +127,7 @@ func systemdUnits(stableData, expData systemdTemplateData, ambiantCapabilitiesSu
 		"datadog-agent-exp.service":            mustReadSystemdUnit("datadog-agent.service", expData, ambiantCapabilitiesSupported),
 		"datadog-agent-installer.service":      mustReadSystemdUnit("datadog-agent-installer.service", stableData, ambiantCapabilitiesSupported),
 		"datadog-agent-installer-exp.service":  mustReadSystemdUnit("datadog-agent-installer.service", expData, ambiantCapabilitiesSupported),
-		"datadog-agent-data-plane.service":     mustReadSystemdUnit("datadog-agent-data-plane.service", stableData, ambiantCapabilitiesSupported),
-		"datadog-agent-data-plane-exp.service": mustReadSystemdUnit("datadog-agent-data-plane.service", expData, ambiantCapabilitiesSupported),
+		// [sts] datadog-agent-data-plane (Saluki) not shipped — see omnibus/config/software/datadog-agent-dependencies.rb
 		"datadog-agent-trace.service":          mustReadSystemdUnit("datadog-agent-trace.service", stableData, ambiantCapabilitiesSupported),
 		"datadog-agent-trace-exp.service":      mustReadSystemdUnit("datadog-agent-trace.service", expData, ambiantCapabilitiesSupported),
 		"datadog-agent-process.service":        mustReadSystemdUnit("datadog-agent-process.service", stableData, ambiantCapabilitiesSupported),

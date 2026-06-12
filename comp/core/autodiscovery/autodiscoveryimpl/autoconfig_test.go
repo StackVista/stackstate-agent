@@ -418,6 +418,10 @@ func TestResolveTemplate(t *testing.T) {
 	})
 
 	t.Run("CEL Identifier on Kubernetes Service", func(t *testing.T) {
+		// [sts] CEL evaluation only works with the `cel` build tag; STS doesn't
+		// include `cel` in AGENT_TAGS so CELSelector.matches against template
+		// fixtures and countLoadedConfigs assertions diverge from upstream.
+		t.Skip("[sts] CELSelector requires the cel build tag; STS doesn't ship cel")
 		_, ac := getResolveTestConfig(t)
 
 		tpl := integration.Config{
@@ -447,6 +451,8 @@ func TestResolveTemplate(t *testing.T) {
 	})
 
 	t.Run("CEL Identifier on Kubernetes Endpoint", func(t *testing.T) {
+		// [sts] CEL evaluation requires the `cel` build tag; not enabled in STS.
+		t.Skip("[sts] CELSelector requires the cel build tag; STS doesn't ship cel")
 		_, ac := getResolveTestConfig(t)
 
 		tpl := integration.Config{
@@ -481,6 +487,8 @@ func TestResolveTemplate(t *testing.T) {
 	})
 
 	t.Run("CEL Identifier on Container", func(t *testing.T) {
+		// [sts] CEL evaluation requires the `cel` build tag; not enabled in STS.
+		t.Skip("[sts] CELSelector requires the cel build tag; STS doesn't ship cel")
 		mockConfig := configmock.New(t)
 		mockConfig.SetWithoutSource("logs_config.container_collect_all", true)
 

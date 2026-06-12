@@ -12,6 +12,7 @@ import (
 	"time"
 
 	yaml "go.yaml.in/yaml/v2"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -396,12 +397,12 @@ func (v *VersaCheck) Run() error {
 }
 
 // Configure the Versa check
-func (v *VersaCheck) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
+func (v *VersaCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, rawInstance integration.Data, rawInitConfig integration.Data, source string, provider string) error {
 
 	// Must be called before v.CommonConfigure
 	v.BuildID(integrationConfigDigest, rawInstance, rawInitConfig)
 
-	err := v.CommonConfigure(senderManager, rawInitConfig, rawInstance, source, provider)
+	err := v.CommonConfigure(senderManager, checkManager, rawInitConfig, rawInstance, source, provider)
 	if err != nil {
 		return err
 	}

@@ -32,7 +32,7 @@ func (pc CollectorRef[T]) bestCollector(runtime RuntimeMetadata, otherID string,
 	var zero T
 
 	if oth.Collector != zero && (pc.Collector == zero || oth.Priority < pc.Priority) {
-		log.Debugf("Using collector id: %s for type: %T and runtime: %s", otherID, pc, runtime.String())
+		log.Infof("Using collector id: %s for type: %T and runtime: %s", otherID, pc, runtime.String())
 		return oth
 	}
 

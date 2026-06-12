@@ -15,6 +15,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -119,7 +120,7 @@ func TestCPUCheckLinuxErrorInInstanceConfig(t *testing.T) {
 	cpuCheck := createCheck()
 	m := mocksender.NewMockSender(cpuCheck.ID())
 
-	err := cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, []byte(`min_collection_interval: "string_value"`), nil, "test", "provider")
+	err := cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(`min_collection_interval: "string_value"`), integration.Data{}, "test", "provider")
 
 	assert.NotNil(t, err)
 }
@@ -128,7 +129,7 @@ func TestCPUCheckLinuxErrorReportTotalPerCPUConfigNotBoolean(t *testing.T) {
 	cpuCheck := createCheck()
 	m := mocksender.NewMockSender(cpuCheck.ID())
 
-	err := cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, []byte(`report_total_percpu: "string_value"`), nil, "test", "provider")
+	err := cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(`report_total_percpu: "string_value"`), integration.Data{}, "test", "provider")
 
 	assert.NotNil(t, err)
 }
@@ -142,7 +143,7 @@ func TestCPUCheckLinuxErrorStoppedSender(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	m.GetSenderManager().(*aggregator.AgentDemultiplexer).Stop(false)
 	err := cpuCheck.Run()
 
@@ -158,7 +159,7 @@ func TestContextSwitchesError(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Nil(t, err)
@@ -171,7 +172,7 @@ func TestContextSwitchesOk(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Nil(t, err)
@@ -188,7 +189,7 @@ func TestNumCoresError(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Equal(t, cpuInfoError, err)
@@ -201,7 +202,7 @@ func TestNumCoresOk(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Equal(t, nil, err)
@@ -218,7 +219,7 @@ func TestSystemCpuMetricsError(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Equal(t, cpuTimesError, err)
@@ -241,7 +242,7 @@ func TestSystemCpuMetricsEmpty(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Equal(t, expectedError, err)
@@ -260,7 +261,7 @@ func TestSystemCpuMetricsNotReportedOnFirstCheck(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Equal(t, nil, err)
@@ -290,7 +291,7 @@ func TestSystemCpuMetricsReportedOnSecondCheck(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	cpuCheck.Run()
 	err := cpuCheck.Run()
 
@@ -317,7 +318,7 @@ func TestSystemCpuMetricsPerCpuError(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, []byte(`report_total_percpu: true`), nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(`report_total_percpu: true`), integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Equal(t, cpuTimesError, err)
@@ -346,7 +347,7 @@ func TestSystemCpuMetricsPerCpuDefault(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, integration.Data{}, integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Equal(t, nil, err)
@@ -373,7 +374,7 @@ func TestSystemCpuMetricsPerCpuFalse(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, []byte(`report_total_percpu: false`), nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(`report_total_percpu: false`), integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Equal(t, nil, err)
@@ -400,7 +401,7 @@ func TestSystemCpuMetricsPerCpuTrue(t *testing.T) {
 	m := mocksender.NewMockSender(cpuCheck.ID())
 	m.SetupAcceptAll()
 
-	cpuCheck.Configure(m.GetSenderManager(), integration.FakeConfigHash, []byte(`report_total_percpu: true`), nil, "test", "provider")
+	cpuCheck.Configure(m.GetSenderManager(), handler.NewMockCheckManager(), integration.FakeConfigHash, []byte(`report_total_percpu: true`), integration.Data{}, "test", "provider")
 	err := cpuCheck.Run()
 
 	assert.Equal(t, nil, err)

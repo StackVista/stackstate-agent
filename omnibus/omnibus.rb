@@ -43,10 +43,17 @@ if ENV["S3_OMNIBUS_CACHE_BUCKET"]
       puts "This may cause S3 caching authentication issues."
     end
   else
-    s3_instance_profile true
+    s3_instance_profile false #TODO: revert true
+    s3_access_key ENV["AWS_ACCESS_KEY_ID"]
+    s3_secret_key ENV["AWS_SECRET_ACCESS_KEY"]
+
   end
 end
 
 # This setting can be overriden per-project (which is the case for the agent builds)
 use_git_caching false
 
+if ENV["OMNIBUS_CACHE_DIR"]
+  # The cache_dir is just a download cache so will hardly make an impact on CI, because it has to be downloaded as a cache anyway
+  cache_dir ENV["OMNIBUS_CACHE_DIR"]
+end

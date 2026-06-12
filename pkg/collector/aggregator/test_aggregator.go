@@ -8,13 +8,25 @@
 package aggregator
 
 import (
+	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/batcher"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/test"
+	check2 "github.com/StackVista/stackstate-receiver-go-client/pkg/model/check"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/health"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/telemetry"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-receiver-go-client/pkg/transactional/transactionmanager"
+	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 
 	tagger "github.com/DataDog/datadog-agent/comp/core/tagger/def"
 	nooptagger "github.com/DataDog/datadog-agent/comp/core/tagger/impl-noop"
 	workloadfilter "github.com/DataDog/datadog-agent/comp/core/workloadfilter/def"
 	workloadfilterfxmock "github.com/DataDog/datadog-agent/comp/core/workloadfilter/fx-mock"
 	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
+	pkgaggregator "github.com/DataDog/datadog-agent/pkg/aggregator" // [sts] for NewNoOpSenderManager in inlined scopeInitCheckManager
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
 	checkid "github.com/DataDog/datadog-agent/pkg/collector/check/id"
@@ -214,14 +226,26 @@ func testSubmitServiceCheckEmptyHostame(t *testing.T) {
 }
 
 func testSubmitEvent(t *testing.T) {
-	sender := mocksender.NewMockSender(checkid.ID("testID"))
-	logReceiver := option.None[integrations.Component]()
-	tagger := nooptagger.NewComponent()
-	filterStore := workloadfilterfxmock.SetupMockFilter(t)
-	release := ScopeInitCheckContext(sender.GetSenderManager(), logReceiver, tagger, filterStore)
+	_, mockTransactionalBatcher, _, manager := handler.SetupMockTransactionalComponents()
+
+	// [sts] Inlined scopeInitCheckManager (originally pkg/collector/python/test_util.go:99).
+	// Cleans any prior context, then locks a fresh CheckContext bound to `manager`. Returns
+	// releaseCheckContext as the cleanup func. Adapted to aggregator's 5-arg withLockedCheckContext
+	// (filterStore arg added in 7.78.2) and aggregator-package-private vars.
+	release := func() func() {
+		checkContextMutex.Lock()
+		if checkCtx != nil {
+			checkCtx.checkManager.Stop()
+			checkCtx = nil
+		}
+		checkContextMutex.Unlock()
+		withLockedCheckContext(pkgaggregator.NewNoOpSenderManager(), manager, option.None[integrations.Component](), nooptagger.NewComponent(), workloadfilterfxmock.SetupMockFilter(t))
+		return releaseCheckContext
+	}()
 	defer release()
 
-	sender.SetupAcceptAll()
+	testCheck := &test.STSTestCheck{Name: "check-id-event-test"}
+	manager.RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	ev := C.event_t{}
 	ev.title = C.CString("ev_title")
@@ -236,7 +260,15 @@ func testSubmitEvent(t *testing.T) {
 	tags := []*C.char{C.CString("tag1"), C.CString("tag2"), nil}
 	ev.tags = &tags[0]
 
-	SubmitEvent(C.CString("testID"), &ev)
+	checkId := C.CString(testCheck.String())
+
+	// [sts] Inlined StartTransaction (originally pkg/collector/python/transactional_api.go:31).
+	// pkg/collector/python imports pkg/collector/aggregator, so we can't import it back without
+	// a cycle. Direct CheckContext access works since we're now in the aggregator package.
+	if cc, err := GetCheckContext(); err == nil {
+		cc.checkManager.GetCheckHandler(checkid.ID(C.GoString(checkId))).StartTransaction()
+	}
+	SubmitEvent(checkId, &ev)
 
 	expectedEvent := event.Event{
 		Title:          "ev_title",
@@ -249,7 +281,20 @@ func testSubmitEvent(t *testing.T) {
 		AggregationKey: "aggregation_key",
 		SourceTypeName: "source_type",
 	}
-	sender.AssertEvent(t, expectedEvent, 0)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
+	currentCheckState, found := mockTransactionalBatcher.GetCheckState(check2.CheckID(testCheck.ID()))
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
+
+	expectedCheckState := transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: currentCheckState.Transaction, // not asserting this specifically, it just needs to be present
+		Health:      map[string]health.Health{},
+		Events:      &telemetry.IntakeEvents{Events: []telemetry.Event{handler.ConvertToStsEvent(expectedEvent)}},
+	}
+	assert.Equal(t, expectedCheckState, currentCheckState)
+
+	manager.UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testSubmitHistogramBucket(t *testing.T) {
@@ -297,10 +342,26 @@ func testSubmitEventPlatformEvent(t *testing.T) {
 	sender.AssertEventPlatformEvent(t, []byte("raw-event"), "dbm-sample")
 }
 
-// ScopeInitCheckContext releases and initializes a check context
+// ScopeInitCheckContext initializes a check context and returns a release
+// function the caller must defer.
+// [sts] Function added during the 7.71.2 -> 7.78.2 merge to inline the test
+// helper that DD removed from python/test_loader.go. Defensive cleanup of any
+// previous test's leaked context lives inside withLockedCheckContext now (so
+// the testMutex is acquired first and only released by the returned function).
 func ScopeInitCheckContext(senderManager sender.SenderManager, logReceiver option.Option[integrations.Component], taggerComp tagger.Component, filterStore workloadfilter.Component) func() {
-	// Ensure the check context is released before initializing a new one
-	releaseCheckContext()
-	InitializeCheckContext(senderManager, logReceiver, taggerComp, filterStore)
+	checkManager := handler.NewCheckManager(batcher.NewMockBatcher(), transactionbatcher.NewMockTransactionalBatcher(), transactionmanager.NewMockTransactionManager())
+	withLockedCheckContext(senderManager, checkManager, logReceiver, taggerComp, filterStore)
+	return releaseCheckContext
+}
+
+// ScopeInitCheckContextWithCheckManager is the same as ScopeInitCheckContext but
+// lets the caller supply a check manager directly (rather than using a default mock
+// over the standard mock batchers). Returns a release function the caller must defer.
+// [sts] Added for STS Python API tests (pkg/collector/python/test_*_api.go) that
+// need to inject custom CheckManager mocks per test. Lets them migrate off the
+// legacy pkg/collector/python/check_context.go scaffolding and route through the
+// canonical aggregator.CheckContext (STAC-24699).
+func ScopeInitCheckContextWithCheckManager(senderManager sender.SenderManager, checkManager handler.CheckManager, logReceiver option.Option[integrations.Component], taggerComp tagger.Component, filterStore workloadfilter.Component) func() {
+	withLockedCheckContext(senderManager, checkManager, logReceiver, taggerComp, filterStore)
 	return releaseCheckContext
 }

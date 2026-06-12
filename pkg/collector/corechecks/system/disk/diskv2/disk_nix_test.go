@@ -21,6 +21,7 @@ import (
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/disk/diskv2"
 	"github.com/DataDog/datadog-agent/pkg/metrics/servicecheck"
 )
@@ -480,7 +481,7 @@ excluded_filesystems:
   - tmpfs(.*
 `))
 
-	err := diskCheck.Configure(senderManager, integration.FakeConfigHash, initConfig, nil, "test", "")
+	err := diskCheck.Configure(senderManager, handler.NewMockCheckManager(), integration.FakeConfigHash, initConfig, nil, "test", "")
 
 	assert.NotNil(t, err)
 }

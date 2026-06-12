@@ -10,12 +10,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"regexp"
 	"runtime"
 	"strings"
 	"sync/atomic"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 	"github.com/benbjohnson/clock"
 	"github.com/shirou/gopsutil/v4/common"
 	gopsutil_disk "github.com/shirou/gopsutil/v4/disk"
@@ -185,7 +187,7 @@ func (c *Check) Run() error {
 }
 
 // Configure parses the check configuration and init the check
-func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
 	if flavor.GetFlavor() == flavor.DefaultAgent && !pkgconfigsetup.Datadog().GetBool("disk_check.use_core_loader") && !pkgconfigsetup.Datadog().GetBool("use_diskv2_check") {
 		// if use_diskv2_check, then do not skip the core check
 		return fmt.Errorf("%w: disk core check is disabled", check.ErrSkipCheckInstance)
@@ -196,7 +198,7 @@ func (c *Check) Configure(senderManager sender.SenderManager, integrationConfigD
 	// one instance from leaking into other instances' metrics.
 	c.BuildID(integrationConfigDigest, data, initConfig)
 
-	err := c.CommonConfigure(senderManager, initConfig, data, source, provider)
+	err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source, provider)
 	if err != nil {
 		return err
 	}
@@ -598,6 +600,17 @@ func (c *Check) getDiskUsageWithTimeout(mountpoint string) (*gopsutil_disk.Usage
 func (c *Check) getPartitionUsage(partition gopsutil_disk.PartitionStat) *gopsutil_disk.UsageStat {
 	usage, err := c.getDiskUsageWithTimeout(partition.Mountpoint)
 	if err != nil {
+		// [sts] Permission-denied is the expected outcome on Kubernetes for per-pod CSI
+		// mounts and volume-subpath bind mounts that the kubelet exposed in the node-agent's
+		// mount table but locked down to the owning pod. The check correctly skips them
+		// (returns nil), but the WARN floods cluster-agent logs at dozens-per-collection
+		// frequency. Real problems (NFS hangs, FS corruption, stuck mounts) surface as
+		// other errno values and continue to WARN. Keeping the upstream message verbatim
+		// in the WARN branch for grep-compatibility with existing playbooks.
+		if errors.Is(err, fs.ErrPermission) {
+			log.Debugf("Skipping permission-denied mountpoint %s: %s", partition.Mountpoint, err)
+			return nil
+		}
 		log.Warnf("Unable to get disk metrics for %s: %s. You can exclude this mountpoint in the settings if it is invalid.", partition.Mountpoint, err)
 		return nil
 	}

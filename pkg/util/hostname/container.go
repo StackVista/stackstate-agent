@@ -10,6 +10,7 @@ package hostname
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/DataDog/datadog-agent/pkg/config/env"
 	"github.com/DataDog/datadog-agent/pkg/util/docker"
@@ -49,12 +50,13 @@ func fromContainer(ctx context.Context, _ string) (string, error) {
 	if !configIsContainerized() {
 		return "", errors.New("the agent is not containerized")
 	}
-
+	what := "I tried the following methods: "
 	// Cluster-agent logic: Kube apiserver
 	if configIsFeaturePresent(env.Kubernetes) {
 		if hostname := callContainerProvider(ctx, kubernetesGetKubeAPIServerHostname, "kube_apiserver"); hostname != "" {
 			return hostname, nil
 		}
+		what = fmt.Sprintf("%s | Kube apiserver |", what)
 	}
 
 	// Node-agent logic: docker or kubelet
@@ -62,13 +64,15 @@ func fromContainer(ctx context.Context, _ string) (string, error) {
 		if hostname := callContainerProvider(ctx, dockerGetHostname, "docker"); hostname != "" {
 			return hostname, nil
 		}
+		what = fmt.Sprintf("%s | Docker |", what)
 	}
 
 	if configIsFeaturePresent(env.Kubernetes) {
 		if hostname := callContainerProvider(ctx, kubeletGetHostname, "kubelet"); hostname != "" {
 			return hostname, nil
 		}
+		what = fmt.Sprintf("%s | Kubelet |", what)
 	}
 
-	return "", errors.New("no container environment detected or none of them detected a valid hostname")
+	return "", fmt.Errorf("no container environment detected or none of them detected a valid hostname. %v", what)
 }

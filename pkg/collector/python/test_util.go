@@ -11,6 +11,14 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	collectoraggregator "github.com/DataDog/datadog-agent/pkg/collector/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
+	nooptagger "github.com/DataDog/datadog-agent/comp/core/tagger/impl-noop"
+	workloadfilterfxmock "github.com/DataDog/datadog-agent/comp/core/workloadfilter/fx-mock"
+	integrations "github.com/DataDog/datadog-agent/comp/logs/integrations/def"
+	"github.com/DataDog/datadog-agent/pkg/util/option"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -88,4 +96,18 @@ func mockRtloader(t *testing.T) {
 		pythonOnce = sync.Once{}
 		pyDestroyLock.Unlock()
 	})
+}
+
+// [sts] Routes through collectoraggregator.ScopeInitCheckContextWithCheckManager
+// (the canonical aggregator-package CheckContext) instead of the deprecated
+// pkg/collector/python.checkCtx global that DD removed. STAC-24699.
+func scopeInitCheckManager(t *testing.T, manager handler.CheckManager) func() {
+	filterStore := workloadfilterfxmock.SetupMockFilter(t)
+	return collectoraggregator.ScopeInitCheckContextWithCheckManager(
+		aggregator.NewNoOpSenderManager(),
+		manager,
+		option.None[integrations.Component](),
+		nooptagger.NewComponent(),
+		filterStore,
+	)
 }

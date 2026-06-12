@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -69,6 +70,16 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	// If true, then new version of disk v2 check will be used.
 	// Otherwise, the python version of disk check will be used.
 	config.BindEnvAndSetDefault("use_diskv2_check", true)
+	// [sts] STAC-24908: DD 7.78.2 ships BOTH `use_diskv2_check=true` AND
+	// `disk_check.use_core_loader=true` by default. The static gate in
+	// diskv2.Configure suggests `use_diskv2_check=true` alone should be
+	// sufficient, but empirically v2 does NOT load on 7.78.2 with
+	// `use_core_loader=false` (beest 2026-06-02 verified). Match DD's default
+	// by enabling both. The registration in pkg/commonchecks/corechecks.go is
+	// `if/else`, so only one factory (diskv2, because use_diskv2_check=true
+	// wins) ends up registered for the "disk" check name — no duplicate
+	// emissions despite both knobs being true. STS keeps these explicit so
+	// future merges don't silently revert them.
 	config.BindEnvAndSetDefault("disk_check.use_core_loader", true)
 
 	// the darwin and bsd network check has not been ported from python
@@ -571,8 +582,11 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("cluster_checks.unscheduled_check_threshold", 60) // value in seconds
 	config.BindEnvAndSetDefault("cluster_checks.cluster_tag_name", "cluster_name")
 	config.BindEnvAndSetDefault("cluster_checks.extra_tags", []string{})
-	config.BindEnvAndSetDefault("cluster_checks.advanced_dispatching_enabled", true)
-	config.BindEnvAndSetDefault("cluster_checks.rebalance_with_utilization", true)
+	// [sts] Default to false: STS cluster-checks use simple dispatching.
+	// Advanced dispatching requires runner IP propagation that the STS helm chart doesn't set up,
+	// producing the WARN "cannot get runner IP from http headers" on every cluster check.
+	config.BindEnvAndSetDefault("cluster_checks.advanced_dispatching_enabled", false)
+	config.BindEnvAndSetDefault("cluster_checks.rebalance_with_utilization", false)
 	config.BindEnvAndSetDefault("cluster_checks.rebalance_min_percentage_improvement", 10) // Experimental. Subject to change. Rebalance only if the distribution found improves the current one by this.
 	config.BindEnvAndSetDefault("cluster_checks.clc_runners_port", 5005)
 	config.BindEnvAndSetDefault("cluster_checks.exclude_checks", []string{})
@@ -712,7 +726,11 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	config.BindEnv("provider_kind") //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
 
 	// Orchestrator Explorer DCA and core agent
-	config.BindEnvAndSetDefault("orchestrator_explorer.enabled", true)
+	// [sts] Default to false: STS receiver does not expose an orchestrator intake
+	// (the cluster-agent's orchestrator forwarder targets the hardcoded https://orchestrator.<site>
+	// which STS doesn't operate, producing DNS errors). Also avoids the 8 RBAC k8s watch
+	// resources DD 7.78 added that the helm-chart ClusterRole doesn't grant. Re-enable per env if needed.
+	config.BindEnvAndSetDefault("orchestrator_explorer.enabled", false)
 	// enabling/disabling the environment variables & command scrubbing from the container specs
 	// this option will potentially impact the CPU usage of the agent
 	config.BindEnvAndSetDefault("orchestrator_explorer.container_scrubbing.enabled", true)
@@ -732,15 +750,21 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("orchestrator_explorer.terminated_pods.enabled", true)
 	config.BindEnvAndSetDefault("orchestrator_explorer.terminated_pods_improved.enabled", false)
 	config.BindEnvAndSetDefault("orchestrator_explorer.custom_resources.ootb.enabled", true)
-	config.BindEnvAndSetDefault("orchestrator_explorer.kubelet_config_check.enabled", true, "DD_ORCHESTRATOR_EXPLORER_KUBELET_CONFIG_CHECK_ENABLED")
+	// [sts] Default to false: pairs with orchestrator_explorer.enabled=false above. With orchestration
+	// disabled, the orchestrator_kubelet_config check's core loader refuses to load it and the Python
+	// fallback can't find the module — producing a one-shot startup ERROR per node-agent. DD release
+	// note `orch-kubelet-config-respect-flag-24e26c336a1c8ef0.yaml` documents this flag as the gate.
+	config.BindEnvAndSetDefault("orchestrator_explorer.kubelet_config_check.enabled", false, "DD_ORCHESTRATOR_EXPLORER_KUBELET_CONFIG_CHECK_ENABLED")
 	config.BindEnvAndSetDefault("auto_team_tag_collection", true)
 
 	// Container lifecycle configuration
-	config.BindEnvAndSetDefault("container_lifecycle.enabled", true)
+	// [sts] Default to false: STS receiver doesn't expose a container-lifecycle intake.
+	config.BindEnvAndSetDefault("container_lifecycle.enabled", false)
 	bindEnvAndSetLogsConfigKeys(config, "container_lifecycle.")
 
 	// Container image configuration
-	config.BindEnvAndSetDefault("container_image.enabled", true)
+	// [sts] Default to false: STS receiver doesn't expose a container-image (SBOM) intake.
+	config.BindEnvAndSetDefault("container_image.enabled", false)
 	bindEnvAndSetLogsConfigKeys(config, "container_image.")
 
 	// Remote process collector
@@ -821,7 +845,9 @@ func initCoreAgentFull(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("otelcollector.installation_method", "")
 
 	// inventories
-	config.BindEnvAndSetDefault("inventories_enabled", true)
+	// [sts] Default to false: STS receiver doesn't support the /api/v1/metadata endpoint,
+	// so inventory payloads would produce 404 errors. Can be re-enabled via config/env if needed.
+	config.BindEnvAndSetDefault("inventories_enabled", false)
 	config.BindEnvAndSetDefault("inventories_configuration_enabled", true)             // controls the agent configurations
 	config.BindEnvAndSetDefault("inventories_checks_configuration_enabled", true)      // controls the checks configurations
 	config.BindEnvAndSetDefault("inventories_collect_cloud_provider_account_id", true) // collect collection of `cloud_provider_account_id`
@@ -1060,7 +1086,14 @@ func agent(config pkgconfigmodel.Setup) {
 	config.SetDefault("proxy.no_proxy", []string{})
 	config.BindEnvAndSetDefault("common_root", "", "DD_COMMON_ROOT") //nolint:forbidigo
 
-	config.BindEnvAndSetDefault("skip_ssl_validation", false)
+	// sts begin
+	stsSkipSSLValidationEnv := os.Getenv("STS_SKIP_SSL_VALIDATION")
+	stsSkipSSLValidation, err := strconv.ParseBool(stsSkipSSLValidationEnv)
+	if err != nil && len(stsSkipSSLValidationEnv) > 0 {
+		_ = log.Warnf("Could not parse `STS_SKIP_SSL_VALIDATION` environment variable to boolean: %v", err)
+	}
+	config.BindEnvAndSetDefault("skip_ssl_validation", stsSkipSSLValidation)
+	// sts end
 	config.BindEnvAndSetDefault("sslkeylogfile", "")
 	config.BindEnv("tls_handshake_timeout")    //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
 	config.BindEnv("http_dial_fallback_delay") //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
@@ -1269,7 +1302,10 @@ func fips(config pkgconfigmodel.Setup) {
 
 func remoteconfig(config pkgconfigmodel.Setup) {
 	// Remote config
-	config.BindEnvAndSetDefault("remote_configuration.enabled", true)
+	// [sts] Default to false: STS does not operate a remote-config backend
+	// (the cluster-agent's "permission denied" mkdir on /opt/stackstate-agent/run/remote-config.db
+	// is the visible symptom when this is on). Re-enable per env if needed.
+	config.BindEnvAndSetDefault("remote_configuration.enabled", false)
 	config.BindEnvAndSetDefault("remote_configuration.key", "")
 	config.BindEnv("remote_configuration.api_key")   //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
 	config.BindEnv("remote_configuration.rc_dd_url") //nolint:forbidigo // TODO: replace by 'SetDefaultAndBindEnv'
@@ -1403,7 +1439,9 @@ func telemetry(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("telemetry.dogstatsd.listeners_channel_latency_buckets", []string{})
 
 	// Agent Telemetry
-	config.BindEnvAndSetDefault("agent_telemetry.enabled", true)
+	// [sts] Default to false: STS receiver doesn't support the instrumentation-telemetry-intake endpoint,
+	// so agent telemetry payloads would produce DNS/connection errors. Can be re-enabled via config/env if needed.
+	config.BindEnvAndSetDefault("agent_telemetry.enabled", false)
 	// default compression first setup inside the next bindEnvAndSetLogsConfigKeys() function ...
 	bindEnvAndSetLogsConfigKeys(config, "agent_telemetry.")
 	// ... and overridden by the following two lines - do not switch these 3 lines order
@@ -1430,13 +1468,14 @@ func serializer(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("serializer_experimental_use_v3_api.sketches.validate", false)
 	config.BindEnvAndSetDefault("serializer_experimental_use_v3_api.compression_level", 0)
 
-	config.BindEnvAndSetDefault("use_v2_api.series", true)
+	config.BindEnvAndSetDefault("use_v2_api.series", false) // [sts] STS receiver only supports v1 series API
 	// Serializer: allow user to blacklist any kind of payload to be sent
 	config.BindEnvAndSetDefault("enable_payloads.events", true)
 	config.BindEnvAndSetDefault("enable_payloads.series", true)
-	config.BindEnvAndSetDefault("enable_payloads.service_checks", true)
-	config.BindEnvAndSetDefault("enable_payloads.sketches", true)
+	config.BindEnvAndSetDefault("enable_payloads.service_checks", false) // [sts] disabled — STS receiver doesn't support this endpoint
+	config.BindEnvAndSetDefault("enable_payloads.sketches", false)       // [sts] disabled — STS receiver doesn't support this endpoint
 	config.BindEnvAndSetDefault("enable_payloads.json_to_v1_intake", true)
+	config.BindEnvAndSetDefault("enable_payloads.check_runs", false) // [sts] disabled — STS receiver doesn't support /api/v1/check_run
 }
 
 func aggregator(config pkgconfigmodel.Setup) {
@@ -1490,7 +1529,7 @@ func forwarder(config pkgconfigmodel.Setup) {
 	config.BindEnvAndSetDefault("forwarder_apikey_validation_interval", DefaultAPIKeyValidationInterval) // in minutes
 	config.BindEnvAndSetDefault("forwarder_num_workers", 1)
 	config.BindEnvAndSetDefault("forwarder_stop_timeout", 2)
-	config.BindEnvAndSetDefault("forwarder_max_concurrent_requests", 10)
+	config.BindEnvAndSetDefault("forwarder_max_concurrent_requests", 1) // [sts] must stay at 1 — concurrent requests cause topology snapshot reordering at the receiver
 	// Forwarder retry settings
 	config.BindEnvAndSetDefault("forwarder_backoff_factor", 2)
 	config.BindEnvAndSetDefault("forwarder_backoff_base", 2)
@@ -1883,7 +1922,10 @@ func cri(config pkgconfigmodel.Setup) {
 
 func kubernetes(config pkgconfigmodel.Setup) {
 	// Kubernetes
-	config.BindEnvAndSetDefault("kubernetes_kubelet_host", "")
+	// [sts] Default sourced from STS_KUBERNETES_KUBELET_HOST env var (STS-specific override
+	// helmchart sets to the node's internal IP via downward API). DD's default is "" which then
+	// requires kubelet auto-discovery — slower + sometimes wrong.
+	config.BindEnvAndSetDefault("kubernetes_kubelet_host", os.Getenv("STS_KUBERNETES_KUBELET_HOST"))
 	config.BindEnvAndSetDefault("kubernetes_kubelet_nodename", "")
 	config.BindEnvAndSetDefault("eks_fargate", false)
 	config.BindEnvAndSetDefault("kubelet_use_api_server", false)
@@ -1904,7 +1946,9 @@ func kubernetes(config pkgconfigmodel.Setup) {
 	// Cache TTL for pod lists in the kubelet client. Set to 0 because it's only
 	// used by workloadmeta that already defines its own pull frequency and has
 	// its own storage, so no need for an extra cache.
-	config.BindEnvAndSetDefault("kubelet_cache_pods_duration", 0)
+	// [sts] Default to 5: STS uses active 5s caching of /pods. DD's new 0 means "no cache"
+	// (relies on workloadmeta's own polling), which STS doesn't use the same way.
+	config.BindEnvAndSetDefault("kubelet_cache_pods_duration", 5)
 	config.BindEnvAndSetDefault("kubernetes_collect_metadata_tags", true)
 	config.BindEnvAndSetDefault("kubernetes_use_endpoint_slices", false)
 	config.BindEnvAndSetDefault("kubernetes_metadata_tag_update_freq", 60) // Polling frequency of the Agent to the DCA in seconds (gets the local cache if the DCA is disabled)

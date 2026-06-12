@@ -9,6 +9,7 @@ package load
 
 import (
 	"fmt"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/load"
@@ -62,8 +63,8 @@ func (c *LoadCheck) Run() error {
 }
 
 // Configure the CPU check
-func (c *LoadCheck) Configure(senderManager sender.SenderManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
-	err := c.CommonConfigure(senderManager, initConfig, data, source, provider)
+func (c *LoadCheck) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
+	err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source, provider)
 	if err != nil {
 		return err
 	}

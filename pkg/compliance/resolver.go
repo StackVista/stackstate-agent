@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io" // [sts] used for io.Closer assertion in Close() against widened dockerCl any
 	"os"
 	"path/filepath"
 	"reflect"
@@ -20,9 +21,7 @@ import (
 	"time"
 
 	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/network"
+	// [sts] container/image/network type imports moved to resolver_docker.go along with resolveDocker
 
 	"github.com/DataDog/datadog-go/v5/statsd"
 
@@ -32,7 +31,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/version"
 
-	docker "github.com/docker/docker/client"
+	// [sts] docker client import no longer needed in resolver.go after DockerProvider widened to (any, error)
 
 	"github.com/shirou/gopsutil/v4/process"
 
@@ -45,7 +44,10 @@ import (
 const inputsResolveTimeout = 5 * time.Second
 
 // DockerProvider is a function returning a Docker client.
-type DockerProvider func(context.Context) (docker.APIClient, error)
+// [sts] Widened to (any, error) to match newDockerClient's signature (which can't
+// import docker SDK in the !docker build) and to let test helpers in pkg/compliance/tests
+// supply mock clients. Use sites type-assert to docker.APIClient (or io.Closer) as needed.
+type DockerProvider func(context.Context) (any, error)
 
 // LinuxAuditProvider is a function returning a Linux Audit client.
 type LinuxAuditProvider func(context.Context) (LinuxAuditClient, error)
@@ -58,7 +60,8 @@ type LinuxAuditClient interface {
 }
 
 // DefaultDockerProvider returns the default Docker client.
-func DefaultDockerProvider(ctx context.Context) (docker.APIClient, error) {
+// [sts] Returns (any, error) to match the widened DockerProvider type.
+func DefaultDockerProvider(ctx context.Context) (any, error) {
 	return newDockerClient(ctx)
 }
 
@@ -111,7 +114,7 @@ type defaultResolver struct {
 	pkgsCache  map[string]*packageInfo
 
 	k8sapiserverResolver *k8sapiserverResolver
-	dockerCl             docker.APIClient
+	dockerCl             any // [sts] widened to match DockerProvider; assert at use site (resolver_docker.go uses docker.APIClient; Close uses io.Closer)
 	linuxAuditCl         LinuxAuditClient
 }
 
@@ -143,10 +146,11 @@ func NewResolver(ctx context.Context, opts ResolverOptions) Resolver {
 }
 
 func (r *defaultResolver) Close() {
-	if r.dockerCl != nil {
-		r.dockerCl.Close()
-		r.dockerCl = nil
+	// [sts] dockerCl is `any`; assert to io.Closer to call Close
+	if cl, ok := r.dockerCl.(io.Closer); ok {
+		cl.Close()
 	}
+	r.dockerCl = nil
 	if r.linuxAuditCl != nil {
 		r.linuxAuditCl.Close()
 		r.linuxAuditCl = nil
@@ -554,89 +558,9 @@ func parseImageRepo(name string) string {
 	return ""
 }
 
-func (r *defaultResolver) resolveDocker(ctx context.Context, spec InputSpecDocker) (interface{}, error) {
-	cl := r.dockerCl
-	if cl == nil {
-		return nil, ErrIncompatibleEnvironment
-	}
-
-	var resolved []interface{}
-	switch spec.Kind {
-	case "image":
-		list, err := cl.ImageList(ctx, image.ListOptions{All: true})
-		if err != nil {
-			return nil, err
-		}
-		for _, im := range list {
-			image, err := cl.ImageInspect(ctx, im.ID)
-			if err != nil {
-				return nil, err
-			}
-			resolved = append(resolved, map[string]interface{}{
-				"id":      image.ID,
-				"tags":    image.RepoTags,
-				"inspect": image,
-			})
-		}
-	case "container":
-		list, err := cl.ContainerList(ctx, container.ListOptions{All: true})
-		if err != nil {
-			return nil, err
-		}
-		for _, cn := range list {
-			container, _, err := cl.ContainerInspectWithRaw(ctx, cn.ID, false)
-			if err != nil {
-				return nil, err
-			}
-			imageRepo := parseImageRepo(container.Config.Image)
-			resolved = append(resolved, map[string]interface{}{
-				"id":         container.ID,
-				"name":       container.Name,
-				"image":      container.Image,
-				"image_repo": imageRepo,
-				"inspect":    container,
-			})
-		}
-	case "network":
-		networks, err := cl.NetworkList(ctx, network.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		for _, nw := range networks {
-			resolved = append(resolved, map[string]interface{}{
-				"id":      nw.ID,
-				"name":    nw.Name,
-				"inspect": nw,
-			})
-		}
-	case "info":
-		info, err := cl.Info(ctx)
-		if err != nil {
-			return nil, err
-		}
-		resolved = append(resolved, map[string]interface{}{
-			"inspect": info,
-		})
-	case "version":
-		version, err := cl.ServerVersion(ctx)
-		if err != nil {
-			return nil, err
-		}
-		resolved = append(resolved, map[string]interface{}{
-			"version":       version.Version,
-			"apiVersion":    version.APIVersion,
-			"platform":      version.Platform.Name,
-			"experimental":  version.Experimental,
-			"os":            version.Os,
-			"arch":          version.Arch,
-			"kernelVersion": version.KernelVersion,
-		})
-	default:
-		return nil, fmt.Errorf("unsupported docker object kind '%q'", spec.Kind)
-	}
-
-	return resolved, nil
-}
+// [sts] resolveDocker moved to resolver_docker.go (gated on `//go:build docker`)
+// to pair with resolver_nodocker.go's stub. DD inlined it here without a build
+// tag, causing a duplicate-method compile error in !docker builds.
 
 const (
 	apkDb     = "/lib/apk/db/installed"

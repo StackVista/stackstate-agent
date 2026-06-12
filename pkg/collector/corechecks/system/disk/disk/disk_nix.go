@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
+
 	"github.com/shirou/gopsutil/v4/disk"
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
@@ -70,7 +72,7 @@ func (c *Check) collectPartitionMetrics(sender sender.Sender) error {
 		// Get disk metrics here to be able to exclude on total usage
 		usage, err := diskUsage(partition.Mountpoint)
 		if err != nil {
-			log.Warnf("Unable to get disk metrics of %s mount point: %s", partition.Mountpoint, err)
+			log.Debugf("Unable to get disk metrics of %s mount point: %s", partition.Mountpoint, err)
 			continue
 		}
 
@@ -146,14 +148,15 @@ func (c *Check) sendDiskMetrics(sender sender.Sender, ioCounter disk.IOCountersS
 }
 
 // Configure the disk check
-func (c *Check) Configure(senderManager sender.SenderManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
+func (c *Check) Configure(senderManager sender.SenderManager, checkManager handler.CheckManager, _ uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
 	if flavor.GetFlavor() == flavor.DefaultAgent && !pkgconfigsetup.Datadog().GetBool("disk_check.use_core_loader") {
 		return fmt.Errorf("%w: disk core check is disabled", check.ErrSkipCheckInstance)
 	}
 
-	err := c.CommonConfigure(senderManager, initConfig, data, source, provider)
+	err := c.CommonConfigure(senderManager, checkManager, initConfig, data, source, provider)
 	if err != nil {
 		return err
 	}
+
 	return c.instanceConfigure(data)
 }

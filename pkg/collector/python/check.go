@@ -19,6 +19,7 @@ import (
 	"unsafe"
 
 	yaml "go.yaml.in/yaml/v2"
+	"github.com/DataDog/datadog-agent/pkg/collector/check/handler"
 
 	"github.com/DataDog/datadog-agent/comp/core/autodiscovery/integration"
 	diagnose "github.com/DataDog/datadog-agent/comp/core/diagnose/def"
@@ -56,6 +57,7 @@ const (
 //nolint:revive
 type PythonCheck struct {
 	senderManager  sender.SenderManager
+	checkManager   handler.CheckManager
 	id             checkid.ID
 	version        string
 	instance       *C.rtloader_pyobject_t
@@ -73,7 +75,7 @@ type PythonCheck struct {
 }
 
 // NewPythonCheck conveniently creates a PythonCheck instance
-func NewPythonCheck(senderManager sender.SenderManager, name string, class *C.rtloader_pyobject_t, haSupported bool) (*PythonCheck, error) {
+func NewPythonCheck(senderManager sender.SenderManager, checkManager handler.CheckManager, name string, class *C.rtloader_pyobject_t, haSupported bool) (*PythonCheck, error) {
 	glock, err := newStickyLock()
 	if err != nil {
 		return nil, err
@@ -84,6 +86,7 @@ func NewPythonCheck(senderManager sender.SenderManager, name string, class *C.rt
 
 	pyCheck := &PythonCheck{
 		senderManager: senderManager,
+		checkManager:  checkManager,
 		ModuleName:    name,
 		class:         class,
 		interval:      defaults.DefaultCheckInterval,
@@ -118,6 +121,8 @@ func (c *PythonCheck) runCheckImpl(commitMetrics bool) error {
 		return fmt.Errorf("An error occurred while running python check %s", c.ModuleName)
 	}
 	defer C.rtloader_free(rtloader, unsafe.Pointer(cResult))
+
+	c.checkManager.GetCheckHandler(c.ID()).SubmitComplete() // [sts]
 
 	if commitMetrics {
 		s, err := c.senderManager.GetSender(c.ID())
@@ -163,6 +168,8 @@ func (c *PythonCheck) Stop() {}
 // Cancel signals to a python check that he can free all internal resources and
 // deregisters the sender
 func (c *PythonCheck) Cancel() {
+	// STS: We do not support cancelling in our checks_base (not needed), but we still need to
+	// set the cancelled flag for test compatibility and to prevent running cancelled checks.
 	gstate, err := newStickyLock()
 	if err != nil {
 		log.Warnf("failed to cancel check %s: %s", c.id, err)
@@ -170,10 +177,8 @@ func (c *PythonCheck) Cancel() {
 	}
 	defer gstate.unlock()
 
-	C.cancel_check(rtloader, c.instance)
-	if err := getRtLoaderError(); err != nil {
-		log.Warnf("failed to cancel check %s: %s", c.id, err)
-	}
+	// Note: We don't call C.cancel_check() as checks_base doesn't support it, but we still
+	// mark the check as cancelled to prevent further runs.
 	c.cancelled = true
 }
 
@@ -254,8 +259,23 @@ func (c *PythonCheck) getPythonWarnings() []error {
 	return warnings
 }
 
+// [sts] Make sure collection_interval is always set
+func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data) (integration.Data, error) {
+	// make sure collection_interval is set within the instance data
+	rawInstance := make(integration.RawMap)
+
+	err := yaml.Unmarshal(data, &rawInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	rawInstance[string("collection_interval")] = int(c.interval.Seconds())
+
+	return yaml.Marshal(rawInstance)
+}
+
 // Configure the Python check from YAML data
-func (c *PythonCheck) Configure(_senderManager sender.SenderManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
+func (c *PythonCheck) Configure(_senderManager sender.SenderManager, checkManager handler.CheckManager, integrationConfigDigest uint64, data integration.Data, initConfig integration.Data, source string, provider string) error {
 	// Generate check ID
 	c.id = checkid.BuildID(c.String(), integrationConfigDigest, data, initConfig)
 
@@ -295,8 +315,8 @@ func (c *PythonCheck) Configure(_senderManager sender.SenderManager, integration
 	if runOnce {
 		// Set interval to 0 for immediate one-shot execution
 		c.interval = 0
-	} else if commonOptions.MinCollectionInterval > 0 {
-		c.interval = time.Duration(commonOptions.MinCollectionInterval) * time.Second
+	} else if commonOptions.GetCollectionInterval() > 0 {
+		c.interval = time.Duration(commonOptions.GetCollectionInterval()) * time.Second
 	}
 
 	// Disable default hostname if specified
@@ -319,8 +339,14 @@ func (c *PythonCheck) Configure(_senderManager sender.SenderManager, integration
 		}
 	}
 
+	// [sts] Make sure collection_interval is always set
+	updatedInstanceData, err := c.setCollectionIntervalToInstanceData(data)
+	if err != nil {
+		return err
+	}
+
 	cInitConfig := TrackedCString(string(initConfig))
-	cInstance := TrackedCString(string(data))
+	cInstance := TrackedCString(string(updatedInstanceData))
 	cCheckID := TrackedCString(string(c.id))
 	cCheckName := TrackedCString(c.ModuleName)
 	cProvider := TrackedCString(provider)
@@ -339,8 +365,8 @@ func (c *PythonCheck) Configure(_senderManager sender.SenderManager, integration
 			return fmt.Errorf("%w: %w", checkbase.ErrSkipCheckInstance, rtLoaderError)
 		}
 
-		log.Warnf("could not get a '%s' check instance with the new api: %s", c.ModuleName, rtLoaderError)
-		log.Warn("trying to instantiate the check with the old api, passing agentConfig to the constructor")
+		log.Infof("could not get a '%s' check instance with the new api: %s", c.ModuleName, rtLoaderError)
+		log.Info("trying to instantiate the check with the old api, passing agentConfig to the constructor")
 
 		allSettings := pkgconfigsetup.Datadog().AllSettings()
 		agentConfig, err := yaml.Marshal(allSettings)
@@ -362,7 +388,7 @@ func (c *PythonCheck) Configure(_senderManager sender.SenderManager, integration
 			}
 			return fmt.Errorf("could not invoke '%s' python check constructor: %w", c.ModuleName, rtLoaderDeprecatedCheckError)
 		}
-		log.Warnf("passing `agentConfig` to the constructor is deprecated, please use the `get_config` function from the 'datadog_agent' package (%s).", c.ModuleName)
+		log.Infof("passing `agentConfig` to the constructor is deprecated, please use the `get_config` function from the 'datadog_agent' package (%s).", c.ModuleName)
 	}
 	c.instance = check
 	c.source = source
