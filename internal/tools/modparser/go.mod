@@ -17,4 +17,4 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.0.2
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1

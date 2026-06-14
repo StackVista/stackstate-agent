@@ -9,4 +9,4 @@ go 1.25.0
 
 require google.golang.org/protobuf v1.36.11
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.0.2
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1

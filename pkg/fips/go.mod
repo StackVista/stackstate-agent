@@ -4,6 +4,8 @@ go 1.25.0
 
 require golang.org/x/sys v0.45.0
 
+require golang.org/x/net v0.55.0 // indirect
+
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
 
 replace (
@@ -184,4 +186,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.0.2
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
