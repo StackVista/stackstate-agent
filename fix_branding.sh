@@ -243,7 +243,28 @@ find "${DIR}/omnibus" -type d -name .git -prune -o -name "vendor" -prune -o -nam
 
 
 # Config Rules
-# Define directories containing config_test.go files
+# Define directories containing config_test.go files.
+#
+# [sts] IMPORTANT: this is an explicit allowlist of directories where the
+# branding gofmt rewrites below run. Any production Go file that contains a
+# branded literal ("DOCKER_DD_AGENT", "DD_PROXY_*", "DD_LOG_LEVEL", "dd_url",
+# "https://app.datadoghq.com", etc.) MUST live under one of these directories,
+# otherwise the literal survives into the branded binary and the corresponding
+# STS_* env var / sts_url config key is silently ignored at runtime.
+#
+# Past regression (STAC-24908-class): the 7.51 -> 7.71 merge moved the
+# allowlist mechanism from `do_go_rename(..., "./pkg/config")` (recursive over
+# the whole tree) to this curated per-directory list, but the curated list
+# didn't include pkg/config/env. Result: IsContainerized() in
+# pkg/config/env/environment.go kept reading the upstream "DOCKER_DD_AGENT",
+# the Dockerfile sets only "DOCKER_STS_AGENT", and the entire containerized
+# code path (container_proc_root, container_cgroup_root, workloadmeta runtime
+# collectors, container check stats) silently degraded to non-containerized
+# defaults. Container metrics dropped to zero with no errors in the logs.
+#
+# When adding a new branded-literal call site upstream, audit with:
+#   grep -lF '"DOCKER_DD_AGENT"' --include='*.go' -r . | xargs -I{} dirname {}
+# and add the enclosing directory here if it's a production file.
 CONFIG_TEST_DIRS="${DIR}/cmd/otel-agent/subcommands/run
 ${DIR}/cmd/process-agent/subcommands/config
 ${DIR}/cmd/security-agent/subcommands/config
@@ -258,6 +279,11 @@ ${DIR}/pkg/collector/corechecks/networkpath
 ${DIR}/pkg/collector/corechecks/servicediscovery/module
 ${DIR}/pkg/config/setup
 ${DIR}/pkg/config/nodetreemodel
+${DIR}/pkg/config/env
+${DIR}/pkg/util/containers
+${DIR}/pkg/util/kernel
+${DIR}/pkg/security/telemetry
+${DIR}/pkg/collector/corechecks/net/networkv2
 ${DIR}/pkg/network/config
 ${DIR}/pkg/orchestrator/config
 ${DIR}/pkg/process/checks
