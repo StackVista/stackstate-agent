@@ -252,16 +252,6 @@ find "${DIR}/omnibus" -type d -name .git -prune -o -name "vendor" -prune -o -nam
 # otherwise the literal survives into the branded binary and the corresponding
 # STS_* env var / sts_url config key is silently ignored at runtime.
 #
-# Past regression (STAC-24908-class): the 7.51 -> 7.71 merge moved the
-# allowlist mechanism from `do_go_rename(..., "./pkg/config")` (recursive over
-# the whole tree) to this curated per-directory list, but the curated list
-# didn't include pkg/config/env. Result: IsContainerized() in
-# pkg/config/env/environment.go kept reading the upstream "DOCKER_DD_AGENT",
-# the Dockerfile sets only "DOCKER_STS_AGENT", and the entire containerized
-# code path (container_proc_root, container_cgroup_root, workloadmeta runtime
-# collectors, container check stats) silently degraded to non-containerized
-# defaults. Container metrics dropped to zero with no errors in the logs.
-#
 # When adding a new branded-literal call site upstream, audit with:
 #   grep -lF '"DOCKER_DD_AGENT"' --include='*.go' -r . | xargs -I{} dirname {}
 # and add the enclosing directory here if it's a production file.
