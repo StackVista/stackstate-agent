@@ -57,7 +57,7 @@ if [ "${WHAT}" = "SHELL" ]; then
         -e REGISTRY="${REGISTRY}" \
         -e ORG="${ORG:-stackstate}" \
         --workdir=${PWD} \
-        registry.tooling.stackstate.io/quay/stackstate/datadog_build_linux_x64:4ed2400d bash
+        registry.tooling.stackstate.io/quay/stackstate/datadog_build_linux_x64:7af9194f bash
 fi
 
 # Prepare a copy of the agent in the SRC_DIR to make sure that in a containerized environment the source directory

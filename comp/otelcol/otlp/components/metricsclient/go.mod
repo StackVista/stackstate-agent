@@ -21,11 +21,12 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/stretchr/objx v0.5.3 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
@@ -207,3 +208,5 @@ replace (
 	github.com/DataDog/datadog-agent/test/new-e2e => ../../../../../test/new-e2e
 	github.com/DataDog/datadog-agent/test/otel => ../../../../../test/otel
 )
+
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1

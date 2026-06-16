@@ -7,9 +7,9 @@ go 1.25.0
 require (
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
 	github.com/moby/sys/mountinfo v0.7.2
-	github.com/shirou/gopsutil/v4 v4.26.2
+	github.com/shirou/gopsutil/v4 v4.26.3
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/sys v0.42.0
+	golang.org/x/sys v0.45.0
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -29,7 +29,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
@@ -211,3 +211,5 @@ replace (
 	github.com/DataDog/datadog-agent/test/new-e2e => ../../test/new-e2e
 	github.com/DataDog/datadog-agent/test/otel => ../../test/otel
 )
+
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1

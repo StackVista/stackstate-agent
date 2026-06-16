@@ -5,14 +5,14 @@ go 1.25.0
 require (
 	github.com/DataDog/datadog-agent/pkg/opentelemetry-mapping-go/otlp/attributes v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/proto v0.78.3-rc.2
-	go.opentelemetry.io/collector/pdata v1.53.0
+	go.opentelemetry.io/collector/pdata v1.57.0
 )
 
 require github.com/cespare/xxhash/v2 v2.3.0 // indirect
 
 require (
-	github.com/hashicorp/go-version v1.8.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.53.0 // indirect
+	github.com/hashicorp/go-version v1.9.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.57.0 // indirect
 )
 
 require (
@@ -24,13 +24,13 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/tinylib/msgp v1.6.3 // indirect
-	go.opentelemetry.io/collector/component v1.53.0 // indirect
+	go.opentelemetry.io/collector/component v1.57.0 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.1 // indirect
+	go.uber.org/zap v1.28.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 
@@ -213,3 +213,5 @@ replace (
 	github.com/DataDog/datadog-agent/test/new-e2e => ../../../../test/new-e2e
 	github.com/DataDog/datadog-agent/test/otel => ../../../../test/otel
 )
+
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1

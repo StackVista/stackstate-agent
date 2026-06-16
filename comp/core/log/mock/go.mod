@@ -13,7 +13,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/version v0.78.3-rc.2 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
@@ -195,3 +195,5 @@ replace (
 	github.com/DataDog/datadog-agent/test/new-e2e => ../../../../test/new-e2e
 	github.com/DataDog/datadog-agent/test/otel => ../../../../test/otel
 )
+
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
