@@ -419,10 +419,12 @@ The merge-branch image is validated against a real customer-shaped cluster (sand
 
 ### Deploying the soak
 
-Sandbox-main is ArgoCD-managed via `stackvista/agent-promoter` (now on GitHub). To soak a merge-branch image:
+Sandbox-main is ArgoCD-managed. **As of mid-June 2026 the soak vehicle is `github.com/StackVista/argocd-apps`** (private; SSH read works if you're in the StackVista GH org). This is a recent migration — predecessor was `github.com/StackVista/agent-promoter` (deprecated in commit `a5ccc994`), which itself was a successor to the original GitLab `stackvista/devops/agent-promoter` (archived). A separate GitLab `stackvista/devops/argocd-apps` exists but is **infra-only** — agent manifests are NOT there; don't be misled by the matching name.
+
+To soak a merge-branch image:
 
 1. **Wait for a successful merged-results pipeline on the agent MR.** GitLab's `merge_request_event` pipelines build images tagged with the MR-merge commit SHA (10 chars). Capture the SHA from the pipeline page or via the GitLab API (`/api/v4/projects/<id>/merge_requests/<iid>/pipelines`). Do NOT use the source-branch tip SHA — that image won't exist in the registry because no source-branch pipeline runs.
-2. **Open a soak PR on `StackVista/agent-promoter`** that bumps `image.tag` in `deploy/argocd/sandbox-main/apps/suse-observability-agent/values.yaml` for `checksAgent`, `clusterAgent`, and `nodeAgent.containers.agent` (three places). Leave `processAgent` at chart default — separate release cadence. Use a branch name like `STAC-NNNNN-sandbox-soak-<sha10>`.
+2. **Open a soak PR on `StackVista/argocd-apps`** that uncomments + sets `image.tag` in `cluster_definitions/sandbox-main/apps/suse-observability-agent/values.yaml` for `checksAgent`, `clusterAgent`, and `nodeAgent.containers.agent` (three places). Leave `processAgent` at chart default — separate release cadence and excluded from the soak-vehicle scope. Branch naming convention: `STAC-NNNNN-sandbox-pin-<sha10>`.
 3. **Merge the soak PR.** ArgoCD picks up the change within its sync window (typically a few minutes); helm chart's checksum annotation on the ConfigMap triggers cluster-agent pod rotation; checks-agent and node-agents follow as their image tags resolve.
 4. **Verify pod rotation:**
    ```bash
@@ -431,6 +433,12 @@ Sandbox-main is ArgoCD-managed via `stackvista/agent-promoter` (now on GitHub). 
      | grep -E 'cluster-agent|checks-agent|node-agent'
    ```
    Confirm all three components show the new tag and recent `creationTimestamp`.
+
+**Self-healing pin reset (transient by design):** the argocd-apps repo runs `.github/workflows/drop-sandbox-agent-image-pins.yml` daily at 00:07 UTC. It `yq del()`s any developer-set `.image.tag` on the three soak-vehicle sites and restores the commented placeholders. Idempotent, GitHub-App-signed, commits straight to main. Consequences:
+
+- A soak that runs past 00:07 UTC needs **daily re-pinning** OR coordination with whoever owns the workflow to pause it.
+- Soak PRs no longer need an explicit revert commit when done — just let the next daily run clean up. (This is a change from the deprecated agent-promoter era, when soak transitions used a revert-then-re-pin commit pair for audit-trail hygiene.)
+- Steady-state on `main` = no tag override. The chart's default agent image flows when no soak is active.
 
 ### Soak triage
 
@@ -485,7 +493,7 @@ Lessons accumulated across cycles, generalizing the discovery workflow above.
 Cutover is a two-stage event:
 
 1. **The cutover MR**: source `merged-<CURRENT>-to-<NEXT>` → target `stackstate-<NEXT>`. The target branch already exists (created in prep step 6 with the SUSE customization commit on it). Once the MR merges, `stackstate-<NEXT>` IS the post-merge state.
-2. **Four-repo coordination** (below) — flips agent-promoter, helm-charts, and beest references over from `stackstate-<CURRENT>` to `stackstate-<NEXT>` and sets the new branch as GitLab default in this repo.
+2. **Multi-repo coordination** (below) — flips helm-charts-internal and beest references over from `stackstate-<CURRENT>` to `stackstate-<NEXT>` and sets the new branch as GitLab default in this repo. As of the 7.78.2 cycle, neither argocd-apps nor agent-promoter requires a cutover-time change (see §2 — both deprecated as a cutover touchpoint).
 
 Once the merge branch has clean CI, sandbox verification is healthy, and the team is ready to retire the previous main, **the four-repo changes need to land in lockstep**. Without coordination, the nightly promoter pipeline, beest CI gating, and the helm chart appVersion silently desynchronize and you end up debugging "why did my dev tag get clobbered overnight?" the morning after.
 
@@ -496,21 +504,49 @@ Once the merge branch has clean CI, sandbox verification is healthy, and the tea
 - The branch name pattern `stackstate-<DD-version>` is the convention; keep it.
 - **`stackstate-deps.json` — flip `STACKSTATE_INTEGRATIONS_VERSION` from the transition branch to the released integrations tag.** During the merge cycle, this field holds the work-in-progress integrations branch (e.g., `transition-7.71.2-7.78.2`) so iterative changes flow through to agent builds without retagging. For the cutover-built release, it must hold a **TAG**, not a branch — tags pin reproducibly while branches drift. Tag naming convention from the integrations repo: `<DD-major>.<DD-minor>.<DD-patch>-<release>`, e.g., `7.78.2-1` (where `-1` is the integrations release-cut counter for that DD patch). Verify the tag exists in `stackstate-agent-integrations` and resolves to the merge commit of the transition-branch PR before flipping. **Easy mistake to make:** pinning to the long-lived release branch (e.g., `stackstate-7.78.2`) instead of the tag — superficially "works" because the next agent build pulls the right commits, but loses reproducibility (later commits on that branch drift the agent build silently).
 
-### 2. agent-promoter (`stackvista/devops/agent-promoter`)
+### 2. argocd-apps (`git@github.com:StackVista/argocd-apps.git`)
 
-- `main.py:103` hard-codes the agent's main branch: `AgentOps("stackvista/agent/stackstate-agent", "stackstate-agent", "stackstate-7.51.1")`. Update the third argument to the new branch.
-- The nightly `promote_agent_master_to_promoter_dev` pipeline reads this and rewrites `config.yml` and `deploy/argocd/common/apps/dev-agent/values.yaml` with the latest commit on that branch. **If you skip this step, every overnight run will continue setting dev tags from the old branch, clobbering whatever dev verification you're trying to do on the new one.**
-- `.github/copilot-instructions.md` (if tracked in your local copy) also references the branch name; check and update.
+**No cutover change required as of the 7.78.2 cycle (June 2026).** The repo is pure ArgoCD declarative config; ArgoCD pulls `version: latest` from helm-internal each sync, so when the helm-charts-internal MR (§3 below) merges and helm-internal publishes, dev clusters pick up the new chart automatically. No branch reference exists anywhere in the argocd-apps tree to flip.
 
-### 3. helm-charts (`stackvista/devops/helm-charts`), chart `stable/suse-observability-agent`
+**Multiple deprecations to be aware of:**
+- The original GitLab `stackvista/devops/agent-promoter` (Python promoter + nightly + ArgoCD config all in one) — archived. Push fails with "You can't push code to an archived project."
+- The GitHub `StackVista/agent-promoter` (ArgoCD-only after the Python promoter was deleted in PR #10, 2026-05-29) — **also deprecated** in commit `a5ccc994` (mid-June 2026); sandbox manifests migrated to argocd-apps.
+- The GitLab `stackvista/devops/argocd-apps` — **infra-only**, no agent app. Don't be misled by the matching name; the agent manifests live in the GitHub argocd-apps repo, not this one.
+- The GitHub `StackVista/argocd-apps` (private) — **canonical for sandbox / dev / prod cluster manifests.** SSH read works for org members; HTTPS shows 404.
 
-- Bump `Chart.yaml`'s `appVersion`. **Convention:** `<STS-major>.<DD-minor>.<DD-patch>`. The StackState major (currently `3`) tracks DD's major-version family — DD v5/v6/v7 mapped to STS v1/v2/v3 historically. So DD `7.71.2` → STS appVersion `3.71.2`. The chart `version` (separate from `appVersion`) follows its own SemVer cadence and is bumped by `verify_versions_bumped.sh` rules whenever any file under `stable/<chart>/` changes.
+The discovery sequence cost an afternoon during the 7.78.2 cycle — Copilot CLI session started on the old agent-promoter pattern, then tried the GitLab argocd-apps (wrong), finally landed on the GitHub one.
+
+Optional during a cycle: `cluster_definitions/<cluster>/apps/suse-observability-agent/values.yaml` can be hand-edited to pin a specific agent image tag for sandbox soak — but **pins are transient by design**, auto-dropped daily at 00:07 UTC by `.github/workflows/drop-sandbox-agent-image-pins.yml`. See [[sandbox-soak-validation]] in Claude memory for the full workflow including the soak PR naming convention and self-healing model.
+
+### 3. helm-charts-internal (`git@github.com:StackVista/helm-charts-internal.git`), chart `stable/suse-observability-agent`
+
+**Three repos, one canonical:**
+- `git@gitlab.com:stackvista/devops/helm-charts.git` — **archived** as of 2026. Push fails with "You can't push code to an archived project."
+- `git@github.com:StackVista/helm-charts.git` — **public read-only mirror**. PRs filed here are in the wrong place; even if a maintainer merges one, the change doesn't reach production (the internal repo is the source of truth and mirrors out, not the reverse). Confusing because the URL pattern matches the agent-promoter GitHub-only migration; helm-charts went GitHub-too-but-private.
+- `git@github.com:StackVista/helm-charts-internal.git` — **canonical, private**. This is where the cutover PR must land. Read access via SSH is fine if you're in the StackVista GitHub org; HTTPS shows 404 because the repo is private.
+
+Cutover-MR mis-targeting cost an afternoon during the 7.78.2 cycle when STAC-25069 was opened on the public mirror; Bram flagged it on review. Always verify `git remote -v` shows `helm-charts-internal` before pushing.
+
+- Bump `Chart.yaml`'s `appVersion`. **Convention:** `<STS-major>.<DD-minor>.<DD-patch>`. The StackState major (currently `3`) tracks DD's major-version family — DD v5/v6/v7 mapped to STS v1/v2/v3 historically. So DD `7.78.2` → STS appVersion `3.78.2`.
+- Bump `Chart.yaml`'s `version` (the chart's own semver, separate from `appVersion`). On long-lived branches the live master may have already auto-bumped past your branch base — expect a rebase conflict on this line, take the live version + 1. The `verify_versions_bumped.sh` script gates MRs on this being strictly greater than the target branch's value.
+- **Bump the 3 agent image tags in `values.yaml` AND the updatecli `agentHash` source branch ref.** The agent-tag automation in helm-charts post-PR-#10 (agent-promoter) is **updatecli**, not the deleted Python promoter. It lives at `updatecli/updatecli.d/update-docker-images/update.yaml` — the `agentHash` source curl-pings `https://api.github.com/repos/StackVista/stackstate-agent/commits/<BRANCH>` and writes `.sha[0:8]` into the chart's image tags via the matching targets. The cutover MR must update BOTH:
+  - The 3 image tag sites in `values.yaml`:
+    - `nodeAgent.containers.agent.image.tag`
+    - `clusterAgent.image.tag`
+    - `checksAgent.image.tag`
+    All three carry the same agent tag — the new agent's latest built hash from the post-cutover `stackstate-<NEXT>` branch.
+  - The `agentHash` source's branch ref in `updatecli/updatecli.d/update-docker-images/update.yaml`: change `commits/stackstate-<PREV>` → `commits/stackstate-<NEXT>`.
+
+  Without flipping the updatecli source, every scheduled updatecli run (driven by `.github/workflows/updatecli.yml`) would resolve the (now stale) `stackstate-<PREV>` tip and silently rewrite `values.yaml` back to the old agent. The manual `values.yaml` bump in the cutover MR is needed because updatecli won't run until after the MR merges; the source-branch flip is what gets the automation pointing at the right reference going forward.
+
+  **Leave alone** (separate release cadences): `nodeAgent.containers.processAgent.image.tag` and `logsAgent.image.tag` (promtail).
 - Audit `templates/_container-agent.yaml` and `templates/checks-agent-deployment.yaml` for env vars deprecated by the new agent. Concrete example from the 7.71.2 cutover: removed `STS_PROCESS_AGENT_ENABLED` (the deprecated `process_config.enabled` key) — the replacement pair `STS_PROCESS_CONFIG_PROCESS_COLLECTION_ENABLED` + `STS_PROCESS_CONFIG_CONTAINER_COLLECTION_ENABLED` had been added alongside it earlier so the removal was a no-op deletion. Look for similar deprecation pairs introduced upstream during the merge.
 - `nodes/stats` RBAC entry must be present in `templates/node-agent-clusterrole.yaml` (was missing pre-cutover; verify it's still there).
-- Image tags in `values.yaml` are managed by the agent-promoter nightly — leave them alone in the cutover MR; once #2 above is merged, the next nightly will write a tag from the new branch.
 - Pre-commit hooks must run for every commit in this repo (helm-docs, shellcheck, helm-lint). Don't squash commits past hook runs.
+- **helm-docs README regeneration gotcha**: the `helm-docs-built` pre-commit hook regenerates `README.md` from `Chart.yaml` + `values.yaml` and rejects the commit if the regenerated file isn't staged. Expect two commit attempts: first fails with README modified-but-unstaged, second succeeds after `git add README.md`.
+- **Rebase-conflict gotcha** (long-lived branches): if live master has auto-bumped the `version:` or the dev image tag has rolled while your MR was in flight, expect 3-way conflicts on `Chart.yaml`, `values.yaml`, AND `README.md`. Resolution recipe: take live's `version:` (bump +1), take your `appVersion:`, take your image tags, take **either** side of `README.md` then re-run `pre-commit run helm-docs-built --files stable/<chart>/values.yaml stable/<chart>/Chart.yaml` and amend.
 
-### 4. beest (`stackvista/integrations/beest`)
+### 4. beest (`git@gitlab.com:stackvista/integrations/beest.git`)
 
 The agent's main branch name is referenced in roughly 30 places, all needing the same find-and-replace:
 
@@ -527,10 +563,11 @@ The agent's main branch name is referenced in roughly 30 places, all needing the
 
 ### Sequencing
 
-Order matters slightly. Recommended:
+Order matters slightly. Recommended (as of the 7.78.2 cycle, post-PR-#10):
 
-1. Merge the agent default-branch change AND the beest CI change on roughly the same day.
-2. Merge the agent-promoter change next — its nightly run that night will start writing tags from the new branch.
-3. Merge the helm-charts appVersion bump whenever convenient (independent).
+1. Flip the agent fork's default branch (§1) and the integrations fork's default branch — these are the prerequisites; everything else assumes the agent ref is live.
+2. Wait for one post-cutover build on the new main to land in the registry — capture the agent image hash for §3.
+3. Merge the beest CI sweep (§4) and the helm-charts cutover (§3) on roughly the same day. They're independent of each other; both reference the new agent ref.
+4. **No agent-promoter merge required** — see §2. ArgoCD picks up the new chart from helm-internal automatically once §3 publishes.
 
-Don't merge the agent-promoter change *before* the agent default branch flips, or the next nightly will fail to find commits to promote.
+Don't merge the helm-charts cutover before the new agent image hash exists in the registry — chart consumers would pull a tag that resolves nowhere.
