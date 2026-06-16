@@ -7,8 +7,8 @@ require (
 	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.78.3-rc.2
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/atomic v1.11.0
-	go.uber.org/zap v1.27.1
-	golang.org/x/time v0.14.0
+	go.uber.org/zap v1.28.0
+	golang.org/x/time v0.15.0
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -200,3 +200,5 @@ replace (
 	github.com/DataDog/datadog-agent/test/new-e2e => ../../../test/new-e2e
 	github.com/DataDog/datadog-agent/test/otel => ../../../test/otel
 )
+
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1

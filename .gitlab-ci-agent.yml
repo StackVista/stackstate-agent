@@ -197,6 +197,7 @@ branded_unit_tests:
     - export AGENT_REPO_NAME=datadog-agent
     - export OMNIBUS_FORCE_PACKAGES=true
     - if [ "$(echo "${BRANDED}" | tr '[:upper:]' '[:lower:]')" = "true" ]; then ./fix_branding.sh; fi
+    - if [ "$(echo "${BRANDED}" | tr '[:upper:]' '[:lower:]')" = "true" ]; then ./scripts/verify_branding_literals.sh; fi
     - inv -e agent.build --race
     # TODO: check why formatting rules differ from previous step
     - gofmt -l -w -s ./pkg ./cmd

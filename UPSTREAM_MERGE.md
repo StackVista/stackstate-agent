@@ -103,6 +103,40 @@ When upstream introduces new `datadoghq.com` references, most are handled automa
 3. A non-`.go` fixture file needs branding (add explicit sed for that file)
 4. A `gofmt` rule produces `localhost:7077` but the correct value is a branded URL (add a fixup)
 
+### CONFIG_TEST_DIRS allowlist: audit after every merge
+
+`fix_branding.sh` rewrites a fixed set of branded Go literals (`"DOCKER_DD_AGENT"`, `"DD_PROXY_*"`, `"DD_LOG_LEVEL"`, `"dd_url"`, `"DD_URL"`, `"DD_DD_URL"`, `"https://app.datadoghq.com/eu"`, the `process`/`process-events`/`orchestrator.datadoghq.com` URLs). These rewrites only run inside the directories listed in the `CONFIG_TEST_DIRS` variable. **Any production Go file outside the allowlist keeps the upstream literal verbatim** — at runtime the agent then looks for `DOCKER_DD_AGENT` / `DD_LOG_LEVEL` / `dd_url` instead of the STS-branded equivalent that's actually set, and the affected code path silently degrades.
+
+This bit us in the 7.51 → 7.71 merge. The 7.51 branding script used `do_go_rename(..., "./pkg/config")` — recursive over the whole tree. The 7.71 rewrite replaced it with the curated per-directory list and dropped `pkg/config/env` from coverage. `pkg/config/env/environment.go:IsContainerized()` kept reading `DOCKER_DD_AGENT`, the Dockerfile sets only `DOCKER_STS_AGENT`, so the function returned `false` in production. Consequence: `container_proc_root`/`container_cgroup_root` defaulted to the agent container's own (empty) paths, workloadmeta's containerd/crio collectors refused to start ("Agent is not running on containerd"), and the `container` check emitted **0 metric samples** with no errors logged. Only the kubelet check still worked, because it uses the kubelet HTTP API and doesn't depend on cgroup paths. See the comment block above `CONFIG_TEST_DIRS` in `fix_branding.sh` for the full failure mode.
+
+**After every merge, audit each branded literal:**
+
+```bash
+# Find any production .go file containing the literal that isn't under CONFIG_TEST_DIRS
+grep -lF '"DOCKER_DD_AGENT"' -r --include='*.go' --exclude-dir=vendor . | \
+  xargs -I{} dirname {} | sort -u
+```
+
+Repeat for `"DD_PROXY_HTTP"`, `"DD_PROXY_HTTPS"`, `"DD_PROXY_NO_PROXY"`, `"DD_LOG_LEVEL"`, `"dd_url"`, `"DD_URL"`, `"DD_DD_URL"`. Any directory in the output that isn't covered (including parent coverage — `gofmt` recurses) needs to be added to `CONFIG_TEST_DIRS`. Skip `_test.go`-only dirs and files with `//go:build ... test` (they don't ship in the production binary).
+
+**Verification after patching the allowlist:** dry-run `gofmt` on each new directory and confirm it lists the file you expected:
+
+```bash
+gofmt -l -r '"DOCKER_DD_AGENT" -> "DOCKER_STS_AGENT"' pkg/config/env
+# -> should print pkg/config/env/environment.go
+```
+
+**Verification after a branded build:** the binary should contain *only* the branded forms.
+
+```bash
+strings bin/agent/agent | grep -E '^DOCKER_(DD|STS)_AGENT$' | sort -u
+# expected: DOCKER_STS_AGENT only
+```
+
+The same `strings` sanity check applies to `DD_LOG_LEVEL` / `STS_LOG_LEVEL` etc. when those literals matter for the helm-chart-provided env vars.
+
+**E2E regression:** `beest/tests/k8s/test_receiver_metrics.py::test_container_metrics` queries container CPU/memory metrics (`memRss`, `systemPct`, etc.) via PromQL. It fails when `IsContainerized()` is unbranded because the container check emits zero samples while kubelet metrics may still pass. Strengthening that test's non-zero assertions is the primary guard against this class of silent branding regression.
+
 ## Path Relocation (fix_package_paths.sh)
 
 When `RELOCATED=true`, the source is moved from the Datadog import path to the StackState path:
