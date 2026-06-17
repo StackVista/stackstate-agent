@@ -2,9 +2,19 @@ name 'datadog-agent-dependencies'
 
 description "Enforce building dependencies as soon as possible so they can be cached"
 
+# [sts] STAC-24773: Bazel migration. The remaining `dependency '...'` lines below
+# (jmxfetch, libpcap, systemd, snmp-traps, procps-ng) are progressively replaced by
+# the //packages/agent/dependencies:install Bazel target invoked in the build do
+# block at the bottom. Mirrors DD upstream's pattern in pristine 7.78.2 with
+# flavor_flag computed for fips/heroku awareness.
+if heroku_target?
+  flavor_flag = "--//packages/agent:flavor=heroku"
+else
+  flavor_flag = fips_mode? ? "--//packages/agent:flavor=fips" : ""
+end
+
 # Linux-specific dependencies
 if linux_target?
-  dependency 'procps-ng'
   dependency 'curl'
 end
 if fips_mode?
@@ -14,34 +24,35 @@ end
 # Bundled cacerts file (is this a good idea?)
 dependency 'cacerts'
 
-# External agents
-dependency 'jmxfetch'
-
 # Used for memory profiling with the `status py` agent subcommand
 dependency 'pympler'
-
-dependency "systemd" if linux_target?
-
-dependency 'libpcap' if linux_target? and !heroku_target? # system-probe dependency
-
-# Include traps db file in snmp.d/traps_db/
-dependency 'snmp-traps'
 
 # [STS] StackState integrations are declared in agent.rb (project level)
 # to avoid circular dependency: datadog-agent -> datadog-agent-dependencies -> integrations -> datadog-agent
 
+# [sts] STAC-24773: STS does not ship Windows. The `if windows_target?` block that
+# previously pulled in datadog-windows-{filter-driver,apminject,procmon-driver}
+# has been removed along with the corresponding .rb recipe files. STS does NOT
+# support Windows at all; this is dead code in our tree. Any Windows-conditional
+# stanza in inherited DD files should be similarly stripped during the broader
+# audit of restored .rb files (see follow-up STAC ticket).
 
-# Additional software
-if windows_target?
-  if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
-    dependency 'datadog-windows-filter-driver'
-  end
-  if ENV['WINDOWS_APMINJECT_MODULE'] and not ENV['WINDOWS_APMINJECT_MODULE'].empty?
-    dependency 'datadog-windows-apminject'
-  end
-  if ENV['WINDOWS_DDPROCMON_DRIVER'] and not ENV['WINDOWS_DDPROCMON_DRIVER'].empty?
-    dependency 'datadog-windows-procmon-driver'
-  end
+build do
+    # [sts] STAC-24773: Bazel install for jmxfetch / libpcap / systemd / snmp-traps
+    # (and other Bazel-shipped deps). Runs alongside the legacy `dependency '...'`
+    # chain in this transitional commit; subsequent commits drop the duplicated
+    # legacy dependencies one-by-one.
+    #
+    # `--downloader_config=/dev/null` overrides DD's .adms/bazel/adms.mirror.cfg
+    # which rewrites all GitHub / canonical URLs to go through DD's internal
+    # mirror at depot-read-api-bzl.us1.ddbuild.io. That mirror is unreachable
+    # from STS runners (private DD infrastructure). The /dev/null override tells
+    # Bazel to use direct URLs, restoring fetches from github.com / bcr.bazel.build
+    # / etc. Without this, every bazelisk invocation in STS CI times out on the
+    # first module-resolution fetch (observed in the first build_deb attempt of
+    # this commit before the override was added — depot-read-api-bzl times out
+    # fetching github.com/aiuto/supply-chain/archive/refs/tags/dd_test.tar.gz).
+    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- //packages/agent/dependencies:install --destdir=#{install_dir}"
 end
 
 build do
