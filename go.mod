@@ -1249,8 +1249,11 @@ exclude github.com/tencentcloud/tencentcloud-sdk-go v1.0.162
 // go-openapi/testify/v2: pin below v2.5.x (assert/yaml removed) and above v2.1 (enable/stubs/yaml added).
 replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
 
-// OTel prometheusreceiver v0.150.0 requires this prometheus commit; v0.311.3 breaks discovery metrics API.
-replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.311.2-0.20260410083055-07c6232d159b
+// Pin prometheus to a commit that includes the v0.311.3 CVE fixes (42151, 42154, 44903)
+// while still exposing the SDMetrics struct that OTel prometheusreceiver v0.150.0 depends on.
+// v0.311.3 removed SDMetrics; this commit is a later v0.311.4-dev commit that re-added it.
+// Same commit OTel collector-contrib v0.152.0 pins.
+replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.311.4-0.20260507094802-91c184a899b8
 
 replace github.com/google/gopacket v1.1.19 => github.com/DataDog/gopacket v0.0.0-20251104174046-ae42df68210e
 
