@@ -19,7 +19,7 @@ alias(
 
 posix_attributes = pkg_attributes(
     group = "root",
-    mode = "0755",
+    mode = "0500",
     owner = "root",
 )
 

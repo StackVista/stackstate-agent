@@ -65,7 +65,10 @@ else
   # creates required build directories
   dependency 'preparation'
 
-  dependency "systemd" if linux_target?
+  # [sts] STAC-24773 C1: `dependency "systemd" if linux_target?` removed
+  # alongside the omnibus systemd.rb deletion. STS does not build the
+  # iot-agent project (no .gitlab-ci-iot pipeline), but keeping the file
+  # parse-clean avoids breaking any local `omnibus list` style commands.
 
   # Datadog agent
   dependency 'datadog-iot-agent'
