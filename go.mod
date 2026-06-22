@@ -202,7 +202,7 @@ require (
 	github.com/cloudflare/cbpfc v0.0.0-20240920015331-ff978e94500b
 	github.com/cloudfoundry-community/go-cfclient/v2 v2.0.1-0.20230503155151-3d15366c5820
 	github.com/containerd/cgroups/v3 v3.0.5
-	github.com/containerd/containerd v1.7.32
+	github.com/containerd/containerd v1.7.33
 	github.com/containerd/containerd/api v1.8.0
 	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/typeurl/v2 v2.2.3
@@ -549,7 +549,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/digitalocean/go-metadata v0.0.0-20250129100319-e3650a3df44b // indirect
 	github.com/digitalocean/godo v1.178.0 // indirect
-	github.com/docker/cli v29.2.0+incompatible // indirect
+	github.com/docker/cli v29.2.1+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.3 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
