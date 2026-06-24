@@ -73,7 +73,8 @@ build do
     major, minor, = version.split(".")
     block "recreate pip symlinks after pip self-upgrade" do
       Dir.chdir "#{install_dir}/embedded/bin" do
-        ["pip3", "pip"].each { |f| File.delete(f) if File.exist?(f) }
+        # File.exist? is false for broken symlinks; pip self-upgrade can leave pip -> pip3 dangling.
+        FileUtils.rm_f("pip3", "pip")
         File.symlink "pip#{major}.#{minor}", "pip3"
         File.symlink "pip3", "pip"
       end
