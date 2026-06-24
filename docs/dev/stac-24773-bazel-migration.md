@@ -11,7 +11,7 @@ Handoff for humans and AI pair-programming on the StackState Agent fork.
 | Phase B (openscap chain, curl/nghttp2) | Done |
 | Phase C (orphan `.rb` sweep + integrations-chain deps) | Done (C1–C3, C5, C6, C-E) |
 | CI + Beest on branch tip | Green before merge |
-| Phase D (`python3.rb` → `@cpython`) | **Not started** — **same ticket** (STAC-24773), after B+C merges |
+| Phase D (`python3.rb` → `@cpython`) | **In progress** — D1 committed locally; D2+ drops python-only `.rb` orphans |
 | Non-Bazel cleanup MR | **Not started** — separate ticket (not Bazel migration) |
 
 Commit history on the branch may be **squashed**; use `git log --grep=STAC-24773` and file contents (grep `STAC-24773` in `omnibus/`) rather than assuming one commit per phase.
