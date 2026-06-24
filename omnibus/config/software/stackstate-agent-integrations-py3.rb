@@ -10,7 +10,6 @@ name 'stackstate-agent-integrations-py3'
 
 dependency 'datadog-agent'
 dependency 'datadog-agent-integrations-py3-dependencies'
-dependency 'pip3'
 
 if arm_target?
   # same with libffi to build the cffi wheel
