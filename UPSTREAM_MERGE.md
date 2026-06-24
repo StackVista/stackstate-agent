@@ -110,7 +110,7 @@ Datadog 7.78 moved most native dependencies from `omnibus/config/software/*.rb` 
 
 **Canonical handoff:** [docs/dev/stac-24773-bazel-migration.md](docs/dev/stac-24773-bazel-migration.md) — status, CI gating, `--downloader_config=/dev/null`, `replace_prefix` pattern, Phase D scope, parallel tickets.
 
-**Still omnibus after Phase B+C:** `python3.rb` (Phase D → `@cpython`), `cacerts`, `openssl3`, FIPS provider, and python3's transitive chain (`libffi`, `zlib`, …).
+**Still omnibus after Phase B+C:** `python3.rb` (Phase D → `@cpython`, **same STAC-24773 ticket**), `cacerts`, `openssl3`, FIPS provider, and python3's transitive chain (`libffi`, `zlib`, …).
 
 ## Branding: datadoghq.com to stackstate.io
 

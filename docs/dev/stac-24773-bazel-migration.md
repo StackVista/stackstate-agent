@@ -11,8 +11,8 @@ Handoff for humans and AI pair-programming on the StackState Agent fork.
 | Phase B (openscap chain, curl/nghttp2) | Done |
 | Phase C (orphan `.rb` sweep + integrations-chain deps) | Done (C1–C3, C5, C6, C-E) |
 | CI + Beest on branch tip | Green before merge |
-| Phase D (`python3.rb` → `@cpython`) | **Not started** — follow-up ticket |
-| Non-Bazel cleanup MR | **Not started** — separate ticket |
+| Phase D (`python3.rb` → `@cpython`) | **Not started** — **same ticket** (STAC-24773), after B+C merges |
+| Non-Bazel cleanup MR | **Not started** — separate ticket (not Bazel migration) |
 
 Commit history on the branch may be **squashed**; use `git log --grep=STAC-24773` and file contents (grep `STAC-24773` in `omnibus/`) rather than assuming one commit per phase.
 
@@ -107,15 +107,26 @@ command "sed -i '1s|.*|#!#{install_dir}/embedded/bin/python|' #{install_dir}/emb
 
 **Deferred from original C2:** `libffi` (python3), `unixodbc`/`freetds` (moved to C5), `nfsiostat` shebang (fixed in C6).
 
-## Phase D (follow-up)
+## Phase D (same ticket — STAC-24773)
 
 **Goal:** Replace omnibus `python3.rb` source build with upstream pattern: `@bzip2`, `@xz`, `@sqlite3`, `@cpython//:install`, pip 26.0.1 bump.
+
+**Ticket scope:** Phase D stays on **STAC-24773** (one epic: omnibus → Bazel for 7.78). It was deferred from MR !426 only to land B+C first and keep commit/MR review units manageable — not because it is a different class of work. Use a **new MR or new commits on the same branch** after B+C merges; no new STAC number required.
+
+**Why deferral was tactical, not organizational:** Compared to an upstream merge, Bazel migration has a smaller blast radius and is fully covered by our standard validation stack (below). DD spread `@cpython` across many PRs for their own release cadence; we can proceed in fewer commits while gating each on CI.
+
+**Standard validation for Phase D (same as B+C):**
+
+1. Unit tests (branded + unbranded) in GitLab CI
+2. Integrated E2E — Beest pipeline on the built image
+3. Sandbox soak — pin agent hash in `argocd-apps` sandbox-main; exercise compliance + integrations paths
+4. Human smoke — one or two reviewers confirm collected metrics/topology/check data in the StackState UI
 
 **Integrations repo:** No check **source** changes expected if Python stays **3.13.13**. Work is in agent `omnibus/` (+ Beest). Touch `stackstate-agent-integrations` only on Python version bump or broken pip hashes.
 
 **Unlocks dropping:** `libffi.rb`, `zlib.rb`, `bzip2.rb`, `liblzma.rb`, `libsqlite3.rb`, `libtool.rb`, `libdb.rb`, `libiconv.rb`, … (full list in plan file).
 
-DD did this across many PRs; treat Phase D as its own MR series, not a single commit.
+DD upstream used multiple PRs; we still gate **one logical change per commit** (wait for `build_deb` x86 + arm, then Beest before declaring Phase D done). Phase D itself may be 2–4 commits (cpython wiring → drop first `.rb` wave → …), not a single squash.
 
 ## Parallel workstreams (do not confuse)
 
