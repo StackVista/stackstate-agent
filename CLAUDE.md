@@ -11,6 +11,7 @@ The StackState Agent is a monitoring and observability agent forked from Datadog
 - StackState-specific components in `/comp/stackstate/`
 - Custom integrations repository: https://github.com/StackVista/stackstate-agent-integrations
 - StackState branding and telemetry endpoints
+- **Omnibus → Bazel migration (STAC-24773):** see [docs/dev/stac-24773-bazel-migration.md](docs/dev/stac-24773-bazel-migration.md) for handoff, patterns, and what not to restore after upstream merges
 
 ## Common Development Commands
 
