@@ -65,27 +65,5 @@ build do
   # when installing malicious wheel archives). Python 3.13 ships with pip 25.3 via
   # ensurepip, which is vulnerable. Replaces the deleted omnibus pip3.rb recipe.
   command "#{python} -m pip install pip==26.0.1"
-
-  # stackstate-agent-integrations-py3.rb invokes embedded/bin/pip3 directly.
-  if !windows_target?
-    block "ensure pip3 entrypoint after pip self-upgrade" do
-      Dir.chdir "#{install_dir}/embedded/bin" do
-        # Drop broken symlinks left from @cpython (e.g. pip -> missing pip3).
-        ["pip3", "pip"].each do |f|
-          File.delete(f) if File.symlink?(f) && !File.exist?(f)
-        end
-
-        # pip 26 reinstalls pip3 as a real console script; do not replace it.
-        next if File.exist?("pip3")
-
-        major, minor, = version.split(".")
-        versioned_pip = Dir.glob("pip#{major}.#{minor}").first
-        versioned_pip = Dir.glob("pip3.*").find { |f| File.file?(f) } unless versioned_pip
-        raise "no pip3 entrypoint in #{Dir.pwd} after pip 26.0.1 install" unless versioned_pip
-
-        File.symlink File.basename(versioned_pip), "pip3"
-        File.symlink "pip3", "pip" unless File.exist?("pip") || File.symlink?("pip")
-      end
-    end
-  end
+  command "#{python} -m pip --version"
 end

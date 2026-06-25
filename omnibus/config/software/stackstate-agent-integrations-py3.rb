@@ -100,13 +100,15 @@ build do
   end
   mkdir conf_dir
 
-  # aliases for pip
+  # aliases for pip / python
   if windows?
     pip = "#{windows_safe_path(python_3_embedded)}\\Scripts\\pip.exe"
     python = "#{windows_safe_path(python_3_embedded)}\\python.exe"
   else
-    pip = "#{install_dir}/embedded/bin/pip3"
     python = "#{install_dir}/embedded/bin/python3"
+    # Upstream DD 7.78.2: invoke pip via the interpreter; do not rely on embedded/bin/pip3
+    # (Bazel @cpython + pip self-upgrade do not guarantee a pip3 console script).
+    pip = "#{python} -m pip"
   end
 
   # Install the checks along with their dependencies
@@ -194,12 +196,6 @@ build do
       command "#{python} -m piptools compile --generate-hashes --no-emit-index-url --no-emit-find-links --output-file #{windows_safe_path(install_dir)}\\#{agent_requirements_file} #{static_reqs_out_file}"
     else
       command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_base"
-      puts "-----------------------------------"
-      puts "PIP VERSION:"
-      command "#{pip} --version"
-      output = `#{pip} --version`
-      puts output
-      puts "-----------------------------------"
       # [STS] Pin setuptools<81 in build isolation envs so pkg_resources stays
       # available (setuptools >=78 split pkg_resources into a separate package,
       # but it is still bundled through 80.x).
