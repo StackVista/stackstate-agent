@@ -11,8 +11,9 @@ Handoff for humans and AI pair-programming on the StackState Agent fork.
 | Phase B (openscap chain, curl/nghttp2) | Done |
 | Phase C (orphan `.rb` sweep + integrations-chain deps) | Done (C1–C3, C5, C6, C-E) |
 | Phase D1 (`python3.rb` → `@cpython`, pip 26, pip entrypoints) | **Done** — [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) + Beest green |
-| Phase D2 (drop python-build `.rb` orphans) | **Pushed** — delete `bzip2`, `liblzma`, `libsqlite3`, `libdb`, `libiconv` (replaced by Bazel `@bzip2`/`@xz`/`@sqlite3`) |
-| Phase D3+ (`libffi`/`libtool`/`zlib` for arm integrations) | **Deferred** — `libffi.rb` still required by `stackstate-agent-integrations-py3.rb` on arm |
+| Phase D2 (drop python-build `.rb` orphans) | **Done** — [pipeline 2628732118](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628732118) + Beest green |
+| Phase D3 (`libffi`/`libtool` omnibus orphans) | **Pushed** — match upstream 7.78.2 (`@cpython` bundles libffi; drop arm `libffi` dep) |
+| `zlib.rb` | **Kept** — still required by `openssl3.rb` |
 | Non-Bazel cleanup MR | **Not started** — separate ticket (not Bazel migration) |
 
 Commit history on the branch may be **squashed**; use `git log --grep=STAC-24773` and file contents (grep `STAC-24773` in `omnibus/`) rather than assuming one commit per phase.
@@ -111,8 +112,9 @@ Local probe: `scripts/dev/test-python3-pip-entrypoint.sh` (run inside build cont
 | C-E | mac-app, cf-finalize, buildpack-finalize, cacerts_py{2,3}_local (+ agent-binaries buildpack dep) |
 | D1 | `python3.rb` → Bazel `@bzip2`/`@xz`/`@sqlite3`/`@cpython`; drop `pip3.rb`; pip 26.0.1; `python -m pip` in integrations; re-stamp `pip3.*` shebangs |
 | D2 | `bzip2.rb`, `liblzma.rb`, `libsqlite3.rb`, `libdb.rb`, `libiconv.rb` (orphaned after D1 Bazel installs) |
+| D3 | `libffi.rb`, `libtool.rb`; drop arm `dependency 'libffi'` from STS integrations recipes (upstream 7.78.2 has none) |
 
-**Deferred from D2:** `libffi` + `libtool` (arm integrations `cffi`/`lxml` wheels), `zlib.rb` (still `openssl3` dep).
+**Still kept:** `zlib.rb` — `openssl3.rb` dependency.
 
 ## Phase D (same ticket — STAC-24773)
 
@@ -120,9 +122,11 @@ Local probe: `scripts/dev/test-python3-pip-entrypoint.sh` (run inside build cont
 
 **D1 complete (June 2026):** `build_deb` [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) + Beest green after pip entrypoint fixes (fix-ups 5–6).
 
-**D2:** Delete omnibus recipes with zero `dependency` consumers, superseded by Bazel targets wired in `python3.rb`.
+**D2 complete (June 2026):** [pipeline 2628732118](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628732118) + Beest green.
 
-**Still deferred:** `libffi.rb`, `libtool.rb` — arm integrations recipe; `zlib.rb` — `openssl3.rb`.
+**D3:** Drop `libffi.rb` / `libtool.rb` and STS-only arm `libffi` omnibus deps; `@cpython` links `@libffi//:ffi` statically (upstream 7.78.2 pattern).
+
+**Still kept:** `zlib.rb` — `openssl3.rb`.
 
 ## Parallel workstreams (do not confuse)
 
@@ -138,7 +142,7 @@ Local probe: `scripts/dev/test-python3-pip-entrypoint.sh` (run inside build cont
 - Integrations git: `github.com/StackVista/stackstate-agent-integrations`
 - Pin: `STACKSTATE_INTEGRATIONS_VERSION` in `stackstate-deps.json` (e.g. tag `7.78.2-2`)
 - Keep `python_version = "3.13"` in `stackstate-agent-integrations-py3.rb` in sync with `python3.rb` `default_version`
-- Arm builds: `dependency 'libffi'` in integrations recipe until Bazel libffi is wired (Phase D3+)
+- Arm builds: libxml2/libxslt via Bazel in `datadog-agent-dependencies.rb` (C2); no omnibus `libffi` dep (D3, matches upstream)
 
 ## After upstream merge
 
@@ -170,21 +174,23 @@ Migrates StackState Agent native/python dependencies from omnibus Ruby recipes t
 | C | Orphan `.rb` sweep + integrations-chain deps (C1–C3, C5, C6, C-E) |
 | D1 | `python3.rb` → `@cpython`; pip 26.0.1; `python -m pip` in integrations; pip3 shebang re-stamp |
 | D2 | Drop `bzip2`, `liblzma`, `libsqlite3`, `libdb`, `libiconv` (Bazel replaces them) |
+| D3 | Drop `libffi`, `libtool`; remove STS arm `libffi` dep from integrations recipes |
 
 ### CI / validation
 
-- `build_deb` x86 + arm: [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) ✅
-- Beest: ✅ (test job succeeded)
+- D1: `build_deb` + Beest — [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) ✅
+- D2: `build_deb` + Beest — [pipeline 2628732118](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628732118) ✅
+- D3: pending CI
 
-### Deferred (follow-up commits)
+### Deferred (not Phase D)
 
-- `libffi.rb` / `libtool.rb` — arm integrations still depend on omnibus libffi
 - `zlib.rb` — still required by `openssl3.rb`
 
 ### Test plan
 
-- [x] `build_deb` green (x86 + arm)
-- [x] Beest on branch tip
+- [x] `build_deb` green (x86 + arm) — D1/D2
+- [x] Beest on branch tip — D1/D2
+- [ ] D3 `build_deb` + Beest
 - [ ] Sandbox soak (optional before merge to `stackstate-7.78.2`)
 - [ ] Reviewer smoke: metrics/topology/checks in StackState UI
 

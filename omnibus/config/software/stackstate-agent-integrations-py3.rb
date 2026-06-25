@@ -11,16 +11,6 @@ name 'stackstate-agent-integrations-py3'
 dependency 'datadog-agent'
 dependency 'datadog-agent-integrations-py3-dependencies'
 
-if arm_target?
-  # same with libffi to build the cffi wheel
-  dependency 'libffi'
-  # [sts] STAC-24773 C2: libxml2 + libxslt now provided by Bazel via
-  # //packages/agent/dependencies:install (@libxml2//:all_files +
-  # @libxslt//:all_files in packages/agent/dependencies/BUILD.bazel's
-  # linux select). Headers + .so land in /opt/.../embedded/{include,lib}
-  # BEFORE this recipe's pip install of lxml runs.
-end
-
 relative_path 'integrations-core'
 
 # [sts] Whitelist psycopg2-binary bundled shared libraries (vendored .so files
