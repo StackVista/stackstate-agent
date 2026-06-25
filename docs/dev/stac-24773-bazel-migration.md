@@ -10,8 +10,9 @@ Handoff for humans and AI pair-programming on the StackState Agent fork.
 | Phase A (initial Bazel deps: libpcap, snmp-traps, jmxfetch, systemd, …) | Done (earlier commits on branch) |
 | Phase B (openscap chain, curl/nghttp2) | Done |
 | Phase C (orphan `.rb` sweep + integrations-chain deps) | Done (C1–C3, C5, C6, C-E) |
-| CI + Beest on branch tip | Green before merge |
-| Phase D (`python3.rb` → `@cpython`) | **In progress** — D1 committed locally; D2+ drops python-only `.rb` orphans |
+| Phase D1 (`python3.rb` → `@cpython`, pip 26, pip entrypoints) | **Done** — [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) + Beest green |
+| Phase D2 (drop python-build `.rb` orphans) | **Pushed** — delete `bzip2`, `liblzma`, `libsqlite3`, `libdb`, `libiconv` (replaced by Bazel `@bzip2`/`@xz`/`@sqlite3`) |
+| Phase D3+ (`libffi`/`libtool`/`zlib` for arm integrations) | **Deferred** — `libffi.rb` still required by `stackstate-agent-integrations-py3.rb` on arm |
 | Non-Bazel cleanup MR | **Not started** — separate ticket (not Bazel migration) |
 
 Commit history on the branch may be **squashed**; use `git log --grep=STAC-24773` and file contents (grep `STAC-24773` in `omnibus/`) rather than assuming one commit per phase.
@@ -78,6 +79,10 @@ Remove every consumer `dependency` line in the **same commit**, or omnibus parse
 command "sed -i '1s|.*|#!#{install_dir}/embedded/bin/python|' #{install_dir}/embedded/sbin/gstatus"
 ```
 
+`@cpython` console scripts (`pip3.*`) have the same problem: Bazel bakes `//:install_dir` (`/opt/datadog-agent`) while `fix_branding.sh` sets omnibus `install_dir` to `/opt/stackstate-agent`. Re-stamp in `python3.rb` after pip upgrade; integrations invoke pip via `python -m pip` (upstream 7.78.2).
+
+Local probe: `scripts/dev/test-python3-pip-entrypoint.sh` (run inside build container via `local.sh cmd`).
+
 (Long-term: ABLD-302-style `config_flag` in Bazel; until then, omnibus `sed` is intentional.)
 
 ## Where Bazel installs live (post B+C)
@@ -104,29 +109,20 @@ command "sed -i '1s|.*|#!#{install_dir}/embedded/bin/python|' #{install_dir}/emb
 | C5 | freetds, msodbcsql18, unixodbc, secret-generic-connector.rb |
 | C6 | gstatus, nfsiostat, lua, sysstat |
 | C-E | mac-app, cf-finalize, buildpack-finalize, cacerts_py{2,3}_local (+ agent-binaries buildpack dep) |
+| D1 | `python3.rb` → Bazel `@bzip2`/`@xz`/`@sqlite3`/`@cpython`; drop `pip3.rb`; pip 26.0.1; `python -m pip` in integrations; re-stamp `pip3.*` shebangs |
+| D2 | `bzip2.rb`, `liblzma.rb`, `libsqlite3.rb`, `libdb.rb`, `libiconv.rb` (orphaned after D1 Bazel installs) |
 
-**Deferred from original C2:** `libffi` (python3), `unixodbc`/`freetds` (moved to C5), `nfsiostat` shebang (fixed in C6).
+**Deferred from D2:** `libffi` + `libtool` (arm integrations `cffi`/`lxml` wheels), `zlib.rb` (still `openssl3` dep).
 
 ## Phase D (same ticket — STAC-24773)
 
-**Goal:** Replace omnibus `python3.rb` source build with upstream pattern: `@bzip2`, `@xz`, `@sqlite3`, `@cpython//:install`, pip 26.0.1 bump.
+**Goal:** Replace omnibus `python3.rb` source build with upstream pattern: `@bzip2`, `@xz`, `@sqlite3`, `@cpython//:install`, pip 26.0.1 bump; drop orphaned python-build recipes.
 
-**Ticket scope:** Phase D stays on **STAC-24773** (one epic: omnibus → Bazel for 7.78). It was deferred from MR !426 only to land B+C first and keep commit/MR review units manageable — not because it is a different class of work. Use a **new MR or new commits on the same branch** after B+C merges; no new STAC number required.
+**D1 complete (June 2026):** `build_deb` [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) + Beest green after pip entrypoint fixes (fix-ups 5–6).
 
-**Why deferral was tactical, not organizational:** Compared to an upstream merge, Bazel migration has a smaller blast radius and is fully covered by our standard validation stack (below). DD spread `@cpython` across many PRs for their own release cadence; we can proceed in fewer commits while gating each on CI.
+**D2:** Delete omnibus recipes with zero `dependency` consumers, superseded by Bazel targets wired in `python3.rb`.
 
-**Standard validation for Phase D (same as B+C):**
-
-1. Unit tests (branded + unbranded) in GitLab CI
-2. Integrated E2E — Beest pipeline on the built image
-3. Sandbox soak — pin agent hash in `argocd-apps` sandbox-main; exercise compliance + integrations paths
-4. Human smoke — one or two reviewers confirm collected metrics/topology/check data in the StackState UI
-
-**Integrations repo:** No check **source** changes expected if Python stays **3.13.13**. Work is in agent `omnibus/` (+ Beest). Touch `stackstate-agent-integrations` only on Python version bump or broken pip hashes.
-
-**Unlocks dropping:** `libffi.rb`, `zlib.rb`, `bzip2.rb`, `liblzma.rb`, `libsqlite3.rb`, `libtool.rb`, `libdb.rb`, `libiconv.rb`, … (full list in plan file).
-
-DD upstream used multiple PRs; we still gate **one logical change per commit** (wait for `build_deb` x86 + arm, then Beest before declaring Phase D done). Phase D itself may be 2–4 commits (cpython wiring → drop first `.rb` wave → …), not a single squash.
+**Still deferred:** `libffi.rb`, `libtool.rb` — arm integrations recipe; `zlib.rb` — `openssl3.rb`.
 
 ## Parallel workstreams (do not confuse)
 
@@ -142,7 +138,7 @@ DD upstream used multiple PRs; we still gate **one logical change per commit** (
 - Integrations git: `github.com/StackVista/stackstate-agent-integrations`
 - Pin: `STACKSTATE_INTEGRATIONS_VERSION` in `stackstate-deps.json` (e.g. tag `7.78.2-2`)
 - Keep `python_version = "3.13"` in `stackstate-agent-integrations-py3.rb` in sync with `python3.rb` `default_version`
-- Arm builds: `dependency 'libffi'` in integrations recipe until Phase D provides Bazel libffi via cpython
+- Arm builds: `dependency 'libffi'` in integrations recipe until Bazel libffi is wired (Phase D3+)
 
 ## After upstream merge
 
@@ -155,3 +151,45 @@ DD upstream used multiple PRs; we still gate **one logical change per commit** (
 - [UPSTREAM_MERGE.md](../../UPSTREAM_MERGE.md) — merge workflow, sandbox soak, cutover
 - [.claude/skills/omnibus-to-bazel/SKILL.md](../../.claude/skills/omnibus-to-bazel/SKILL.md) — single-dep migration procedure
 - Claude memory: `omnibus-bazel-migration-gap.md` (short index, points here)
+
+## MR !426 description (keep in sync with branch tip)
+
+Copy into [MR !426](https://gitlab.com/stackvista/agent/stackstate-agent/-/merge_requests/426) when status changes.
+
+```markdown
+## STAC-24773 — Omnibus → Bazel migration (7.78.2)
+
+Migrates StackState Agent native/python dependencies from omnibus Ruby recipes to Bazel (`bazelisk run @dep//:install`), aligned with Datadog Agent 7.78.2. All `bazelisk` invocations use `--downloader_config=/dev/null` for STS runner egress.
+
+### Phases complete
+
+| Phase | Summary |
+|-------|---------|
+| A | libpcap, snmp-traps, jmxfetch, systemd, … |
+| B | openscap chain, curl, nghttp2 |
+| C | Orphan `.rb` sweep + integrations-chain deps (C1–C3, C5, C6, C-E) |
+| D1 | `python3.rb` → `@cpython`; pip 26.0.1; `python -m pip` in integrations; pip3 shebang re-stamp |
+| D2 | Drop `bzip2`, `liblzma`, `libsqlite3`, `libdb`, `libiconv` (Bazel replaces them) |
+
+### CI / validation
+
+- `build_deb` x86 + arm: [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) ✅
+- Beest: ✅ (test job succeeded)
+
+### Deferred (follow-up commits)
+
+- `libffi.rb` / `libtool.rb` — arm integrations still depend on omnibus libffi
+- `zlib.rb` — still required by `openssl3.rb`
+
+### Test plan
+
+- [x] `build_deb` green (x86 + arm)
+- [x] Beest on branch tip
+- [ ] Sandbox soak (optional before merge to `stackstate-7.78.2`)
+- [ ] Reviewer smoke: metrics/topology/checks in StackState UI
+
+### Docs
+
+- Handoff: `docs/dev/stac-24773-bazel-migration.md`
+- Local pip probe: `scripts/dev/test-python3-pip-entrypoint.sh`
+```
