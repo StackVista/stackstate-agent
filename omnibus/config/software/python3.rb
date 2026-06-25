@@ -66,4 +66,18 @@ build do
   # ensurepip, which is vulnerable. Replaces the deleted omnibus pip3.rb recipe.
   command "#{python} -m pip install pip==26.0.1"
   command "#{python} -m pip --version"
+
+  # @cpython console scripts (pip3.*) ship with shebangs baked to /opt/datadog-agent
+  # (Bazel //:install_dir default). fix_branding.sh rewrites omnibus install_dir to
+  # /opt/stackstate-agent, so re-stamp pip entrypoints (same pattern as gstatus/nfsiostat
+  # in datadog-agent-integrations-py3-dependencies.rb).
+  unless windows_target?
+    block do
+      Dir.glob("#{install_dir}/embedded/bin/pip3*").each do |pip_script|
+        next if File.symlink?(pip_script)
+
+        command "sed -i '1s|.*|#!#{install_dir}/embedded/bin/python3|' #{pip_script}"
+      end
+    end
+  end
 end
