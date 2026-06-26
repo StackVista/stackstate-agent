@@ -12,7 +12,7 @@ Handoff for humans and AI pair-programming on the StackState Agent fork.
 | Phase C (orphan `.rb` sweep + integrations-chain deps) | Done (C1–C3, C5, C6, C-E) |
 | Phase D1 (`python3.rb` → `@cpython`, pip 26, pip entrypoints) | **Done** — [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) + Beest green |
 | Phase D2 (drop python-build `.rb` orphans) | **Done** — [pipeline 2628732118](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628732118) + Beest green |
-| Phase D3 (`libffi`/`libtool` omnibus orphans) | **Pushed** — match upstream 7.78.2 (`@cpython` bundles libffi; drop arm `libffi` dep) |
+| Phase D3 (`libffi`/`libtool` omnibus orphans) | **Done** — [pipeline 2629204999](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2629204999) + Beest green |
 | `zlib.rb` | **Kept** — still required by `openssl3.rb` |
 | Non-Bazel cleanup MR | **Not started** — separate ticket (not Bazel migration) |
 
@@ -180,7 +180,7 @@ Migrates StackState Agent native/python dependencies from omnibus Ruby recipes t
 
 - D1: `build_deb` + Beest — [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) ✅
 - D2: `build_deb` + Beest — [pipeline 2628732118](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628732118) ✅
-- D3: pending CI
+- D3: `build_deb` + Beest + unit tests — [pipeline 2629204999](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2629204999) ✅
 
 ### Deferred (not Phase D)
 
@@ -188,9 +188,9 @@ Migrates StackState Agent native/python dependencies from omnibus Ruby recipes t
 
 ### Test plan
 
-- [x] `build_deb` green (x86 + arm) — D1/D2
-- [x] Beest on branch tip — D1/D2
-- [ ] D3 `build_deb` + Beest
+- [x] `build_deb` green (x86 + arm) — D1–D3
+- [x] Beest on branch tip — D1–D3
+- [x] Unbranded unit tests — [pipeline 2629204999](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2629204999)
 - [ ] Sandbox soak (optional before merge to `stackstate-7.78.2`)
 - [ ] Reviewer smoke: metrics/topology/checks in StackState UI
 
