@@ -367,7 +367,6 @@ build_deb:
         prefix: build-deb-bazel-cache-$STS_VER-$ARCH
         files:
           - .bazelversion
-          - .go-version
           - .python-version
       paths:
         - .cache/bazel-disk
