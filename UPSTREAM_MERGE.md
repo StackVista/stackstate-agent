@@ -112,6 +112,93 @@ Datadog 7.78 moved most native dependencies from `omnibus/config/software/*.rb` 
 
 **Still omnibus after Phase B+C:** `python3.rb` (Phase D → `@cpython`, **same STAC-24773 ticket**), `cacerts`, `openssl3`, FIPS provider, and python3's transitive chain (`libffi`, `zlib`, …).
 
+### Bazel cache wiring for omnibus jobs
+
+**When this matters:** any upstream merge that introduces, expands, or modifies
+`bazelisk run` shell-outs from `omnibus/config/software/*.rb`. At the time of
+writing, the wiring is on `build_deb` only because that's the only
+omnibus-invoking job in the STS fork; if a future job is added (`build_rpm`,
+`build_suse_rpm`, `build_msi`, …) it needs the same treatment.
+
+**The problem:** every bazelisk invocation from omnibus runs with no `--config`,
+no `--disk_cache`, no `--repository_cache`, and Bazel's default state lives
+under `$HOME/.cache/bazel/` which is wiped between K8s job pods. Each pipeline
+rebuilds `@cpython` (~9.5 min cold), `@openscap`, `@sqlite3`, `@msodbcsql18`,
+etc. from scratch. Measured impact on the STAC-24773 migration:
+`build_deb` regressed from 52 min (pre-bazel) to 84 min (post-bazel) — a 31-min
+hit, of which 27 min was bazelisk re-doing fully-cacheable work.
+
+**The fix (already applied in `build_deb`, commit `64ab79eeca`):** mirrors DD's
+`.bazel:defs:cache:omnibus-transition` anchor from
+`.gitlab/build/bazel/defs.yml`. STS pipelines don't `include:` any of those
+upstream files, so the pattern is inlined. Two pieces:
+
+1. **Split the job `cache:` into a list** so omnibus state, Bazel install base,
+   and Bazel action/repository caches invalidate independently:
+
+   ```yaml
+   cache:
+     - key: "build-<job>-omnibus-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
+       paths: [.omnibus, .gems]
+     - key:
+         prefix: build-<job>-bazel-install-$STS_VER-$ARCH
+         files: [.bazelversion]           # max 2 entries — GitLab limit
+       paths: [.cache/bazelisk, .cache/bazel/install]
+       when: on_success
+     - key:
+         prefix: build-<job>-bazel-cache-$STS_VER-$ARCH
+         files: [.bazelversion, .python-version]
+       paths: [.cache/bazel-disk, .cache/bazel-repo]
+       when: on_success
+   ```
+
+   The omnibus cache is per-branch (`$CI_COMMIT_REF_SLUG`); the two Bazel caches
+   are cross-branch (intentional — Bazel state is content-addressed and safe to
+   share). `cache:key:files:` is capped at **2 entries** by GitLab — picking the
+   right two means picking the files whose change should invalidate that cache.
+
+2. **Write `user.bazelrc` in `before_script`** to pin Bazel state under
+   `$CI_PROJECT_DIR/.cache/` so it lines up with the `cache:paths:` above.
+   `.bazelrc:75` does `try-import %workspace%/user.bazelrc` — the
+   upstream-blessed extension point. `/user.bazelrc` and `/.cache/` are
+   gitignored.
+
+   ```yaml
+   before_script:
+     # … (restate the file-level before_script verbatim — GitLab REPLACES the
+     #     top-level one, doesn't extend it) …
+     - mkdir -p "$CI_PROJECT_DIR/.cache/bazel" \
+                "$CI_PROJECT_DIR/.cache/bazel-disk" \
+                "$CI_PROJECT_DIR/.cache/bazel-repo" \
+                "$CI_PROJECT_DIR/.cache/bazelisk"
+     - |
+       cat > "$CI_PROJECT_DIR/user.bazelrc" <<EOF
+       startup --output_user_root=$CI_PROJECT_DIR/.cache/bazel
+       common --disk_cache=$CI_PROJECT_DIR/.cache/bazel-disk
+       common --repository_cache=$CI_PROJECT_DIR/.cache/bazel-repo
+       EOF
+   ```
+
+**Gotchas:**
+
+- **Job-level `before_script` REPLACES the file-level one, doesn't extend it.**
+  The conda activate / GOPATH symlink / go-deps tarball extraction at the top
+  of `.gitlab-ci-agent.yml` must be restated verbatim in any job that adds its
+  own `before_script`. Easy to miss because Bazel will still install fine; the
+  failure shows up later as a missing Go toolchain or wrong-Python errors.
+- **`XDG_CACHE_HOME` alone is not enough.** Bazelisk reads it for its own
+  download dir, but Bazel itself does not — `output_user_root` defaults to
+  `~/.cache/bazel/_bazel_$USER/<workspace-hash>` regardless. Pin it explicitly
+  with `--output_user_root` in `user.bazelrc`.
+- **Validation:** first run after wiring will MISS all three caches
+  ("WARNING: file does not exist") and upload them at job end. Look for the
+  `===== user.bazelrc =====` echo and the `Creating cache build-<job>-bazel-…`
+  lines. Confirm cache hit on the SECOND run: @cpython should drop from ~570s
+  cold → seconds.
+- **DD's upstream `.bazel:defs:cache:omnibus-transition`** anchor exists in
+  `.gitlab/build/bazel/defs.yml`. If STS ever starts `include:`ing the upstream
+  CI files, switch from the inlined pattern to `extends: .bazel:defs:cache:omnibus-transition`.
+
 ## Branding: datadoghq.com to stackstate.io
 
 All branding transformations live in `fix_branding.sh`. This script runs at build time and must NOT be applied as permanent local code changes — the source tree stays close to upstream for easier future merges.
@@ -475,10 +562,11 @@ Pre-merge branch setup (above) is a prerequisite. By the time you're here, `merg
 3. Iterate on CI until `branded_unit_tests` and `unbranded_unit_tests` pass on both x86 and ARM
 4. **Verify all StackState-specific code blocks** (see "StackState-Specific Code That Can Be Lost During Merge" above)
 5. **If this merge bumped the embedded Python** (`omnibus/config/software/python3.rb` `default_version`), bump and rebuild the `stackstate-agent-integrations` CI runner image + venv to match — see "Integrations repo: CI runner image (embedded Python bump)" above. Do this before integration testing so checks run on the interpreter the agent ships.
-6. Run integration tests (beest) against the produced container images
-7. **Deploy to sandbox and verify metric enrichment + log noise floor** (see "Sandbox soak validation" below)
-8. Fix any runtime issues
-9. **Open the cutover MR**: source `merged-<CURRENT>-to-<NEXT>` → target `stackstate-<NEXT>` (which already exists from prep step 6 with the SUSE customization commit on it). Title pattern from MR !387: "Our changes on top of <NEXT> into base". Once that merges, `stackstate-<NEXT>` becomes the new fork main and the four-repo coordination in "Cutover" below kicks in.
+6. **If this merge brought new omnibus → Bazel migrations** (any new `bazelisk run` shell-out from `omnibus/config/software/*.rb`), check that the relevant build job in `.gitlab-ci-agent.yml` has the multi-cache wiring described in "Omnibus → Bazel migration / Bazel cache wiring for omnibus jobs" above. Each new bazelisk-driven dep (cpython, openscap, sqlite3, msodbcsql18, …) rebuilds from scratch every pipeline without it.
+7. Run integration tests (beest) against the produced container images
+8. **Deploy to sandbox and verify metric enrichment + log noise floor** (see "Sandbox soak validation" below)
+9. Fix any runtime issues
+10. **Open the cutover MR**: source `merged-<CURRENT>-to-<NEXT>` → target `stackstate-<NEXT>` (which already exists from prep step 6 with the SUSE customization commit on it). Title pattern from MR !387: "Our changes on top of <NEXT> into base". Once that merges, `stackstate-<NEXT>` becomes the new fork main and the four-repo coordination in "Cutover" below kicks in.
 
 ## Sandbox soak validation
 
