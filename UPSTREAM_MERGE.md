@@ -86,6 +86,23 @@ as the build container image in "Build & Test Infrastructure"). Finally point
   agent. Concrete case — **STAC-25137** (Rabobank Dynatrace): a pydantic v2
   `dict_type` validation bug only reproduced on the production stack (py3.13 /
   pydantic 2.12.5) while integrations CI was still on py3.11, so CI stayed green.
+- **Worked resolution (STAC-25137):** the fix is **three-legged** and all three
+  legs ship together or not at all:
+  1. **Code fix in `stackstate-agent-integrations`** on a ticket branch
+     (`STAC-25137`): tolerant-union validator on
+     `HostProperties.customHostMetadata` so dict, list, and str inputs all parse
+     successfully. Released as integrations tag **`7.78.2-3`**.
+  2. **Agent pin bump** in `stackstate-deps.json`:
+     `STACKSTATE_INTEGRATIONS_VERSION: 7.78.2-2 → 7.78.2-3`. Without this the
+     agent still ships the broken integrations build.
+  3. **Embedded Python bump** in `omnibus/config/software/python3.rb`
+     (`3.13.13 → 3.13.14`) so the production interpreter matches what
+     integrations CI now tests against. Stale embedded Python is what let the
+     bug slip past CI in the first place; bumping it without re-verifying CI
+     would re-open the same blind spot on the next merge.
+
+  Customer-validated outcome: Rabobank confirmed missing hosts re-appeared in
+  topology once the agent shipping all three changes rolled out.
 
 ## Branding: datadoghq.com to stackstate.io
 
