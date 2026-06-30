@@ -129,6 +129,7 @@ Walk every item in UPSTREAM_MERGE.md "StackState-Specific Code That Can Be Lost 
 
 ## Phase 4 — Integration testing
 
+- [ ] If this merge bumped the embedded Python (`omnibus/config/software/python3.rb` `default_version`), bump the `stackstate-agent-integrations` CI runner image + venv to the same version and rebuild/publish it — see UPSTREAM_MERGE.md "Integrations repo: CI runner image (embedded Python bump)". Otherwise integration checks test on a different Python than the agent ships (cf. STAC-25137).
 - [ ] Build container images via the agent CI pipeline.
 - [ ] Trigger beest pipeline against the new images. Use the `AGENT_BRANCH_UNDER_TEST` mechanism (see beest README).
 - [ ] Investigate any failures; loop back to Phase 2/3 fixes as needed.

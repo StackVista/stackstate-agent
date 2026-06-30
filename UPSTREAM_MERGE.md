@@ -42,6 +42,68 @@ Both `branded_unit_tests` and `unbranded_unit_tests` in `.gitlab-ci-agent.yml` i
 - `--build-exclude=$STS_UT_BUILD_EXCLUDE` — drops build tags for features StackState does not ship in the cluster-agent / node-agent images. The current set is `oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd`. **If a future upstream merge introduces a new heavy build tag for a feature StackState doesn't surface (e.g., a new database integration, GPU/hardware support, vendor SDK), consider adding it to this list to keep CI time bounded.** Service-discovery integrations (`consul`, `etcd`, `zk`, `ncm`) are deliberately kept in.
 - `--timeout=600` — bumps Go's per-package test timeout from 180s to 600s. Required because we run `go clean -modcache` at job start, so subprocess-heavy tests like `pkg/collector/corechecks/servicediscovery/apm.TestGoDetector` (which shells out to `go build` four times to compile fixture binaries) can blow the default 3-minute timeout on a busy runner. Don't drop this without first confirming the modcache wipe is also gone.
 
+## Integrations repo: CI runner image (embedded Python bump)
+
+The Python integrations (`stackstate-agent-integrations`, a **separate** repo)
+run in production under the CPython the agent **embeds via omnibus**, not the
+system Python. The source of truth for that version is the agent's
+`omnibus/config/software/python3.rb` → `default_version` (currently `3.13.14`).
+The integrations repo mirrors it in `.python-version` and is supposed to run its
+CI on a matching interpreter.
+
+Historically the integrations CI **runner image and venv lagged** behind — stuck
+on 3.11 while the embedded Python moved to 3.13.14 — so integration tests ran on
+a different Python (and therefore different resolved dependency versions) than
+the agent actually ships. **When an upstream merge bumps `python3.rb`
+`default_version`, bump the integrations runner image + venv to the same version
+as part of the merge.** This is upstream-merge work, not an ad-hoc task.
+
+Files to change in `stackstate-agent-integrations` (replace the old `3.11` /
+`py311` with the new `X.Y` / `py3XY`):
+
+- `.setup-scripts/image/Dockerfile` — `FROM registry.tooling.stackstate.io/docker/python:<X.Y.Z>-bullseye`
+- `.setup-scripts/image/Makefile` — runner image tag suffix `-py3XY` (the `build`/`push`/`tag_latest`/`push_latest` targets)
+- `.setup-scripts/setup_env.sh` — `virtualenv --python=python3.XY` (and the `lib/python3.XY/site-packages` echo)
+- `.gitlab-ci.yml` — the `image:` tag (`stackstate-agent-integrations-runner:<DATE>-py3XY`) and `PYTHON_VERSION:`
+- `.python-version` — the pinned interpreter (often already bumped ahead of the image)
+
+Then rebuild and publish the runner image:
+
+```
+make -C .setup-scripts/image build push tag_latest push_latest
+```
+
+This pushes to `registry.tooling.stackstate.io` and **needs registry
+credentials** — coordinate with whoever owns SUSE/registry infra (the same people
+as the build container image in "Build & Test Infrastructure"). Finally point
+`.gitlab-ci.yml`'s `image:` at the new `<DATE>-py3XY` tag the Makefile produced.
+
+- **Why it matters:** the runner image resolves `pydantic` (and the other base
+  deps in `stackstate_checks_base/requirements.in`) for *its* Python. A stale
+  image hides bugs that only appear on the production interpreter / dependency
+  set.
+- **Symptom if skipped:** a check passes integrations CI but fails in the shipped
+  agent. Concrete case — **STAC-25137** (Rabobank Dynatrace): a pydantic v2
+  `dict_type` validation bug only reproduced on the production stack (py3.13 /
+  pydantic 2.12.5) while integrations CI was still on py3.11, so CI stayed green.
+- **Worked resolution (STAC-25137):** the fix is **three-legged** and all three
+  legs ship together or not at all:
+  1. **Code fix in `stackstate-agent-integrations`** on a ticket branch
+     (`STAC-25137`): tolerant-union validator on
+     `HostProperties.customHostMetadata` so dict, list, and str inputs all parse
+     successfully. Released as integrations tag **`7.78.2-3`**.
+  2. **Agent pin bump** in `stackstate-deps.json`:
+     `STACKSTATE_INTEGRATIONS_VERSION: 7.78.2-2 → 7.78.2-3`. Without this the
+     agent still ships the broken integrations build.
+  3. **Embedded Python bump** in `omnibus/config/software/python3.rb`
+     (`3.13.13 → 3.13.14`) so the production interpreter matches what
+     integrations CI now tests against. Stale embedded Python is what let the
+     bug slip past CI in the first place; bumping it without re-verifying CI
+     would re-open the same blind spot on the next merge.
+
+  Customer-validated outcome: Rabobank confirmed missing hosts re-appeared in
+  topology once the agent shipping all three changes rolled out.
+
 ## Branding: datadoghq.com to stackstate.io
 
 All branding transformations live in `fix_branding.sh`. This script runs at build time and must NOT be applied as permanent local code changes — the source tree stays close to upstream for easier future merges.
@@ -404,10 +466,11 @@ Pre-merge branch setup (above) is a prerequisite. By the time you're here, `merg
 2. Update `fix_branding.sh` to handle new branding patterns
 3. Iterate on CI until `branded_unit_tests` and `unbranded_unit_tests` pass on both x86 and ARM
 4. **Verify all StackState-specific code blocks** (see "StackState-Specific Code That Can Be Lost During Merge" above)
-5. Run integration tests (beest) against the produced container images
-6. **Deploy to sandbox and verify metric enrichment + log noise floor** (see "Sandbox soak validation" below)
-7. Fix any runtime issues
-8. **Open the cutover MR**: source `merged-<CURRENT>-to-<NEXT>` → target `stackstate-<NEXT>` (which already exists from prep step 6 with the SUSE customization commit on it). Title pattern from MR !387: "Our changes on top of <NEXT> into base". Once that merges, `stackstate-<NEXT>` becomes the new fork main and the four-repo coordination in "Cutover" below kicks in.
+5. **If this merge bumped the embedded Python** (`omnibus/config/software/python3.rb` `default_version`), bump and rebuild the `stackstate-agent-integrations` CI runner image + venv to match — see "Integrations repo: CI runner image (embedded Python bump)" above. Do this before integration testing so checks run on the interpreter the agent ships.
+6. Run integration tests (beest) against the produced container images
+7. **Deploy to sandbox and verify metric enrichment + log noise floor** (see "Sandbox soak validation" below)
+8. Fix any runtime issues
+9. **Open the cutover MR**: source `merged-<CURRENT>-to-<NEXT>` → target `stackstate-<NEXT>` (which already exists from prep step 6 with the SUSE customization commit on it). Title pattern from MR !387: "Our changes on top of <NEXT> into base". Once that merges, `stackstate-<NEXT>` becomes the new fork main and the four-repo coordination in "Cutover" below kicks in.
 
 ## Sandbox soak validation
 
