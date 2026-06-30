@@ -402,8 +402,19 @@ build_deb:
       startup --output_user_root=$CI_PROJECT_DIR/.cache/bazel
       common --disk_cache=$CI_PROJECT_DIR/.cache/bazel-disk
       common --repository_cache=$CI_PROJECT_DIR/.cache/bazel-repo
+      # [sts] STAC-24773 — diagnostic: print which rc files bazel loaded so we can
+      # confirm user.bazelrc is picked up by every bazelisk invocation in omnibus
+      # builders (one-off — drop after the cache-hit question is settled).
+      common --announce_rc
       EOF
     - echo "===== user.bazelrc ====="; cat "$CI_PROJECT_DIR/user.bazelrc"
+    # [sts] STAC-24773 — pre-build cache snapshot: prove the restored disk_cache
+    # (extracted by GitLab from S3) actually contains entries, separate from
+    # whatever the current job will/won't write.
+    - echo "===== bazel cache state BEFORE build ====="
+    - du -sh "$CI_PROJECT_DIR/.cache/bazel-disk" "$CI_PROJECT_DIR/.cache/bazel-repo" 2>/dev/null || true
+    - find "$CI_PROJECT_DIR/.cache/bazel-disk" -mindepth 1 -maxdepth 2 2>/dev/null | head -10 || true
+    - echo -n "  bazel-disk file count (before) "; find "$CI_PROJECT_DIR/.cache/bazel-disk" -type f 2>/dev/null | wc -l
   script:
     - export PATH=$PATH:/usr/local/go/bin
     - export AGENT_GITHUB_ORG=DataDog
@@ -428,6 +439,19 @@ build_deb:
     - export LD_LIBRARY_PATH="/opt/stackstate-agent/embedded/lib/python3.12/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
     - echo ${LD_LIBRARY_PATH}
     - inv -e omnibus.build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign
+
+    # [sts] STAC-24773 — post-build cache snapshot: capture what bazel actually
+    # wrote to --disk_cache during this job, before GitLab packs it for S3
+    # upload. If file count stays near zero across multiple jobs, disk_cache is
+    # being silently bypassed (likely rules_foreign_cc/configure_make + tree
+    # outputs) and the cache: paths: entry for bazel-disk is not earning its
+    # keep — drop it and rely only on bazel-repo. One-off diagnostic.
+    - echo "===== bazel cache state AFTER build ====="
+    - du -sh "$CI_PROJECT_DIR/.cache/bazel-disk" "$CI_PROJECT_DIR/.cache/bazel-repo" 2>/dev/null || true
+    - find "$CI_PROJECT_DIR/.cache/bazel-disk" -mindepth 1 -maxdepth 2 2>/dev/null | head -20 || true
+    - echo -n "  bazel-disk file count (after) "; find "$CI_PROJECT_DIR/.cache/bazel-disk" -type f 2>/dev/null | wc -l
+    - echo -n "  bazel-disk cas file count "; find "$CI_PROJECT_DIR/.cache/bazel-disk/cas" -type f 2>/dev/null | wc -l
+    - echo -n "  bazel-disk ac file count "; find "$CI_PROJECT_DIR/.cache/bazel-disk/ac" -type f 2>/dev/null | wc -l
 
     # Prepare outputs
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
