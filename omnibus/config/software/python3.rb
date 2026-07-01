@@ -2,75 +2,51 @@ name "python3"
 
 default_version "3.13.14"
 
+# [sts] STAC-24773 Phase D1: Python via Bazel @cpython (replaces omnibus source build).
+# Mirrors origin/base-7.78.2 with --downloader_config=/dev/null on every bazelisk
+# invocation (STS runner egress workaround; see datadog-agent-dependencies.rb).
+if heroku_target?
+  flavor_flag = "--//packages/agent:flavor=heroku"
+else
+  flavor_flag = fips_mode? ? "--//packages/agent:flavor=fips" : ""
+end
+
 unless windows?
-  dependency "libxcrypt"
-  dependency "libffi"
-  dependency "zlib"
-  dependency "bzip2"
-  dependency "libsqlite3"
-  dependency "liblzma"
-  dependency "libyaml"
+  build do
+    # Temporary deps. When we fix auto-rpath fixing these will disappear.
+    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- @bzip2//:install --destdir='#{install_dir}'"
+
+    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- @xz//:install --destdir='#{install_dir}'"
+    sh_lib = if linux_target? then "liblzma.so" else "liblzma.dylib" end
+    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- //bazel/rules:replace_prefix --prefix '#{install_dir}/embedded' " \
+      "#{install_dir}/embedded/lib/#{sh_lib}"
+
+    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- @sqlite3//:install --destdir='#{install_dir}'"
+    sh_lib = if linux_target? then "libsqlite3.so" else "libsqlite3.dylib" end
+    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- //bazel/rules:replace_prefix --prefix '#{install_dir}/embedded' " \
+       "#{install_dir}/embedded/lib/#{sh_lib}"
+  end
 end
 dependency "openssl3"
-
-source :url => "https://python.org/ftp/python/#{version}/Python-#{version}.tgz",
-       :sha256 => "5ae535a36af0ebca6fca176ecb8197f5db9c1cb8c8f0cd12cdf1787046db1f41"
-
-relative_path "Python-#{version}"
 
 build do
   # 2.0 is the license version here, not the python version
   license "Python-2.0"
 
-  unless windows_target?
+  if !windows_target?
     env = with_standard_compiler_flags(with_embedded_path)
-    python_configure_options = [
-      "--without-readline",  # Disables readline support
-      "--with-ensurepip=yes", # We upgrade pip later, in the pip3 software definition
-      "--without-static-libpython" # We only care about the shared library
-    ]
+    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- @cpython//:install --destdir='#{install_dir}'"
+    sh_ext = if linux_target? then "so" else "dylib" end
+    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- //bazel/rules:replace_prefix --prefix '#{install_dir}/embedded'" \
+      " #{install_dir}/embedded/lib/libpython3.*#{sh_ext}" \
+      " #{install_dir}/embedded/lib/python3.13/lib-dynload/*.so" \
+      " #{install_dir}/embedded/bin/python3*"
+    python = "#{install_dir}/embedded/bin/python3"
 
-    if mac_os_x?
-      python_configure_options.push("--enable-ipv6",
-                            "--with-universal-archs=#{arm_target? ? "universal2" : "intel"}",
-                            "--enable-shared")
-    elsif linux_target?
-      python_configure_options.push("--enable-shared",
-                            "--enable-ipv6")
-    elsif aix?
-      # something here...
-    end
-
-    python_configure_options.push("--with-dbmliborder=")
-
-    # Force different defaults for the "optimization settings"
-    # This removes the debug symbol generation and doesn't enable all warnings
-    env["OPT"] = "-DNDEBUG -fwrapv"
-    configure(*python_configure_options, :env => env)
-    command "make -j #{workers}", :env => env
-    command "make install", :env => env
-
-    # There exists no configure flag to tell Python to not compile readline support :(
-    major, minor, bugfix = version.split(".")
-
-    # Don't forward CC and CXX to python extensions Makefile, it's quite unlikely that any non default
-    # compiler we use would end up being available in the system/docker image used by customers
-    if linux_target? && env["CC"]
-      command "sed -i \"s/^CC=[[:space:]]*${CC}/CC=gcc/\" #{install_dir}/embedded/lib/python#{major}.#{minor}/config-3.13-*-linux-gnu/Makefile", :env => env
-      command "sed -i \"s/${CC}/gcc/g\" #{install_dir}/embedded/lib/python#{major}.#{minor}/_sysconfigdata__linux_*-linux-gnu.py", :env => env
-    end
-    if linux_target? && env["CXX"]
-      command "sed -i \"s/^CXX=[[:space:]]*${CXX}/CC=g++/\" #{install_dir}/embedded/lib/python#{major}.#{minor}/config-3.13-*-linux-gnu/Makefile", :env => env
-      command "sed -i \"s/${CXX}/g++/g\" #{install_dir}/embedded/lib/python#{major}.#{minor}/_sysconfigdata__linux_*-linux-gnu.py", :env => env
-    end
-    delete "#{install_dir}/embedded/lib/python#{major}.#{minor}/test"
-    block do
-      FileUtils.rm_f(Dir.glob("#{install_dir}/embedded/lib/python#{major}.#{minor}/distutils/command/wininst-*.exe"))
-    end
-
-    # Python curses modules depend on system ncurses libraries (libncursesw.so.6, libtinfo.so.6, libpanelw.so.6)
+    # Python curses modules depend on system ncurses libraries (libncursesw.so.6, …)
     # which are widely available on Linux systems. These are safe dependencies.
     if linux_target?
+      major, minor, = version.split(".")
       block do
         Dir.glob("#{install_dir}/embedded/lib/python#{major}.#{minor}/lib-dynload/_curses*.so").each do |file|
           whitelist_file file
@@ -81,69 +57,27 @@ build do
       end
     end
   else
-    dependency "vc_redist_14"
-
-    ###############################
-    # Setup openssl dependency... #
-    ###############################
-
-    # We must provide python with the same file hierarchy as
-    # https://github.com/python/cpython-bin-deps/tree/openssl-bin-3.0/amd64
-    # but with our OpenSSL build instead.
-
-    # This is not necessarily the version we built, but the version
-    # the Python build system expects.
-    openssl_version = "3.0.19"
-    python_arch = "amd64"
-
-    mkdir "externals\\openssl-bin-#{openssl_version}\\#{python_arch}\\include"
-    # Copy the import library to have them point at our own built versions, regardless of
-    # their names in usual python builds
-    copy "#{install_dir}\\embedded3\\lib\\libcrypto.dll.a", "externals\\openssl-bin-#{openssl_version}\\#{python_arch}\\libcrypto.lib"
-    copy "#{install_dir}\\embedded3\\lib\\libssl.dll.a", "externals\\openssl-bin-#{openssl_version}\\#{python_arch}\\libssl.lib"
-    # Copy the actual DLLs, be sure to keep the same name since that's what the IMPLIBs expect
-    copy "#{install_dir}\\embedded3\\bin\\libssl-3-x64.dll", "externals\\openssl-bin-#{openssl_version}\\#{python_arch}\\libssl-3.dll"
-    # Create empty PDBs since python's build system require those to be present
-    command "touch externals\\openssl-bin-#{openssl_version}\\#{python_arch}\\libssl-3.pdb"
-    copy "#{install_dir}\\embedded3\\bin\\libcrypto-3-x64.dll", "externals\\openssl-bin-#{openssl_version}\\#{python_arch}\\libcrypto-3.dll"
-    command "touch externals\\openssl-bin-#{openssl_version}\\#{python_arch}\\libcrypto-3.pdb"
-    # And finally the headers:
-    copy "#{install_dir}\\embedded3\\include\\openssl", "externals\\openssl-bin-#{openssl_version}\\#{python_arch}\\include\\"
-    # Now build python itself...
-
-    ###############################
-    # Build Python...             #
-    ###############################
-    # -e to enable external libraries. They won't be fetched if already
-    # present, but the modules will be built nonetheless.
-    command "PCbuild\\build.bat -e --pgo"
-    # Install the built artifacts to their expected locations
-    # --include-dev - include include/ and libs/ directories
-    # --include-venv - necessary for ensurepip to work
-    # --include-stable - adds python3.dll
-    command "PCbuild\\#{python_arch}\\python.exe PC\\layout\\main.py --build PCbuild\\#{python_arch} --precompile --copy #{windows_safe_path(python_3_embedded)} --include-dev --include-venv --include-stable -vv"
-
-    ###############################
-    # Install build artifacts...  #
-    ###############################
-    # We copied the OpenSSL libraries with the name python expects to keep the build happy
-    # but at runtime, it will attempt to load the DLLs pointed at by the .dll.a generated by
-    # the OpenSSL build, so we need to copy those files to the install directory.
-    # The ones we copied for the build are now irrelevant
-    openssl_arch = "x64"
-    copy "#{install_dir}\\embedded3\\bin\\libcrypto-3-#{openssl_arch}.dll", "#{windows_safe_path(python_3_embedded)}\\DLLs"
-    copy "#{install_dir}\\embedded3\\bin\\libssl-3-#{openssl_arch}.dll", "#{windows_safe_path(python_3_embedded)}\\DLLs"
-    # We can also remove the DLLs that were put there by the python build since they won't be loaded anyway
-    delete "#{windows_safe_path(python_3_embedded)}\\DLLs\\libcrypto-3.dll"
-    delete "#{windows_safe_path(python_3_embedded)}\\DLLs\\libssl-3.dll"
-    # Generate libpython3XY.a for MinGW tools
-    # https://docs.python.org/3/whatsnew/3.8.html
-    major, minor, _ = version.split(".")
-    command "gendef #{windows_safe_path(python_3_embedded)}\\python#{major}#{minor}.dll"
-    command "dlltool --dllname python#{major}#{minor}.dll --def python#{major}#{minor}.def --output-lib #{windows_safe_path(python_3_embedded)}\\libs\\libpython#{major}#{minor}.a"
-
+    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- @cpython//:install --destdir=#{install_dir}"
     python = "#{windows_safe_path(python_3_embedded)}\\python.exe"
-    command "#{python} -m ensurepip"
+  end
+
+  # Upgrade pip to 26.0.1 to address CVE-2026-1703 (path traversal in pip < 26.0
+  # when installing malicious wheel archives). Python 3.13 ships with pip 25.3 via
+  # ensurepip, which is vulnerable. Replaces the deleted omnibus pip3.rb recipe.
+  command "#{python} -m pip install pip==26.0.1"
+  command "#{python} -m pip --version"
+
+  # @cpython console scripts (pip3.*) ship with shebangs baked to /opt/datadog-agent
+  # (Bazel //:install_dir default). fix_branding.sh rewrites omnibus install_dir to
+  # /opt/stackstate-agent, so re-stamp pip entrypoints (same pattern as gstatus/nfsiostat
+  # in datadog-agent-integrations-py3-dependencies.rb).
+  unless windows_target?
+    block do
+      Dir.glob("#{install_dir}/embedded/bin/pip3*").each do |pip_script|
+        next if File.symlink?(pip_script)
+
+        command "sed -i '1s|.*|#!#{install_dir}/embedded/bin/python3|' #{pip_script}"
+      end
+    end
   end
 end
-

@@ -15,23 +15,11 @@ if arm?
   # psycopg2 doesn't come with pre-built wheel on the arm architecture.
   # to compile from source, it requires the `pg_config` executable present on the $PATH
   dependency 'postgresql'
-  # same with libffi to build the cffi wheel
-  dependency 'libffi'
-  # same with libxml2 and libxslt to build the lxml wheel
-  dependency 'libxml2'
-  dependency 'libxslt'
-end
-
-if osx?
-  dependency 'unixodbc'
+  # [sts] STAC-24773 C2: libxml2 + libxslt now provided by Bazel via
+  # //packages/agent/dependencies:install (see py3 sibling recipe).
 end
 
 if linux?
-  # add nfsiostat script
-  dependency 'unixodbc'
-  dependency 'freetds'  # needed for SQL Server integration
-  dependency 'nfsiostat'
-
   # [sts] we do not use the hdfs check
   # need kerberos for hdfs
   # dependency 'libkrb5'

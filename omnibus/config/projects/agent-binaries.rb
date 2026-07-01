@@ -76,6 +76,8 @@ dependency 'preparation'
 dependency 'datadog-iot-agent'
 dependency 'datadog-dogstatsd'
 
-dependency 'datadog-buildpack-finalize'
+# [sts] STAC-24773 C-E: STS does not ship Heroku buildpack / agent-binaries CF
+# zip packages. datadog-buildpack-finalize.rb deleted; strip dep so omnibus
+# parser does not fail if agent-binaries project is enumerated.
 exclude '\.git*'
 exclude 'bundler\/git'
