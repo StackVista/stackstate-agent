@@ -128,13 +128,13 @@ etc. from scratch. Measured impact on the STAC-24773 migration:
 `build_deb` regressed from 52 min (pre-bazel) to 84 min (post-bazel) — a 31-min
 hit, of which 27 min was bazelisk re-doing fully-cacheable work.
 
-**The fix (already applied in `build_deb`, commit `64ab79eeca`):** mirrors DD's
-`.bazel:defs:cache:omnibus-transition` anchor from
+**The fix (already applied in `build_deb`, commits `64ab79eeca` + `43e53ae2b1`):**
+mirrors DD's `.bazel:defs:cache:omnibus-transition` anchor from
 `.gitlab/build/bazel/defs.yml`. STS pipelines don't `include:` any of those
 upstream files, so the pattern is inlined. Two pieces:
 
 1. **Split the job `cache:` into a list** so omnibus state, Bazel install base,
-   and Bazel action/repository caches invalidate independently:
+   and Bazel's repository cache invalidate independently:
 
    ```yaml
    cache:
@@ -146,9 +146,9 @@ upstream files, so the pattern is inlined. Two pieces:
        paths: [.cache/bazelisk, .cache/bazel/install]
        when: on_success
      - key:
-         prefix: build-<job>-bazel-cache-$STS_VER-$ARCH
+         prefix: build-<job>-bazel-repo-$STS_VER-$ARCH
          files: [.bazelversion, .python-version]
-       paths: [.cache/bazel-disk, .cache/bazel-repo]
+       paths: [.cache/bazel-repo]
        when: on_success
    ```
 
@@ -168,16 +168,29 @@ upstream files, so the pattern is inlined. Two pieces:
      # … (restate the file-level before_script verbatim — GitLab REPLACES the
      #     top-level one, doesn't extend it) …
      - mkdir -p "$CI_PROJECT_DIR/.cache/bazel" \
-                "$CI_PROJECT_DIR/.cache/bazel-disk" \
                 "$CI_PROJECT_DIR/.cache/bazel-repo" \
                 "$CI_PROJECT_DIR/.cache/bazelisk"
      - |
        cat > "$CI_PROJECT_DIR/user.bazelrc" <<EOF
        startup --output_user_root=$CI_PROJECT_DIR/.cache/bazel
-       common --disk_cache=$CI_PROJECT_DIR/.cache/bazel-disk
        common --repository_cache=$CI_PROJECT_DIR/.cache/bazel-repo
        EOF
    ```
+
+**Why no `--disk_cache`?** The obvious next step is to also persist Bazel's
+action cache + CAS via `common --disk_cache=…`. We tried it (commits
+`64ab79eeca` initial wiring, `babe1fa373` in-CI diagnostic) and it produced
+**zero cache entries** across full omnibus builds:
+`.cache/bazel-disk/cas` and `/ac` were empty after `bazelisk run @cpython//:install`
+finished; only `/tmp/` (which Bazel always creates) remained. `.cache/bazel-repo`
+by contrast restored 691 M of source tarballs — real work saved. Suspected
+cause is `rules_foreign_cc.configure_make`'s tree-artifact outputs
+(`out_data_dirs`, `out_include_dir`) combined with `bazel run` semantics
+bypassing `--disk_cache`. DataDog upstream sidesteps this via the buildbarn
+remote cache in `.bazelrc`'s `:cache` config, which STS pipelines can't reach.
+Net effect: `--disk_cache` wiring was inert, so it was dropped in commit
+`43e53ae2b1`. If STS ever gains a remote cache or the rules_foreign_cc
+interaction is fixed upstream, revisit adding it back.
 
 **Gotchas:**
 
