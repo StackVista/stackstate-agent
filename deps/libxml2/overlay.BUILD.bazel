@@ -169,6 +169,14 @@ pkg_files(
     prefix = "include/libxml2/libxml",
 )
 
+# [sts] STAC-24773 C2: visibility extended so //packages/agent/dependencies
+# can include @libxml2//:all_files in its pkg_filegroup. Mirrors libxslt
+# overlay's pattern (deps/libxslt/overlay.BUILD.bazel) which already has
+# this visibility. DD pristine restricts libxml2's all_files to private —
+# they consume it only via cc_library deps inside @openscap, never via
+# pkg_filegroup composition. STS needs the latter to install libxml2 into
+# /opt/.../embedded/{include,lib} early enough for stackstate-agent-
+# integrations-py{2,3} arm pip-install of lxml.
 pkg_filegroup(
     name = "all_files",
     srcs = [
@@ -176,6 +184,7 @@ pkg_filegroup(
         ":lib_files",
     ],
     prefix = "embedded",
+    visibility = ["@@//packages:__subpackages__"],
 )
 
 pkg_install(

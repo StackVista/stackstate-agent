@@ -1,0 +1,10 @@
+# SUPERSEDED — do not use
+
+This was a May 2026 handoff for the in-progress **7.71.2 → 7.78.2** upstream merge (`merged-7.71.2-to-7.78.2`, 246 UU conflicts era). That merge completed; the file lived at `~/where-do-I-go-from-here.txt` and was removed in June 2026.
+
+**Use instead:**
+
+- [UPSTREAM_MERGE.md](../../../UPSTREAM_MERGE.md) — merge workflow, sandbox soak, cutover
+- [docs/dev/stac-24773-bazel-migration.md](../stac-24773-bazel-migration.md) — omnibus → Bazel migration (STAC-24773)
+
+The original content is not reproduced here intentionally (it would mislead). If you need archaeology, search git history or agent session transcripts from May 2026.
