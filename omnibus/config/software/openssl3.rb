@@ -26,8 +26,7 @@ dependency "cacerts"
 # Mirrors origin/base-7.78.2's openssl3.rb, with --downloader_config=/dev/null
 # on every bazelisk invocation (STS runner egress workaround, same pattern as
 # STAC-24773 D1 in python3.rb / datadog-agent-dependencies.rb). zlib is now
-# installed inline via @zlib//:install and is no longer an omnibus dependency;
-# the omnibus zlib.rb recipe is removed in the follow-up commit.
+# installed inline via @zlib//:install and is no longer an omnibus dependency.
 #
 # Version is kept at 3.5.7 to match deps/openssl/version.bzl (STS is a patch
 # release ahead of upstream base-7.78.2's 3.5.6; bumped in commit 42e0e0b8bf
