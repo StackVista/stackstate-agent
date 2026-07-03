@@ -112,6 +112,41 @@ Datadog 7.78 moved most native dependencies from `omnibus/config/software/*.rb` 
 
 **Still omnibus after Phase B+C:** `python3.rb` (Phase D → `@cpython`, **same STAC-24773 ticket**), `cacerts`, `openssl3`, FIPS provider, and python3's transitive chain (`libffi`, `zlib`, …).
 
+## Secret backend connector: keep it out of STS packages (STAC-25211)
+
+Datadog packages an embedded `secret-generic-connector` binary for the
+`secret_backend_type` convenience flow. STS does **not** expose or rely on that
+flow in the supported Helm chart surface. STS users who need secret resolution
+should use `secret_backend_command` with an explicit executable instead; the
+container image includes `/readsecret.py` for that path.
+
+STAC-25211 intentionally removed the packaged embedded connector rather than
+rebuilding or VEXing it. Future upstream merges may reintroduce the Bazel module,
+Omnibus install step, container copy step, Windows installer entry, or embedded
+SGC e2e tests. Do not restore those during conflict resolution.
+
+After every upstream merge, verify the packaging/install surfaces are still
+clean:
+
+```bash
+test ! -d deps/secret_connector
+rg -n "secret-generic-connector|secret_connector|SECRET_GENERIC_CONNECTOR_BINARIES_DIR" \
+  MODULE.bazel \
+  omnibus/config \
+  .gitlab/deploy/container_build \
+  .gitlab/windows/deploy/container_build \
+  tasks/cluster_agent.py \
+  tools/windows/DatadogAgentInstaller \
+  test/new-e2e/tests/containers \
+  test/new-e2e/tests/agent-configuration
+# expected: no matches
+```
+
+It is OK if inherited source/manual task code for the connector still exists in
+the fork; the important bit is that STS packages and images must not ship it.
+Keep the `pkg/config/config_template.yaml` note that tells STS users to prefer
+`secret_backend_command`.
+
 ### Bazel cache wiring for omnibus jobs
 
 **When this matters:** any upstream merge that introduces, expands, or modifies
