@@ -56,16 +56,6 @@ if fips_mode?
   dependency 'openssl-fips-provider'
 end
 
-# [sts] STAC-24773 C5: secret-generic-connector via Bazel prebuilt (replaces
-# omnibus secret-generic-connector.rb). Mirrors upstream ABLD-251 cutover;
-# mode 0500 is set in deps/secret_connector/BUILD.bazel (agent.rb chmod is
-# redundant but kept for belt-and-suspenders).
-unless heroku_target?
-  build do
-    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- //deps/secret_connector:install --destdir=#{install_dir}"
-  end
-end
-
 # Bundled cacerts file (is this a good idea?)
 dependency 'cacerts'
 
