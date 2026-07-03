@@ -289,7 +289,18 @@ def build(
         and "OMNIBUS_PACKAGE_ARTIFACT_DIR" not in os.environ
     )
     remote_cache_name = os.environ.get('CI_JOB_NAME_SLUG')
-    use_remote_cache = use_omnibus_git_cache and remote_cache_name is not None
+    # [sts] Only use the S3-backed remote git cache when a bucket is actually
+    # configured. Upstream assumes S3 whenever a git cache dir + CI job slug are
+    # present, and unconditionally dereferences os.environ['S3_OMNIBUS_GIT_CACHE_BUCKET']
+    # below (KeyError otherwise). STS runs a purely LOCAL omnibus git cache
+    # persisted via the GitLab job cache (OMNIBUS_GIT_CACHE_DIR under
+    # $CI_PROJECT_DIR), with no S3 bucket — gating on the bucket lets that work
+    # standalone instead of crashing the build.
+    use_remote_cache = (
+        use_omnibus_git_cache
+        and remote_cache_name is not None
+        and os.environ.get('S3_OMNIBUS_GIT_CACHE_BUCKET') is not None
+    )
     cache_state = None
     aws_cmd = "aws.exe" if sys.platform == 'win32' else "aws"
     if use_omnibus_git_cache:
