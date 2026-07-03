@@ -92,7 +92,7 @@ Local probe: `scripts/dev/test-python3-pip-entrypoint.sh` (run inside build cont
 |------|----------------|
 | jmxfetch, libpcap, snmp-traps, systemd (top-level) | `datadog-agent-dependencies.rb` → `//packages/agent/dependencies:install` |
 | nghttp2, curl, libxml2, libxslt | `datadog-agent-dependencies.rb` Linux `build do` |
-| secret-generic-connector | `datadog-agent-dependencies.rb` → `//deps/secret_connector:install` |
+| secret-generic-connector | Linux: `datadog-agent.rb` → `secret-generic-connector.build`; non-Linux: `datadog-agent-dependencies.rb` → `//deps/secret_connector:install` |
 | unixodbc, freetds, msodbcsql18 | `datadog-agent-integrations-py3-dependencies.rb` |
 | gstatus, nfsiostat | same (plus shebang `sed`) |
 
@@ -107,7 +107,7 @@ Local probe: `scripts/dev/test-python3-pip-entrypoint.sh` (run inside build cont
 | C1 | dbus, systemd, libselinux, libsepol, pcre2, util-linux, expat (+ iot-agent.rb systemd dep) |
 | C2 | libxml2, libxslt only (libffi, unixodbc, nfsiostat deferred — see below) |
 | C3 | file, elfutils, m4, libxcrypt (+ drop libxcrypt from python3.rb) |
-| C5 | freetds, msodbcsql18, unixodbc, secret-generic-connector.rb |
+| C5 | freetds, msodbcsql18, unixodbc, secret-generic-connector.rb; STAC-25211 later moved Linux packages from the prebuilt connector back to the in-repo source build so CVE fixes follow the repo Go toolchain/modules |
 | C6 | gstatus, nfsiostat, lua, sysstat |
 | C-E | mac-app, cf-finalize, buildpack-finalize, cacerts_py{2,3}_local (+ agent-binaries buildpack dep) |
 | D1 | `python3.rb` → Bazel `@bzip2`/`@xz`/`@sqlite3`/`@cpython`; drop `pip3.rb`; pip 26.0.1; `python -m pip` in integrations; re-stamp `pip3.*` shebangs |
