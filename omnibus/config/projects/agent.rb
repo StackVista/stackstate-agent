@@ -302,7 +302,6 @@ if windows_target?
     "#{install_dir}\\bin\\agent\\trace-agent.exe",
     "#{install_dir}\\bin\\agent\\process-agent.exe",
     "#{install_dir}\\bin\\agent\\system-probe.exe",
-    "#{install_dir}\\bin\\agent\\secret-generic-connector.exe",
     "#{install_dir}\\datadog-installer.exe"
   ]
 
@@ -379,5 +378,4 @@ end
 if linux_target?
   # Strip runs before packaging, so restore final perms after strip.
   chmod_before_packaging "#{install_dir}/embedded/bin/dd-compile-policy", 0555
-  chmod_before_packaging "#{install_dir}/embedded/bin/secret-generic-connector", 0500
 end

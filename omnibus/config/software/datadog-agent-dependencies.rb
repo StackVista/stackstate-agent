@@ -56,15 +56,6 @@ if fips_mode?
   dependency 'openssl-fips-provider'
 end
 
-# [sts] STAC-24773 C5: secret-generic-connector via Bazel prebuilt for
-# non-Linux packages. Linux packages build the connector from in-repo source in
-# datadog-agent.rb so it uses the repo Go toolchain and patched Go modules.
-unless heroku_target? || linux_target?
-  build do
-    command_on_repo_root "bazelisk run #{flavor_flag} --downloader_config=/dev/null -- //deps/secret_connector:install --destdir=#{install_dir}"
-  end
-end
-
 # Bundled cacerts file (is this a good idea?)
 dependency 'cacerts'
 

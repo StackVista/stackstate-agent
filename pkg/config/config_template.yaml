@@ -903,6 +903,9 @@ enable_gohai: false
 ## `secret_backend_type` is the type of backend where secrets are stored.
 ## Supported backends are: "aws.secrets", "aws.ssm", "azure.keyvault", "hashicorp.vault",
 ## "file.json", "file.yaml"
+## [STS] The embedded secret-generic-connector binary that powers this option is not
+## packaged. Use `secret_backend_command` with a custom executable, for example
+## `/readsecret.py` in the container image, instead.
 ## For more information see: https://docs.datadoghq.com/agent/configuration/secrets-management
 ##
 ## This option is ignored if 'secret_backend_command' is set.

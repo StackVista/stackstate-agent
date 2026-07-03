@@ -12,7 +12,6 @@ namespace WixSetup.Datadog_Agent
         public string PrivateActionRunner => $@"{_binSource}\privateactionrunner.exe";
         public string SystemProbe => $@"{_binSource}\system-probe.exe";
         public string TraceAgent => $@"{_binSource}\trace-agent.exe";
-        public string SecretGenericConnector => $@"{_binSource}\secret-generic-connector.exe";
         // this will only be actually used when the procmon driver is present
         // if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WINDOWS_DDPROCMON_DRIVER")))
         public string SecurityAgent => $@"{_binSource}\security-agent.exe";

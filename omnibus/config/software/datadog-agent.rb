@@ -107,10 +107,6 @@ build do
 
     # [sts] DD 7.78 removed --major-version and --include-sds from agent.build. STS doesn't ship SDS; drop both flags.
     command "dda inv -- -e agent.build --exclude-rtloader --no-development --install-path=#{install_dir} --embedded-path=#{install_dir}/embedded --flavor #{flavor_arg}", env: env
-    mkdir "#{install_dir}/embedded/bin"
-    command "dda inv -- -e secret-generic-connector.build --output-bin=#{install_dir}/embedded/bin/secret-generic-connector #{fips_args}", env: env
-    mkdir "#{install_dir}/LICENSES"
-    copy "cmd/secret-generic-connector/LICENSE", "#{install_dir}/LICENSES/secret-generic-connector-LICENSE"
   end
 
   if osx_target?
