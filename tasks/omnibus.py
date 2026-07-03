@@ -364,8 +364,15 @@ def build(
         # a mismatch is detected, but will keep the old cached tags.
         # Do this before checking for tag differences, in order to remove stale tags
         # in case they were included in the bundle in a previous build
-        for _, tag in enumerate(stale_tags.split(os.linesep)):
-            ctx.run(f'git -C {omnibus_cache_dir} tag -d {tag}')
+        # [sts] Skip blank entries and tolerate failures. `git tag --no-merged`
+        # output carries a trailing newline (and is empty when there are no stale
+        # tags — the common case on a cold local cache), so split() yields a ''
+        # element; a bare `git tag -d ''` errors and, without warn, aborts the
+        # whole build. Only surfaced now that STS runs the local (non-S3) git
+        # cache instead of the DD S3-bundle path.
+        for tag in stale_tags.split(os.linesep):
+            if tag.strip():
+                ctx.run(f'git -C {omnibus_cache_dir} tag -d {tag}', warn=True)
         if use_remote_cache:
             if cache_state is None:
                 with timed(quiet=True) as durations['Updating omnibus cache']:

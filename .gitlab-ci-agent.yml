@@ -452,7 +452,12 @@ build_deb:
     - source ./.gitlab-scripts/setup_artifact_registry.sh
     - export LD_LIBRARY_PATH="/opt/stackstate-agent/embedded/lib/python3.12/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
     - echo ${LD_LIBRARY_PATH}
-    - inv -e omnibus.build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign
+    # [sts] STAC-0 --install-directory pins the omnibus git-cache path to the
+    # BRANDED install dir. Without it, tasks/omnibus.py derives the path from
+    # install_dir_for_project("agent") = unbranded /opt/datadog-agent, while the
+    # branded omnibus build caches under /opt/stackstate-agent — the post-build
+    # git-cache purge then targets a nonexistent dir and aborts the job.
+    - inv -e omnibus.build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --install-directory /opt/stackstate-agent
 
     # Prepare outputs
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
