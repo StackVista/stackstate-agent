@@ -502,6 +502,14 @@ DD periodically flips these from STS's preferred value back to DD's default. Non
 - **Affected monitors:** Node Disk/Memory/PID Pressure, Node Readiness, Available Endpoints (fixed in stackpacks MR 1332 by adding `max by (...)` aggregation). Desired-replicas monitors (daemonset/deployment/replicaset/statefulset) are theoretically vulnerable but not currently affected.
 - **After merge:** Check if new KSM metrics add labels that differ from the labels used in monitor `urnTemplate` fields. If so, the monitor queries in the kubernetes-v2 stackpack need `by (...)` aggregation to strip volatile labels.
 
+### tasks/omnibus.py: omnibus git-cache S3 gate (STAC-0 / build_deb perf)
+- **File:** `tasks/omnibus.py` — the `use_remote_cache` assignment (immediately after `remote_cache_name = os.environ.get('CI_JOB_NAME_SLUG')`).
+- **What:** STS gates `use_remote_cache` on the S3 bucket being configured: `use_remote_cache = use_omnibus_git_cache and remote_cache_name is not None and os.environ.get('S3_OMNIBUS_GIT_CACHE_BUCKET') is not None`. Upstream omits the final clause.
+- **Why:** `build_deb` enables the omnibus git cache (the build-skip layer) via `OMNIBUS_GIT_CACHE_DIR` in `.gitlab-ci-agent.yml`, but persists it through the **GitLab job cache, not S3**. Upstream assumes S3 whenever a git-cache dir + `CI_JOB_NAME_SLUG` exist and unconditionally dereferences `os.environ['S3_OMNIBUS_GIT_CACHE_BUCKET']`, which `KeyError`s on STS runners (no such bucket).
+- **Symptom if missing:** `build_deb` aborts with `KeyError: 'S3_OMNIBUS_GIT_CACHE_BUCKET'` once the git cache is enabled.
+- **Verify after merge:** `grep -n "S3_OMNIBUS_GIT_CACHE_BUCKET" tasks/omnibus.py` — the `use_remote_cache` line must still include the bucket check.
+- **Related (same MR):** the `.gitlab-ci-agent.yml` side is STS-owned (no `[sts]` marker needed) — `OMNIBUS_GIT_CACHE_DIR`, the `.omnibus-git-cache` cache path with `fallback_keys`, and `--install-directory /opt/stackstate-agent` on the `inv omnibus.build` call. The git-cache path is derived from the **unbranded** `install_dir_for_project` (`tasks/libs/common/omnibus.py`), so without the branded override the post-build purge runs `git -C` against a nonexistent `/opt/datadog-agent` path and fails. Also in `tasks/omnibus.py`: the stale-tag purge skips blank tags and uses `warn=True` (a bare `git tag -d ''` otherwise aborts the build). Reference: MR !434 (STAC-0-build_deb); memory `build-deb-omnibus-git-cache`.
+
 ## Pre-merge: branch setup
 
 Before any conflict resolution, set up the branches that the merge will run on. The strategy is to give git a meaningful three-way merge base by replaying StackState's changes onto the upstream commit that the source and target DD versions share. Without this, git treats every line of every file StackState ever touched as a potential conflict.

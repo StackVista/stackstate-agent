@@ -289,7 +289,18 @@ def build(
         and "OMNIBUS_PACKAGE_ARTIFACT_DIR" not in os.environ
     )
     remote_cache_name = os.environ.get('CI_JOB_NAME_SLUG')
-    use_remote_cache = use_omnibus_git_cache and remote_cache_name is not None
+    # [sts] Only use the S3-backed remote git cache when a bucket is actually
+    # configured. Upstream assumes S3 whenever a git cache dir + CI job slug are
+    # present, and unconditionally dereferences os.environ['S3_OMNIBUS_GIT_CACHE_BUCKET']
+    # below (KeyError otherwise). STS runs a purely LOCAL omnibus git cache
+    # persisted via the GitLab job cache (OMNIBUS_GIT_CACHE_DIR under
+    # $CI_PROJECT_DIR), with no S3 bucket — gating on the bucket lets that work
+    # standalone instead of crashing the build.
+    use_remote_cache = (
+        use_omnibus_git_cache
+        and remote_cache_name is not None
+        and os.environ.get('S3_OMNIBUS_GIT_CACHE_BUCKET') is not None
+    )
     cache_state = None
     aws_cmd = "aws.exe" if sys.platform == 'win32' else "aws"
     if use_omnibus_git_cache:
@@ -353,8 +364,15 @@ def build(
         # a mismatch is detected, but will keep the old cached tags.
         # Do this before checking for tag differences, in order to remove stale tags
         # in case they were included in the bundle in a previous build
-        for _, tag in enumerate(stale_tags.split(os.linesep)):
-            ctx.run(f'git -C {omnibus_cache_dir} tag -d {tag}')
+        # [sts] Skip blank entries and tolerate failures. `git tag --no-merged`
+        # output carries a trailing newline (and is empty when there are no stale
+        # tags — the common case on a cold local cache), so split() yields a ''
+        # element; a bare `git tag -d ''` errors and, without warn, aborts the
+        # whole build. Only surfaced now that STS runs the local (non-S3) git
+        # cache instead of the DD S3-bundle path.
+        for tag in stale_tags.split(os.linesep):
+            if tag.strip():
+                ctx.run(f'git -C {omnibus_cache_dir} tag -d {tag}', warn=True)
         if use_remote_cache:
             if cache_state is None:
                 with timed(quiet=True) as durations['Updating omnibus cache']:
