@@ -13,7 +13,7 @@ Handoff for humans and AI pair-programming on the StackState Agent fork.
 | Phase D1 (`python3.rb` → `@cpython`, pip 26, pip entrypoints) | **Done** — [pipeline 2628270529](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628270529) + Beest green |
 | Phase D2 (drop python-build `.rb` orphans) | **Done** — [pipeline 2628732118](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628732118) + Beest green |
 | Phase D3 (`libffi`/`libtool` omnibus orphans) | **Done** — [pipeline 2629204999](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2629204999) + Beest green |
-| `zlib.rb` | **Kept** — still required by `openssl3.rb` |
+| `zlib.rb` / `openssl.rb` (1.x) | **Removed** — STAC-25143 wave 2 (openssl3 → Bazel, openssl 1.x orphan swept) |
 | Non-Bazel cleanup MR | **Not started** — separate ticket (not Bazel migration) |
 
 Commit history on the branch may be **squashed**; use `git log --grep=STAC-24773` and file contents (grep `STAC-24773` in `omnibus/`) rather than assuming one commit per phase.
@@ -114,7 +114,7 @@ Local probe: `scripts/dev/test-python3-pip-entrypoint.sh` (run inside build cont
 | D2 | `bzip2.rb`, `liblzma.rb`, `libsqlite3.rb`, `libdb.rb`, `libiconv.rb` (orphaned after D1 Bazel installs) |
 | D3 | `libffi.rb`, `libtool.rb`; drop arm `dependency 'libffi'` from STS integrations recipes (upstream 7.78.2 has none) |
 
-**Still kept:** `zlib.rb` — `openssl3.rb` dependency.
+**Still kept:** none — `zlib.rb` was removed post-STAC-24773 by STAC-25143 wave 2 (openssl3 → Bazel).
 
 ## Phase D (same ticket — STAC-24773)
 
@@ -125,8 +125,6 @@ Local probe: `scripts/dev/test-python3-pip-entrypoint.sh` (run inside build cont
 **D2 complete (June 2026):** [pipeline 2628732118](https://gitlab.com/stackvista/agent/stackstate-agent/-/pipelines/2628732118) + Beest green.
 
 **D3:** Drop `libffi.rb` / `libtool.rb` and STS-only arm `libffi` omnibus deps; `@cpython` links `@libffi//:ffi` statically (upstream 7.78.2 pattern).
-
-**Still kept:** `zlib.rb` — `openssl3.rb`.
 
 ## Parallel workstreams (do not confuse)
 
@@ -184,7 +182,7 @@ Migrates StackState Agent native/python dependencies from omnibus Ruby recipes t
 
 ### Deferred (not Phase D)
 
-- `zlib.rb` — still required by `openssl3.rb`
+- `zlib.rb` — removed post-STAC-24773 by STAC-25143 wave 2 (openssl3 → Bazel).
 
 ### Test plan
 
