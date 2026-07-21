@@ -31,7 +31,7 @@ name "cacerts"
 # when they change.
 default_version "latest"
 source url: "https://curl.se/ca/cacert.pem",
-       sha256: "86a1f3366afac7c6f8ae9f3c779ac221129328c43f0ab2b8817eb2f362a5025c",
+       sha256: "3ff344e30b9b1ed2971044eabb438a08f2e2245ddb5f8ab1a3ad8b63ab4eaf91",
        target_filename: "cacert.pem"
 
 relative_path "cacerts-#{version}"
@@ -55,4 +55,3 @@ build do
     end
   end
 end
-
