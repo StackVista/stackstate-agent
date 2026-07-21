@@ -1226,7 +1226,10 @@ replace (
 	k8s.io/metrics => k8s.io/metrics v0.34.1
 )
 
-// containerd v1.7.x is not compatible with the runtime-spec v1.3.0 API.
+// Envoy Gateway raises these transitive dependencies to versions that require
+// the runtime-spec v1.3.0 API, which containerd v1.7.x does not support.
+replace github.com/containerd/cgroups/v3 => github.com/containerd/cgroups/v3 v3.0.5
+
 replace github.com/opencontainers/runtime-spec => github.com/opencontainers/runtime-spec v1.2.1
 
 // TODO(songy23): remove this once https://github.com/kubernetes/apiserver/commit/b887c9ebecf558a2001fc5c5dbd5c87fd672500c is brought to agent
