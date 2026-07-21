@@ -235,7 +235,7 @@ filename_linting:
   stage: test
   interruptible: true
   tags:
-    - ${RUNNER_TAG_M}
+    - ${RUNNER_TAG_XL}
   needs:
     - deps_deb
   script:
