@@ -1215,10 +1215,17 @@ replace (
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.34.1
 	k8s.io/apimachinery => k8s.io/apimachinery v0.34.1
 	k8s.io/apiserver => k8s.io/apiserver v0.34.1
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.34.1
 	k8s.io/client-go => k8s.io/client-go v0.34.1
 	k8s.io/component-base => k8s.io/component-base v0.34.1
+	k8s.io/component-helpers => k8s.io/component-helpers v0.34.1
 	k8s.io/kms => k8s.io/kms v0.34.1
+	k8s.io/kubectl => k8s.io/kubectl v0.34.1
+	k8s.io/metrics => k8s.io/metrics v0.34.1
 )
+
+// containerd v1.7.x is not compatible with the runtime-spec v1.3.0 API.
+replace github.com/opencontainers/runtime-spec => github.com/opencontainers/runtime-spec v1.2.1
 
 // TODO(songy23): remove this once https://github.com/kubernetes/apiserver/commit/b887c9ebecf558a2001fc5c5dbd5c87fd672500c is brought to agent
 replace go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0
