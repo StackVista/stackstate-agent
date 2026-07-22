@@ -1,4 +1,5 @@
 require "./lib/symbols_inspectors"
+require "digest"
 
 module Omnibus
   module ProjectExtensions
@@ -163,12 +164,50 @@ module Omnibus
 
   Packager::PKG.prepend PackagerPKGNotarizer
 
+  # [sts] STAC-25283: content hash of the Bazel dependency graph — the //deps
+  # C-library definitions, root MODULE.bazel + its lockfile, the Bazel rules under
+  # //bazel, and the //packages/agent/dependencies install targets. Go/Rust module
+  # pins (deps/go.MODULE.bazel, deps/crates.MODULE.bazel) are excluded because they
+  # churn with unrelated Go/Rust updates and are not built by the omnibus software
+  # that shell out to `bazelisk`. Memoized: computed once per omnibus run.
+  def self.bazel_deps_shasum
+    @bazel_deps_shasum ||= begin
+      root = File.expand_path(File.join(Omnibus::Config.project_root, ".."))
+      excluded = %w[deps/go.MODULE.bazel deps/crates.MODULE.bazel].map { |p| File.join(root, p) }
+      files = []
+      %w[deps bazel packages/agent/dependencies].each do |dir|
+        files.concat(Dir.glob(File.join(root, dir, "**", "*"), File::FNM_DOTMATCH))
+      end
+      files.concat(%w[MODULE.bazel MODULE.bazel.lock].map { |f| File.join(root, f) })
+      files = files.select { |f| File.file?(f) && !excluded.include?(f) }.sort.uniq
+      digest = Digest::SHA256.new
+      files.each do |f|
+        digest.update(f.sub(root, ""))
+        digest.update(File.binread(f))
+      end
+      digest.hexdigest[0, 16]
+    end
+  end
+
   # Open the Builder class to allow adding custom DSL methods
   class Builder
     #
     # Runs a command from the root of the datadog-agent repository
     #
     def command_on_repo_root(*args, **kwargs)
+      # [sts] STAC-25283: the first time a software builds via Bazel, record a
+      # no-op marker command whose description carries the Bazel-deps hash.
+      # omnibus folds each build command's description into builder.shasum -> the
+      # software's shasum -> its git-cache tag. The `bazelisk run @dep//:install`
+      # commands are static, so a Bazel dependency bump (e.g. curl 8.20 -> 8.21)
+      # changed //deps but not any software's cache identity, and omnibus restored
+      # a stale build. This marker ties every Bazel-built software to the dep
+      # graph so a bump busts the cache and the software rebuilds. `true` is a
+      # build-time no-op; only its recorded description feeds the shasum.
+      unless @sts_bazel_deps_marker_emitted
+        @sts_bazel_deps_marker_emitted = true
+        command "true  # [sts] bazel-deps cache key: #{Omnibus.bazel_deps_shasum}"
+      end
       command *args, **kwargs, cwd: File.join(Omnibus::Config.project_root, "..")
     end
     expose :command_on_repo_root
