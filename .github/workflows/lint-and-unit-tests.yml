@@ -44,7 +44,7 @@ jobs:
     name: Filename linting
     # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: docker
+    runs-on: docker-public
     timeout-minutes: 20
     container:
       # datadog_build image (built by datadog-agent-buildimages), pulled via the
@@ -71,7 +71,7 @@ jobs:
   unbranded-unit-tests:
     name: Unit tests (unbranded / DataDog)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: xlarge
+    runs-on: xlarge-public
     timeout-minutes: 150
     container:
       image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
@@ -115,7 +115,7 @@ jobs:
   branded-unit-tests:
     name: Unit tests (branded / StackState)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: xlarge
+    runs-on: xlarge-public
     timeout-minutes: 150
     container:
       image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
