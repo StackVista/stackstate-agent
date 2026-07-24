@@ -72,6 +72,9 @@ jobs:
           # it needs no Go deps/vendoring (the GitLab job carried that as boilerplate).
           . /root/miniforge3/etc/profile.d/conda.sh
           conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
           inv -e linter.filenames
 
   unbranded-unit-tests:
@@ -96,6 +99,9 @@ jobs:
           export PATH="$PATH:/usr/local/go/bin"
           . /root/miniforge3/etc/profile.d/conda.sh
           conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
           go clean -modcache
           go work sync
           go work vendor
@@ -140,6 +146,9 @@ jobs:
           export PATH="$PATH:/usr/local/go/bin"
           . /root/miniforge3/etc/profile.d/conda.sh
           conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
           go clean -modcache
           go work sync
           go work vendor
