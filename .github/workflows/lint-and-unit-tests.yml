@@ -35,6 +35,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# The datadog_build container's default shell is dash, which lacks `set -o pipefail`
+# and mis-handles the conda activation the steps rely on; force bash.
+defaults:
+  run:
+    shell: bash
+
 env:
   # conda env baked into the datadog_build image.
   CONDA_ENV: ddpy3
