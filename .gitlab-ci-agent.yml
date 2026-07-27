@@ -62,24 +62,23 @@ deps_deb:
   cache:
     key: "deps-deb-$STS_VER-$CI_COMMIT_REF_SLUG-$ARCH"
     paths:
-      - vendor
       - venv
   script:
     - export PATH=$PATH:/usr/local/go/bin
-    - go clean -modcache
-#    - *rename_datadog_stackvista
+    # [sts STAC-25396] deps_deb is now ONLY the version producer. The full Go reconcile it used to
+    # run was redundant — every consumer job re-runs go work sync / go work vendor / inv deps from
+    # cold anyway (a warm module cache can't be shared across jobs: too large for GitLab cache/
+    # artifacts), so even a bare `go work sync` gate here just re-downloaded the whole graph (~1600
+    # modules) and threw it away. A broken go.mod/workspace is still caught by the consumers' own
+    # reconcile. vendor.tar.gz was consumed by nobody (Go jobs build -mod=readonly; build_deb
+    # regenerates its own vendor). version.txt (git-based via inv agent.version, not module-based)
+    # is deps_deb's only downstream-consumed output.
     - conda activate $CONDA_ENV
-    - go work sync
-    - go work vendor
-    - inv -e deps --verbose
-    - go mod tidy
     - inv agent.version -u > version.txt  # [sts] DD 7.78 removed --major-version from inv agent.version
-    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz . || echo "No vendor"
   artifacts:
     <<: *artifacts_expire_in
     paths:
       - $CI_PROJECT_DIR/version.txt
-      - $CI_PROJECT_DIR/vendor.tar.gz
   retry:
     max: 2
     when:
@@ -173,6 +172,12 @@ unbranded_unit_tests:
     when:
       - always
   rules:
+    # [sts STAC-25396] Run unit tests once on the path to master: skip merge-train and
+    # default-branch/tag pipelines (the MR/branch pipeline already ran them).
+    - if: '$FWD_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+      when: never
+    - if: '$FWD_COMMIT_TAG || $FWD_COMMIT_REF_NAME == "stackstate-7.78.2"'
+      when: never
     - when: on_success
   timeout: 120 minutes
 
@@ -228,6 +233,12 @@ branded_unit_tests:
     when:
       - always
   rules:
+    # [sts STAC-25396] Run unit tests once on the path to master: skip merge-train and
+    # default-branch/tag pipelines (the MR/branch pipeline already ran them).
+    - if: '$FWD_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+      when: never
+    - if: '$FWD_COMMIT_TAG || $FWD_COMMIT_REF_NAME == "stackstate-7.78.2"'
+      when: never
     - when: on_success
   timeout: 120 minutes
 
@@ -236,16 +247,14 @@ filename_linting:
   interruptible: true
   tags:
     - ${RUNNER_TAG_XL}
-  needs:
-    - deps_deb
+  # [sts STAC-25396] Independent of Go deps (only runs `git ls-files`); no needs so it starts
+  # immediately and does not wait on deps_deb.
+  needs: []
   script:
     - export PATH=$PATH:/usr/local/go/bin
-    - go clean -modcache
-#    - *rename_datadog_stackvista
+    # [sts STAC-25396] linter.filenames only shells out to `git ls-files`; it needs
+    # neither the Go module cache nor vendored deps, so skip the cold Go setup.
     - conda activate $CONDA_ENV
-    - inv -e deps --verbose
-    - go work sync
-    - go work vendor
     - inv -e linter.filenames
   rules:
     - when: on_success

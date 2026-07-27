@@ -143,6 +143,11 @@ agent-x86:
     ANSIBLE_INVENTORY_LOCATION: "../../sut/yards/k8s/ansible_inventory"
     STS_CONTEXT_FILE: "../../sut/yards/k8s/config.yaml"
     STS_KUBECONFIG_FILE: "./../../sut/yards/k8s/config"
+    # [sts STAC-25396] Forward pipeline-type context so the child unit-test jobs can skip
+    # merge-train + default-branch/tag runs (MR/commit vars don't auto-propagate to child pipelines).
+    FWD_MERGE_REQUEST_EVENT_TYPE: $CI_MERGE_REQUEST_EVENT_TYPE
+    FWD_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
+    FWD_COMMIT_TAG: $CI_COMMIT_TAG
   trigger:
     include: .gitlab-ci-agent.yml
     strategy: depend
@@ -167,6 +172,11 @@ agent-arm:
     ANSIBLE_INVENTORY_LOCATION: "../../sut/yards/k8s-arm/ansible_inventory"
     STS_CONTEXT_FILE: "../../sut/yards/k8s-arm/config.yaml"
     STS_KUBECONFIG_FILE: "./../../sut/yards/k8s-arm/config"
+    # [sts STAC-25396] Forward pipeline-type context so the child unit-test jobs can skip
+    # merge-train + default-branch/tag runs (MR/commit vars don't auto-propagate to child pipelines).
+    FWD_MERGE_REQUEST_EVENT_TYPE: $CI_MERGE_REQUEST_EVENT_TYPE
+    FWD_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
+    FWD_COMMIT_TAG: $CI_COMMIT_TAG
   trigger:
     include: .gitlab-ci-agent.yml
     strategy: depend
