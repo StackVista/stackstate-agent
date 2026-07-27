@@ -1,0 +1,171 @@
+name: Binary builds
+
+# Ported from .gitlab-ci-agent.yml (build_binaries, build_cluster_agent) as part
+# of the GitLab -> GitHub migration (STAC-25142), phase 2: binary builds. Tracks
+# the stackstate-7.78.2 pipeline. Builds the branded (StackState) production agent
+# and cluster-agent from the DataDog fork, validating that the shippable binaries
+# compile on GitHub runners before the packaging/image phases build on top of them.
+#
+# Speedup concepts carried over from the GitLab pipeline work (STAC-25396):
+#   * Self-contained jobs, NO shared "prepare deps once" job. On GitLab, deps_deb
+#     sat on the critical path as a serial prefix that every build job depended on,
+#     but it never actually shared anything reusable: the Go module cache is too
+#     big to transport between jobs (~540k files, 2-3 GB) and a shared vendor/ dir
+#     breaks vendoring (`go work sync` mutates go.mod, so each job must re-vendor
+#     against its own checkout). So every job here reconciles its own deps
+#     (go work sync + go work vendor + inv deps) instead of depending on a deps job.
+#   * deps_deb's only genuinely consumed output was version.txt, which is git-based
+#     (inv agent.version), not module-cache-based -- so build-cluster-agent just
+#     generates it in-job rather than pulling it from an upstream job.
+#   * Each suite runs once on the path to master, deduped via
+#     `concurrency: cancel-in-progress` (a newer push cancels the in-flight build).
+#
+# Known follow-ups (same as the GitLab analysis):
+#   * The real build-time win is a WARM module cache, which needs persistent
+#     runner-local storage (PVC-backed GOMODCACHE/GOCACHE on the ARC pool) -- an
+#     SRE / pulumi-infra change, not workflow YAML. actions/cache does not help:
+#     it hits the same file-count/size tax that made the GitLab cache a net loss.
+#   * Phase 6 (merge queue): move the heavy builds to `merge_group` so they run
+#     once at land time and drop from `pull_request`; master/version-branch pushes
+#     then build + publish without re-running these.
+#
+# Prerequisites for a GREEN run are the same as lint-and-unit-tests.yml: the GitLab
+# push mirror must stay disabled, and this PUBLIC repo needs the read-only
+# registry-proxy credentials (vars REGISTRY_HOST/REGISTRY_USER + secret
+# REGISTRY_PASSWORD) for the container: image pull. Org secrets are never exposed
+# to fork PRs, so external-fork PRs skip these jobs by design.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The datadog_build container's default shell is dash, which lacks `set -o pipefail`
+# and mis-handles the conda activation the steps rely on; force bash.
+defaults:
+  run:
+    shell: bash
+
+env:
+  # conda env baked into the datadog_build image.
+  CONDA_ENV: ddpy3
+
+jobs:
+  build-agent:
+    name: Build agent binary (branded / StackState)
+    # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: xlarge-public
+    timeout-minutes: 120
+    container:
+      # datadog_build image (built by datadog-agent-buildimages), pulled via the
+      # read-only quay proxy -- mirrors BUILD_IMAGE in .gitlab-ci.yml (7.78.2 tag).
+      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          # Full history + tags so `inv agent.build` resolves the version via
+          # `git describe --tags --match "3.*"` (needs the 3.x tag reachable from HEAD).
+          fetch-depth: 0
+
+      - name: Build branded agent (production, with rtloader)
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
+          # Self-contained deps: reconcile go.mod <-> vendor for this checkout
+          # (cross-job cache/vendor sharing is not viable here -- see header).
+          go clean -modcache
+          go work sync
+          go work vendor
+          inv -e deps --verbose
+          # rtloader is the C++/Python bridge the full agent links against; the
+          # cluster-agent doesn't need it, but the production agent does.
+          inv -e rtloader.make
+          inv -e rtloader.install
+          export AGENT_GITHUB_ORG=DataDog
+          export GITHUB_ORG=DataDog
+          export BRANDED=true
+          export AGENT_REPO_NAME=datadog-agent
+          # Rebrand DataDog -> StackState. fix_branding.sh defaults its target dir to
+          # $CI_PROJECT_DIR (a GitLab built-in that is unset here); pass the checkout
+          # root explicitly.
+          ./fix_branding.sh "${GITHUB_WORKSPACE}"
+          # Production (non-race) build -- the shippable binary, distinct from the
+          # race-instrumented build in the unit-test workflow.
+          inv -e agent.build
+          ls -la bin/agent
+
+  build-cluster-agent:
+    name: Build cluster-agent binary (branded / StackState)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: xlarge-public
+    timeout-minutes: 120
+    container:
+      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          # Full history + tags so the version resolves via `git describe`.
+          fetch-depth: 0
+
+      - name: Build branded cluster-agent
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
+          # Self-contained deps (see header): reconcile go.mod <-> vendor per job.
+          go clean -modcache
+          go work sync
+          go work vendor
+          inv -e deps --verbose
+          export AGENT_GITHUB_ORG=DataDog
+          export GITHUB_ORG=DataDog
+          export BRANDED=true
+          export AGENT_REPO_NAME=datadog-agent
+          # Rebrand DataDog -> StackState; pass the checkout root (CI_PROJECT_DIR is GitLab-only).
+          ./fix_branding.sh "${GITHUB_WORKSPACE}"
+          inv -e cluster-agent.build
+          # version.txt is a build artifact for the downstream packaging/image phases.
+          # deps_deb produced it on GitLab; there is no shared deps job here, so
+          # generate it in-job. inv agent.version is git-based (not module-cache-based)
+          # and cheap. No `-e`: its stdout must be only the version string.
+          inv agent.version -u > version.txt
+          ls -la bin/stackstate-cluster-agent
+
+      - name: Upload cluster-agent build artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cluster-agent-binary
+          # Paths match the GitLab build_cluster_agent artifacts; the cluster-agent
+          # image phase (phase 5) consumes the binary + Dockerfile manifest.
+          path: |
+            bin/stackstate-cluster-agent/
+            Dockerfiles/cluster-agent/stackstate-cluster.yaml
+            version.txt
+          retention-days: 5
+          if-no-files-found: error
