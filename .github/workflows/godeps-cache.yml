@@ -8,11 +8,17 @@ name: Go dependency cache image
 # heavy Go module download only runs when the graph actually changes.
 #
 # The image is FROM the private datadog_build CI image with the workspace's external
-# modules baked into GOMODCACHE. It is pushed to quay.io/stackstate/sts-ci-images
-# (private) and pulled by consumer jobs through the registry.tooling quay proxy with
-# the same read-only REGISTRY_* credentials they already use for datadog_build.
-# Because the base image is private, the cache image MUST stay private -- it is never
-# pushed to a public registry (that would leak base-image layers).
+# modules baked into GOMODCACHE. It is pushed to the dedicated private quay repo
+# quay.io/stackstate/stackstate-agent-godeps-cache and pulled by consumer jobs through
+# the registry.tooling quay proxy with the same read-only REGISTRY_* credentials they
+# already use for datadog_build. Because the base image is private, the cache image
+# MUST stay private -- it is never pushed to a public registry (that would leak
+# base-image layers).
+#
+# Dedicated repo, not the shared sts-ci-images: that one also holds the ARC runner
+# images, and stackstate-agent is PUBLIC, so any org member's same-repo branch can use
+# whatever push credential this workflow carries. Scoping it to a rebuildable cache
+# keeps a compromised branch away from the images the CI fleet boots from.
 
 on:
   workflow_call:

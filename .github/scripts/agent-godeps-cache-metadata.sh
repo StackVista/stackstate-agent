@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 # Computes the content-addressed tag for the stackstate-agent Go dependency cache
 # image (STAC-25429) and the two image refs it is referenced by:
-#   * push  ref -> quay.io/stackstate/sts-ci-images   (authoritative; build + exists check)
-#   * pull  ref -> ${REGISTRY_HOST}/quay/...           (registry.tooling proxy; job container)
+#   * push  ref -> quay.io/stackstate/stackstate-agent-godeps-cache  (authoritative)
+#   * pull  ref -> ${REGISTRY_HOST}/quay/...                         (registry.tooling proxy)
+#
+# The cache lives in its own quay repo rather than the shared sts-ci-images, which also
+# holds the ARC runner images: stackstate-agent is PUBLIC, so whatever credential this
+# workflow carries is reachable from any org member's same-repo branch. A dedicated repo
+# keeps that reach down to a rebuildable cache.
 #
 # Mirrors StackVista/StackGraph .github/scripts/stackgraph-ci-metadata.sh: the tag is
 # a hash of the dependency-defining inputs, so an unchanged module graph reuses the
@@ -31,9 +36,10 @@ agent_godeps_compute_metadata() {
     } | sha256sum | cut -c1-16
   )"
 
-  local image_tag="stackstate-agent-godeps-${godeps_hash}"
+  local image_repo="stackstate/stackstate-agent-godeps-cache"
+  local image_tag="godeps-${godeps_hash}"
   # shellcheck disable=SC2034  # consumed by the sourcing workflow step
-  ci_image_push="${QUAY_REGISTRY}/stackstate/sts-ci-images:${image_tag}"
+  ci_image_push="${QUAY_REGISTRY}/${image_repo}:${image_tag}"
   # shellcheck disable=SC2034  # consumed by the sourcing workflow step
-  ci_image="${REGISTRY_HOST}/quay/stackstate/sts-ci-images:${image_tag}"
+  ci_image="${REGISTRY_HOST}/quay/${image_repo}:${image_tag}"
 }
