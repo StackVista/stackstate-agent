@@ -1,0 +1,142 @@
+name: Go dependency cache image
+
+# Reusable workflow (STAC-25429): builds and publishes a Go module cache image for
+# stackstate-agent CI, keyed by a hash of the module graph. Mirrors the StackGraph
+# ci-metadata / build-ci-image pattern (its .github/workflows/ci.yml): the image tag
+# is content-addressed, so an unchanged dependency graph reuses an already-published
+# image across every branch/PR/default build (the tag *is* the cache key), and the
+# heavy Go module download only runs when the graph actually changes.
+#
+# The image is FROM the private datadog_build CI image with the workspace's external
+# modules baked into GOMODCACHE. It is pushed to quay.io/stackstate/sts-ci-images
+# (private) and pulled by consumer jobs through the registry.tooling quay proxy with
+# the same read-only REGISTRY_* credentials they already use for datadog_build.
+# Because the base image is private, the cache image MUST stay private -- it is never
+# pushed to a public registry (that would leak base-image layers).
+
+on:
+  workflow_call:
+    inputs:
+      base_image_tag:
+        description: Tag of the datadog_build_linux_x64 base image the cache derives FROM.
+        type: string
+        default: "7af9194f"
+    outputs:
+      ci_image:
+        description: Proxy pull ref of the cache image, for use as a consumer job `container.image`.
+        value: ${{ jobs.metadata.outputs.ci_image }}
+      image_exists:
+        description: Whether the computed cache image tag already exists in the registry.
+        value: ${{ jobs.metadata.outputs.image_exists }}
+    secrets:
+      REGISTRY_PASSWORD:
+        description: Password for the read-only registry.tooling quay proxy (pull the base image).
+        required: true
+      QUAY_PASSWORD:
+        description: Password for quay.io/stackstate (inspect + push the cache image).
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    name: Compute cache image tag and look up existing image
+    runs-on: docker-public
+    timeout-minutes: 15
+    outputs:
+      ci_image: ${{ steps.metadata.outputs.ci_image }}
+      image_exists: ${{ steps.metadata.outputs.image_exists }}
+    env:
+      QUAY_REGISTRY: quay.io
+      REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+      QUAY_USER: ${{ vars.QUAY_USER }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+      BASE_IMAGE_TAG: ${{ inputs.base_image_tag }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Compute cache image metadata and check existence
+        id: metadata
+        run: |
+          set -euo pipefail
+          source .github/scripts/agent-godeps-cache-metadata.sh
+          agent_godeps_compute_metadata
+
+          # Presence-gated login: same-repo runs have QUAY_* wired; a run without
+          # them still computes the tag and reports the image as missing.
+          if [[ -n "$QUAY_USER" && -n "$QUAY_PASSWORD" ]]; then
+            echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USER" --password-stdin "$QUAY_REGISTRY"
+          fi
+
+          if docker manifest inspect "$ci_image_push" >/dev/null 2>&1; then
+            image_exists=true
+          else
+            image_exists=false
+          fi
+
+          {
+            echo "ci_image=${ci_image}"
+            echo "image_exists=${image_exists}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Cache push ref:     ${ci_image_push}"
+          echo "Cache pull ref:     ${ci_image}"
+          echo "Cache image exists: ${image_exists}"
+
+  build:
+    name: Build and publish missing cache image
+    if: ${{ needs.metadata.outputs.image_exists != 'true' }}
+    needs: metadata
+    runs-on: docker-public
+    timeout-minutes: 60
+    env:
+      QUAY_REGISTRY: quay.io
+      REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+      REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_USER: ${{ vars.QUAY_USER }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+      BASE_IMAGE_TAG: ${{ inputs.base_image_tag }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Build and publish Go dependency cache image
+        run: |
+          set -euo pipefail
+          source .github/scripts/agent-godeps-cache-metadata.sh
+          agent_godeps_compute_metadata
+
+          base_image="${REGISTRY_HOST}/quay/stackstate/datadog_build_linux_x64:${BASE_IMAGE_TAG}"
+
+          # Minimal build context: the module manifests (repo paths preserved so
+          # nested modules and their local `replace ../` targets resolve) plus the
+          # cache Dockerfile. Assembled outside the checkout so `docker build`
+          # streams only what the image needs.
+          context="$(mktemp -d)"
+          mkdir -p "${context}/manifests"
+          git ls-files -z -- \
+            '*go.mod' '*go.sum' 'go.work' 'go.work.sum' 'modules.yml' \
+          | while IFS= read -r -d '' f; do
+              mkdir -p "${context}/manifests/$(dirname "$f")"
+              cp "$f" "${context}/manifests/${f}"
+            done
+          cp .github/docker/godeps-cache/Dockerfile "${context}/Dockerfile"
+
+          # Log into both registries: pull the private base via the registry.tooling
+          # proxy, push the result to quay.io/stackstate.
+          echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin "$REGISTRY_HOST"
+          echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USER" --password-stdin "$QUAY_REGISTRY"
+
+          docker build \
+            --pull \
+            --build-arg "BASE_IMAGE=${base_image}" \
+            --tag "$ci_image_push" \
+            "$context"
+          docker push "$ci_image_push"
