@@ -1,5 +1,5 @@
 # Go dependency cache image for stackstate-agent CI (STAC-25429). Derives FROM the
-# private datadog_build CI image and bakes the workspace's external Go module
+# datadog_build CI image and bakes the workspace's external Go module
 # downloads into GOMODCACHE, so consumer jobs get a warm module cache with no
 # per-job `go mod download`/network round-trips. Rebuilt only when the module graph
 # hash changes -- the image tag is content-addressed

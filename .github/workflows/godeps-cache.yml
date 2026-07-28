@@ -7,13 +7,16 @@ name: Go dependency cache image
 # image across every branch/PR/default build (the tag *is* the cache key), and the
 # heavy Go module download only runs when the graph actually changes.
 #
-# The image is FROM the private datadog_build CI image with the workspace's external
-# modules baked into GOMODCACHE. It is pushed to the dedicated private quay repo
+# The image is FROM the datadog_build CI image with the workspace's external modules
+# baked into GOMODCACHE. It is pushed to the dedicated quay repo
 # quay.io/stackstate/stackstate-agent-godeps-cache and pulled by consumer jobs through
 # the registry.tooling quay proxy with the same read-only REGISTRY_* credentials they
-# already use for datadog_build. Because the base image is private, the cache image
-# MUST stay private -- it is never pushed to a public registry (that would leak
-# base-image layers).
+# already use for datadog_build.
+#
+# Both that repo and the datadog_build base are public (terraform-infra quay/locals.tf).
+# Nothing private is baked in: this repo is open source and the module set is already
+# public in the committed go.mod files. Public read also keeps the pull path off the
+# registry.tooling proxy robot's private-repo grants, which it does not hold.
 #
 # Dedicated repo, not the shared sts-ci-images: that one also holds the ARC runner
 # images, and stackstate-agent is PUBLIC, so any org member's same-repo branch can use
@@ -135,8 +138,8 @@ jobs:
             done
           cp .github/docker/godeps-cache/Dockerfile "${context}/Dockerfile"
 
-          # Log into both registries: pull the private base via the registry.tooling
-          # proxy, push the result to quay.io/stackstate.
+          # Log into both registries: pull the base via the registry.tooling proxy,
+          # push the result to quay.io/stackstate.
           echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin "$REGISTRY_HOST"
           echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USER" --password-stdin "$QUAY_REGISTRY"
 
