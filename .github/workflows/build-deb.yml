@@ -1,14 +1,22 @@
 name: DEB package build
 
-# Ported from .gitlab-ci-agent.yml (build_deb, test_deb_renaming) as part of the
-# GitLab -> GitHub migration (STAC-25142), phase 3: omnibus DEB packaging. Tracks
-# the stackstate-7.78.2 pipeline.
+# Ported from .gitlab-ci-agent.yml (build_deb, test_deb_renaming,
+# pre_release_main_agent_image) as part of the GitLab -> GitHub migration
+# (STAC-25142). Tracks the stackstate-7.78.2 pipeline.
 #
-# Scope: the PR lane only -- packaging plus the branding gate. `sign_deb` and the
-# S3 publish stay out by design and land in phase 4: signing is a release action,
-# it needs the GPG key material, and org secrets are never exposed to fork PRs on
-# what is a PUBLIC repo. Validating a change and releasing it are different trust
-# boundaries and belong in different workflows.
+# Scope: the PR lane only -- package, verify branding, build the agent image and
+# smoke-test it. Nothing is signed, pushed or published here:
+#   * `sign_deb` and the S3 publish are release actions needing GPG key material.
+#   * `pre_release_main_agent_image` also PUSHES to quay.io/stackstate; this job
+#     stops at `docker build` + a runtime check, so the PR lane needs no write
+#     credential at all -- only the read-only proxy creds already in use.
+# On a PUBLIC repo that separation is the point: validating a change and releasing
+# it are different trust boundaries and belong in different workflows. Publishing
+# lands in phase 4, gated on the branch, not on the PR.
+#
+# Only the amd64 pipeline is ported. GitLab fans .gitlab-ci-agent.yml out twice
+# from .gitlab-ci.yml (agent-x86 / agent-arm); the arm64 half needs an arm64 XL
+# runner class, which does not exist yet (only `arm64-docker`). Tracked separately.
 #
 # Deliberate differences from the GitLab job:
 #   * `deps_deb` is NOT ported. Its only downstream-consumed artifact was
@@ -238,3 +246,55 @@ jobs:
             exit 1
           fi
           ./test/renaming/test_deb.sh "${debs[0]}"
+
+  build-agent-image:
+    name: Build agent container image (docker build, no push on PR)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: build-deb
+    # DinD class: docker CLI in the runner image, dockerd in a native sidecar.
+    runs-on: docker-public
+    timeout-minutes: 60
+    env:
+      # ARCH in the agent-x86 trigger block of .gitlab-ci.yml; also the .deb suffix.
+      ARCH: amd64
+      LOCAL_IMAGE: stackstate-agent:ci
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package
+
+      - name: Log in to the registry proxy
+        env:
+          REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+          REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          set -eo pipefail
+          # Dockerfiles/agent pulls its ubuntu extract stage through the proxy;
+          # the BCI stages come from registry.suse.com and need no auth.
+          printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
+
+      - name: Build agent image
+        run: |
+          set -eo pipefail
+          shopt -s nullglob
+          debs=(outcomes/pkg/stackstate-agent_*_"${ARCH}".deb)
+          if [ "${#debs[@]}" -ne 1 ]; then
+            echo "Expected exactly one stackstate-agent_*_${ARCH}.deb, found ${#debs[@]}: ${debs[*]}" >&2
+            exit 1
+          fi
+          cp "${debs[0]}" Dockerfiles/agent/
+          # publish_image.sh also passes --build-arg S6_ARCH; the agent Dockerfile
+          # declares no such ARG, so it is dropped here rather than kept as a warning.
+          docker build --build-arg ARCH="${ARCH}" -t "${LOCAL_IMAGE}" Dockerfiles/agent
+
+      - name: Smoke test agent image
+        run: |
+          set -eo pipefail
+          docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
