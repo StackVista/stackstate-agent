@@ -40,7 +40,7 @@ name: DEB package build
 #
 # Prerequisites for a GREEN run (beyond the phase 1/2 registry-proxy credentials):
 #   * GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL / _USER / _READONLY_PASSWORD must
-#     reach this repo as REPO-level secrets, provisioned through pulumi-infra
+#     reach this repo at REPO level, provisioned through pulumi-infra
 #     (github/repoVariables/resources.yaml, `- repository: stackstate-agent`).
 #     Repo-level, not org-level: org secrets default to visibility=private, which
 #     excludes this PUBLIC repo, and widening them to visibility=all -- the
@@ -105,11 +105,11 @@ jobs:
 
       - name: Build DEB package with omnibus
         env:
-          # Repo-level secrets (see header). Read via `secrets.` for all three
-          # because pulumi-infra's `value: "secret:..."` form provisions a secret
-          # unless the entry is marked `type: variable` -- the mismatch flagged in
-          # the stackpacks block of github/repoVariables/resources.yaml.
-          GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL: ${{ secrets.GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL }}
+          # Repo-level, provisioned by pulumi-infra (see header). The index URL is a
+          # plain variable -- it is not secret, the same URL is hardcoded in this repo
+          # at omnibus/package-scripts/publish_image.sh -- while the user and password
+          # are secrets. Scheme-less: setup_artifact_registry.sh prepends https://.
+          GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL: ${{ vars.GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL }}
           GITLAB_PACKAGE_REGISTRY_USER: ${{ secrets.GITLAB_PACKAGE_REGISTRY_USER }}
           GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD: ${{ secrets.GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD }}
         run: |
