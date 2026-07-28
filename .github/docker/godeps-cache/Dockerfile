@@ -11,21 +11,28 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
-# Pre-download external modules for every module in the workspace. manifests/
-# preserves the repo's directory layout so nested go.mod files (and their local
-# `replace ../` targets) resolve. GOFLAGS=-mod=mod lets `go mod download` reconcile
-# go.sum in-container without a committed change; only the populated module cache is
-# kept -- the manifests themselves are removed from the final image.
+# `read -d ''` and `pipefail` are bashisms and RUN defaults to /bin/sh (dash), where
+# the download loop silently iterates zero times and publishes an empty cache.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Pre-download external modules for every module in the workspace, mirroring what
+# `inv deps` does per module (tasks/libs/common/go.py) at the same parallelism.
+# manifests/ preserves the repo's directory layout so nested go.mod files (and their
+# local `replace ../` targets) resolve. No GOFLAGS override: go.work puts this in
+# workspace mode, where anything other than -mod=readonly is rejected outright. Only
+# the populated module cache is kept -- the manifests are removed from the final image.
 COPY manifests/ /workspace/
 RUN set -eux; \
     git config --global --add safe.directory '*'; \
     export PATH="${PATH}:/usr/local/go/bin"; \
-    export GOFLAGS=-mod=mod; \
     cd /workspace; \
+    modules="$(find . -type f -name go.mod | wc -l)"; \
+    echo "workspace modules: ${modules}"; \
+    test "${modules}" -gt 0; \
     find . -type f -name go.mod -print0 \
-      | while IFS= read -r -d '' modfile; do \
-          moddir="$(dirname "${modfile}")"; \
-          echo "go mod download :: ${moddir}"; \
-          ( cd "${moddir}" && go mod download ); \
-        done; \
+      | xargs -0 -n1 -P8 bash -c \
+          'moddir="$(dirname "$1")"; echo "go mod download :: ${moddir}"; cd "${moddir}" && go mod download' _; \
+    cache="$(go env GOMODCACHE)"; \
+    du -sh "${cache}"; \
+    test "$(du -sm "${cache}" | cut -f1)" -gt 100; \
     rm -rf /workspace

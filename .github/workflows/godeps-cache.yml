@@ -102,6 +102,11 @@ jobs:
     needs: metadata
     runs-on: docker-public
     timeout-minutes: 60
+    # Consumer workflows call this in parallel on the same commit; without a shared gate
+    # they all see image_exists=false and build the same content-addressed tag at once.
+    concurrency:
+      group: godeps-cache-${{ needs.metadata.outputs.ci_image }}
+      cancel-in-progress: false
     env:
       QUAY_REGISTRY: quay.io
       REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
@@ -124,6 +129,18 @@ jobs:
 
           base_image="${REGISTRY_HOST}/quay/stackstate/datadog_build_linux_x64:${BASE_IMAGE_TAG}"
 
+          # Log into both registries: pull the base via the registry.tooling proxy,
+          # push the result to quay.io/stackstate.
+          echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin "$REGISTRY_HOST"
+          echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USER" --password-stdin "$QUAY_REGISTRY"
+
+          # The metadata lookup can be stale by the time this job holds the concurrency
+          # slot -- a sibling workflow may have published the same tag while it queued.
+          if docker manifest inspect "$ci_image_push" >/dev/null 2>&1; then
+            echo "Already published by a concurrent run: ${ci_image_push}"
+            exit 0
+          fi
+
           # Minimal build context: the module manifests (repo paths preserved so
           # nested modules and their local `replace ../` targets resolve) plus the
           # cache Dockerfile. Assembled outside the checkout so `docker build`
@@ -137,11 +154,6 @@ jobs:
               cp "$f" "${context}/manifests/${f}"
             done
           cp .github/docker/godeps-cache/Dockerfile "${context}/Dockerfile"
-
-          # Log into both registries: pull the base via the registry.tooling proxy,
-          # push the result to quay.io/stackstate.
-          echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin "$REGISTRY_HOST"
-          echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USER" --password-stdin "$QUAY_REGISTRY"
 
           docker build \
             --pull \
