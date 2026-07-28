@@ -210,6 +210,12 @@ jobs:
       - name: Build cluster-agent image
         run: |
           set -eo pipefail
+          # actions/download-artifact does not preserve the executable bit (GitLab
+          # artifacts did). The Dockerfile's `chmod +x` targets
+          # opt/stackstate-agent/bin/stackstate-cluster-agent, which is the enclosing
+          # DIRECTORY, not the binary inside it -- so nothing in the build restores
+          # it and the image ships a non-executable agent.
+          chmod +x bin/stackstate-cluster-agent/stackstate-cluster-agent
           # bin/stackstate-cluster-agent is a DIRECTORY (binary + dist/), and it
           # must stay one: the Dockerfile COPYs it to
           # /opt/stackstate-agent/bin/stackstate-cluster-agent/ and entrypoint.sh
