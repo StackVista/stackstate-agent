@@ -20,9 +20,13 @@ name: Lint and unit tests
 #   * The GitLab push mirror to this repo must be disabled (done 2026-07-10),
 #     otherwise a mirror sync overwrites anything pushed to GitHub.
 #   * This is a PUBLIC repo. The read-only registry-proxy credentials must be
-#     available to it (org-inherited or provisioned via pulumi-infra):
-#     vars REGISTRY_HOST, REGISTRY_USER + secret REGISTRY_PASSWORD. Org secrets
-#     are never exposed to fork PRs, so external-fork PRs skip these jobs.
+#     available to it (org-inherited or provisioned via pulumi-infra) to pull the
+#     cache image: vars REGISTRY_HOST, REGISTRY_USER + secret REGISTRY_PASSWORD.
+#     The godeps-cache build job additionally needs quay push credentials (var
+#     QUAY_USER + secret QUAY_PASSWORD). The warm Go module cache is delivered by
+#     the godeps-cache reusable workflow (STAC-25429; see build-binaries.yml header
+#     and .github/workflows/godeps-cache.yml). Org secrets are never exposed to fork
+#     PRs, so external-fork PRs skip these jobs.
 
 on:
   pull_request:
@@ -46,6 +50,15 @@ env:
   CONDA_ENV: ddpy3
 
 jobs:
+  godeps-cache:
+    name: Go dependency cache image
+    # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
   filename-linting:
     name: Filename linting
     # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
@@ -80,10 +93,16 @@ jobs:
   unbranded-unit-tests:
     name: Unit tests (unbranded / DataDog)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: godeps-cache
     runs-on: xlarge-public
     timeout-minutes: 150
     container:
-      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      # Warm Go module cache image (godeps-cache job); pulled via the same
+      # read-only registry proxy + REGISTRY_* credentials as datadog_build. The tag is
+      # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
+      # is effectively digest-pinned; it cannot be a static digest because it is
+      # computed per run -- hence the narrow unpinned-images ignore below.
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -105,13 +124,14 @@ jobs:
           # Work volume is owned by the ARC runner uid but the job container runs as
           # root, so git rejects the repo as "dubious ownership"; mark it safe.
           git config --global --add safe.directory '*'
-          go clean -modcache
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429), keyed
+          # to the module-graph hash: no `go clean -modcache` and no per-job
+          # `inv deps` reconcile. Materialise vendor/ against the warm cache
+          # (offline). Go tool binaries come from `invoke install-tools` below --
+          # the removed second `inv deps` never installed them (it is go mod
+          # download + tidy, not a tool install).
           go work sync
           go work vendor
-          inv -e deps --verbose
-          # /go/bin is not cached on ephemeral runners; re-run deps to get tool
-          # binaries (golint, misspell, ...).
-          inv deps
           export AGENT_GITHUB_ORG=DataDog
           export GITHUB_ORG=DataDog
           export BRANDED=false
@@ -130,10 +150,16 @@ jobs:
   branded-unit-tests:
     name: Unit tests (branded / StackState)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: godeps-cache
     runs-on: xlarge-public
     timeout-minutes: 150
     container:
-      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      # Warm Go module cache image (godeps-cache job); pulled via the same
+      # read-only registry proxy + REGISTRY_* credentials as datadog_build. The tag is
+      # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
+      # is effectively digest-pinned; it cannot be a static digest because it is
+      # computed per run -- hence the narrow unpinned-images ignore below.
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -155,11 +181,12 @@ jobs:
           # Work volume is owned by the ARC runner uid but the job container runs as
           # root, so git rejects the repo as "dubious ownership"; mark it safe.
           git config --global --add safe.directory '*'
-          go clean -modcache
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429): no
+          # `go clean -modcache` and no per-job `inv deps` reconcile. Materialise
+          # vendor/ against the warm cache (offline). Go tool binaries come from
+          # `invoke install-tools` below.
           go work sync
           go work vendor
-          inv -e deps --verbose
-          inv deps
           export AGENT_GITHUB_ORG=DataDog
           export GITHUB_ORG=DataDog
           export BRANDED=true
