@@ -6,34 +6,38 @@ name: Binary builds
 # and cluster-agent from the DataDog fork, validating that the shippable binaries
 # compile on GitHub runners before the packaging/image phases build on top of them.
 #
-# Speedup concepts carried over from the GitLab pipeline work (STAC-25396):
-#   * Self-contained jobs, NO shared "prepare deps once" job. On GitLab, deps_deb
-#     sat on the critical path as a serial prefix that every build job depended on,
-#     but it never actually shared anything reusable: the Go module cache is too
-#     big to transport between jobs (~540k files, 2-3 GB) and a shared vendor/ dir
-#     breaks vendoring (`go work sync` mutates go.mod, so each job must re-vendor
-#     against its own checkout). So every job here reconciles its own deps
-#     (go work sync + go work vendor + inv deps) instead of depending on a deps job.
+# Speedup concepts carried over from the GitLab pipeline work (STAC-25396) and the
+# warm-cache follow-up (STAC-25429):
+#   * WARM Go module cache via a prebuilt cache image (STAC-25429), keyed by a hash
+#     of the module graph -- the StackGraph ci-metadata/build-ci-image pattern. The
+#     godeps-cache reusable workflow (.github/workflows/godeps-cache.yml) publishes
+#     an image FROM datadog_build with all external modules baked into GOMODCACHE;
+#     the build jobs use it as their `container:` so the cache is already warm. This
+#     replaces the earlier "each job cold-reconciles its own deps" approach: there
+#     is no `go clean -modcache` and no per-job `inv deps` (go mod download + tidy).
+#     The module cache is too big to transport via actions/cache (~540k files,
+#     2-3 GB), which is why it ships as an image layer instead. Jobs still run
+#     `go work sync` + `go work vendor` per checkout (vendoring mutates go.mod, so
+#     vendor/ is materialised per job) -- but now against the warm cache, offline.
 #   * deps_deb's only genuinely consumed output was version.txt, which is git-based
 #     (inv agent.version), not module-cache-based -- so build-cluster-agent just
 #     generates it in-job rather than pulling it from an upstream job.
 #   * Each suite runs once on the path to master, deduped via
 #     `concurrency: cancel-in-progress` (a newer push cancels the in-flight build).
 #
-# Known follow-ups (same as the GitLab analysis):
-#   * The real build-time win is a WARM module cache, which needs persistent
-#     runner-local storage (PVC-backed GOMODCACHE/GOCACHE on the ARC pool) -- an
-#     SRE / pulumi-infra change, not workflow YAML. actions/cache does not help:
-#     it hits the same file-count/size tax that made the GitLab cache a net loss.
+# Known follow-ups:
+#   * go.mod tidiness is no longer verified in these jobs (the `inv deps` reconcile
+#     is gone). Add a single check-mod-tidy gate rather than paying tidy in every job.
 #   * Phase 6 (merge queue): move the heavy builds to `merge_group` so they run
 #     once at land time and drop from `pull_request`; master/version-branch pushes
 #     then build + publish without re-running these.
 #
-# Prerequisites for a GREEN run are the same as lint-and-unit-tests.yml: the GitLab
-# push mirror must stay disabled, and this PUBLIC repo needs the read-only
-# registry-proxy credentials (vars REGISTRY_HOST/REGISTRY_USER + secret
-# REGISTRY_PASSWORD) for the container: image pull. Org secrets are never exposed
-# to fork PRs, so external-fork PRs skip these jobs by design.
+# Prerequisites for a GREEN run: the GitLab push mirror must stay disabled, and this
+# PUBLIC repo needs the read-only registry-proxy credentials (vars REGISTRY_HOST/
+# REGISTRY_USER + secret REGISTRY_PASSWORD) to pull the cache image, plus quay push
+# credentials (var QUAY_USER + secret QUAY_PASSWORD) for the godeps-cache build job.
+# The cache image is PRIVATE (its base datadog_build is private). Org secrets are
+# never exposed to fork PRs, so external-fork PRs skip these jobs by design.
 
 on:
   pull_request:
@@ -57,16 +61,29 @@ env:
   CONDA_ENV: ddpy3
 
 jobs:
+  godeps-cache:
+    name: Go dependency cache image
+    # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
   build-agent:
     name: Build agent binary (branded / StackState)
     # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: godeps-cache
     runs-on: xlarge-public
     timeout-minutes: 120
     container:
-      # datadog_build image (built by datadog-agent-buildimages), pulled via the
-      # read-only quay proxy -- mirrors BUILD_IMAGE in .gitlab-ci.yml (7.78.2 tag).
-      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      # Warm Go module cache image (godeps-cache job); pulled via the same
+      # read-only registry proxy + REGISTRY_* credentials as datadog_build. The tag is
+      # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
+      # is effectively digest-pinned; it cannot be a static digest because it is
+      # computed per run -- hence the narrow unpinned-images ignore below.
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -88,12 +105,12 @@ jobs:
           # Work volume is owned by the ARC runner uid but the job container runs as
           # root, so git rejects the repo as "dubious ownership"; mark it safe.
           git config --global --add safe.directory '*'
-          # Self-contained deps: reconcile go.mod <-> vendor for this checkout
-          # (cross-job cache/vendor sharing is not viable here -- see header).
-          go clean -modcache
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429), keyed
+          # to the module-graph hash, so there is no `go clean -modcache` and no
+          # per-job `inv deps` (go mod download + tidy) reconcile. Materialise
+          # vendor/ for this checkout against the warm cache (offline; no download).
           go work sync
           go work vendor
-          inv -e deps --verbose
           # rtloader is the C++/Python bridge the full agent links against; the
           # cluster-agent doesn't need it, but the production agent does.
           inv -e rtloader.make
@@ -114,10 +131,16 @@ jobs:
   build-cluster-agent:
     name: Build cluster-agent binary (branded / StackState)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: godeps-cache
     runs-on: xlarge-public
     timeout-minutes: 120
     container:
-      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      # Warm Go module cache image (godeps-cache job); pulled via the same
+      # read-only registry proxy + REGISTRY_* credentials as datadog_build. The tag is
+      # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
+      # is effectively digest-pinned; it cannot be a static digest because it is
+      # computed per run -- hence the narrow unpinned-images ignore below.
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -138,11 +161,11 @@ jobs:
           # Work volume is owned by the ARC runner uid but the job container runs as
           # root, so git rejects the repo as "dubious ownership"; mark it safe.
           git config --global --add safe.directory '*'
-          # Self-contained deps (see header): reconcile go.mod <-> vendor per job.
-          go clean -modcache
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429); no
+          # `go clean -modcache` and no per-job `inv deps` reconcile. Materialise
+          # vendor/ for this checkout against the warm cache (offline; no download).
           go work sync
           go work vendor
-          inv -e deps --verbose
           export AGENT_GITHUB_ORG=DataDog
           export GITHUB_ORG=DataDog
           export BRANDED=true
