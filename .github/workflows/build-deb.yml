@@ -25,20 +25,33 @@ name: DEB package build
 #     (vendor.tar.gz) is consumed by nobody (see the STAC-25396 note at
 #     .gitlab-ci-agent.yml:68-75). Dropping it removes a job, an artifact
 #     round-trip and a cache for zero loss.
-#   * No build caches yet -- this is a deliberate cold port. The GitLab job carried
-#     three (omnibus base_dir + .gems, bazel install, bazel repository_cache), none
-#     of which transfer directly: the GitHub-hosted Actions cache is capped at 10 GB
-#     per repo and the omnibus cache alone is expected to exceed it, and STAC-25396
-#     already established that caches of this shape hit the file-count tax and
-#     artifact 413s on this repo. The cache backend is its own ticket; the cold
-#     wall-clock this job produces is the number that tells us what it is worth.
-#     Bazel state is still pinned under XDG_CACHE_HOME below so a cache layer can
-#     adopt those paths unchanged.
+#   * WARM Go module cache via the prebuilt cache image (STAC-25429), the same way
+#     the binary builds and unit tests get theirs: this workflow calls the
+#     godeps-cache reusable workflow and runs build-deb inside the image it
+#     publishes, so GOMODCACHE is already populated. That replaces the cold
+#     `go clean -modcache` + `inv deps` reconcile the port started with. The tag is
+#     a content hash of the module graph, so this workflow shares the image with
+#     the other two rather than building a third one -- and on a PR that leaves
+#     go.mod alone, nothing is built at all. Branding is safe against a cache baked
+#     from the unbranded tree: fix_branding.sh rewrites .go sources and testdata
+#     only, never go.mod/go.sum/go.work, so the module graph is identical either
+#     side of it.
+#   * The OMNIBUS and BAZEL caches are still absent -- this stays a cold port for
+#     those. The GitLab job carried three (omnibus base_dir + .gems, bazel install,
+#     bazel repository_cache), none of which transfer directly: the GitHub-hosted
+#     Actions cache is capped at 10 GB per repo and the omnibus cache alone is
+#     expected to exceed it, and STAC-25396 already established that caches of this
+#     shape hit the file-count tax and artifact 413s on this repo. That backend is
+#     its own ticket; the wall-clock this job produces is the number that tells us
+#     what it is worth. Bazel state is still pinned under XDG_CACHE_HOME below so a
+#     cache layer can adopt those paths unchanged.
 #   * The GitLab job's `.omnibus` <-> `/omnibus` move dance is dropped along with
 #     the cache. Note it was already inert there: it staged the cache at /omnibus
 #     while the build ran with --base-dir /.omnibus.
 #
-# Prerequisites for a GREEN run (beyond the phase 1/2 registry-proxy credentials):
+# Prerequisites for a GREEN run (beyond the phase 1/2 registry-proxy credentials
+# and the quay push credentials the godeps-cache build job needs -- var QUAY_USER
+# + secret QUAY_PASSWORD, see godeps-cache.yml):
 #   * GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL / _USER / _READONLY_PASSWORD must
 #     reach this repo at REPO level, provisioned through pulumi-infra
 #     (github/repoVariables/resources.yaml, `- repository: stackstate-agent`).
@@ -76,18 +89,32 @@ env:
   MAJOR_VERSION: '3'
 
 jobs:
+  godeps-cache:
+    name: Go dependency cache image
+    # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
   build-deb:
     name: Build DEB package (omnibus, branded / StackState)
     # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: godeps-cache
     runs-on: xlarge-public
     # Cold omnibus build: no git cache, so every embedded software (openssl, cpython,
     # openscap, sqlite, ...) compiles from source. Generous until we have a real number.
     timeout-minutes: 300
     container:
-      # datadog_build image (built by datadog-agent-buildimages), pulled via the
-      # read-only quay proxy -- mirrors BUILD_IMAGE in .gitlab-ci.yml (7.78.2 tag).
-      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      # Warm Go module cache image (godeps-cache job), FROM the same datadog_build
+      # image this job used to run directly and pulled through the same read-only
+      # registry proxy + REGISTRY_* credentials. The tag is a sha256 content hash of
+      # the module graph (see godeps-cache.yml), so this ref is effectively
+      # digest-pinned; it cannot be a static digest because it is computed per run --
+      # hence the narrow unpinned-images ignore below.
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -155,10 +182,13 @@ jobs:
           # built-in that is unset here); pass the checkout root explicitly.
           ./fix_branding.sh "${GITHUB_WORKSPACE}"
 
-          go clean -modcache
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429), keyed
+          # to the module-graph hash, so there is no `go clean -modcache` and no
+          # per-job `inv deps` (go mod download + tidy) reconcile. Materialise
+          # vendor/ for this checkout against the warm cache (offline; no download).
+          # omnibus.build is handed this vendor/ as its --go-mod-cache below.
           go work sync
           go work vendor
-          inv -e deps --verbose
           # version.txt is consumed by the packaging/image phases. deps_deb produced
           # it on GitLab; generate it in-job instead. No `-e`: stdout must be only
           # the version string.
