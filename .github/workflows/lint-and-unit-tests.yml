@@ -31,6 +31,11 @@ name: Lint and unit tests
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      force_mod_tidy:
+        description: Run the go.mod tidiness check even when the module graph is unchanged.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -89,6 +94,59 @@ jobs:
           # root, so git rejects the repo as "dubious ownership"; mark it safe.
           git config --global --add safe.directory '*'
           inv -e linter.filenames
+
+  mod-tidy:
+    name: Go module tidiness (go.mod / go.sum)
+    # Nothing in this repo's CI has ever verified module tidiness (STAC-25459):
+    # `inv deps` only downloads, and the `go mod tidy` that used to sit in the GitLab
+    # reconcile mutated the tree rather than failing on a diff. `inv check-mod-tidy`
+    # has always existed (tasks/go.py) and does fail on a diff -- it was just never wired up.
+    #
+    # Gated on the godeps-cache tag, which is a sha256 over exactly **/go.mod,
+    # **/go.sum, go.work, go.work.sum and modules.yml. `image_exists == true` therefore
+    # means those files are byte-identical to a tree this check already passed on: the
+    # cache tag doubles as the cached verdict, so the check costs nothing on the PRs
+    # that do not touch the module graph. Dispatch with force_mod_tidy to re-run it
+    # against an unchanged graph.
+    #
+    # Blind spot: a source-only change that drops the last import of a dependency
+    # leaves a stale `require` without touching any hashed file, so this stays skipped.
+    # That does not break builds; a scheduled force_mod_tidy run would cover it.
+    if: >-
+      ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      && (needs.godeps-cache.outputs.image_exists != 'true' || inputs.force_mod_tidy) }}
+    needs: godeps-cache
+    # XL for headroom: check-mod-tidy walks all ~186 workspace modules serially and
+    # holds the full module graph. Revisit once there is a wall-clock measurement.
+    runs-on: xlarge-public
+    timeout-minutes: 60
+    container:
+      # Warm Go module cache image (godeps-cache job); see the unit-test jobs below
+      # for why this ref cannot be a static digest.
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # No fetch-depth: check-mod-tidy diffs the working tree, not history.
+          persist-credentials: false
+
+      - name: inv check-mod-tidy
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # check-mod-tidy reports by mutating the tree (`go work sync`, then `go mod
+          # tidy` per module) and diffing it, so git has to accept the checkout.
+          git config --global --add safe.directory '*'
+          # `go mod tidy` resolves the full module graph including test dependencies of
+          # dependencies, which is wider than the `go mod download` set baked into the
+          # cache image, so expect some network fetches here even on a warm cache.
+          inv -e check-mod-tidy
 
   unbranded-unit-tests:
     name: Unit tests (unbranded / DataDog)
