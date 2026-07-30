@@ -192,3 +192,66 @@ jobs:
             version.txt
           retention-days: 5
           if-no-files-found: error
+
+  build-cluster-agent-image:
+    name: Build cluster-agent container image (docker build, no push on PR)
+    # Ported from pre_release_cluster_agent_image. Lives in this workflow rather
+    # than build-deb.yml so it can `needs:` the job that produces its input --
+    # cross-workflow artifact hand-off would need run-id plumbing for no gain.
+    # Stops at `docker build` + a runtime check: the GitLab job also pushed to
+    # quay.io/stackstate, which the PR lane of a PUBLIC repo must not do.
+    # Publishing lands in phase 4, gated on the branch.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: build-cluster-agent
+    # DinD class: docker CLI in the runner image, dockerd in a native sidecar.
+    runs-on: docker-public
+    timeout-minutes: 45
+    env:
+      LOCAL_IMAGE: stackstate-cluster-agent:ci
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download cluster-agent binary
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: cluster-agent-binary
+
+      - name: Log in to the registry proxy
+        env:
+          REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+          REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          set -eo pipefail
+          # Dockerfiles/cluster-agent pulls its ubuntu builder stage through the
+          # proxy; the BCI stages come from registry.suse.com and need no auth.
+          printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
+
+      - name: Build cluster-agent image
+        run: |
+          set -eo pipefail
+          # actions/download-artifact does not preserve the executable bit (GitLab
+          # artifacts did). The Dockerfile's `chmod +x` targets
+          # opt/stackstate-agent/bin/stackstate-cluster-agent, which is the enclosing
+          # DIRECTORY, not the binary inside it -- so nothing in the build restores
+          # it and the image ships a non-executable agent.
+          chmod +x bin/stackstate-cluster-agent/stackstate-cluster-agent
+          # bin/stackstate-cluster-agent is a DIRECTORY (binary + dist/), and it
+          # must stay one: the Dockerfile COPYs it to
+          # /opt/stackstate-agent/bin/stackstate-cluster-agent/ and entrypoint.sh
+          # puts that directory on PATH so CMD can exec `stackstate-cluster-agent`
+          # by name. Flattening it to a bare binary breaks the image.
+          cp -r bin/stackstate-cluster-agent Dockerfiles/cluster-agent/
+          docker build -t "${LOCAL_IMAGE}" Dockerfiles/cluster-agent
+
+      - name: Smoke test cluster-agent image
+        run: |
+          set -eo pipefail
+          # Bypass entrypoint.sh: it hard-exits without STS_API_KEY, which a
+          # version check has no business needing.
+          docker run --rm \
+            --entrypoint /opt/stackstate-agent/bin/stackstate-cluster-agent/stackstate-cluster-agent \
+            "${LOCAL_IMAGE}" version

@@ -1,0 +1,330 @@
+name: DEB package build
+
+# Ported from .gitlab-ci-agent.yml (build_deb, test_deb_renaming,
+# pre_release_main_agent_image) as part of the GitLab -> GitHub migration
+# (STAC-25142). Tracks the stackstate-7.78.2 pipeline.
+#
+# Scope: the PR lane only -- package, verify branding, build the agent image and
+# smoke-test it. Nothing is signed, pushed or published here:
+#   * `sign_deb` and the S3 publish are release actions needing GPG key material.
+#   * `pre_release_main_agent_image` also PUSHES to quay.io/stackstate; this job
+#     stops at `docker build` + a runtime check, so the PR lane needs no write
+#     credential at all -- only the read-only proxy creds already in use.
+# On a PUBLIC repo that separation is the point: validating a change and releasing
+# it are different trust boundaries and belong in different workflows. Publishing
+# lands in phase 4, gated on the branch, not on the PR.
+#
+# Only the amd64 pipeline is ported. GitLab fans .gitlab-ci-agent.yml out twice
+# from .gitlab-ci.yml (agent-x86 / agent-arm); the arm64 half needs an arm64 XL
+# runner class, which does not exist yet (only `arm64-docker`). Tracked separately.
+#
+# Deliberate differences from the GitLab job:
+#   * `deps_deb` is NOT ported. Its only downstream-consumed artifact was
+#     version.txt, produced by `inv agent.version -u` -- a pure git-tag derivation
+#     that needs no upstream job, just `fetch-depth: 0`. Its other output
+#     (vendor.tar.gz) is consumed by nobody (see the STAC-25396 note at
+#     .gitlab-ci-agent.yml:68-75). Dropping it removes a job, an artifact
+#     round-trip and a cache for zero loss.
+#   * WARM Go module cache via the prebuilt cache image (STAC-25429), the same way
+#     the binary builds and unit tests get theirs: this workflow calls the
+#     godeps-cache reusable workflow and runs build-deb inside the image it
+#     publishes, so GOMODCACHE is already populated. That replaces the cold
+#     `go clean -modcache` + `inv deps` reconcile the port started with. The tag is
+#     a content hash of the module graph, so this workflow shares the image with
+#     the other two rather than building a third one -- and on a PR that leaves
+#     go.mod alone, nothing is built at all. Branding is safe against a cache baked
+#     from the unbranded tree: fix_branding.sh rewrites .go sources and testdata
+#     only, never go.mod/go.sum/go.work, so the module graph is identical either
+#     side of it.
+#   * The OMNIBUS and BAZEL caches are still absent -- this stays a cold port for
+#     those. The GitLab job carried three (omnibus base_dir + .gems, bazel install,
+#     bazel repository_cache), none of which transfer directly: the GitHub-hosted
+#     Actions cache is capped at 10 GB per repo and the omnibus cache alone is
+#     expected to exceed it, and STAC-25396 already established that caches of this
+#     shape hit the file-count tax and artifact 413s on this repo. That backend is
+#     its own ticket; the wall-clock this job produces is the number that tells us
+#     what it is worth. Bazel state is still pinned under XDG_CACHE_HOME below so a
+#     cache layer can adopt those paths unchanged.
+#   * The GitLab job's `.omnibus` <-> `/omnibus` move dance is dropped along with
+#     the cache. Note it was already inert there: it staged the cache at /omnibus
+#     while the build ran with --base-dir /.omnibus.
+#
+# Prerequisites for a GREEN run (beyond the phase 1/2 registry-proxy credentials
+# and the quay push credentials the godeps-cache build job needs -- var QUAY_USER
+# + secret QUAY_PASSWORD, see godeps-cache.yml):
+#   * GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL / _USER / _READONLY_PASSWORD must
+#     reach this repo at REPO level, provisioned through pulumi-infra
+#     (github/repoVariables/resources.yaml, `- repository: stackstate-agent`).
+#     Repo-level, not org-level: org secrets default to visibility=private, which
+#     excludes this PUBLIC repo, and widening them to visibility=all -- the
+#     STAC-25350 workaround used for the read-only REGISTRY_* pull credentials --
+#     would expose a package-registry credential to every public repo in the org.
+#     `.gitlab-scripts/setup_artifact_registry.sh` hard-exits when they are unset,
+#     so build-deb stays red until they land. The agent genuinely needs a private
+#     Python index for non-upstream packages, so these must be provisioned rather
+#     than dropped. Use the READONLY password, never the write one. Credentials go
+#     to pip.conf + ~/.netrc, never into a URL -- see wiki/concepts/ci-credentials.md.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The datadog_build container's default shell is dash, which lacks `set -o pipefail`
+# and mis-handles the conda activation the steps rely on; force bash.
+defaults:
+  run:
+    shell: bash
+
+env:
+  # conda env baked into the datadog_build image.
+  CONDA_ENV: ddpy3
+  # MAJOR_VERSION in .gitlab-ci.yml; selects the built .deb for the branding gate.
+  MAJOR_VERSION: '3'
+
+jobs:
+  godeps-cache:
+    name: Go dependency cache image
+    # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+  build-deb:
+    name: Build DEB package (omnibus, branded / StackState)
+    # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: godeps-cache
+    runs-on: xlarge-public
+    # Cold omnibus build: no git cache, so every embedded software (openssl, cpython,
+    # openscap, sqlite, ...) compiles from source. Generous until we have a real number.
+    timeout-minutes: 300
+    container:
+      # Warm Go module cache image (godeps-cache job), FROM the same datadog_build
+      # image this job used to run directly and pulled through the same read-only
+      # registry proxy + REGISTRY_* credentials. The tag is a sha256 content hash of
+      # the module graph (see godeps-cache.yml), so this ref is effectively
+      # digest-pinned; it cannot be a static digest because it is computed per run --
+      # hence the narrow unpinned-images ignore below.
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    env:
+      # Must live OUTSIDE the checkout: omnibus git-clones into base_dir and that
+      # conflicts with the agent working tree when nested under it.
+      OMNIBUS_BASE_DIR: /omnibus
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          # Full history + tags so `inv agent.version` resolves via `git describe`.
+          fetch-depth: 0
+
+      - name: Build DEB package with omnibus
+        env:
+          # Repo-level, provisioned by pulumi-infra (see header). The index URL is a
+          # plain variable -- it is not secret, the same URL is hardcoded in this repo
+          # at omnibus/package-scripts/publish_image.sh -- while the user and password
+          # are secrets. Scheme-less: setup_artifact_registry.sh prepends https://.
+          GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL: ${{ vars.GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL }}
+          GITLAB_PACKAGE_REGISTRY_USER: ${{ secrets.GITLAB_PACKAGE_REGISTRY_USER }}
+          GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD: ${{ secrets.GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD }}
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # omnibus is Ruby; the build image ships it under rvm.
+          . /usr/local/rvm/scripts/rvm
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
+
+          # omnibus resolves the agent source through GOPATH rather than the
+          # workspace path; GitLab's before_script created this symlink.
+          mkdir -p /go/src/github.com/StackVista
+          rm -rf /go/src/github.com/StackVista/stackstate-agent
+          ln -s "${GITHUB_WORKSPACE}" /go/src/github.com/StackVista/stackstate-agent
+
+          # DD 7.78 builds some dependencies through bazelisk from
+          # omnibus/config/software/datadog-agent-dependencies.rb. bazelisk aborts
+          # with "XDG_CACHE_HOME () must denote a directory in CI!" unless these
+          # point at real directories.
+          export XDG_CACHE_HOME="${GITHUB_WORKSPACE}/.cache"
+          export BAZELISK_HOME="${XDG_CACHE_HOME}/bazelisk"
+          mkdir -p "${XDG_CACHE_HOME}/bazel" "${XDG_CACHE_HOME}/bazel-repo" "${BAZELISK_HOME}"
+          # .bazelrc:75 `try-import %workspace%/user.bazelrc` is the upstream-blessed
+          # extension point; it applies to every bazelisk shell-out omnibus makes.
+          # user.bazelrc is gitignored.
+          cat > "${GITHUB_WORKSPACE}/user.bazelrc" <<EOF
+          startup --output_user_root=${XDG_CACHE_HOME}/bazel
+          common --repository_cache=${XDG_CACHE_HOME}/bazel-repo
+          EOF
+
+          export AGENT_GITHUB_ORG=DataDog
+          export GITHUB_ORG=DataDog
+          export BRANDED=true
+          export AGENT_REPO_NAME=datadog-agent
+          export OMNIBUS_FORCE_PACKAGES=true
+          # Rebrand DataDog -> StackState BEFORE vendoring: branding rewrites import
+          # paths, so vendor/ must be materialised against the rewritten tree.
+          # fix_branding.sh defaults its target dir to $CI_PROJECT_DIR (a GitLab
+          # built-in that is unset here); pass the checkout root explicitly.
+          ./fix_branding.sh "${GITHUB_WORKSPACE}"
+
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429), keyed
+          # to the module-graph hash, so there is no `go clean -modcache` and no
+          # per-job `inv deps` (go mod download + tidy) reconcile. Materialise
+          # vendor/ for this checkout against the warm cache (offline; no download).
+          # omnibus.build is handed this vendor/ as its --go-mod-cache below.
+          go work sync
+          go work vendor
+          # version.txt is consumed by the packaging/image phases. deps_deb produced
+          # it on GitLab; generate it in-job instead. No `-e`: stdout must be only
+          # the version string.
+          inv agent.version -u > version.txt
+          cat version.txt
+
+          # Writes pip.conf + ~/.netrc for the private Python index. Hard-exits if
+          # the GITLAB_PACKAGE_REGISTRY_* variables above are unset.
+          source ./.gitlab-scripts/setup_artifact_registry.sh
+
+          export LD_LIBRARY_PATH="/opt/stackstate-agent/embedded/lib/python3.12/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
+
+          # --install-directory pins the omnibus paths to the BRANDED install dir.
+          # Without it tasks/omnibus.py derives them from the unbranded
+          # /opt/datadog-agent while the branded build uses /opt/stackstate-agent,
+          # and the post-build step then targets a nonexistent directory.
+          inv -e omnibus.build \
+            --gem-path "${GITHUB_WORKSPACE}/.gems" \
+            --base-dir "${OMNIBUS_BASE_DIR}" \
+            --go-mod-cache "${GITHUB_WORKSPACE}/vendor" \
+            --skip-deps \
+            --skip-sign \
+            --install-directory /opt/stackstate-agent
+
+      - name: Collect package outputs
+        run: |
+          set -eo pipefail
+          mkdir -p outcomes
+          cp -r "${OMNIBUS_BASE_DIR}/pkg" outcomes/
+          cp -r Dockerfiles outcomes/
+          ls -la outcomes/pkg outcomes/Dockerfiles
+
+      - name: Upload DEB package and image manifests
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: deb-package
+          # Paths match the GitLab build_deb artifacts; the branding gate below and
+          # the image phase (phase 5) consume them.
+          path: |
+            outcomes/pkg/*.deb
+            outcomes/pkg/*.json
+            outcomes/Dockerfiles/agent
+            outcomes/Dockerfiles/cluster-agent
+            outcomes/Dockerfiles/dogstatsd
+            outcomes/Dockerfiles/manifests
+            version.txt
+          retention-days: 5
+          if-no-files-found: error
+
+  test-deb-renaming:
+    name: DEB branding verification (no DataDog references)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: build-deb
+    # Cheap gate: unpacks the .deb and greps it. Does not need the XL class.
+    runs-on: docker-public
+    timeout-minutes: 30
+    container:
+      # Same build image: test_deb.sh needs `ar` from binutils to unpack the .deb.
+      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package
+
+      - name: Verify package carries no DataDog branding
+        run: |
+          set -eo pipefail
+          git config --global --add safe.directory '*'
+          # test_deb.sh takes exactly one package and rejects anything else, so
+          # resolve the glob here and fail loudly rather than passing it through
+          # (the GitLab job relied on the glob expanding to exactly one file).
+          shopt -s nullglob
+          debs=(outcomes/pkg/stackstate-agent_"${MAJOR_VERSION}"*.deb)
+          if [ "${#debs[@]}" -ne 1 ]; then
+            echo "Expected exactly one stackstate-agent_${MAJOR_VERSION}*.deb, found ${#debs[@]}: ${debs[*]}" >&2
+            exit 1
+          fi
+          ./test/renaming/test_deb.sh "${debs[0]}"
+
+  build-agent-image:
+    name: Build agent container image (docker build, no push on PR)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: build-deb
+    # DinD class: docker CLI in the runner image, dockerd in a native sidecar.
+    runs-on: docker-public
+    timeout-minutes: 60
+    env:
+      # ARCH in the agent-x86 trigger block of .gitlab-ci.yml; also the .deb suffix.
+      ARCH: amd64
+      LOCAL_IMAGE: stackstate-agent:ci
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package
+
+      - name: Log in to the registry proxy
+        env:
+          REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+          REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          set -eo pipefail
+          # Dockerfiles/agent pulls its ubuntu extract stage through the proxy;
+          # the BCI stages come from registry.suse.com and need no auth.
+          printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
+
+      - name: Build agent image
+        run: |
+          set -eo pipefail
+          shopt -s nullglob
+          debs=(outcomes/pkg/stackstate-agent_*_"${ARCH}".deb)
+          if [ "${#debs[@]}" -ne 1 ]; then
+            echo "Expected exactly one stackstate-agent_*_${ARCH}.deb, found ${#debs[@]}: ${debs[*]}" >&2
+            exit 1
+          fi
+          cp "${debs[0]}" Dockerfiles/agent/
+          # publish_image.sh also passes --build-arg S6_ARCH; the agent Dockerfile
+          # declares no such ARG, so it is dropped here rather than kept as a warning.
+          docker build --build-arg ARCH="${ARCH}" -t "${LOCAL_IMAGE}" Dockerfiles/agent
+
+      - name: Smoke test agent image
+        run: |
+          set -eo pipefail
+          docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
