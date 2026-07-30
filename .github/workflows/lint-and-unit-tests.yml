@@ -60,6 +60,10 @@ jobs:
     # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
+    # Designated builder of the cache image (STAC-25494): no wait, so this workflow --
+    # the longest of the three -- is never held up. The other two wait it out.
+    with:
+      build_delay_seconds: 0
     secrets:
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
       QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
