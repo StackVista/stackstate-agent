@@ -18,11 +18,12 @@ name: Cerberus notify
 # The repo's own .cerberus/cerberus_notify_failure.sh is not reused: it is built
 # around GitLab's CI_* variables and predates the `platform` field.
 #
-# Prerequisite: CERBERUS_LAMBDA_URL and SLACK_CI_REPORT_CHANNEL are org secrets that
-# default to visibility=private, which excludes this PUBLIC repo. StackVista/pulumi-infra
-# PR #257 flips both to visibility=all (the same fix STAC-25350 applied to REGISTRY_*).
-# Until it lands this workflow warns and exits 0 rather than adding a second red job to
-# an already-failed run -- the annotation is the signal.
+# Prerequisite: CERBERUS_LAMBDA_URL and SLACK_CI_REPORT_CHANNEL must reach this repo as
+# REPO-level secrets (StackVista/pulumi-infra PR #258). The org-level copies are
+# visibility=private, which excludes this PUBLIC repo, and widening them is not an option:
+# the Cerberus endpoint is unauthenticated, so the URL is the whole capability. Until #258
+# applies, this workflow warns and exits 0 rather than adding a second red job to an
+# already-failed run -- the annotation is the signal.
 #
 # Both are secrets, so SLACK_CI_REPORT_CHANNEL is read from `secrets`, not `vars`.
 
@@ -63,7 +64,7 @@ jobs:
           set -euo pipefail
 
           if [ -z "${CERBERUS_LAMBDA_URL}" ]; then
-            echo "::warning title=Cerberus not configured::CERBERUS_LAMBDA_URL is not visible to this repo, so the ${SUITE} failure was not reported to Slack. Needs pulumi-infra PR #257 (STAC-25461)."
+            echo "::warning title=Cerberus not configured::CERBERUS_LAMBDA_URL is not visible to this repo, so the ${SUITE} failure was not reported to Slack. Needs pulumi-infra PR #258 (STAC-25461)."
             exit 0
           fi
 
