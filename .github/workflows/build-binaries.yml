@@ -283,3 +283,4 @@ jobs:
       suite: binary-builds
     secrets:
       CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
+      SLACK_CI_REPORT_CHANNEL: ${{ secrets.SLACK_CI_REPORT_CHANNEL }}

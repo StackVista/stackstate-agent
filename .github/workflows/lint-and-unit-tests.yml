@@ -291,3 +291,4 @@ jobs:
       suite: lint-and-unit-tests
     secrets:
       CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
+      SLACK_CI_REPORT_CHANNEL: ${{ secrets.SLACK_CI_REPORT_CHANNEL }}
