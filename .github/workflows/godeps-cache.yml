@@ -30,6 +30,14 @@ on:
         description: Tag of the datadog_build_linux_x64 base image the cache derives FROM.
         type: string
         default: "7af9194f"
+      build_delay_seconds:
+        description: >-
+          How long to wait for a sibling workflow to publish the cache image before
+          building it here. Consumers stagger this so one builds immediately and the
+          rest wait out a normal build first. See the build job for why this is not a
+          concurrency group.
+        type: number
+        default: 0
     outputs:
       ci_image:
         description: Proxy pull ref of the cache image, for use as a consumer job `container.image`.
@@ -104,9 +112,13 @@ jobs:
     timeout-minutes: 60
     # Consumer workflows call this in parallel on the same commit; without a shared gate
     # they all see image_exists=false and build the same content-addressed tag at once.
-    concurrency:
-      group: godeps-cache-${{ needs.metadata.outputs.ci_image }}
-      cancel-in-progress: false
+    #
+    # That gate used to be a `concurrency` group. It cannot be: GitHub allows one
+    # running and one *pending* entry per group, and cancels the pending one when a
+    # third arrives -- even with cancel-in-progress: false. With three consumers the
+    # loser's build was cancelled, and cancellation propagates to the caller, so a whole
+    # workflow (unit tests included) ended as "cancelled" on exactly the PRs that change
+    # the module graph. STAC-25494. Callers stagger `build_delay_seconds` instead.
     env:
       QUAY_REGISTRY: quay.io
       REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
@@ -115,6 +127,7 @@ jobs:
       QUAY_USER: ${{ vars.QUAY_USER }}
       QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
       BASE_IMAGE_TAG: ${{ inputs.base_image_tag }}
+      BUILD_DELAY_SECONDS: ${{ inputs.build_delay_seconds }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -134,8 +147,22 @@ jobs:
           echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin "$REGISTRY_HOST"
           echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USER" --password-stdin "$QUAY_REGISTRY"
 
-          # The metadata lookup can be stale by the time this job holds the concurrency
-          # slot -- a sibling workflow may have published the same tag while it queued.
+          # Staggered wait: give the caller designated to build first (delay 0) a full
+          # build's worth of time before duplicating its work. Polling before the first
+          # build would only waste the delay, which is why the builder gets 0.
+          waited=0
+          while [ "$waited" -lt "${BUILD_DELAY_SECONDS}" ]; do
+            if docker manifest inspect "$ci_image_push" >/dev/null 2>&1; then
+              echo "Published by a sibling workflow after ${waited}s: ${ci_image_push}"
+              exit 0
+            fi
+            sleep 20
+            waited=$((waited + 20))
+          done
+
+          # Backstop: the metadata lookup, and any wait above, can be stale by the time
+          # we get here. Pushing the same content-addressed tag twice is harmless, but
+          # rebuilding it is not free.
           if docker manifest inspect "$ci_image_push" >/dev/null 2>&1; then
             echo "Already published by a concurrent run: ${ci_image_push}"
             exit 0

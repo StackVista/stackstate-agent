@@ -94,6 +94,11 @@ jobs:
     # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
+    # Wait for Lint and unit tests to publish the image before building it here
+    # (STAC-25494). Covers a ~7m build plus runner scheduling; on timeout this builds
+    # it itself, so a failed sibling costs latency, not correctness.
+    with:
+      build_delay_seconds: 900
     secrets:
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
       QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
