@@ -30,6 +30,12 @@ name: Lint and unit tests
 
 on:
   pull_request:
+  # The release branch, so a failure there reaches Slack via Cerberus
+  # (STAC-25461). Moves with the release; GitLab hardcoded it the same way
+  # (`only: - stackstate-7.78.2`).
+  push:
+    branches:
+      - stackstate-7.78.2
   workflow_dispatch:
     inputs:
       force_mod_tidy:
@@ -262,3 +268,26 @@ jobs:
           go build -o "$(go env GOTOOLDIR)/covdata" cmd/covdata
           export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
           inv -e test --coverage --race --profile --cpus 4 --build-exclude="${STS_UT_BUILD_EXCLUDE}" --timeout=600
+
+  # Terminal job: report a failed build of the release branch to the team's Slack
+  # CI channel (STAC-25461, replacing GitLab's `notify-on-master-fail`). PRs never
+  # reach it -- the `push` filter above only carries the release branch, so the
+  # event check is the whole gate. `needs` lists every job, not just the leaves, so
+  # an early failure that skips its dependents is still reported.
+  cerberus-notify:
+    name: Report failure to Slack (Cerberus)
+    needs:
+      - godeps-cache
+      - filename-linting
+      - mod-tidy
+      - unbranded-unit-tests
+      - branded-unit-tests
+    if: >-
+      always()
+      && github.event_name == 'push'
+      && contains(needs.*.result, 'failure')
+    uses: ./.github/workflows/cerberus-notify.yml
+    with:
+      suite: lint-and-unit-tests
+    secrets:
+      CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}

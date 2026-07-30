@@ -41,6 +41,12 @@ name: Binary builds
 
 on:
   pull_request:
+  # The release branch, so a failure there reaches Slack via Cerberus
+  # (STAC-25461). Moves with the release; GitLab hardcoded it the same way
+  # (`only: - stackstate-7.78.2`).
+  push:
+    branches:
+      - stackstate-7.78.2
   workflow_dispatch:
 
 permissions:
@@ -255,3 +261,25 @@ jobs:
           docker run --rm \
             --entrypoint /opt/stackstate-agent/bin/stackstate-cluster-agent/stackstate-cluster-agent \
             "${LOCAL_IMAGE}" version
+
+  # Terminal job: report a failed build of the release branch to the team's Slack
+  # CI channel (STAC-25461, replacing GitLab's `notify-on-master-fail`). PRs never
+  # reach it -- the `push` filter above only carries the release branch, so the
+  # event check is the whole gate. `needs` lists every job, not just the leaves, so
+  # an early failure that skips its dependents is still reported.
+  cerberus-notify:
+    name: Report failure to Slack (Cerberus)
+    needs:
+      - godeps-cache
+      - build-agent
+      - build-cluster-agent
+      - build-cluster-agent-image
+    if: >-
+      always()
+      && github.event_name == 'push'
+      && contains(needs.*.result, 'failure')
+    uses: ./.github/workflows/cerberus-notify.yml
+    with:
+      suite: binary-builds
+    secrets:
+      CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
