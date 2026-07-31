@@ -18,14 +18,18 @@ name: Cerberus notify
 # The repo's own .cerberus/cerberus_notify_failure.sh is not reused: it is built
 # around GitLab's CI_* variables and predates the `platform` field.
 #
-# Prerequisite: CERBERUS_LAMBDA_URL and SLACK_CI_REPORT_CHANNEL must reach this repo as
-# REPO-level secrets (StackVista/pulumi-infra PR #258). The org-level copies are
-# visibility=private, which excludes this PUBLIC repo, and widening them is not an option:
-# the Cerberus endpoint is unauthenticated, so the URL is the whole capability. Until #258
-# applies, this workflow warns and exits 0 rather than adding a second red job to an
-# already-failed run -- the annotation is the signal.
+# Prerequisite: CERBERUS_LAMBDA_URL must reach this repo as a REPO-level secret
+# (StackVista/pulumi-infra PR #258). The org-level copy is visibility=private, which
+# excludes this PUBLIC repo, and widening it is not an option: the Cerberus endpoint is
+# unauthenticated, so the URL is the whole capability. Until #258 applies, this workflow
+# warns and exits 0 rather than adding a second red job to an already-failed run -- the
+# annotation is the signal.
 #
-# Both are secrets, so SLACK_CI_REPORT_CHANNEL is read from `secrets`, not `vars`.
+# The Slack channel is deliberately not sent. Cerberus resolves it as
+# `util.GetOrDefault(req.Context, "channel", s.Channel)`, and GetOrDefault treats an empty
+# or whitespace value as absent, so omitting `channel` falls back to the Lambda's own
+# SLACK_CHANNEL. Add a `channel` field to the payload only if agent failures should go
+# somewhere other than the shared CI channel.
 
 on:
   workflow_call:
@@ -35,13 +39,11 @@ on:
         required: true
         type: string
     secrets:
-      # Both are `required: false`. A caller passing `${{ secrets.X }}` for a secret the
-      # repo does not hold yields an empty string, which GitHub rejects as "not provided"
-      # against a required secret and fails the call before the run step's guard can
-      # warn -- the failure mode this workflow exists to avoid.
+      # `required: false`. A caller passing `${{ secrets.X }}` for a secret the repo does
+      # not hold yields an empty string, which GitHub rejects as "not provided" against a
+      # required secret and fails the call before the run step's guard can warn -- the
+      # failure mode this workflow exists to avoid.
       CERBERUS_LAMBDA_URL:
-        required: false
-      SLACK_CI_REPORT_CHANNEL:
         required: false
 
 # Nothing here reads the repository; the payload is built entirely from the
@@ -57,7 +59,6 @@ jobs:
       - name: Post the failure to Cerberus
         env:
           CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
-          SLACK_CHANNEL: ${{ secrets.SLACK_CI_REPORT_CHANNEL }}
           REPOSITORY: ${{ github.repository }}
           BRANCH: ${{ github.ref_name }}
           PIPELINE: ${{ github.run_id }}
@@ -84,7 +85,6 @@ jobs:
               --arg sha "${COMMIT_SHA}" \
               --arg title "${COMMIT_TITLE}" \
               --arg suite "${SUITE}" \
-              --arg channel "${SLACK_CHANNEL}" \
               '{
                 action: "notify",
                 context: {
@@ -96,8 +96,7 @@ jobs:
                   pipeline: $pipeline,
                   "commit.sha": $sha,
                   "commit.title": $title,
-                  suite: $suite,
-                  channel: $channel
+                  suite: $suite
                 }
               }'
             )"
