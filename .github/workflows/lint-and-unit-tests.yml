@@ -56,13 +56,16 @@ env:
 
 jobs:
   godeps-cache:
-    name: Go dependency cache image
+    name: Go dependency cache image (amd64)
     # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
-    # Designated builder of the cache image (STAC-25494): no wait, so this workflow --
-    # the longest of the three -- is never held up. The other two wait it out.
+    # Designated builder of the amd64 cache image (STAC-25494): no wait, so this
+    # workflow -- the longest of the three -- is never held up. The other two wait it
+    # out. amd64 only: lint and unit tests deliberately gain no arm64 lane
+    # (STAC-25498), since each suite runs once on the path to master.
     with:
+      arch: amd64
       build_delay_seconds: 0
     secrets:
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

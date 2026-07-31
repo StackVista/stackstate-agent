@@ -14,9 +14,20 @@ name: DEB package build
 # it are different trust boundaries and belong in different workflows. Publishing
 # lands in phase 4, gated on the branch, not on the PR.
 #
-# Only the amd64 pipeline is ported. GitLab fans .gitlab-ci-agent.yml out twice
-# from .gitlab-ci.yml (agent-x86 / agent-arm); the arm64 half needs an arm64 XL
-# runner class, which does not exist yet (only `arm64-docker`). Tracked separately.
+# Both architectures are built. GitLab fans .gitlab-ci-agent.yml out twice from
+# .gitlab-ci.yml (agent-x86 / agent-arm) with per-arch variables; here that fan-out
+# is an `arch` matrix (STAC-25498), unblocked by the arm64-xlarge-public ARC scale
+# set landing on argocd-apps main (STAC-25492).
+#
+# Of the GitLab per-arch variables only ARCH carries over. PKG_ARCH_SUFFIX is the
+# same amd64/arm64 value and is used for exactly one thing -- selecting the built
+# .deb (.gitlab-ci-agent.yml:695) -- which `matrix.arch` now does. PACKAGE_ARCH /
+# DD_PKG_ARCH / STS_PKG_ARCH are passed to build_deb but nothing in the StackState
+# omnibus path reads them; the amd64 lane has been green without them, and omnibus
+# derives the package architecture from the (native) build host. DOCKER_ARCH is
+# deliberately NOT ported: its only consumer is publish_image.sh, which belongs to
+# the publishing lane. Note for STAC-25457 -- on arm64 DOCKER_ARCH is `aarch64`,
+# NOT `arm64`, so it cannot simply be aliased to `matrix.arch`.
 #
 # Deliberate differences from the GitLab job:
 #   * `deps_deb` is NOT ported. Its only downstream-consumed artifact was
@@ -89,8 +100,8 @@ env:
   MAJOR_VERSION: '3'
 
 jobs:
-  godeps-cache:
-    name: Go dependency cache image
+  godeps-cache-amd64:
+    name: Go dependency cache image (amd64)
     # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
@@ -98,17 +109,45 @@ jobs:
     # (STAC-25494). Covers a ~7m build plus runner scheduling; on timeout this builds
     # it itself, so a failed sibling costs latency, not correctness.
     with:
+      arch: amd64
+      build_delay_seconds: 900
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+  godeps-cache-arm64:
+    name: Go dependency cache image (arm64)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    # Same stagger, different designated builder: Binary builds owns the arm64 image
+    # (delay 0) the way Lint and unit tests owns the amd64 one, so this side waits.
+    with:
+      arch: arm64
       build_delay_seconds: 900
     secrets:
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
       QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
 
   build-deb:
-    name: Build DEB package (omnibus, branded / StackState)
+    name: Build DEB package (omnibus, branded / StackState, ${{ matrix.arch }})
     # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    needs: godeps-cache
-    runs-on: xlarge-public
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+    strategy:
+      # An arm64 regression must not abort the amd64 leg: amd64 is the lane that has
+      # been green for weeks, and during arm64 bring-up its result is the signal.
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: xlarge-public
+            cache_image: ${{ needs.godeps-cache-amd64.outputs.ci_image }}
+          - arch: arm64
+            runner: arm64-xlarge-public
+            cache_image: ${{ needs.godeps-cache-arm64.outputs.ci_image }}
+    runs-on: ${{ matrix.runner }}
     # Cold omnibus build: no git cache, so every embedded software (openssl, cpython,
     # openscap, sqlite, ...) compiles from source. Generous until we have a real number.
     timeout-minutes: 300
@@ -119,7 +158,7 @@ jobs:
       # the module graph (see godeps-cache.yml), so this ref is effectively
       # digest-pinned; it cannot be a static digest because it is computed per run --
       # hence the narrow unpinned-images ignore below.
-      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      image: ${{ matrix.cache_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -229,7 +268,10 @@ jobs:
       - name: Upload DEB package and image manifests
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: deb-package
+          # Per-arch name: matrix legs upload concurrently and actions/upload-artifact
+          # v4 rejects a second upload to an existing artifact name, so a shared name
+          # would fail the arm64 leg outright.
+          name: deb-package-${{ matrix.arch }}
           # Paths match the GitLab build_deb artifacts; the branding gate below and
           # the image phase (phase 5) consume them.
           path: |
@@ -244,10 +286,16 @@ jobs:
           if-no-files-found: error
 
   test-deb-renaming:
-    name: DEB branding verification (no DataDog references)
+    name: DEB branding verification (no DataDog references, ${{ matrix.arch }})
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     needs: build-deb
-    # Cheap gate: unpacks the .deb and greps it. Does not need the XL class.
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+    # Cheap gate: unpacks the .deb and greps it. Does not need the XL class -- and
+    # stays on amd64 for BOTH legs: `ar` + grep read the arm64 .deb just fine, so
+    # burning a scarce arm64 XL runner on a grep would buy nothing.
     runs-on: docker-public
     timeout-minutes: 30
     container:
@@ -265,7 +313,7 @@ jobs:
       - name: Download DEB package
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: deb-package
+          name: deb-package-${{ matrix.arch }}
 
       - name: Verify package carries no DataDog branding
         run: |
@@ -283,16 +331,27 @@ jobs:
           ./test/renaming/test_deb.sh "${debs[0]}"
 
   build-agent-image:
-    name: Build agent container image (docker build, no push on PR)
+    name: Build agent container image (docker build, no push on PR, ${{ matrix.arch }})
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     needs: build-deb
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: docker-public
+          - arch: arm64
+            runner: arm64-xlarge-public
     # DinD class: docker CLI in the runner image, dockerd in a native sidecar.
-    runs-on: docker-public
+    # Native per arch -- the .deb and the Dockerfile's base stages are both
+    # arch-specific, so this cannot be cross-built without QEMU.
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     env:
-      # ARCH in the agent-x86 trigger block of .gitlab-ci.yml; also the .deb suffix.
-      ARCH: amd64
-      LOCAL_IMAGE: stackstate-agent:ci
+      # ARCH in the agent-x86 / agent-arm trigger blocks of .gitlab-ci.yml; also the
+      # .deb suffix.
+      ARCH: ${{ matrix.arch }}
+      LOCAL_IMAGE: stackstate-agent:ci-${{ matrix.arch }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -302,7 +361,7 @@ jobs:
       - name: Download DEB package
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: deb-package
+          name: deb-package-${{ matrix.arch }}
 
       - name: Log in to the registry proxy
         env:

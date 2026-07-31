@@ -22,12 +22,23 @@ name: Go dependency cache image
 # images, and stackstate-agent is PUBLIC, so any org member's same-repo branch can use
 # whatever push credential this workflow carries. Scoping it to a rebuildable cache
 # keeps a compromised branch away from the images the CI fleet boots from.
+#
+# One call per architecture (STAC-25498). Each arch gets its own base image and its own
+# content-addressed tag, and is built NATIVELY on a runner of that architecture -- no
+# QEMU/binfmt emulation, which would make the module extraction in the Dockerfile
+# unusably slow. The two arches are independent images, not a multi-arch manifest:
+# consumers reference them from `container.image`, which resolves against the runner's
+# own architecture anyway.
 
 on:
   workflow_call:
     inputs:
+      arch:
+        description: Target architecture, amd64 or arm64. Selects the datadog_build base image and the runner that builds the cache.
+        type: string
+        required: true
       base_image_tag:
-        description: Tag of the datadog_build_linux_x64 base image the cache derives FROM.
+        description: Tag of the datadog_build base image the cache derives FROM. Both arch variants carry the same tag.
         type: string
         default: "7af9194f"
       build_delay_seconds:
@@ -58,7 +69,10 @@ permissions:
 
 jobs:
   metadata:
-    name: Compute cache image tag and look up existing image
+    name: Compute ${{ inputs.arch }} cache image tag and look up existing image
+    # Stays on amd64 regardless of `arch`: this job only hashes files and calls
+    # `docker manifest inspect`, both architecture-independent. Only the build below
+    # has to run natively.
     runs-on: docker-public
     timeout-minutes: 15
     outputs:
@@ -70,6 +84,8 @@ jobs:
       QUAY_USER: ${{ vars.QUAY_USER }}
       QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
       BASE_IMAGE_TAG: ${{ inputs.base_image_tag }}
+      BASE_IMAGE_NAME: ${{ inputs.arch == 'arm64' && 'datadog_build_linux_arm64' || 'datadog_build_linux_x64' }}
+      ARCH: ${{ inputs.arch }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -105,10 +121,11 @@ jobs:
           echo "Cache image exists: ${image_exists}"
 
   build:
-    name: Build and publish missing cache image
+    name: Build and publish missing ${{ inputs.arch }} cache image
     if: ${{ needs.metadata.outputs.image_exists != 'true' }}
     needs: metadata
-    runs-on: docker-public
+    # Native build: an arm64 cache image must be produced on an arm64 runner.
+    runs-on: ${{ inputs.arch == 'arm64' && 'arm64-xlarge-public' || 'docker-public' }}
     timeout-minutes: 60
     # Consumer workflows call this in parallel on the same commit; without a shared gate
     # they all see image_exists=false and build the same content-addressed tag at once.
@@ -127,6 +144,8 @@ jobs:
       QUAY_USER: ${{ vars.QUAY_USER }}
       QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
       BASE_IMAGE_TAG: ${{ inputs.base_image_tag }}
+      BASE_IMAGE_NAME: ${{ inputs.arch == 'arm64' && 'datadog_build_linux_arm64' || 'datadog_build_linux_x64' }}
+      ARCH: ${{ inputs.arch }}
       BUILD_DELAY_SECONDS: ${{ inputs.build_delay_seconds }}
     steps:
       - name: Check out repository
@@ -140,7 +159,7 @@ jobs:
           source .github/scripts/agent-godeps-cache-metadata.sh
           agent_godeps_compute_metadata
 
-          base_image="${REGISTRY_HOST}/quay/stackstate/datadog_build_linux_x64:${BASE_IMAGE_TAG}"
+          base_image="${REGISTRY_HOST}/quay/stackstate/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG}"
 
           # Log into both registries: pull the base via the registry.tooling proxy,
           # push the result to quay.io/stackstate.
