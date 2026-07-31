@@ -407,7 +407,8 @@ jobs:
   cerberus-notify:
     name: Report failure to Slack (Cerberus)
     needs:
-      - godeps-cache
+      - godeps-cache-amd64
+      - godeps-cache-arm64
       - build-deb
       - test-deb-renaming
       - build-agent-image
