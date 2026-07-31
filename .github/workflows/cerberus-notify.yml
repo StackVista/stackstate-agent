@@ -35,8 +35,12 @@ on:
         required: true
         type: string
     secrets:
+      # Both are `required: false`. A caller passing `${{ secrets.X }}` for a secret the
+      # repo does not hold yields an empty string, which GitHub rejects as "not provided"
+      # against a required secret and fails the call before the run step's guard can
+      # warn -- the failure mode this workflow exists to avoid.
       CERBERUS_LAMBDA_URL:
-        required: true
+        required: false
       SLACK_CI_REPORT_CHANNEL:
         required: false
 
