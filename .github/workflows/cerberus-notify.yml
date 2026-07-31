@@ -1,0 +1,103 @@
+name: Cerberus notify
+
+# Ported from the `notify-on-master-fail` job in .gitlab-ci.yml as part of the
+# GitLab -> GitHub migration (STAC-25142 / STAC-25461).
+#
+# Called by each pipeline workflow as a terminal job so a failed build of the
+# release branch reaches the team's Slack CI channel. Cerberus is the internal
+# notify/block Lambda (source: https://gitlab.com/stackvista/devops/cerberus);
+# the calling convention here follows `cerberus-block-on-master-fail` in
+# StackVista/stackstate's .github/workflows/ci.yml, with `platform: github` in
+# the context so Cerberus builds GitHub pipeline/commit URLs.
+#
+# `action: notify`, never `action: block`. Policy for migrated repos is notify by
+# default; blocking locks the branch (`lock_branch`) on every failure of the
+# release branch, additionally requires the Cerberus GitHub App to be installed
+# on the repo, and mutates Pulumi-managed branch protection out from under it.
+#
+# The repo's own .cerberus/cerberus_notify_failure.sh is not reused: it is built
+# around GitLab's CI_* variables and predates the `platform` field.
+#
+# Prerequisite: CERBERUS_LAMBDA_URL and SLACK_CI_REPORT_CHANNEL must reach this repo as
+# REPO-level secrets (StackVista/pulumi-infra PR #258). The org-level copies are
+# visibility=private, which excludes this PUBLIC repo, and widening them is not an option:
+# the Cerberus endpoint is unauthenticated, so the URL is the whole capability. Until #258
+# applies, this workflow warns and exits 0 rather than adding a second red job to an
+# already-failed run -- the annotation is the signal.
+#
+# Both are secrets, so SLACK_CI_REPORT_CHANNEL is read from `secrets`, not `vars`.
+
+on:
+  workflow_call:
+    inputs:
+      suite:
+        description: Suite label shown in the Slack message, e.g. lint-and-unit-tests.
+        required: true
+        type: string
+    secrets:
+      # Both are `required: false`. A caller passing `${{ secrets.X }}` for a secret the
+      # repo does not hold yields an empty string, which GitHub rejects as "not provided"
+      # against a required secret and fails the call before the run step's guard can
+      # warn -- the failure mode this workflow exists to avoid.
+      CERBERUS_LAMBDA_URL:
+        required: false
+      SLACK_CI_REPORT_CHANNEL:
+        required: false
+
+# Nothing here reads the repository; the payload is built entirely from the
+# github context.
+permissions: {}
+
+jobs:
+  notify:
+    name: Notify Slack via Cerberus
+    runs-on: docker-public
+    timeout-minutes: 5
+    steps:
+      - name: Post the failure to Cerberus
+        env:
+          CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CI_REPORT_CHANNEL }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          PIPELINE: ${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          SUITE: ${{ inputs.suite }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CERBERUS_LAMBDA_URL}" ]; then
+            echo "::warning title=Cerberus not configured::CERBERUS_LAMBDA_URL is not visible to this repo, so the ${SUITE} failure was not reported to Slack. Needs pulumi-infra PR #258 (STAC-25461)."
+            exit 0
+          fi
+
+          COMMIT_TITLE=$(printf '%s' "${COMMIT_MESSAGE}" | head -n1)
+
+          curl --verbose --fail \
+            -X POST "${CERBERUS_LAMBDA_URL}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg repo "${REPOSITORY}" \
+              --arg branch "${BRANCH}" \
+              --arg pipeline "${PIPELINE}" \
+              --arg sha "${COMMIT_SHA}" \
+              --arg title "${COMMIT_TITLE}" \
+              --arg suite "${SUITE}" \
+              --arg channel "${SLACK_CHANNEL}" \
+              '{
+                action: "notify",
+                context: {
+                  platform: "github",
+                  "project.id": $repo,
+                  "project.slug": $repo,
+                  "project.name": "StackState Agent",
+                  branch: $branch,
+                  pipeline: $pipeline,
+                  "commit.sha": $sha,
+                  "commit.title": $title,
+                  suite: $suite,
+                  channel: $channel
+                }
+              }'
+            )"
