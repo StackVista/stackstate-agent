@@ -67,8 +67,8 @@ env:
   CONDA_ENV: ddpy3
 
 jobs:
-  godeps-cache:
-    name: Go dependency cache image
+  godeps-cache-amd64:
+    name: Go dependency cache image (amd64)
     # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
@@ -76,17 +76,47 @@ jobs:
     # (STAC-25494). Covers a ~7m build plus runner scheduling; on timeout this builds
     # it itself, so a failed sibling costs latency, not correctness.
     with:
+      arch: amd64
       build_delay_seconds: 900
     secrets:
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
       QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
 
+  godeps-cache-arm64:
+    name: Go dependency cache image (arm64)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    # Designated builder of the arm64 cache image, hence delay 0. Lint and unit tests
+    # plays that role for amd64 but has no arm64 lane, so if this workflow also waited
+    # nothing would ever build the arm64 image inside the delay window and both arm64
+    # consumers would build it at once -- the duplicate-build case STAC-25494 fixed.
+    with:
+      arch: arm64
+      build_delay_seconds: 0
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
   build-agent:
-    name: Build agent binary (branded / StackState)
+    name: Build agent binary (branded / StackState, ${{ matrix.arch }})
     # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    needs: godeps-cache
-    runs-on: xlarge-public
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+    strategy:
+      # An arm64 regression must not abort the amd64 leg: amd64 is the lane that has
+      # been green for weeks, and during arm64 bring-up its result is the signal.
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: xlarge-public
+            cache_image: ${{ needs.godeps-cache-amd64.outputs.ci_image }}
+          - arch: arm64
+            runner: arm64-xlarge-public
+            cache_image: ${{ needs.godeps-cache-arm64.outputs.ci_image }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
     container:
       # Warm Go module cache image (godeps-cache job); pulled via the same
@@ -94,7 +124,7 @@ jobs:
       # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
       # is effectively digest-pinned; it cannot be a static digest because it is
       # computed per run -- hence the narrow unpinned-images ignore below.
-      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      image: ${{ matrix.cache_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -140,10 +170,24 @@ jobs:
           ls -la bin/agent
 
   build-cluster-agent:
-    name: Build cluster-agent binary (branded / StackState)
+    name: Build cluster-agent binary (branded / StackState, ${{ matrix.arch }})
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    needs: godeps-cache
-    runs-on: xlarge-public
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+    strategy:
+      # An arm64 regression must not abort the amd64 leg: amd64 is the lane that has
+      # been green for weeks, and during arm64 bring-up its result is the signal.
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: xlarge-public
+            cache_image: ${{ needs.godeps-cache-amd64.outputs.ci_image }}
+          - arch: arm64
+            runner: arm64-xlarge-public
+            cache_image: ${{ needs.godeps-cache-arm64.outputs.ci_image }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
     container:
       # Warm Go module cache image (godeps-cache job); pulled via the same
@@ -151,7 +195,7 @@ jobs:
       # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
       # is effectively digest-pinned; it cannot be a static digest because it is
       # computed per run -- hence the narrow unpinned-images ignore below.
-      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      image: ${{ matrix.cache_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -194,7 +238,10 @@ jobs:
       - name: Upload cluster-agent build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: cluster-agent-binary
+          # Per-arch name: matrix legs upload concurrently and actions/upload-artifact
+          # v4 rejects a second upload to an existing artifact name, so a shared name
+          # would fail the arm64 leg outright.
+          name: cluster-agent-binary-${{ matrix.arch }}
           # Paths match the GitLab build_cluster_agent artifacts; the cluster-agent
           # image phase (phase 5) consumes the binary + Dockerfile manifest.
           path: |
@@ -205,7 +252,7 @@ jobs:
           if-no-files-found: error
 
   build-cluster-agent-image:
-    name: Build cluster-agent container image (docker build, no push on PR)
+    name: Build cluster-agent container image (docker build, no push on PR, ${{ matrix.arch }})
     # Ported from pre_release_cluster_agent_image. Lives in this workflow rather
     # than build-deb.yml so it can `needs:` the job that produces its input --
     # cross-workflow artifact hand-off would need run-id plumbing for no gain.
@@ -213,12 +260,25 @@ jobs:
     # quay.io/stackstate, which the PR lane of a PUBLIC repo must not do.
     # Publishing lands in phase 4, gated on the branch.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # `needs` on a matrix job waits for every leg, so the arm64 image build also
+    # waits out the amd64 binary. Actions has no per-leg dependency; the cost is
+    # latency on an already-parallel lane, not correctness.
     needs: build-cluster-agent
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: docker-public
+          - arch: arm64
+            runner: arm64-xlarge-public
     # DinD class: docker CLI in the runner image, dockerd in a native sidecar.
-    runs-on: docker-public
+    # Native per arch -- the binary and the Dockerfile's base stages are both
+    # arch-specific, so this cannot be cross-built without QEMU.
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
-      LOCAL_IMAGE: stackstate-cluster-agent:ci
+      LOCAL_IMAGE: stackstate-cluster-agent:ci-${{ matrix.arch }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -228,7 +288,7 @@ jobs:
       - name: Download cluster-agent binary
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: cluster-agent-binary
+          name: cluster-agent-binary-${{ matrix.arch }}
 
       - name: Log in to the registry proxy
         env:
@@ -275,7 +335,8 @@ jobs:
   cerberus-notify:
     name: Report failure to Slack (Cerberus)
     needs:
-      - godeps-cache
+      - godeps-cache-amd64
+      - godeps-cache-arm64
       - build-agent
       - build-cluster-agent
       - build-cluster-agent-image
