@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/pointer v0.78.3-rc.2
-	github.com/containerd/cgroups/v3 v3.0.5
+	github.com/containerd/cgroups/v3 v3.1.2
 	github.com/google/go-cmp v0.7.0
 	github.com/stretchr/testify v1.11.1
 )
@@ -21,11 +21,11 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
-	github.com/opencontainers/runtime-spec v1.2.1 // indirect
+	github.com/opencontainers/runtime-spec v1.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
