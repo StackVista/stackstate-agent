@@ -349,3 +349,4 @@ jobs:
       suite: binary-builds
     secrets:
       CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
+      CERBERUS_API_TOKEN: ${{ secrets.CERBERUS_API_TOKEN }}

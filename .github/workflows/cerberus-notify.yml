@@ -18,13 +18,6 @@ name: Cerberus notify
 # The repo's own .cerberus/cerberus_notify_failure.sh is not reused: it is built
 # around GitLab's CI_* variables and predates the `platform` field.
 #
-# Prerequisite: CERBERUS_LAMBDA_URL must reach this repo as a REPO-level secret
-# (StackVista/pulumi-infra PR #258). The org-level copy is visibility=private, which
-# excludes this PUBLIC repo, and widening it is not an option: the Cerberus endpoint is
-# unauthenticated, so the URL is the whole capability. Until #258 applies, this workflow
-# warns and exits 0 rather than adding a second red job to an already-failed run -- the
-# annotation is the signal.
-#
 # The Slack channel is deliberately not sent. Cerberus resolves it as
 # `util.GetOrDefault(req.Context, "channel", s.Channel)`, and GetOrDefault treats an empty
 # or whitespace value as absent, so omitting `channel` falls back to the Lambda's own
@@ -45,6 +38,8 @@ on:
       # failure mode this workflow exists to avoid.
       CERBERUS_LAMBDA_URL:
         required: false
+      CERBERUS_API_TOKEN:
+        required: false
 
 # Nothing here reads the repository; the payload is built entirely from the
 # github context.
@@ -59,6 +54,7 @@ jobs:
       - name: Post the failure to Cerberus
         env:
           CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
+          CERBERUS_API_TOKEN: ${{ secrets.CERBERUS_API_TOKEN }}
           REPOSITORY: ${{ github.repository }}
           BRANCH: ${{ github.ref_name }}
           PIPELINE: ${{ github.run_id }}
@@ -68,16 +64,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ -z "${CERBERUS_LAMBDA_URL}" ]; then
-            echo "::warning title=Cerberus not configured::CERBERUS_LAMBDA_URL is not visible to this repo, so the ${SUITE} failure was not reported to Slack. Needs pulumi-infra PR #258 (STAC-25461)."
+          if [ -z "${CERBERUS_LAMBDA_URL}" ] || [ -z "${CERBERUS_API_TOKEN}" ]; then
+            echo "::warning title=Cerberus not configured::CERBERUS_LAMBDA_URL and/or CERBERUS_API_TOKEN is not visible to this repo, so the ${SUITE} failure was not reported to Slack. Both are provisioned as repo-level secrets by pulumi-infra (STAC-25461)."
             exit 0
           fi
 
           COMMIT_TITLE=$(printf '%s' "${COMMIT_MESSAGE}" | head -n1)
 
-          curl --verbose --fail \
+          curl --fail --silent --show-error \
             -X POST "${CERBERUS_LAMBDA_URL}" \
             -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${CERBERUS_API_TOKEN}" \
             -d "$(jq -n \
               --arg repo "${REPOSITORY}" \
               --arg branch "${BRANCH}" \
