@@ -23,4 +23,12 @@ PAYLOAD=$(cat << END_OF_PAYLOAD
 END_OF_PAYLOAD
 )
 
-curl --verbose --fail --data "${PAYLOAD?Payload is empty}" "${CERBERUS_LAMBDA_URL?No URL Provided}"
+# Suspend xtrace: with `set -x` the expanded curl command - including the bearer
+# token - would be echoed into the job log.
+set +x
+curl --fail --show-error --silent \
+  --header "Content-Type: application/json" \
+  --header "Authorization: Bearer ${CERBERUS_API_TOKEN?No Cerberus API token provided}" \
+  --data "${PAYLOAD?Payload is empty}" \
+  "${CERBERUS_LAMBDA_URL?No URL Provided}"
+set -x
