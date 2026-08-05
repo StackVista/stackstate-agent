@@ -278,6 +278,116 @@ jobs:
           set -eo pipefail
           docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
 
+  publish-agent-image:
+    name: Publish and sign agent image (${{ matrix.arch }})
+    if: github.event_name == 'push'
+    needs: build-agent-image
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: docker-public
+          - arch: arm64
+            runner: arm64-xlarge-public
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ARCH: ${{ matrix.arch }}
+      IMAGE: quay.io/stackstate/stackstate-k8s-agent
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-${{ matrix.arch }}
+
+      - name: Stage the DEB in the image build context
+        run: |
+          set -eo pipefail
+          shopt -s nullglob
+          debs=(outcomes/pkg/stackstate-agent_*_"${ARCH}".deb)
+          if [ "${#debs[@]}" -ne 1 ]; then
+            echo "Expected exactly one stackstate-agent_*_${ARCH}.deb, found ${#debs[@]}: ${debs[*]}" >&2
+            exit 1
+          fi
+          cp "${debs[0]}" Dockerfiles/agent/
+
+      - name: Resolve image tag
+        id: image
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve canonical OCI labels
+        id: oci
+        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image-name: stackstate-k8s-agent
+          tag: ${{ steps.image.outputs.tag }}
+          title: SUSE Observability Agent
+          description: Node agent collecting metrics, logs, traces and topology for SUSE Observability.
+          component: stackstate-k8s-agent
+          dockerfile: Dockerfiles/agent/Dockerfile
+          base-name: registry.suse.com/bci/bci-micro:latest
+          registry-credentials: |
+            [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+
+      - name: Build, publish, and sign architecture image
+        uses: StackVista/image-pipeline/.github/actions/push-single-arch@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: ${{ env.IMAGE }}
+          tag: ${{ steps.image.outputs.tag }}
+          arch: ${{ matrix.arch }}
+          docker-context: Dockerfiles/agent
+          dockerfile: Dockerfiles/agent/Dockerfile
+          build-args: ARCH=${{ matrix.arch }}
+          labels: |
+            ${{ steps.oci.outputs.labels }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          source-registry-credentials: |
+            [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+          target-registry: quay.io
+          target-registry-user: ${{ vars.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+  merge-agent-manifest:
+    name: Publish and sign multi-architecture agent image
+    if: github.event_name == 'push'
+    needs: publish-agent-image
+    runs-on: docker-public
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Resolve image tag
+        id: image
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
+
+      - name: Merge and sign multi-architecture manifest
+        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: quay.io/stackstate/stackstate-k8s-agent
+          tag: ${{ steps.image.outputs.tag }}
+          arches: amd64,arm64
+          target-registry: quay.io
+          target-registry-user: ${{ vars.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
   cerberus-notify:
     name: Report failure to Slack (Cerberus)
     needs:
@@ -286,6 +396,8 @@ jobs:
       - build-deb
       - test-deb-renaming
       - build-agent-image
+      - publish-agent-image
+      - merge-agent-manifest
     if: >-
       always()
       && github.event_name == 'push'
