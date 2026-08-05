@@ -1,30 +1,24 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
-if [ -z ${STACKSTATE_AGENT_VERSION+x} ]; then
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=omnibus/package-scripts/gpg_signing_setup.sh
+source "${script_dir}/gpg_signing_setup.sh"
+
+# CI_PROJECT_DIR is GitLab's; GITHUB_WORKSPACE is the GitHub Actions equivalent.
+PROJECT_DIR="${CI_PROJECT_DIR:-${GITHUB_WORKSPACE:-$(pwd)}}"
+PKG_DIR="${PKG_DIR:-${PROJECT_DIR}/outcomes/pkg}"
+
+if [ -z "${STACKSTATE_AGENT_VERSION:-}" ]; then
 	# Pick the latest tag by default for our version.
-	STACKSTATE_AGENT_VERSION=$(cat $CI_PROJECT_DIR/version.txt)
+	STACKSTATE_AGENT_VERSION=$(cat "${PROJECT_DIR}/version.txt")
 	# But we will be building from the master branch in this case.
 fi
 
-echo $STACKSTATE_AGENT_VERSION
+echo "Signing stackstate-agent ${STACKSTATE_AGENT_VERSION}"
+ls "${PKG_DIR}"/*.*
 
-printenv
+gpg_signing_setup
 
-echo "$SIGNING_PUBLIC_KEY" | gpg --import
-echo "$SIGNING_PRIVATE_KEY" > gpg_private.key
-echo "$SIGNING_PRIVATE_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --import gpg_private.key
-echo "$SIGNING_KEY_ID"
-
-ls $CI_PROJECT_DIR/outcomes/pkg/*.*
-
-cat <<EOF >~/.gnupg/gpg-agent.conf
-default-cache-ttl 46000
-allow-preset-passphrase
-EOF
-
-gpg-connect-agent RELOADAGENT /bye
-echo $SIGNING_PRIVATE_PASSPHRASE | /usr/lib/gnupg2/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
-
-debsigs --sign=origin -k ${SIGNING_KEY_ID} $CI_PROJECT_DIR/outcomes/pkg/*.deb
+debsigs --sign=origin -k "${SIGNING_KEY_ID}" "${PKG_DIR}"/*.deb
