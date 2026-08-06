@@ -209,8 +209,6 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: |
           set -eo pipefail
-          # Dockerfiles/cluster-agent pulls its ubuntu builder stage through the
-          # proxy; the BCI stages come from registry.suse.com and need no auth.
           printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
 
       - name: Build cluster-agent image
@@ -238,6 +236,16 @@ jobs:
           docker run --rm \
             --entrypoint /opt/stackstate-agent/bin/stackstate-cluster-agent/stackstate-cluster-agent \
             "${LOCAL_IMAGE}" version
+
+      - name: Scan cluster-agent image (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
+        uses: StackVista/image-pipeline/.github/actions/scan-image@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: ${{ env.LOCAL_IMAGE }}
+          mode: gate
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          with-grype: true
+          upload-sarif: false
+          sarif-category: stackstate-k8s-cluster-agent-${{ matrix.arch }}
 
   publish-cluster-agent-image:
     name: Publish and sign cluster-agent image (${{ matrix.arch }})

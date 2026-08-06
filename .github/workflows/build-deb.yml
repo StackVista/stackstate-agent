@@ -255,8 +255,6 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: |
           set -eo pipefail
-          # Dockerfiles/agent pulls its ubuntu extract stage through the proxy;
-          # the BCI stages come from registry.suse.com and need no auth.
           printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
 
       - name: Build agent image
@@ -278,10 +276,22 @@ jobs:
           set -eo pipefail
           docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
 
+      - name: Scan agent image (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
+        uses: StackVista/image-pipeline/.github/actions/scan-image@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: ${{ env.LOCAL_IMAGE }}
+          mode: gate
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          with-grype: true
+          upload-sarif: false
+          sarif-category: stackstate-k8s-agent-${{ matrix.arch }}
+
   publish-agent-image:
     name: Publish and sign agent image (${{ matrix.arch }})
     if: github.event_name == 'push'
-    needs: build-agent-image
+    needs:
+      - build-agent-image
+      - test-deb-renaming
     strategy:
       fail-fast: false
       matrix:
