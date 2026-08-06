@@ -426,12 +426,14 @@ jobs:
         with:
           name: deb-package-arm64
 
-      - name: Install debsigs, GnuPG and deb-s3
+      - name: Install debsigs and GnuPG
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends debsigs gnupg gpg-agent
-          sudo gem install --no-document deb-s3
+          sudo apt-get install -y --no-install-recommends debsigs gnupg gpg-agent ruby
+
+      - name: Install deb-s3 from the pinned, checksum-verified manifest
+        run: ./.github/scripts/install-deb-s3.sh .github/deb-s3-gems.sha256
 
       - name: Assume the pre-release publishing role
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
@@ -501,7 +503,9 @@ jobs:
 
   publish-install-script:
     name: Publish the pre-release agent install script to S3
-    needs: generate-install-script
+    needs:
+      - generate-install-script
+      - sign-and-publish-deb
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     environment: agent-pre-release
