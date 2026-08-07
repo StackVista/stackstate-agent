@@ -190,7 +190,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
-      LOCAL_IMAGE: stackstate-cluster-agent:ci-${{ matrix.arch }}
+      LOCAL_IMAGE: quay.io/stackstate/stackstate-k8s-cluster-agent:ci-${{ matrix.arch }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -244,6 +244,7 @@ jobs:
           mode: gate
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           with-grype: true
+          exceptions-path: exceptions
           upload-sarif: false
           sarif-category: stackstate-k8s-cluster-agent-${{ matrix.arch }}
 
