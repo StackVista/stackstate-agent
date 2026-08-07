@@ -1,86 +1,7 @@
 name: DEB package build
 
-# Ported from .gitlab-ci-agent.yml (build_deb, test_deb_renaming,
-# pre_release_main_agent_image) as part of the GitLab -> GitHub migration
-# (STAC-25142). Tracks the stackstate-7.78.2 pipeline.
-#
-# Scope: the PR lane only -- package, verify branding, build the agent image and
-# smoke-test it. Nothing is signed, pushed or published here:
-#   * `sign_deb` and the S3 publish are release actions needing GPG key material.
-#   * `pre_release_main_agent_image` also PUSHES to quay.io/stackstate; this job
-#     stops at `docker build` + a runtime check, so the PR lane needs no write
-#     credential at all -- only the read-only proxy creds already in use.
-# On a PUBLIC repo that separation is the point: validating a change and releasing
-# it are different trust boundaries and belong in different workflows. Publishing
-# lands in phase 4, gated on the branch, not on the PR.
-#
-# Both architectures are built. GitLab fans .gitlab-ci-agent.yml out twice from
-# .gitlab-ci.yml (agent-x86 / agent-arm) with per-arch variables; here that fan-out
-# is an `arch` matrix (STAC-25498), unblocked by the arm64-xlarge-public ARC scale
-# set landing on argocd-apps main (STAC-25492).
-#
-# Of the GitLab per-arch variables only ARCH carries over. PKG_ARCH_SUFFIX is the
-# same amd64/arm64 value and is used for exactly one thing -- selecting the built
-# .deb (.gitlab-ci-agent.yml:695) -- which `matrix.arch` now does. PACKAGE_ARCH /
-# DD_PKG_ARCH / STS_PKG_ARCH are passed to build_deb but nothing in the StackState
-# omnibus path reads them; the amd64 lane has been green without them, and omnibus
-# derives the package architecture from the (native) build host. DOCKER_ARCH is
-# deliberately NOT ported: its only consumer is publish_image.sh, which belongs to
-# the publishing lane. Note for STAC-25457 -- on arm64 DOCKER_ARCH is `aarch64`,
-# NOT `arm64`, so it cannot simply be aliased to `matrix.arch`.
-#
-# Deliberate differences from the GitLab job:
-#   * `deps_deb` is NOT ported. Its only downstream-consumed artifact was
-#     version.txt, produced by `inv agent.version -u` -- a pure git-tag derivation
-#     that needs no upstream job, just `fetch-depth: 0`. Its other output
-#     (vendor.tar.gz) is consumed by nobody (see the STAC-25396 note at
-#     .gitlab-ci-agent.yml:68-75). Dropping it removes a job, an artifact
-#     round-trip and a cache for zero loss.
-#   * WARM Go module cache via the prebuilt cache image (STAC-25429), the same way
-#     the binary builds and unit tests get theirs: this workflow calls the
-#     godeps-cache reusable workflow and runs build-deb inside the image it
-#     publishes, so GOMODCACHE is already populated. That replaces the cold
-#     `go clean -modcache` + `inv deps` reconcile the port started with. The tag is
-#     a content hash of the module graph, so this workflow shares the image with
-#     the other two rather than building a third one -- and on a PR that leaves
-#     go.mod alone, nothing is built at all. Branding is safe against a cache baked
-#     from the unbranded tree: fix_branding.sh rewrites .go sources and testdata
-#     only, never go.mod/go.sum/go.work, so the module graph is identical either
-#     side of it.
-#   * The OMNIBUS and BAZEL caches are still absent -- this stays a cold port for
-#     those. The GitLab job carried three (omnibus base_dir + .gems, bazel install,
-#     bazel repository_cache), none of which transfer directly: the GitHub-hosted
-#     Actions cache is capped at 10 GB per repo and the omnibus cache alone is
-#     expected to exceed it, and STAC-25396 already established that caches of this
-#     shape hit the file-count tax and artifact 413s on this repo. That backend is
-#     its own ticket; the wall-clock this job produces is the number that tells us
-#     what it is worth. Bazel state is still pinned under XDG_CACHE_HOME below so a
-#     cache layer can adopt those paths unchanged.
-#   * The GitLab job's `.omnibus` <-> `/omnibus` move dance is dropped along with
-#     the cache. Note it was already inert there: it staged the cache at /omnibus
-#     while the build ran with --base-dir /.omnibus.
-#
-# Prerequisites for a GREEN run (beyond the phase 1/2 registry-proxy credentials
-# and the quay push credentials the godeps-cache build job needs -- var QUAY_USER
-# + secret QUAY_PASSWORD, see godeps-cache.yml):
-#   * GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL / _USER / _READONLY_PASSWORD must
-#     reach this repo at REPO level, provisioned through pulumi-infra
-#     (github/repoVariables/resources.yaml, `- repository: stackstate-agent`).
-#     Repo-level, not org-level: org secrets default to visibility=private, which
-#     excludes this PUBLIC repo, and widening them to visibility=all -- the
-#     STAC-25350 workaround used for the read-only REGISTRY_* pull credentials --
-#     would expose a package-registry credential to every public repo in the org.
-#     `.gitlab-scripts/setup_artifact_registry.sh` hard-exits when they are unset,
-#     so build-deb stays red until they land. The agent genuinely needs a private
-#     Python index for non-upstream packages, so these must be provisioned rather
-#     than dropped. Use the READONLY password, never the write one. Credentials go
-#     to pip.conf + ~/.netrc, never into a URL -- see wiki/concepts/ci-credentials.md.
-
 on:
   pull_request:
-  # The release branch, so a failure there reaches Slack via Cerberus
-  # (STAC-25461). Moves with the release; GitLab hardcoded it the same way
-  # (`only: - stackstate-7.78.2`).
   push:
     branches:
       - stackstate-7.78.2
@@ -93,27 +14,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# The datadog_build container's default shell is dash, which lacks `set -o pipefail`
-# and mis-handles the conda activation the steps rely on; force bash.
 defaults:
   run:
     shell: bash
 
 env:
-  # conda env baked into the datadog_build image.
   CONDA_ENV: ddpy3
-  # MAJOR_VERSION in .gitlab-ci.yml; selects the built .deb for the branding gate.
   MAJOR_VERSION: '3'
 
 jobs:
   godeps-cache-amd64:
     name: Go dependency cache image (amd64)
-    # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
-    # Wait for Lint and unit tests to publish the image before building it here
-    # (STAC-25494). Covers a ~7m build plus runner scheduling; on timeout this builds
-    # it itself, so a failed sibling costs latency, not correctness.
     with:
       arch: amd64
       build_delay_seconds: 900
@@ -125,8 +38,6 @@ jobs:
     name: Go dependency cache image (arm64)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
-    # Same stagger, different designated builder: Binary builds owns the arm64 image
-    # (delay 0) the way Lint and unit tests owns the amd64 one, so this side waits.
     with:
       arch: arm64
       build_delay_seconds: 900
@@ -136,14 +47,11 @@ jobs:
 
   build-deb:
     name: Build DEB package (omnibus, branded / StackState, ${{ matrix.arch }})
-    # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     needs:
       - godeps-cache-amd64
       - godeps-cache-arm64
     strategy:
-      # An arm64 regression must not abort the amd64 leg: amd64 is the lane that has
-      # been green for weeks, and during arm64 bring-up its result is the signal.
       fail-fast: false
       matrix:
         include:
@@ -154,38 +62,23 @@ jobs:
             runner: arm64-xlarge-public
             cache_image: ${{ needs.godeps-cache-arm64.outputs.ci_image }}
     runs-on: ${{ matrix.runner }}
-    # Cold omnibus build: no git cache, so every embedded software (openssl, cpython,
-    # openscap, sqlite, ...) compiles from source. Generous until we have a real number.
     timeout-minutes: 300
     container:
-      # Warm Go module cache image (godeps-cache job), FROM the same datadog_build
-      # image this job used to run directly and pulled through the same read-only
-      # registry proxy + REGISTRY_* credentials. The tag is a sha256 content hash of
-      # the module graph (see godeps-cache.yml), so this ref is effectively
-      # digest-pinned; it cannot be a static digest because it is computed per run --
-      # hence the narrow unpinned-images ignore below.
       image: ${{ matrix.cache_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
     env:
-      # Must live OUTSIDE the checkout: omnibus git-clones into base_dir and that
-      # conflicts with the agent working tree when nested under it.
       OMNIBUS_BASE_DIR: /omnibus
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          # Full history + tags so `inv agent.version` resolves via `git describe`.
           fetch-depth: 0
 
       - name: Build DEB package with omnibus
         env:
-          # Repo-level, provisioned by pulumi-infra (see header). The index URL is a
-          # plain variable -- it is not secret, the same URL is hardcoded in this repo
-          # at omnibus/package-scripts/publish_image.sh -- while the user and password
-          # are secrets. Scheme-less: setup_artifact_registry.sh prepends https://.
           GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL: ${{ vars.GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL }}
           GITLAB_PACKAGE_REGISTRY_USER: ${{ secrets.GITLAB_PACKAGE_REGISTRY_USER }}
           GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD: ${{ secrets.GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD }}
@@ -274,12 +167,7 @@ jobs:
       - name: Upload DEB package and image manifests
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          # Per-arch name: matrix legs upload concurrently and actions/upload-artifact
-          # v4 rejects a second upload to an existing artifact name, so a shared name
-          # would fail the arm64 leg outright.
           name: deb-package-${{ matrix.arch }}
-          # Paths match the GitLab build_deb artifacts; the branding gate below and
-          # the image phase (phase 5) consume them.
           path: |
             outcomes/pkg/*.deb
             outcomes/pkg/*.json
@@ -299,13 +187,9 @@ jobs:
       fail-fast: false
       matrix:
         arch: [amd64, arm64]
-    # Cheap gate: unpacks the .deb and greps it. Does not need the XL class -- and
-    # stays on amd64 for BOTH legs: `ar` + grep read the arm64 .deb just fine, so
-    # burning a scarce arm64 XL runner on a grep would buy nothing.
     runs-on: docker-public
     timeout-minutes: 30
     container:
-      # Same build image: test_deb.sh needs `ar` from binutils to unpack the .deb.
       image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
       credentials:
         username: ${{ vars.REGISTRY_USER }}
@@ -348,14 +232,9 @@ jobs:
             runner: docker-public
           - arch: arm64
             runner: arm64-xlarge-public
-    # DinD class: docker CLI in the runner image, dockerd in a native sidecar.
-    # Native per arch -- the .deb and the Dockerfile's base stages are both
-    # arch-specific, so this cannot be cross-built without QEMU.
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     env:
-      # ARCH in the agent-x86 / agent-arm trigger blocks of .gitlab-ci.yml; also the
-      # .deb suffix.
       ARCH: ${{ matrix.arch }}
       LOCAL_IMAGE: stackstate-agent:ci-${{ matrix.arch }}
     steps:
@@ -399,11 +278,6 @@ jobs:
           set -eo pipefail
           docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
 
-  # Terminal job: report a failed build of the release branch to the team's Slack
-  # CI channel (STAC-25461, replacing GitLab's `notify-on-master-fail`). PRs never
-  # reach it -- the `push` filter above only carries the release branch, so the
-  # event check is the whole gate. `needs` lists every job, not just the leaves, so
-  # an early failure that skips its dependents is still reported.
   cerberus-notify:
     name: Report failure to Slack (Cerberus)
     needs:

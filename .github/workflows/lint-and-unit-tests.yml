@@ -1,38 +1,7 @@
 name: Lint and unit tests
 
-# Ported from .gitlab-ci-agent.yml (filename_linting, unbranded_unit_tests,
-# branded_unit_tests) as part of the GitLab -> GitHub migration (STAC-25142),
-# phase 1: lint + unit tests. Tracks the stackstate-7.78.2 pipeline.
-#
-# Test-execution policy (architect directive — minimize redundant runs):
-#   * filename-linting is a cheap gate and runs on every PR.
-#   * The two unit suites are heavy (each does a full `inv agent.build` + full
-#     `inv test`, ~2h on an XL runner). They run ONCE per change here, deduped
-#     via `concurrency: cancel-in-progress`. When the merge queue is enabled
-#     (phase 6) they move to `merge_group` (run once at land) and drop from
-#     `pull_request`; master/version-branch pushes then build+publish WITHOUT
-#     re-running tests. Follow-ups tracked in the migration scope doc:
-#       - path-filter the heavy suites (skip when no Go/build inputs changed)
-#       - open question for architects: do we need BOTH unbranded and branded
-#         on every path, or branded-as-gate + unbranded on the queue only?
-#
-# Prerequisites for a GREEN run (see scope doc):
-#   * The GitLab push mirror to this repo must be disabled (done 2026-07-10),
-#     otherwise a mirror sync overwrites anything pushed to GitHub.
-#   * This is a PUBLIC repo. The read-only registry-proxy credentials must be
-#     available to it (org-inherited or provisioned via pulumi-infra) to pull the
-#     cache image: vars REGISTRY_HOST, REGISTRY_USER + secret REGISTRY_PASSWORD.
-#     The godeps-cache build job additionally needs quay push credentials (var
-#     QUAY_USER + secret QUAY_PASSWORD). The warm Go module cache is delivered by
-#     the godeps-cache reusable workflow (STAC-25429; see build-binaries.yml header
-#     and .github/workflows/godeps-cache.yml). Org secrets are never exposed to fork
-#     PRs, so external-fork PRs skip these jobs.
-
 on:
   pull_request:
-  # The release branch, so a failure there reaches Slack via Cerberus
-  # (STAC-25461). Moves with the release; GitLab hardcoded it the same way
-  # (`only: - stackstate-7.78.2`).
   push:
     branches:
       - stackstate-7.78.2
@@ -50,26 +19,18 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# The datadog_build container's default shell is dash, which lacks `set -o pipefail`
-# and mis-handles the conda activation the steps rely on; force bash.
 defaults:
   run:
     shell: bash
 
 env:
-  # conda env baked into the datadog_build image.
   CONDA_ENV: ddpy3
 
 jobs:
   godeps-cache:
     name: Go dependency cache image (amd64)
-    # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
-    # Designated builder of the amd64 cache image (STAC-25494): no wait, so this
-    # workflow -- the longest of the three -- is never held up. The other two wait it
-    # out. amd64 only: lint and unit tests deliberately gain no arm64 lane
-    # (STAC-25498), since each suite runs once on the path to master.
     with:
       arch: amd64
       build_delay_seconds: 0
@@ -79,13 +40,10 @@ jobs:
 
   filename-linting:
     name: Filename linting
-    # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: docker-public
     timeout-minutes: 20
     container:
-      # datadog_build image (built by datadog-agent-buildimages), pulled via the
-      # read-only quay proxy — mirrors BUILD_IMAGE in .gitlab-ci.yml (7.78.2 tag).
       image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
       credentials:
         username: ${{ vars.REGISTRY_USER }}
@@ -110,32 +68,13 @@ jobs:
 
   mod-tidy:
     name: Go module tidiness (go.mod / go.sum)
-    # Nothing in this repo's CI has ever verified module tidiness (STAC-25459):
-    # `inv deps` only downloads, and the `go mod tidy` that used to sit in the GitLab
-    # reconcile mutated the tree rather than failing on a diff. `inv check-mod-tidy`
-    # has always existed (tasks/go.py) and does fail on a diff -- it was just never wired up.
-    #
-    # Gated on the godeps-cache tag, which is a sha256 over exactly **/go.mod,
-    # **/go.sum, go.work, go.work.sum and modules.yml. `image_exists == true` therefore
-    # means those files are byte-identical to a tree this check already passed on: the
-    # cache tag doubles as the cached verdict, so the check costs nothing on the PRs
-    # that do not touch the module graph. Dispatch with force_mod_tidy to re-run it
-    # against an unchanged graph.
-    #
-    # Blind spot: a source-only change that drops the last import of a dependency
-    # leaves a stale `require` without touching any hashed file, so this stays skipped.
-    # That does not break builds; a scheduled force_mod_tidy run would cover it.
     if: >-
       ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
       && (needs.godeps-cache.outputs.image_exists != 'true' || inputs.force_mod_tidy) }}
     needs: godeps-cache
-    # XL for headroom: check-mod-tidy walks all ~186 workspace modules serially and
-    # holds the full module graph. Revisit once there is a wall-clock measurement.
     runs-on: xlarge-public
     timeout-minutes: 60
     container:
-      # Warm Go module cache image (godeps-cache job); see the unit-test jobs below
-      # for why this ref cannot be a static digest.
       image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
@@ -144,7 +83,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          # No fetch-depth: check-mod-tidy diffs the working tree, not history.
           persist-credentials: false
 
       - name: inv check-mod-tidy
@@ -168,11 +106,6 @@ jobs:
     runs-on: xlarge-public
     timeout-minutes: 150
     container:
-      # Warm Go module cache image (godeps-cache job); pulled via the same
-      # read-only registry proxy + REGISTRY_* credentials as datadog_build. The tag is
-      # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
-      # is effectively digest-pinned; it cannot be a static digest because it is
-      # computed per run -- hence the narrow unpinned-images ignore below.
       image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
@@ -182,8 +115,6 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          # Full history + tags so `inv agent.build` resolves the version via
-          # `git describe --tags --match "3.*"` (needs the 3.x tag reachable from HEAD).
           fetch-depth: 0
 
       - name: Build agent and run unit tests
@@ -225,11 +156,6 @@ jobs:
     runs-on: xlarge-public
     timeout-minutes: 150
     container:
-      # Warm Go module cache image (godeps-cache job); pulled via the same
-      # read-only registry proxy + REGISTRY_* credentials as datadog_build. The tag is
-      # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
-      # is effectively digest-pinned; it cannot be a static digest because it is
-      # computed per run -- hence the narrow unpinned-images ignore below.
       image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
@@ -239,8 +165,6 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          # Full history + tags so `inv agent.build` resolves the version via
-          # `git describe --tags --match "3.*"` (needs the 3.x tag reachable from HEAD).
           fetch-depth: 0
 
       - name: Build agent and run unit tests
@@ -276,11 +200,6 @@ jobs:
           export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
           inv -e test --coverage --race --profile --cpus 4 --build-exclude="${STS_UT_BUILD_EXCLUDE}" --timeout=600
 
-  # Terminal job: report a failed build of the release branch to the team's Slack
-  # CI channel (STAC-25461, replacing GitLab's `notify-on-master-fail`). PRs never
-  # reach it -- the `push` filter above only carries the release branch, so the
-  # event check is the whole gate. `needs` lists every job, not just the leaves, so
-  # an early failure that skips its dependents is still reported.
   cerberus-notify:
     name: Report failure to Slack (Cerberus)
     needs:

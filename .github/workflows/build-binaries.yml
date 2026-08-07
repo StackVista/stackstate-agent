@@ -1,49 +1,7 @@
 name: Binary builds
 
-# Ported from .gitlab-ci-agent.yml (build_binaries, build_cluster_agent) as part
-# of the GitLab -> GitHub migration (STAC-25142), phase 2: binary builds. Tracks
-# the stackstate-7.78.2 pipeline. Builds the branded (StackState) production agent
-# and cluster-agent from the DataDog fork, validating that the shippable binaries
-# compile on GitHub runners before the packaging/image phases build on top of them.
-#
-# Speedup concepts carried over from the GitLab pipeline work (STAC-25396) and the
-# warm-cache follow-up (STAC-25429):
-#   * WARM Go module cache via a prebuilt cache image (STAC-25429), keyed by a hash
-#     of the module graph -- the StackGraph ci-metadata/build-ci-image pattern. The
-#     godeps-cache reusable workflow (.github/workflows/godeps-cache.yml) publishes
-#     an image FROM datadog_build with all external modules baked into GOMODCACHE;
-#     the build jobs use it as their `container:` so the cache is already warm. This
-#     replaces the earlier "each job cold-reconciles its own deps" approach: there
-#     is no `go clean -modcache` and no per-job `inv deps` (go mod download + tidy).
-#     The module cache is too big to transport via actions/cache (~540k files,
-#     2-3 GB), which is why it ships as an image layer instead. Jobs still run
-#     `go work sync` + `go work vendor` per checkout (vendoring mutates go.mod, so
-#     vendor/ is materialised per job) -- but now against the warm cache, offline.
-#   * deps_deb's only genuinely consumed output was version.txt, which is git-based
-#     (inv agent.version), not module-cache-based -- so build-cluster-agent just
-#     generates it in-job rather than pulling it from an upstream job.
-#   * Each suite runs once on the path to master, deduped via
-#     `concurrency: cancel-in-progress` (a newer push cancels the in-flight build).
-#
-# Known follow-ups:
-#   * go.mod tidiness is no longer verified in these jobs (the `inv deps` reconcile
-#     is gone). Add a single check-mod-tidy gate rather than paying tidy in every job.
-#   * Phase 6 (merge queue): move the heavy builds to `merge_group` so they run
-#     once at land time and drop from `pull_request`; master/version-branch pushes
-#     then build + publish without re-running these.
-#
-# Prerequisites for a GREEN run: the GitLab push mirror must stay disabled, and this
-# PUBLIC repo needs the read-only registry-proxy credentials (vars REGISTRY_HOST/
-# REGISTRY_USER + secret REGISTRY_PASSWORD) to pull the cache image, plus quay push
-# credentials (var QUAY_USER + secret QUAY_PASSWORD) for the godeps-cache build job.
-# The cache image is PRIVATE (its base datadog_build is private). Org secrets are
-# never exposed to fork PRs, so external-fork PRs skip these jobs by design.
-
 on:
   pull_request:
-  # The release branch, so a failure there reaches Slack via Cerberus
-  # (STAC-25461). Moves with the release; GitLab hardcoded it the same way
-  # (`only: - stackstate-7.78.2`).
   push:
     branches:
       - stackstate-7.78.2
@@ -56,25 +14,18 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# The datadog_build container's default shell is dash, which lacks `set -o pipefail`
-# and mis-handles the conda activation the steps rely on; force bash.
 defaults:
   run:
     shell: bash
 
 env:
-  # conda env baked into the datadog_build image.
   CONDA_ENV: ddpy3
 
 jobs:
   godeps-cache-amd64:
     name: Go dependency cache image (amd64)
-    # Same-repo PRs only: the registry/quay secrets are not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
-    # Wait for Lint and unit tests to publish the image before building it here
-    # (STAC-25494). Covers a ~7m build plus runner scheduling; on timeout this builds
-    # it itself, so a failed sibling costs latency, not correctness.
     with:
       arch: amd64
       build_delay_seconds: 900
@@ -86,10 +37,6 @@ jobs:
     name: Go dependency cache image (arm64)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/godeps-cache.yml
-    # Designated builder of the arm64 cache image, hence delay 0. Lint and unit tests
-    # plays that role for amd64 but has no arm64 lane, so if this workflow also waited
-    # nothing would ever build the arm64 image inside the delay window and both arm64
-    # consumers would build it at once -- the duplicate-build case STAC-25494 fixed.
     with:
       arch: arm64
       build_delay_seconds: 0
@@ -99,14 +46,11 @@ jobs:
 
   build-agent:
     name: Build agent binary (branded / StackState, ${{ matrix.arch }})
-    # Same-repo PRs only: the registry-proxy secret is not exposed to fork PRs.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     needs:
       - godeps-cache-amd64
       - godeps-cache-arm64
     strategy:
-      # An arm64 regression must not abort the amd64 leg: amd64 is the lane that has
-      # been green for weeks, and during arm64 bring-up its result is the signal.
       fail-fast: false
       matrix:
         include:
@@ -119,11 +63,6 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
     container:
-      # Warm Go module cache image (godeps-cache job); pulled via the same
-      # read-only registry proxy + REGISTRY_* credentials as datadog_build. The tag is
-      # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
-      # is effectively digest-pinned; it cannot be a static digest because it is
-      # computed per run -- hence the narrow unpinned-images ignore below.
       image: ${{ matrix.cache_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
@@ -133,8 +72,6 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          # Full history + tags so `inv agent.build` resolves the version via
-          # `git describe --tags --match "3.*"` (needs the 3.x tag reachable from HEAD).
           fetch-depth: 0
 
       - name: Build branded agent (production, with rtloader)
@@ -176,8 +113,6 @@ jobs:
       - godeps-cache-amd64
       - godeps-cache-arm64
     strategy:
-      # An arm64 regression must not abort the amd64 leg: amd64 is the lane that has
-      # been green for weeks, and during arm64 bring-up its result is the signal.
       fail-fast: false
       matrix:
         include:
@@ -190,11 +125,6 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
     container:
-      # Warm Go module cache image (godeps-cache job); pulled via the same
-      # read-only registry proxy + REGISTRY_* credentials as datadog_build. The tag is
-      # a sha256 content hash of the module graph (see godeps-cache.yml), so this ref
-      # is effectively digest-pinned; it cannot be a static digest because it is
-      # computed per run -- hence the narrow unpinned-images ignore below.
       image: ${{ matrix.cache_image }} # zizmor: ignore[unpinned-images]
       credentials:
         username: ${{ vars.REGISTRY_USER }}
@@ -204,7 +134,6 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          # Full history + tags so the version resolves via `git describe`.
           fetch-depth: 0
 
       - name: Build branded cluster-agent
@@ -238,12 +167,7 @@ jobs:
       - name: Upload cluster-agent build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          # Per-arch name: matrix legs upload concurrently and actions/upload-artifact
-          # v4 rejects a second upload to an existing artifact name, so a shared name
-          # would fail the arm64 leg outright.
           name: cluster-agent-binary-${{ matrix.arch }}
-          # Paths match the GitLab build_cluster_agent artifacts; the cluster-agent
-          # image phase (phase 5) consumes the binary + Dockerfile manifest.
           path: |
             bin/stackstate-cluster-agent/
             Dockerfiles/cluster-agent/stackstate-cluster.yaml
@@ -253,16 +177,7 @@ jobs:
 
   build-cluster-agent-image:
     name: Build cluster-agent container image (docker build, no push on PR, ${{ matrix.arch }})
-    # Ported from pre_release_cluster_agent_image. Lives in this workflow rather
-    # than build-deb.yml so it can `needs:` the job that produces its input --
-    # cross-workflow artifact hand-off would need run-id plumbing for no gain.
-    # Stops at `docker build` + a runtime check: the GitLab job also pushed to
-    # quay.io/stackstate, which the PR lane of a PUBLIC repo must not do.
-    # Publishing lands in phase 4, gated on the branch.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    # `needs` on a matrix job waits for every leg, so the arm64 image build also
-    # waits out the amd64 binary. Actions has no per-leg dependency; the cost is
-    # latency on an already-parallel lane, not correctness.
     needs: build-cluster-agent
     strategy:
       fail-fast: false
@@ -272,9 +187,6 @@ jobs:
             runner: docker-public
           - arch: arm64
             runner: arm64-xlarge-public
-    # DinD class: docker CLI in the runner image, dockerd in a native sidecar.
-    # Native per arch -- the binary and the Dockerfile's base stages are both
-    # arch-specific, so this cannot be cross-built without QEMU.
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
@@ -327,11 +239,6 @@ jobs:
             --entrypoint /opt/stackstate-agent/bin/stackstate-cluster-agent/stackstate-cluster-agent \
             "${LOCAL_IMAGE}" version
 
-  # Terminal job: report a failed build of the release branch to the team's Slack
-  # CI channel (STAC-25461, replacing GitLab's `notify-on-master-fail`). PRs never
-  # reach it -- the `push` filter above only carries the release branch, so the
-  # event check is the whole gate. `needs` lists every job, not just the leaves, so
-  # an early failure that skips its dependents is still reported.
   cerberus-notify:
     name: Report failure to Slack (Cerberus)
     needs:
