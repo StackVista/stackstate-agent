@@ -1,5 +1,6 @@
 ARG BASE_IMAGE_REGISTRY=registry.tooling.stackstate.io/docker/library
 ARG BASE_IMAGE_UBUNTU_VERSION=24.04
+ARG BCI_IMAGE_REGISTRY=registry.tooling.stackstate.io/suse/bci
 
 ##########################################
 # Preparation stage: extract and cleanup #
@@ -27,7 +28,7 @@ RUN dpkg -x /stackstate-agent*_${ARCH}.deb . \
 #   - copy default config files
 COPY stackstate*.yaml etc/stackstate-agent/
 
-FROM registry.suse.com/bci/bci-base:latest AS software
+FROM ${BCI_IMAGE_REGISTRY}/bci-base:latest AS software
 # as per comment here: https://github.com/rancher/rancher/blob/main/package/Dockerfile#L12
 # No-op command to create an explicit layer - this fixes a weird buildkit/buildx bug on macos arm
 RUN :
@@ -35,7 +36,7 @@ RUN :
 # Actual docker image construction #
 ####################################
 
-FROM registry.suse.com/bci/bci-micro:latest
+FROM ${BCI_IMAGE_REGISTRY}/bci-micro:latest
 LABEL maintainer="StackState <info@stackstate.com>"
 # Install system packages using builder image that has zypper
 

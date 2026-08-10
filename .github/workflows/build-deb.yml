@@ -236,7 +236,7 @@ jobs:
     timeout-minutes: 60
     env:
       ARCH: ${{ matrix.arch }}
-      LOCAL_IMAGE: stackstate-agent:ci-${{ matrix.arch }}
+      LOCAL_IMAGE: quay.io/stackstate/stackstate-k8s-agent:ci-${{ matrix.arch }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -255,8 +255,6 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: |
           set -eo pipefail
-          # Dockerfiles/agent pulls its ubuntu extract stage through the proxy;
-          # the BCI stages come from registry.suse.com and need no auth.
           printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
 
       - name: Build agent image
@@ -278,6 +276,262 @@ jobs:
           set -eo pipefail
           docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
 
+      - name: Scan agent image (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
+        uses: StackVista/image-pipeline/.github/actions/scan-image@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: ${{ env.LOCAL_IMAGE }}
+          mode: gate
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          with-grype: true
+          exceptions-path: exceptions
+          upload-sarif: false
+          sarif-category: stackstate-k8s-agent-${{ matrix.arch }}
+
+  publish-agent-image:
+    name: Publish and sign agent image (${{ matrix.arch }})
+    if: github.event_name == 'push'
+    needs:
+      - build-agent-image
+      - test-deb-renaming
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: docker-public
+          - arch: arm64
+            runner: arm64-xlarge-public
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ARCH: ${{ matrix.arch }}
+      IMAGE: quay.io/stackstate/stackstate-k8s-agent
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-${{ matrix.arch }}
+
+      - name: Stage the DEB in the image build context
+        run: |
+          set -eo pipefail
+          shopt -s nullglob
+          debs=(outcomes/pkg/stackstate-agent_*_"${ARCH}".deb)
+          if [ "${#debs[@]}" -ne 1 ]; then
+            echo "Expected exactly one stackstate-agent_*_${ARCH}.deb, found ${#debs[@]}: ${debs[*]}" >&2
+            exit 1
+          fi
+          cp "${debs[0]}" Dockerfiles/agent/
+
+      - name: Resolve image tag
+        id: image
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve canonical OCI labels
+        id: oci
+        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image-name: stackstate-k8s-agent
+          tag: ${{ steps.image.outputs.tag }}
+          title: SUSE Observability Agent
+          description: Node agent collecting metrics, logs, traces and topology for SUSE Observability.
+          component: stackstate-k8s-agent
+          dockerfile: Dockerfiles/agent/Dockerfile
+          base-name: registry.suse.com/bci/bci-micro:latest
+          registry-credentials: |
+            [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+
+      - name: Build, publish, and sign architecture image
+        uses: StackVista/image-pipeline/.github/actions/push-single-arch@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: ${{ env.IMAGE }}
+          tag: ${{ steps.image.outputs.tag }}
+          arch: ${{ matrix.arch }}
+          docker-context: Dockerfiles/agent
+          dockerfile: Dockerfiles/agent/Dockerfile
+          build-args: ARCH=${{ matrix.arch }}
+          labels: |
+            ${{ steps.oci.outputs.labels }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          source-registry-credentials: |
+            [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+          target-registry: quay.io
+          target-registry-user: ${{ vars.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+  merge-agent-manifest:
+    name: Publish and sign multi-architecture agent image
+    if: github.event_name == 'push'
+    needs: publish-agent-image
+    runs-on: docker-public
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Resolve image tag
+        id: image
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
+
+      - name: Merge and sign multi-architecture manifest
+        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: quay.io/stackstate/stackstate-k8s-agent
+          tag: ${{ steps.image.outputs.tag }}
+          arches: amd64,arm64
+          target-registry: quay.io
+          target-registry-user: ${{ vars.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+  sign-and-publish-deb:
+    name: Sign DEB packages (GPG) and publish to the pre-release apt repository
+    needs:
+      - build-deb
+      - test-deb-renaming
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    environment: agent-pre-release
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download amd64 DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-amd64
+
+      - name: Download arm64 DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-arm64
+
+      - name: Install debsigs and GnuPG
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends debsigs gnupg gpg-agent ruby
+
+      - name: Install deb-s3 from the pinned, checksum-verified manifest
+        run: ./.github/scripts/install-deb-s3.sh .github/deb-s3-gems.sha256
+
+      - name: Assume the pre-release publishing role
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ vars.AGENT_PRERELEASE_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Sign the DEB packages with debsigs
+        env:
+          SIGNING_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
+          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          SIGNING_PRIVATE_PASSPHRASE: ${{ secrets.SIGNING_PRIVATE_PASSPHRASE }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+        run: ./omnibus/package-scripts/sign_debian_package.sh
+
+      - name: Publish the DEB packages to the pre-release apt repository
+        env:
+          SIGNING_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
+          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          SIGNING_PRIVATE_PASSPHRASE: ${{ secrets.SIGNING_PRIVATE_PASSPHRASE }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+        run: ./omnibus/package-scripts/publish_package.sh stackstate-agent-3-test
+
+  generate-install-script:
+    name: Generate the pre-release agent install script
+    needs: godeps-cache-amd64
+    if: github.event_name == 'push'
+    runs-on: xlarge-public
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    container:
+      image: ${{ needs.godeps-cache-amd64.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Render install.sh against the pre-release repositories
+        env:
+          STS_AWS_TEST_BUCKET: stackstate-agent-3-test
+          STS_AWS_TEST_BUCKET_YUM: stackstate-agent-3-rpm-test
+          STS_AWS_TEST_BUCKET_WIN: stackstate-agent-3-test
+        run: |
+          set -eo pipefail
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          git config --global --add safe.directory '*'
+          inv release.generate-install -t
+          grep -q 's3.amazonaws.com' ./cmd/agent/install.sh
+          if grep -q 'None.s3.amazonaws.com' ./cmd/agent/install.sh; then
+            echo "install.sh references an unset bucket variable" >&2
+            exit 1
+          fi
+
+      - name: Upload the rendered install script
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: agent-install-script
+          path: cmd/agent/install.sh
+          retention-days: 5
+          if-no-files-found: error
+
+  publish-install-script:
+    name: Publish the pre-release agent install script to S3
+    needs:
+      - generate-install-script
+      - sign-and-publish-deb
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    environment: agent-pre-release
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download the rendered install script
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: agent-install-script
+
+      - name: Assume the pre-release publishing role
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ vars.AGENT_PRERELEASE_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Upload install.sh
+        run: |
+          set -euo pipefail
+          aws s3 cp ./install.sh s3://stackstate-agent-3-test/install.sh --acl public-read
+          aws s3 ls s3://stackstate-agent-3-test/
+
   cerberus-notify:
     name: Report failure to Slack (Cerberus)
     needs:
@@ -286,6 +540,11 @@ jobs:
       - build-deb
       - test-deb-renaming
       - build-agent-image
+      - publish-agent-image
+      - merge-agent-manifest
+      - sign-and-publish-deb
+      - generate-install-script
+      - publish-install-script
     if: >-
       always()
       && github.event_name == 'push'

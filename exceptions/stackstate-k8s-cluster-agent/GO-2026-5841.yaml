@@ -1,0 +1,23 @@
+schema_version: '1'
+vulnerability:
+  id: GO-2026-5841
+  severity: UNKNOWN
+product:
+  consumer: stackstate-k8s-cluster-agent
+  image: quay.io/stackstate/stackstate-k8s-cluster-agent
+component:
+  purl: pkg:golang/github.com/klauspost/compress@v1.18.5
+  paths:
+  - opt/stackstate-agent/bin/stackstate-cluster-agent/stackstate-cluster-agent
+status: under_investigation
+reason: transitive_dependency_bump_in_progress
+expires: '2026-08-20'
+owner: "@StackVista/observability-team"
+upstream_owner: klauspost
+upstream_reference: https://pkg.go.dev/vuln/GO-2026-5841
+statement: |
+  github.com/klauspost/compress v1.18.7 fixes this, so a compatible patch
+  exists and the finding is inside the 14-day remediation window. It reaches
+  the binary transitively through the upstream Datadog agent dependency
+  graph, so the bump has to go through a go.mod update rather than a direct
+  version pin. Tracked in STAC-25556.
