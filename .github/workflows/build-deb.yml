@@ -399,6 +399,139 @@ jobs:
           target-registry-user: ${{ vars.QUAY_USER }}
           target-registry-password: ${{ secrets.QUAY_PASSWORD }}
 
+  sign-and-publish-deb:
+    name: Sign DEB packages (GPG) and publish to the pre-release apt repository
+    needs:
+      - build-deb
+      - test-deb-renaming
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    environment: agent-pre-release
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download amd64 DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-amd64
+
+      - name: Download arm64 DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-arm64
+
+      - name: Install debsigs and GnuPG
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends debsigs gnupg gpg-agent ruby
+
+      - name: Install deb-s3 from the pinned, checksum-verified manifest
+        run: ./.github/scripts/install-deb-s3.sh .github/deb-s3-gems.sha256
+
+      - name: Assume the pre-release publishing role
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ vars.AGENT_PRERELEASE_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Sign the DEB packages with debsigs
+        env:
+          SIGNING_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
+          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          SIGNING_PRIVATE_PASSPHRASE: ${{ secrets.SIGNING_PRIVATE_PASSPHRASE }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+        run: ./omnibus/package-scripts/sign_debian_package.sh
+
+      - name: Publish the DEB packages to the pre-release apt repository
+        env:
+          SIGNING_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
+          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          SIGNING_PRIVATE_PASSPHRASE: ${{ secrets.SIGNING_PRIVATE_PASSPHRASE }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+        run: ./omnibus/package-scripts/publish_package.sh stackstate-agent-3-test
+
+  generate-install-script:
+    name: Generate the pre-release agent install script
+    needs: godeps-cache-amd64
+    if: github.event_name == 'push'
+    runs-on: xlarge-public
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    container:
+      image: ${{ needs.godeps-cache-amd64.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Render install.sh against the pre-release repositories
+        env:
+          STS_AWS_TEST_BUCKET: stackstate-agent-3-test
+          STS_AWS_TEST_BUCKET_YUM: stackstate-agent-3-rpm-test
+          STS_AWS_TEST_BUCKET_WIN: stackstate-agent-3-test
+        run: |
+          set -eo pipefail
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          git config --global --add safe.directory '*'
+          inv release.generate-install -t
+          grep -q 's3.amazonaws.com' ./cmd/agent/install.sh
+          if grep -q 'None.s3.amazonaws.com' ./cmd/agent/install.sh; then
+            echo "install.sh references an unset bucket variable" >&2
+            exit 1
+          fi
+
+      - name: Upload the rendered install script
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: agent-install-script
+          path: cmd/agent/install.sh
+          retention-days: 5
+          if-no-files-found: error
+
+  publish-install-script:
+    name: Publish the pre-release agent install script to S3
+    needs:
+      - generate-install-script
+      - sign-and-publish-deb
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    environment: agent-pre-release
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download the rendered install script
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: agent-install-script
+
+      - name: Assume the pre-release publishing role
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ vars.AGENT_PRERELEASE_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Upload install.sh
+        run: |
+          set -euo pipefail
+          aws s3 cp ./install.sh s3://stackstate-agent-3-test/install.sh --acl public-read
+          aws s3 ls s3://stackstate-agent-3-test/
+
   cerberus-notify:
     name: Report failure to Slack (Cerberus)
     needs:
@@ -409,6 +542,9 @@ jobs:
       - build-agent-image
       - publish-agent-image
       - merge-agent-manifest
+      - sign-and-publish-deb
+      - generate-install-script
+      - publish-install-script
     if: >-
       always()
       && github.event_name == 'push'

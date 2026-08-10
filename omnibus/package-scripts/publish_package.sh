@@ -1,29 +1,31 @@
 #!/bin/bash
 
-TARGET_BUCKET=$1
+set -euo pipefail
 
-CODENAME=${2:-$CI_COMMIT_REF_NAME}
-TARGET_CODENAME=${CODENAME:-dirty}
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=omnibus/package-scripts/gpg_signing_setup.sh
+source "${script_dir}/gpg_signing_setup.sh"
 
-
-if [ -z ${TARGET_BUCKET+x} ]; then
-	echo "Missing S3 bucket parameter"
-	exit 1;
+TARGET_BUCKET="${1:-}"
+if [ -z "${TARGET_BUCKET}" ]; then
+	echo "Missing S3 bucket parameter" >&2
+	exit 1
 fi
 
-if [ -z ${STACKSTATE_AGENT_VERSION+x} ]; then
-	STACKSTATE_AGENT_VERSION=$(cat $CI_PROJECT_DIR/version.txt)
+# CI_PROJECT_DIR is GitLab's; GITHUB_WORKSPACE is the GitHub Actions equivalent.
+PROJECT_DIR="${CI_PROJECT_DIR:-${GITHUB_WORKSPACE:-$(pwd)}}"
+PKG_DIR="${PKG_DIR:-${PROJECT_DIR}/outcomes/pkg}"
+
+CODENAME="${2:-${CI_COMMIT_REF_NAME:-${GITHUB_REF_NAME:-}}}"
+TARGET_CODENAME="${CODENAME:-dirty}"
+
+if [ -z "${STACKSTATE_AGENT_VERSION:-}" ]; then
+	STACKSTATE_AGENT_VERSION=$(cat "${PROJECT_DIR}/version.txt")
 fi
-echo $STACKSTATE_AGENT_VERSION
 
-ls $CI_PROJECT_DIR/outcomes/pkg/*.*
+echo "Publishing stackstate-agent ${STACKSTATE_AGENT_VERSION} to ${TARGET_BUCKET} (${TARGET_CODENAME})"
+ls "${PKG_DIR}"/*.*
 
-cat <<EOF >~/.gnupg/gpg-agent.conf
-default-cache-ttl 46000
-allow-preset-passphrase
-EOF
+gpg_signing_setup
 
-gpg-connect-agent RELOADAGENT /bye
-echo $SIGNING_PRIVATE_PASSPHRASE | /usr/lib/gnupg2/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
-
-deb-s3 upload --sign=${SIGNING_KEY_ID} --codename ${TARGET_CODENAME} --bucket ${TARGET_BUCKET} $CI_PROJECT_DIR/outcomes/pkg/*.deb
+deb-s3 upload --sign="${SIGNING_KEY_ID}" --codename "${TARGET_CODENAME}" --bucket "${TARGET_BUCKET}" "${PKG_DIR}"/*.deb
