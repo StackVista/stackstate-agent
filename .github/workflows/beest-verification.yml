@@ -15,6 +15,10 @@ on:
         description: Agent branch beest should deploy (empty = the branch this workflow runs on)
         type: string
         default: ""
+      agent_hash_under_test:
+        description: Agent commit beest should pin the image to (empty = the commit this workflow runs on)
+        type: string
+        default: ""
       scenarios:
         description: Beest scenario selector (empty = whatever the beest workflow defaults to)
         type: string
@@ -56,6 +60,8 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           SUITE: ${{ inputs.suite }}
           AGENT_BRANCH: ${{ inputs.agent_branch_under_test || github.ref_name }}
+          AGENT_BRANCH_INPUT: ${{ inputs.agent_branch_under_test }}
+          AGENT_HASH_INPUT: ${{ inputs.agent_hash_under_test }}
           AGENT_SHA: ${{ github.sha }}
           SCENARIOS: ${{ inputs.scenarios }}
           NO_DESTROY: ${{ inputs.no_destroy }}
@@ -70,9 +76,17 @@ jobs:
             *)    echo "::error::unknown suite '${SUITE}'"; exit 1 ;;
           esac
 
-          # beest resolves the agent image from the branch name; the SHA is recorded
-          # for traceability only and is not part of beest's dispatch contract.
-          echo "agent branch under test: ${AGENT_BRANCH} (${AGENT_SHA})"
+          # A branch builds many images, so pin the exact commit rather than letting
+          # beest pick the newest build. Default to this run's SHA, but only when the
+          # branch was not overridden -- against another branch our SHA means nothing,
+          # so leave it unset and let beest fall back.
+          agent_hash="${AGENT_HASH_INPUT}"
+          if [ -z "${agent_hash}" ] && [ -z "${AGENT_BRANCH_INPUT}" ]; then
+            agent_hash="${AGENT_SHA}"
+          fi
+
+          echo "agent branch under test: ${AGENT_BRANCH}"
+          echo "agent commit under test: ${agent_hash:-(unpinned - beest chart default)}"
 
           {
             echo "## Beest verification dispatched"
@@ -80,7 +94,7 @@ jobs:
             echo "| field | value |"
             echo "| --- | --- |"
             echo "| agent branch under test | \`${AGENT_BRANCH}\` |"
-            echo "| agent commit | \`${AGENT_SHA}\` |"
+            echo "| agent commit under test | \`${agent_hash:-(unpinned - beest chart default)}\` |"
             echo "| suite | \`${SUITE}\` |"
             echo "| scenarios | \`${SCENARIOS:-(beest default)}\` |"
             echo "| keep infrastructure | \`${NO_DESTROY}\` |"
@@ -92,6 +106,9 @@ jobs:
             args=(--repo StackVista/beest --ref "${BEEST_REF}")
             args+=(--field "agent_branch_under_test=${AGENT_BRANCH}")
             args+=(--field "no_destroy=${NO_DESTROY}")
+            if [ -n "${agent_hash}" ]; then
+              args+=(--field "agent_hash_under_test=${agent_hash}")
+            fi
             if [ -n "${SCENARIOS}" ]; then
               args+=(--field "scenarios=${SCENARIOS}")
             fi
