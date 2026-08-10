@@ -1,0 +1,109 @@
+name: Beest verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which beest agent suite to run (GitLab triggered x86 only)
+        type: choice
+        default: x86
+        options:
+          - x86
+          - arm
+          - both
+      agent_branch_under_test:
+        description: Agent branch beest should deploy (empty = the branch this workflow runs on)
+        type: string
+        default: ""
+      scenarios:
+        description: Beest scenario selector (empty = whatever the beest workflow defaults to)
+        type: string
+        default: ""
+      no_destroy:
+        description: Keep the beest infrastructure after the run (for debugging a failure)
+        type: boolean
+        default: false
+      beest_ref:
+        description: Ref of StackVista/beest to dispatch
+        type: string
+        default: main
+
+permissions: {}
+
+concurrency:
+  group: beest-verification-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    name: Trigger beest agent verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions: {}
+    steps:
+      - name: Mint GitHub App token (dispatch beest workflows)
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.BEEST_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.BEEST_DISPATCH_APP_PRIVATE_KEY }}
+          owner: StackVista
+          repositories: beest
+          permission-actions: write
+
+      - name: Dispatch beest verification
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SUITE: ${{ inputs.suite }}
+          AGENT_BRANCH: ${{ inputs.agent_branch_under_test || github.ref_name }}
+          AGENT_SHA: ${{ github.sha }}
+          SCENARIOS: ${{ inputs.scenarios }}
+          NO_DESTROY: ${{ inputs.no_destroy }}
+          BEEST_REF: ${{ inputs.beest_ref }}
+        run: |
+          set -euo pipefail
+
+          case "${SUITE}" in
+            x86)  workflows=("agent-x86.yml") ;;
+            arm)  workflows=("arm.yml") ;;
+            both) workflows=("agent-x86.yml" "arm.yml") ;;
+            *)    echo "::error::unknown suite '${SUITE}'"; exit 1 ;;
+          esac
+
+          # beest resolves the agent image from the branch name; the SHA is recorded
+          # for traceability only and is not part of beest's dispatch contract.
+          echo "agent branch under test: ${AGENT_BRANCH} (${AGENT_SHA})"
+
+          {
+            echo "## Beest verification dispatched"
+            echo
+            echo "| field | value |"
+            echo "| --- | --- |"
+            echo "| agent branch under test | \`${AGENT_BRANCH}\` |"
+            echo "| agent commit | \`${AGENT_SHA}\` |"
+            echo "| suite | \`${SUITE}\` |"
+            echo "| scenarios | \`${SCENARIOS:-(beest default)}\` |"
+            echo "| keep infrastructure | \`${NO_DESTROY}\` |"
+            echo "| beest ref | \`${BEEST_REF}\` |"
+            echo
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          for wf in "${workflows[@]}"; do
+            args=(--repo StackVista/beest --ref "${BEEST_REF}")
+            args+=(--field "agent_branch_under_test=${AGENT_BRANCH}")
+            args+=(--field "no_destroy=${NO_DESTROY}")
+            if [ -n "${SCENARIOS}" ]; then
+              args+=(--field "scenarios=${SCENARIOS}")
+            fi
+
+            echo "dispatching ${wf}"
+            gh workflow run "${wf}" "${args[@]}"
+
+            # gh does not report the queued run, and every beest AWS workflow shares
+            # one global lock, so look the run up rather than assuming it started.
+            sleep 10
+            url="$(gh run list --repo StackVista/beest --workflow "${wf}" \
+              --limit 1 --json url --jq '.[0].url' 2>/dev/null || true)"
+            fallback="https://github.com/StackVista/beest/actions/workflows/${wf}"
+            echo "- \`${wf}\` -> ${url:-${fallback}}" >> "${GITHUB_STEP_SUMMARY}"
+          done
