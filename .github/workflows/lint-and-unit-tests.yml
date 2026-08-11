@@ -218,3 +218,51 @@ jobs:
     secrets:
       CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
       CERBERUS_API_TOKEN: ${{ secrets.CERBERUS_API_TOKEN }}
+
+  ci-success:
+    name: CI success (lint and unit tests)
+    needs:
+      - godeps-cache
+      - filename-linting
+      - mod-tidy
+      - unbranded-unit-tests
+      - branded-unit-tests
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate upstream job results
+        env:
+          GODEPS_CACHE: ${{ needs.godeps-cache.result }}
+          FILENAME_LINTING: ${{ needs.filename-linting.result }}
+          MOD_TIDY: ${{ needs.mod-tidy.result }}
+          UNBRANDED_UNIT_TESTS: ${{ needs.unbranded-unit-tests.result }}
+          BRANDED_UNIT_TESTS: ${{ needs.branded-unit-tests.result }}
+        run: |
+          set -euo pipefail
+          status=0
+
+          # Every job below is skipped on a fork pull request, so "skipped" must not
+          # satisfy the gate -- otherwise the merge check goes green having run nothing.
+          require_success() {
+            printf '  %-30s %s\n' "$1" "$2"
+            [ "$2" = "success" ] || status=1
+          }
+
+          # mod-tidy is skipped by design when the cache image already covers the
+          # module graph (STAC-25396), so it is the one job allowed to skip.
+          allow_skipped() {
+            printf '  %-30s %s\n' "$1" "$2"
+            case "$2" in
+              success|skipped) ;;
+              *) status=1 ;;
+            esac
+          }
+
+          require_success "Go dependency cache" "${GODEPS_CACHE}"
+          require_success "Filename linting" "${FILENAME_LINTING}"
+          require_success "Unit tests (unbranded)" "${UNBRANDED_UNIT_TESTS}"
+          require_success "Unit tests (branded)" "${BRANDED_UNIT_TESTS}"
+          allow_skipped "Go module tidiness" "${MOD_TIDY}"
+
+          exit "${status}"

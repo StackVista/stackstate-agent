@@ -371,3 +371,43 @@ jobs:
     secrets:
       CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
       CERBERUS_API_TOKEN: ${{ secrets.CERBERUS_API_TOKEN }}
+
+  ci-success:
+    name: CI success (binary builds)
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+      - build-agent
+      - build-cluster-agent
+      - build-cluster-agent-image
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate upstream job results
+        env:
+          GODEPS_CACHE_AMD64: ${{ needs.godeps-cache-amd64.result }}
+          GODEPS_CACHE_ARM64: ${{ needs.godeps-cache-arm64.result }}
+          BUILD_AGENT: ${{ needs.build-agent.result }}
+          BUILD_CLUSTER_AGENT: ${{ needs.build-cluster-agent.result }}
+          BUILD_CLUSTER_AGENT_IMAGE: ${{ needs.build-cluster-agent-image.result }}
+        run: |
+          set -euo pipefail
+          status=0
+
+          # Every job below is skipped on a fork pull request, so "skipped" must not
+          # satisfy the gate -- otherwise the merge check goes green having built nothing.
+          # The publish and manifest jobs are excluded on purpose: they only run on push,
+          # so they can never report on a pull request.
+          require_success() {
+            printf '  %-30s %s\n' "$1" "$2"
+            [ "$2" = "success" ] || status=1
+          }
+
+          require_success "Go dependency cache (amd64)" "${GODEPS_CACHE_AMD64}"
+          require_success "Go dependency cache (arm64)" "${GODEPS_CACHE_ARM64}"
+          require_success "Agent binary" "${BUILD_AGENT}"
+          require_success "Cluster-agent binary" "${BUILD_CLUSTER_AGENT}"
+          require_success "Cluster-agent image" "${BUILD_CLUSTER_AGENT_IMAGE}"
+
+          exit "${status}"
