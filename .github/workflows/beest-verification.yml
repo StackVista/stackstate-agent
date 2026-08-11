@@ -107,7 +107,7 @@ jobs:
             args+=(--field "agent_branch_under_test=${AGENT_BRANCH}")
             args+=(--field "no_destroy=${NO_DESTROY}")
             if [ -n "${agent_hash}" ]; then
-              args+=(--field "agent_hash_under_test=${agent_hash}")
+              args+=(--field "hashes_under_test=agent=${agent_hash}")
             fi
             if [ -n "${SCENARIOS}" ]; then
               args+=(--field "scenarios=${SCENARIOS}")
