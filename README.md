@@ -191,7 +191,5 @@ helm upgrade --install \
   stackstate-agent stackstate-test/stackstate-agent --version <version>
 ```
 
-`<version>` is the new version you've set on `helm-charts/stable/stackstate-agent/Chart.yaml` on your feature branch.
-
-To use this version in the `stackstate-agent` pipeline, create a branch and update the `AGENT_HELM_CHART_VERSION` variable on `.gitlab-ci-agent.yml`, with that the pipeline will use the test helm repository that was updated by the helm-charts pipeline.
+`<version>` is the new version you've set on `helm-charts/stable/stackstate-agent/Chart.yaml` on your feature branch. Install it directly with `helm upgrade --install` from the `stackstate-test` repository; the agent pipeline no longer carries a chart-version override.
 

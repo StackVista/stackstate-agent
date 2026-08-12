@@ -25,19 +25,20 @@ The `local.sh` script orchestrates containerized builds. Key steps:
 
 The build container image is `registry.tooling.stackstate.io/quay/stackstate/datadog_build_linux_x64`.
 
-### GitLab CI
+### GitLab CI (retired)
+
+The agent pipeline now runs on GitHub Actions in `.github/workflows/`. The GitLab pipeline files have been deleted; passages below that name `.gitlab-ci.yml` or `.gitlab-ci-agent.yml` describe the retired pipeline and are kept for the constraints they record, which still apply to the equivalent GitHub jobs. Translate the mechanism, not the file path — GitLab job caches and GitHub caching do not behave alike.
 
 - Pipeline structure: parent pipeline triggers bridge jobs, which spawn child pipelines (`agent-x86`, `agent-arm`)
 - API base: `https://gitlab.com/api/v4/projects/<PROJECT_ID>`
 - Auth: `Authorization: Bearer $GITLAB_TOKEN` (token stored in `.env`)
-- Use `[cluster-agent]` in commit messages to run only cluster-agent pipeline steps
 - The `branded_unit_tests` job runs `fix_branding.sh` then the full test suite
 - The `unbranded_unit_tests` job runs tests without branding (baseline comparison)
 - Jobs have `retry: max: 2, when: always` — any single test failure triggers up to 2 retries
 
 #### STS deviations in the unit-test invocation
 
-Both `branded_unit_tests` and `unbranded_unit_tests` in `.gitlab-ci-agent.yml` invoke `inv -e test` with two STS-specific flags that diverge from upstream defaults:
+Both `branded-unit-tests` and `unbranded-unit-tests` in `.github/workflows/lint-and-unit-tests.yml` invoke `inv -e test` with two STS-specific flags that diverge from upstream defaults:
 
 - `--build-exclude=$STS_UT_BUILD_EXCLUDE` — drops build tags for features StackState does not ship in the cluster-agent / node-agent images. The current set is `oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd`. **If a future upstream merge introduces a new heavy build tag for a feature StackState doesn't surface (e.g., a new database integration, GPU/hardware support, vendor SDK), consider adding it to this list to keep CI time bounded.** Service-discovery integrations (`consul`, `etcd`, `zk`, `ncm`) are deliberately kept in.
 - `--timeout=600` — bumps Go's per-package test timeout from 180s to 600s. Required because we run `go clean -modcache` at job start, so subprocess-heavy tests like `pkg/collector/corechecks/servicediscovery/apm.TestGoDetector` (which shells out to `go build` four times to compile fixture binaries) can blow the default 3-minute timeout on a busy runner. Don't drop this without first confirming the modcache wipe is also gone.
