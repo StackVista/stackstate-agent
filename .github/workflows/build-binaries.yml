@@ -5,13 +5,15 @@ on:
   push:
     branches:
       - stackstate-7.78.2
+  schedule:
+    - cron: "17 20 * * 1-5"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 defaults:
@@ -250,7 +252,7 @@ jobs:
 
   publish-cluster-agent-image:
     name: Publish and sign cluster-agent image (${{ matrix.arch }})
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'schedule'
     needs: build-cluster-agent-image
     strategy:
       fail-fast: false
@@ -325,7 +327,7 @@ jobs:
 
   merge-cluster-agent-manifest:
     name: Publish and sign multi-architecture cluster-agent image
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'schedule'
     needs: publish-cluster-agent-image
     runs-on: docker-public
     timeout-minutes: 30
@@ -363,7 +365,7 @@ jobs:
       - merge-cluster-agent-manifest
     if: >-
       always()
-      && github.event_name == 'push'
+      && (github.event_name == 'push' || github.event_name == 'schedule')
       && contains(needs.*.result, 'failure')
     uses: ./.github/workflows/cerberus-notify.yml
     with:
