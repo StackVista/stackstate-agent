@@ -20,9 +20,12 @@ jobs:
     name: Notify Slack via Cerberus
     runs-on: docker-public
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - name: Post the failure to Cerberus
         env:
+          GH_TOKEN: ${{ github.token }}
           CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
           CERBERUS_API_TOKEN: ${{ secrets.CERBERUS_API_TOKEN }}
           REPOSITORY: ${{ github.repository }}
@@ -40,6 +43,17 @@ jobs:
           fi
 
           COMMIT_TITLE=$(printf '%s' "${COMMIT_MESSAGE}" | head -n1)
+
+          # schedule payloads carry no head_commit, which is exactly when the
+          # Slack message still has to name the commit that is failing.
+          if [ -z "${COMMIT_TITLE}" ]; then
+            COMMIT_TITLE=$(gh api "repos/${REPOSITORY}/commits/${COMMIT_SHA}" \
+              --jq '.commit.message | split("\n")[0]' 2>/dev/null || true)
+          fi
+
+          if [ -z "${COMMIT_TITLE}" ]; then
+            COMMIT_TITLE="(commit title unavailable)"
+          fi
 
           curl --fail --silent --show-error \
             -X POST "${CERBERUS_LAMBDA_URL}" \
