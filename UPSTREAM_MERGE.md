@@ -354,12 +354,12 @@ This involves rewriting Go import paths, cleaning the module cache, removing `go
 
 Upstream Datadog merges can silently drop StackState-specific code blocks (usually marked with `// sts begin` / `// sts end` or `// [sts]` comments). These are modifications to upstream files that don't exist in Datadog's codebase. **After every merge, verify these are still present:**
 
-### Delete `.github/` after every merge (mirroring to github)
-- **Directory:** `.github/` (entire tree)
-- **What:** STS deletes `.github/` from the repo to keep the GitLab→GitHub mirror working. DD's Actions workflows / dependabot config / CODEOWNERS interfere with the mirror push (Actions/permissions checks). Every upstream merge will re-introduce the directory and may add new files inside it, so a fresh `git rm -r .github` is needed after each merge.
-- **Why:** mirror reliability — `.github/` content is irrelevant to STS (we use GitLab CI exclusively; the canonical pipelines live in `.gitlab-ci*.yml`).
-- **Reference commits on stackstate-7.71.2:** `7f85fc9c2c` (move to `github_disabled/`) + `8cd65c57b3` (delete `github_disabled/`). On future merges, prefer a single `git rm -r .github` commit over cherry-picking those two — DD adds files inside `.github/` between releases that the original move-commit doesn't cover, so cherry-picking leaves leftovers.
-- **Symptom if missed:** mirror push to github.com fails; the github-side `master` falls behind GitLab `stackstate-<DD-version>`.
+### Prune Datadog's `.github/` content after every merge (keep StackState's)
+- **Directory:** `.github/` — Datadog's files only
+- **What:** the agent pipeline now lives in `.github/workflows/`, so the blanket `git rm -r .github` this section used to prescribe would delete the entire CI. Every upstream merge re-introduces Datadog's own Actions workflows, dependabot config and CODEOWNERS; remove those and keep the StackState-owned tree.
+- **StackState-owned — never delete:** everything under `.github/workflows/`, `.github/scripts/`, `.github/docker/`, plus `.github/deb-s3-gems.sha256`. Check with `git log --oneline -- <path>` if a file's origin is unclear: ours carry `STAC-` commit prefixes.
+- **Why:** the GitLab→GitHub mirror that motivated the original blanket deletion is retired, and GitHub is now the canonical remote and the only pipeline.
+- **Symptom if missed:** deleting the tree takes the agent pipeline with it; leaving Datadog's files in place runs their workflows on our runners.
 
 ### Tagger: `kube_cluster_name` on all pod tags
 - **File:** `comp/core/tagger/collectors/workloadmeta_extract.go` (old path: `pkg/tagger/collectors/workloadmeta_extract.go`)
