@@ -252,7 +252,7 @@ jobs:
 
   publish-cluster-agent-image:
     name: Publish and sign cluster-agent image (${{ matrix.arch }})
-    if: github.event_name == 'push' || github.event_name == 'schedule'
+    if: github.event_name == 'push'
     needs: build-cluster-agent-image
     strategy:
       fail-fast: false
@@ -327,7 +327,7 @@ jobs:
 
   merge-cluster-agent-manifest:
     name: Publish and sign multi-architecture cluster-agent image
-    if: github.event_name == 'push' || github.event_name == 'schedule'
+    if: github.event_name == 'push'
     needs: publish-cluster-agent-image
     runs-on: docker-public
     timeout-minutes: 30

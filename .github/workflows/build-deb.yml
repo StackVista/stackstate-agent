@@ -291,7 +291,7 @@ jobs:
 
   publish-agent-image:
     name: Publish and sign agent image (${{ matrix.arch }})
-    if: github.event_name == 'push' || github.event_name == 'schedule'
+    if: github.event_name == 'push'
     needs:
       - build-agent-image
       - test-deb-renaming
@@ -375,7 +375,7 @@ jobs:
 
   merge-agent-manifest:
     name: Publish and sign multi-architecture agent image
-    if: github.event_name == 'push' || github.event_name == 'schedule'
+    if: github.event_name == 'push'
     needs: publish-agent-image
     runs-on: docker-public
     timeout-minutes: 30
@@ -406,7 +406,7 @@ jobs:
     needs:
       - build-deb
       - test-deb-renaming
-    if: github.event_name == 'push' || github.event_name == 'schedule'
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     environment: agent-pre-release
     timeout-minutes: 30
@@ -463,7 +463,7 @@ jobs:
   generate-install-script:
     name: Generate the pre-release agent install script
     needs: godeps-cache-amd64
-    if: github.event_name == 'push' || github.event_name == 'schedule'
+    if: github.event_name == 'push'
     runs-on: xlarge-public
     timeout-minutes: 30
     permissions:
@@ -509,7 +509,7 @@ jobs:
     needs:
       - generate-install-script
       - sign-and-publish-deb
-    if: github.event_name == 'push' || github.event_name == 'schedule'
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     environment: agent-pre-release
     timeout-minutes: 15
