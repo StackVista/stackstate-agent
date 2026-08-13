@@ -31,7 +31,7 @@ jobs:
     uses: ./.github/workflows/godeps-cache.yml
     with:
       arch: amd64
-      build_delay_seconds: 900
+      build_delay_seconds: 0
     secrets:
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
       QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
