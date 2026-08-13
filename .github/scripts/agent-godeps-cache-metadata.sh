@@ -1,18 +1,13 @@
 #!/usr/bin/env bash
 # Computes the content-addressed tag for the stackstate-agent Go dependency cache
-# image (STAC-25429) and the two image refs it is referenced by:
-#   * push  ref -> quay.io/stackstate/stackstate-agent-godeps-cache  (authoritative)
-#   * pull  ref -> ${REGISTRY_HOST}/quay/...                         (registry.tooling proxy)
+# image (STAC-25429), and the two refs it is reached by:
+#   * push ref -> quay.io/stackstate/stackstate-agent-godeps-cache  (authoritative)
+#   * pull ref -> ${REGISTRY_HOST}/quay/...                         (registry.tooling proxy)
 #
-# The cache lives in its own quay repo rather than the shared sts-ci-images, which also
-# holds the ARC runner images: stackstate-agent is PUBLIC, so whatever credential this
-# workflow carries is reachable from any org member's same-repo branch. A dedicated repo
+# The cache has its own quay repo rather than sharing sts-ci-images with the ARC
+# runner images: stackstate-agent is public, so whatever credential this workflow
+# carries is reachable from any org member's same-repo branch. A dedicated repo
 # keeps that reach down to a rebuildable cache.
-#
-# Mirrors StackVista/StackGraph .github/scripts/stackgraph-ci-metadata.sh: the tag is
-# a hash of the dependency-defining inputs, so an unchanged module graph reuses the
-# same image across every branch/PR/default build (the tag *is* the cache key), while
-# any change to the graph rotates the tag and a stale cache is never reused.
 
 agent_godeps_compute_metadata() {
   : "${QUAY_REGISTRY:?QUAY_REGISTRY is required}"     # quay.io
@@ -21,16 +16,12 @@ agent_godeps_compute_metadata() {
   : "${BASE_IMAGE_NAME:?BASE_IMAGE_NAME is required}" # datadog_build_linux_x64 | datadog_build_linux_arm64
   : "${ARCH:?ARCH is required}"                       # amd64 | arm64
 
-  # Hash inputs: every module manifest (go.work + go.work.sum + modules.yml + all
-  # nested go.mod/go.sum) plus the base image and the two files that define the
-  # cache mechanism itself (Dockerfile + this script), so changing how the cache is
-  # built also rotates the tag.
+  # The Dockerfile and this script are hashed alongside the module manifests, so
+  # changing how the cache is built also rotates the tag.
   #
   # The base image NAME is hashed, not just its tag: the amd64 and arm64
-  # datadog_build images share tag 7af9194f, so hashing the tag alone would give
-  # both arches the same cache tag and let one arch's image satisfy the other's
-  # existence check. ARCH is in the tag as well, so the collision is impossible
-  # by construction and the arch is readable off the ref.
+  # datadog_build images share a tag, so hashing the tag alone would let one
+  # arch's cache satisfy the other's existence check.
   local godeps_hash
   godeps_hash="$(
     {
