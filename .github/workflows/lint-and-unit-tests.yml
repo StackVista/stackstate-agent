@@ -6,11 +6,6 @@ on:
     branches:
       - stackstate-7.78.2
   workflow_dispatch:
-    inputs:
-      force_mod_tidy:
-        description: Run the go.mod tidiness check even when the module graph is unchanged.
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -68,9 +63,7 @@ jobs:
 
   mod-tidy:
     name: Go module tidiness (go.mod / go.sum)
-    if: >-
-      ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-      && (needs.godeps-cache.outputs.image_exists != 'true' || inputs.force_mod_tidy) }}
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     needs: godeps-cache
     runs-on: xlarge-public
     timeout-minutes: 60
@@ -249,20 +242,10 @@ jobs:
             [ "$2" = "success" ] || status=1
           }
 
-          # mod-tidy is skipped by design when the cache image already covers the
-          # module graph (STAC-25396), so it is the one job allowed to skip.
-          allow_skipped() {
-            printf '  %-30s %s\n' "$1" "$2"
-            case "$2" in
-              success|skipped) ;;
-              *) status=1 ;;
-            esac
-          }
-
           require_success "Go dependency cache" "${GODEPS_CACHE}"
           require_success "Filename linting" "${FILENAME_LINTING}"
           require_success "Unit tests (unbranded)" "${UNBRANDED_UNIT_TESTS}"
           require_success "Unit tests (branded)" "${BRANDED_UNIT_TESTS}"
-          allow_skipped "Go module tidiness" "${MOD_TIDY}"
+          require_success "Go module tidiness" "${MOD_TIDY}"
 
           exit "${status}"
