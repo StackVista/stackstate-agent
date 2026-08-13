@@ -1,0 +1,84 @@
+name: Await checks
+
+on:
+  workflow_call:
+    inputs:
+      checks:
+        description: >-
+          Newline-separated check-run names that must have concluded successfully
+          for this commit before the calling workflow publishes anything. GitLab
+          enforced this with stage barriers inside a single pipeline; `needs:`
+          cannot cross workflow boundaries, so the barrier is rebuilt here.
+        required: true
+        type: string
+      timeout_minutes:
+        description: How long to wait for every check to conclude before failing.
+        type: number
+        default: 150
+
+permissions: {}
+
+jobs:
+  await:
+    name: Wait for verification to pass
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    permissions:
+      checks: read
+    steps:
+      - name: Wait for the required checks to conclude
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+          REQUIRED_CHECKS: ${{ inputs.checks }}
+          TIMEOUT_MINUTES: ${{ inputs.timeout_minutes }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t checks <<EOF
+          ${REQUIRED_CHECKS}
+          EOF
+
+          deadline=$(( $(date +%s) + TIMEOUT_MINUTES * 60 ))
+
+          while :; do
+            pending=()
+
+            for check in "${checks[@]}"; do
+              [ -n "${check}" ] || continue
+
+              # filter=latest collapses re-runs to the current attempt, so a
+              # re-run that fixed a failure is what gets read here.
+              conclusions=$(CHECK_NAME="${check}" gh api \
+                "repos/${REPOSITORY}/commits/${COMMIT_SHA}/check-runs?filter=latest&per_page=100" \
+                --paginate \
+                --jq '.check_runs[] | select(.name == env.CHECK_NAME and .status == "completed") | .conclusion' \
+                </dev/null)
+              conclusion=${conclusions%%$'\n'*}
+
+              if [ -z "${conclusion}" ]; then
+                pending+=("${check}")
+                continue
+              fi
+
+              if [ "${conclusion}" != "success" ]; then
+                echo "::error title=Verification failed::'${check}' concluded '${conclusion}' for ${COMMIT_SHA}. Refusing to publish."
+                exit 1
+              fi
+
+              echo "Passed: ${check}"
+            done
+
+            [ "${#pending[@]}" -gt 0 ] || break
+
+            if [ "$(date +%s)" -ge "${deadline}" ]; then
+              echo "::error title=Verification timed out::Still waiting on ${pending[*]} after ${TIMEOUT_MINUTES} minutes. Refusing to publish."
+              exit 1
+            fi
+
+            echo "Waiting on: ${pending[*]}"
+            sleep 30
+          done
+
+          echo "All required checks passed for ${COMMIT_SHA}."

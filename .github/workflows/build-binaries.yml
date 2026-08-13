@@ -250,10 +250,23 @@ jobs:
           upload-sarif: false
           sarif-category: stackstate-k8s-cluster-agent-${{ matrix.arch }}
 
+  await-verification:
+    name: Await lint, unit test and DEB verification
+    if: github.event_name == 'push'
+    permissions:
+      checks: read
+    uses: ./.github/workflows/await-checks.yml
+    with:
+      checks: |
+        CI success (lint and unit tests)
+        CI success (DEB package build)
+
   publish-cluster-agent-image:
     name: Publish and sign cluster-agent image (${{ matrix.arch }})
     if: github.event_name == 'push'
-    needs: build-cluster-agent-image
+    needs:
+      - await-verification
+      - build-cluster-agent-image
     strategy:
       fail-fast: false
       matrix:

@@ -289,10 +289,20 @@ jobs:
           upload-sarif: false
           sarif-category: stackstate-k8s-agent-${{ matrix.arch }}
 
+  await-verification:
+    name: Await lint and unit test verification
+    if: github.event_name == 'push'
+    permissions:
+      checks: read
+    uses: ./.github/workflows/await-checks.yml
+    with:
+      checks: CI success (lint and unit tests)
+
   publish-agent-image:
     name: Publish and sign agent image (${{ matrix.arch }})
     if: github.event_name == 'push'
     needs:
+      - await-verification
       - build-agent-image
       - test-deb-renaming
     strategy:
@@ -376,7 +386,9 @@ jobs:
   merge-agent-manifest:
     name: Publish and sign multi-architecture agent image
     if: github.event_name == 'push'
-    needs: publish-agent-image
+    needs:
+      - publish-agent-image
+      - sign-and-publish-deb
     runs-on: docker-public
     timeout-minutes: 30
     permissions:
@@ -404,6 +416,7 @@ jobs:
   sign-and-publish-deb:
     name: Sign DEB packages (GPG) and publish to the pre-release apt repository
     needs:
+      - await-verification
       - build-deb
       - test-deb-renaming
     if: github.event_name == 'push'
