@@ -1,0 +1,428 @@
+name: Binary builds
+
+on:
+  pull_request:
+  push:
+    branches:
+      - stackstate-7.78.2
+  schedule:
+    - cron: "17 20 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CONDA_ENV: ddpy3
+
+jobs:
+  godeps-cache-amd64:
+    name: Go dependency cache image (amd64)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    with:
+      arch: amd64
+      build_delay_seconds: 900
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+  godeps-cache-arm64:
+    name: Go dependency cache image (arm64)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    with:
+      arch: arm64
+      build_delay_seconds: 0
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+  build-agent:
+    name: Build agent binary (branded / StackState, ${{ matrix.arch }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: xlarge-public
+            cache_image: ${{ needs.godeps-cache-amd64.outputs.ci_image }}
+          - arch: arm64
+            runner: arm64-xlarge-public
+            cache_image: ${{ needs.godeps-cache-arm64.outputs.ci_image }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    container:
+      image: ${{ matrix.cache_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Build branded agent (production, with rtloader)
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429), keyed
+          # to the module-graph hash, so there is no `go clean -modcache` and no
+          # per-job `inv deps` (go mod download + tidy) reconcile. Materialise
+          # vendor/ for this checkout against the warm cache (offline; no download).
+          go work sync
+          go work vendor
+          # rtloader is the C++/Python bridge the full agent links against; the
+          # cluster-agent doesn't need it, but the production agent does.
+          inv -e rtloader.make
+          inv -e rtloader.install
+          export AGENT_GITHUB_ORG=DataDog
+          export GITHUB_ORG=DataDog
+          export BRANDED=true
+          export AGENT_REPO_NAME=datadog-agent
+          # Rebrand DataDog -> StackState. fix_branding.sh defaults its target dir to
+          # $CI_PROJECT_DIR (a GitLab built-in that is unset here); pass the checkout
+          # root explicitly.
+          ./fix_branding.sh "${GITHUB_WORKSPACE}"
+          # Production (non-race) build -- the shippable binary, distinct from the
+          # race-instrumented build in the unit-test workflow.
+          inv -e agent.build
+          ls -la bin/agent
+
+  build-cluster-agent:
+    name: Build cluster-agent binary (branded / StackState, ${{ matrix.arch }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: xlarge-public
+            cache_image: ${{ needs.godeps-cache-amd64.outputs.ci_image }}
+          - arch: arm64
+            runner: arm64-xlarge-public
+            cache_image: ${{ needs.godeps-cache-arm64.outputs.ci_image }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    container:
+      image: ${{ matrix.cache_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Build branded cluster-agent
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429); no
+          # `go clean -modcache` and no per-job `inv deps` reconcile. Materialise
+          # vendor/ for this checkout against the warm cache (offline; no download).
+          go work sync
+          go work vendor
+          export AGENT_GITHUB_ORG=DataDog
+          export GITHUB_ORG=DataDog
+          export BRANDED=true
+          export AGENT_REPO_NAME=datadog-agent
+          # Rebrand DataDog -> StackState; pass the checkout root (CI_PROJECT_DIR is GitLab-only).
+          ./fix_branding.sh "${GITHUB_WORKSPACE}"
+          inv -e cluster-agent.build
+          # version.txt is a build artifact for the downstream packaging/image phases.
+          # deps_deb produced it on GitLab; there is no shared deps job here, so
+          # generate it in-job. inv agent.version is git-based (not module-cache-based)
+          # and cheap. No `-e`: its stdout must be only the version string.
+          inv agent.version -u > version.txt
+          ls -la bin/stackstate-cluster-agent
+
+      - name: Upload cluster-agent build artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cluster-agent-binary-${{ matrix.arch }}
+          path: |
+            bin/stackstate-cluster-agent/
+            Dockerfiles/cluster-agent/stackstate-cluster.yaml
+            version.txt
+          retention-days: 5
+          if-no-files-found: error
+
+  build-cluster-agent-image:
+    name: Build cluster-agent container image (docker build, no push on PR, ${{ matrix.arch }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: build-cluster-agent
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: docker-public
+          - arch: arm64
+            runner: arm64-xlarge-public
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      LOCAL_IMAGE: quay.io/stackstate/stackstate-k8s-cluster-agent:ci-${{ matrix.arch }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download cluster-agent binary
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: cluster-agent-binary-${{ matrix.arch }}
+
+      - name: Log in to the registry proxy
+        env:
+          REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+          REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          set -eo pipefail
+          printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
+
+      - name: Build cluster-agent image
+        run: |
+          set -eo pipefail
+          # actions/download-artifact does not preserve the executable bit (GitLab
+          # artifacts did). The Dockerfile's `chmod +x` targets
+          # opt/stackstate-agent/bin/stackstate-cluster-agent, which is the enclosing
+          # DIRECTORY, not the binary inside it -- so nothing in the build restores
+          # it and the image ships a non-executable agent.
+          chmod +x bin/stackstate-cluster-agent/stackstate-cluster-agent
+          # bin/stackstate-cluster-agent is a DIRECTORY (binary + dist/), and it
+          # must stay one: the Dockerfile COPYs it to
+          # /opt/stackstate-agent/bin/stackstate-cluster-agent/ and entrypoint.sh
+          # puts that directory on PATH so CMD can exec `stackstate-cluster-agent`
+          # by name. Flattening it to a bare binary breaks the image.
+          cp -r bin/stackstate-cluster-agent Dockerfiles/cluster-agent/
+          docker build -t "${LOCAL_IMAGE}" Dockerfiles/cluster-agent
+
+      - name: Smoke test cluster-agent image
+        run: |
+          set -eo pipefail
+          # Bypass entrypoint.sh: it hard-exits without STS_API_KEY, which a
+          # version check has no business needing.
+          docker run --rm \
+            --entrypoint /opt/stackstate-agent/bin/stackstate-cluster-agent/stackstate-cluster-agent \
+            "${LOCAL_IMAGE}" version
+
+      - name: Scan cluster-agent image (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
+        uses: StackVista/image-pipeline/.github/actions/scan-image@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: ${{ env.LOCAL_IMAGE }}
+          mode: gate
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          with-grype: true
+          exceptions-path: exceptions
+          upload-sarif: false
+          sarif-category: stackstate-k8s-cluster-agent-${{ matrix.arch }}
+
+  await-verification:
+    name: Await lint, unit test and DEB verification
+    if: github.event_name == 'push'
+    permissions:
+      checks: read
+    uses: ./.github/workflows/await-checks.yml
+    with:
+      checks: |
+        CI success (lint and unit tests)
+        CI success (DEB package build)
+
+  publish-cluster-agent-image:
+    name: Publish and sign cluster-agent image (${{ matrix.arch }})
+    if: github.event_name == 'push'
+    needs:
+      - await-verification
+      - build-cluster-agent-image
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: docker-public
+          - arch: arm64
+            runner: arm64-xlarge-public
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE: quay.io/stackstate/stackstate-k8s-cluster-agent
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download cluster-agent binary
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: cluster-agent-binary-${{ matrix.arch }}
+
+      - name: Stage the cluster-agent binary in the image build context
+        run: |
+          set -eo pipefail
+          chmod +x bin/stackstate-cluster-agent/stackstate-cluster-agent
+          cp -r bin/stackstate-cluster-agent Dockerfiles/cluster-agent/
+
+      - name: Resolve image tag
+        id: image
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve canonical OCI labels
+        id: oci
+        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image-name: stackstate-k8s-cluster-agent
+          tag: ${{ steps.image.outputs.tag }}
+          title: SUSE Observability Cluster Agent
+          description: Cluster-level agent collecting Kubernetes topology and cluster checks for SUSE Observability.
+          component: stackstate-k8s-cluster-agent
+          dockerfile: Dockerfiles/cluster-agent/Dockerfile
+          base-name: registry.suse.com/bci/bci-micro:latest
+          registry-credentials: |
+            [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+
+      - name: Build, publish, and sign architecture image
+        uses: StackVista/image-pipeline/.github/actions/push-single-arch@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: ${{ env.IMAGE }}
+          tag: ${{ steps.image.outputs.tag }}
+          arch: ${{ matrix.arch }}
+          docker-context: Dockerfiles/cluster-agent
+          dockerfile: Dockerfiles/cluster-agent/Dockerfile
+          labels: |
+            ${{ steps.oci.outputs.labels }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          source-registry-credentials: |
+            [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+          target-registry: quay.io
+          target-registry-user: ${{ vars.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+  merge-cluster-agent-manifest:
+    name: Publish and sign multi-architecture cluster-agent image
+    if: github.event_name == 'push'
+    needs: publish-cluster-agent-image
+    runs-on: docker-public
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Resolve image tag
+        id: image
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
+
+      - name: Merge and sign multi-architecture manifest
+        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: quay.io/stackstate/stackstate-k8s-cluster-agent
+          tag: ${{ steps.image.outputs.tag }}
+          arches: amd64,arm64
+          target-registry: quay.io
+          target-registry-user: ${{ vars.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+  cerberus-notify:
+    name: Report failure to Slack (Cerberus)
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+      - build-agent
+      - build-cluster-agent
+      - build-cluster-agent-image
+      - publish-cluster-agent-image
+      - merge-cluster-agent-manifest
+    if: >-
+      always()
+      && (github.event_name == 'push' || github.event_name == 'schedule')
+      && contains(needs.*.result, 'failure')
+    uses: ./.github/workflows/cerberus-notify.yml
+    with:
+      suite: binary-builds
+    secrets:
+      CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
+      CERBERUS_API_TOKEN: ${{ secrets.CERBERUS_API_TOKEN }}
+
+  ci-success:
+    name: CI success (binary builds)
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+      - build-agent
+      - build-cluster-agent
+      - build-cluster-agent-image
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate upstream job results
+        env:
+          GODEPS_CACHE_AMD64: ${{ needs.godeps-cache-amd64.result }}
+          GODEPS_CACHE_ARM64: ${{ needs.godeps-cache-arm64.result }}
+          BUILD_AGENT: ${{ needs.build-agent.result }}
+          BUILD_CLUSTER_AGENT: ${{ needs.build-cluster-agent.result }}
+          BUILD_CLUSTER_AGENT_IMAGE: ${{ needs.build-cluster-agent-image.result }}
+        run: |
+          set -euo pipefail
+          status=0
+
+          # Every job below is skipped on a fork pull request, so "skipped" must not
+          # satisfy the gate -- otherwise the merge check goes green having built nothing.
+          # The publish and manifest jobs are excluded on purpose: they only run on push,
+          # so they can never report on a pull request.
+          require_success() {
+            printf '  %-30s %s\n' "$1" "$2"
+            [ "$2" = "success" ] || status=1
+          }
+
+          require_success "Go dependency cache (amd64)" "${GODEPS_CACHE_AMD64}"
+          require_success "Go dependency cache (arm64)" "${GODEPS_CACHE_ARM64}"
+          require_success "Agent binary" "${BUILD_AGENT}"
+          require_success "Cluster-agent binary" "${BUILD_CLUSTER_AGENT}"
+          require_success "Cluster-agent image" "${BUILD_CLUSTER_AGENT_IMAGE}"
+
+          exit "${status}"

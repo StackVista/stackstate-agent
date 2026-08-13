@@ -1,0 +1,612 @@
+name: DEB package build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - stackstate-7.78.2
+  schedule:
+    - cron: "17 20 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CONDA_ENV: ddpy3
+  MAJOR_VERSION: '3'
+
+jobs:
+  godeps-cache-amd64:
+    name: Go dependency cache image (amd64)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    with:
+      arch: amd64
+      build_delay_seconds: 0
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+  godeps-cache-arm64:
+    name: Go dependency cache image (arm64)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    with:
+      arch: arm64
+      build_delay_seconds: 900
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+  build-deb:
+    name: Build DEB package (omnibus, branded / StackState, ${{ matrix.arch }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: xlarge-public
+            cache_image: ${{ needs.godeps-cache-amd64.outputs.ci_image }}
+          - arch: arm64
+            runner: arm64-xlarge-public
+            cache_image: ${{ needs.godeps-cache-arm64.outputs.ci_image }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 300
+    container:
+      image: ${{ matrix.cache_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    env:
+      OMNIBUS_BASE_DIR: /omnibus
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Build DEB package with omnibus
+        env:
+          GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL: ${{ vars.GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL }}
+          GITLAB_PACKAGE_REGISTRY_USER: ${{ secrets.GITLAB_PACKAGE_REGISTRY_USER }}
+          GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD: ${{ secrets.GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD }}
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # omnibus is Ruby; the build image ships it under rvm.
+          . /usr/local/rvm/scripts/rvm
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
+
+          # omnibus resolves the agent source through GOPATH rather than the
+          # workspace path; GitLab's before_script created this symlink.
+          mkdir -p /go/src/github.com/StackVista
+          rm -rf /go/src/github.com/StackVista/stackstate-agent
+          ln -s "${GITHUB_WORKSPACE}" /go/src/github.com/StackVista/stackstate-agent
+
+          # DD 7.78 builds some dependencies through bazelisk from
+          # omnibus/config/software/datadog-agent-dependencies.rb. bazelisk aborts
+          # with "XDG_CACHE_HOME () must denote a directory in CI!" unless these
+          # point at real directories.
+          export XDG_CACHE_HOME="${GITHUB_WORKSPACE}/.cache"
+          export BAZELISK_HOME="${XDG_CACHE_HOME}/bazelisk"
+          mkdir -p "${XDG_CACHE_HOME}/bazel" "${XDG_CACHE_HOME}/bazel-repo" "${BAZELISK_HOME}"
+          # .bazelrc:75 `try-import %workspace%/user.bazelrc` is the upstream-blessed
+          # extension point; it applies to every bazelisk shell-out omnibus makes.
+          # user.bazelrc is gitignored.
+          cat > "${GITHUB_WORKSPACE}/user.bazelrc" <<EOF
+          startup --output_user_root=${XDG_CACHE_HOME}/bazel
+          common --repository_cache=${XDG_CACHE_HOME}/bazel-repo
+          EOF
+
+          export AGENT_GITHUB_ORG=DataDog
+          export GITHUB_ORG=DataDog
+          export BRANDED=true
+          export AGENT_REPO_NAME=datadog-agent
+          export OMNIBUS_FORCE_PACKAGES=true
+          # Rebrand DataDog -> StackState BEFORE vendoring: branding rewrites import
+          # paths, so vendor/ must be materialised against the rewritten tree.
+          # fix_branding.sh defaults its target dir to $CI_PROJECT_DIR (a GitLab
+          # built-in that is unset here); pass the checkout root explicitly.
+          ./fix_branding.sh "${GITHUB_WORKSPACE}"
+
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429), keyed
+          # to the module-graph hash, so there is no `go clean -modcache` and no
+          # per-job `inv deps` (go mod download + tidy) reconcile. Materialise
+          # vendor/ for this checkout against the warm cache (offline; no download).
+          # omnibus.build is handed this vendor/ as its --go-mod-cache below.
+          go work sync
+          go work vendor
+          # version.txt is consumed by the packaging/image phases. deps_deb produced
+          # it on GitLab; generate it in-job instead. No `-e`: stdout must be only
+          # the version string.
+          inv agent.version -u > version.txt
+          cat version.txt
+
+          # Writes pip.conf + ~/.netrc for the private Python index. Hard-exits if
+          # the GITLAB_PACKAGE_REGISTRY_* variables above are unset.
+          source ./.gitlab-scripts/setup_artifact_registry.sh
+
+          export LD_LIBRARY_PATH="/opt/stackstate-agent/embedded/lib/python3.12/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
+
+          # --install-directory pins the omnibus paths to the BRANDED install dir.
+          # Without it tasks/omnibus.py derives them from the unbranded
+          # /opt/datadog-agent while the branded build uses /opt/stackstate-agent,
+          # and the post-build step then targets a nonexistent directory.
+          inv -e omnibus.build \
+            --gem-path "${GITHUB_WORKSPACE}/.gems" \
+            --base-dir "${OMNIBUS_BASE_DIR}" \
+            --go-mod-cache "${GITHUB_WORKSPACE}/vendor" \
+            --skip-deps \
+            --skip-sign \
+            --install-directory /opt/stackstate-agent
+
+      - name: Collect package outputs
+        run: |
+          set -eo pipefail
+          mkdir -p outcomes
+          cp -r "${OMNIBUS_BASE_DIR}/pkg" outcomes/
+          cp -r Dockerfiles outcomes/
+          ls -la outcomes/pkg outcomes/Dockerfiles
+
+      - name: Upload DEB package and image manifests
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: deb-package-${{ matrix.arch }}
+          path: |
+            outcomes/pkg/*.deb
+            outcomes/pkg/*.json
+            outcomes/Dockerfiles/agent
+            outcomes/Dockerfiles/cluster-agent
+            outcomes/Dockerfiles/dogstatsd
+            outcomes/Dockerfiles/manifests
+            version.txt
+          retention-days: 5
+          if-no-files-found: error
+
+  test-deb-renaming:
+    name: DEB branding verification (no DataDog references, ${{ matrix.arch }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: build-deb
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+    runs-on: docker-public
+    timeout-minutes: 30
+    container:
+      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-${{ matrix.arch }}
+
+      - name: Verify package carries no DataDog branding
+        run: |
+          set -eo pipefail
+          git config --global --add safe.directory '*'
+          # test_deb.sh takes exactly one package and rejects anything else, so
+          # resolve the glob here and fail loudly rather than passing it through
+          # (the GitLab job relied on the glob expanding to exactly one file).
+          shopt -s nullglob
+          debs=(outcomes/pkg/stackstate-agent_"${MAJOR_VERSION}"*.deb)
+          if [ "${#debs[@]}" -ne 1 ]; then
+            echo "Expected exactly one stackstate-agent_${MAJOR_VERSION}*.deb, found ${#debs[@]}: ${debs[*]}" >&2
+            exit 1
+          fi
+          ./test/renaming/test_deb.sh "${debs[0]}"
+
+  build-agent-image:
+    name: Build agent container image (docker build, no push on PR, ${{ matrix.arch }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: build-deb
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: docker-public
+          - arch: arm64
+            runner: arm64-xlarge-public
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      ARCH: ${{ matrix.arch }}
+      LOCAL_IMAGE: quay.io/stackstate/stackstate-k8s-agent:ci-${{ matrix.arch }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-${{ matrix.arch }}
+
+      - name: Log in to the registry proxy
+        env:
+          REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+          REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          set -eo pipefail
+          printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
+
+      - name: Build agent image
+        run: |
+          set -eo pipefail
+          shopt -s nullglob
+          debs=(outcomes/pkg/stackstate-agent_*_"${ARCH}".deb)
+          if [ "${#debs[@]}" -ne 1 ]; then
+            echo "Expected exactly one stackstate-agent_*_${ARCH}.deb, found ${#debs[@]}: ${debs[*]}" >&2
+            exit 1
+          fi
+          cp "${debs[0]}" Dockerfiles/agent/
+          # publish_image.sh also passes --build-arg S6_ARCH; the agent Dockerfile
+          # declares no such ARG, so it is dropped here rather than kept as a warning.
+          docker build --build-arg ARCH="${ARCH}" -t "${LOCAL_IMAGE}" Dockerfiles/agent
+
+      - name: Smoke test agent image
+        run: |
+          set -eo pipefail
+          docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
+
+      - name: Scan agent image (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
+        uses: StackVista/image-pipeline/.github/actions/scan-image@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: ${{ env.LOCAL_IMAGE }}
+          mode: gate
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          with-grype: true
+          exceptions-path: exceptions
+          upload-sarif: false
+          sarif-category: stackstate-k8s-agent-${{ matrix.arch }}
+
+  await-verification:
+    name: Await lint and unit test verification
+    if: github.event_name == 'push'
+    permissions:
+      checks: read
+    uses: ./.github/workflows/await-checks.yml
+    with:
+      checks: CI success (lint and unit tests)
+
+  publish-agent-image:
+    name: Publish and sign agent image (${{ matrix.arch }})
+    if: github.event_name == 'push'
+    needs:
+      - await-verification
+      - build-agent-image
+      - test-deb-renaming
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: docker-public
+          - arch: arm64
+            runner: arm64-xlarge-public
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ARCH: ${{ matrix.arch }}
+      IMAGE: quay.io/stackstate/stackstate-k8s-agent
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-${{ matrix.arch }}
+
+      - name: Stage the DEB in the image build context
+        run: |
+          set -eo pipefail
+          shopt -s nullglob
+          debs=(outcomes/pkg/stackstate-agent_*_"${ARCH}".deb)
+          if [ "${#debs[@]}" -ne 1 ]; then
+            echo "Expected exactly one stackstate-agent_*_${ARCH}.deb, found ${#debs[@]}: ${debs[*]}" >&2
+            exit 1
+          fi
+          cp "${debs[0]}" Dockerfiles/agent/
+
+      - name: Resolve image tag
+        id: image
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve canonical OCI labels
+        id: oci
+        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image-name: stackstate-k8s-agent
+          tag: ${{ steps.image.outputs.tag }}
+          title: SUSE Observability Agent
+          description: Node agent collecting metrics, logs, traces and topology for SUSE Observability.
+          component: stackstate-k8s-agent
+          dockerfile: Dockerfiles/agent/Dockerfile
+          base-name: registry.suse.com/bci/bci-micro:latest
+          registry-credentials: |
+            [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+
+      - name: Build, publish, and sign architecture image
+        uses: StackVista/image-pipeline/.github/actions/push-single-arch@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: ${{ env.IMAGE }}
+          tag: ${{ steps.image.outputs.tag }}
+          arch: ${{ matrix.arch }}
+          docker-context: Dockerfiles/agent
+          dockerfile: Dockerfiles/agent/Dockerfile
+          build-args: ARCH=${{ matrix.arch }}
+          labels: |
+            ${{ steps.oci.outputs.labels }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          source-registry-credentials: |
+            [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+          target-registry: quay.io
+          target-registry-user: ${{ vars.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+  merge-agent-manifest:
+    name: Publish and sign multi-architecture agent image
+    if: github.event_name == 'push'
+    needs:
+      - publish-agent-image
+      - sign-and-publish-deb
+    runs-on: docker-public
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Resolve image tag
+        id: image
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
+
+      - name: Merge and sign multi-architecture manifest
+        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
+        with:
+          image: quay.io/stackstate/stackstate-k8s-agent
+          tag: ${{ steps.image.outputs.tag }}
+          arches: amd64,arm64
+          target-registry: quay.io
+          target-registry-user: ${{ vars.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+  sign-and-publish-deb:
+    name: Sign DEB packages (GPG) and publish to the pre-release apt repository
+    needs:
+      - await-verification
+      - build-deb
+      - test-deb-renaming
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    environment: agent-pre-release
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download amd64 DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-amd64
+
+      - name: Download arm64 DEB package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: deb-package-arm64
+
+      - name: Install debsigs and GnuPG
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends debsigs gnupg gpg-agent ruby
+
+      - name: Install deb-s3 from the pinned, checksum-verified manifest
+        run: ./.github/scripts/install-deb-s3.sh .github/deb-s3-gems.sha256
+
+      - name: Assume the pre-release publishing role
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ vars.AGENT_PRERELEASE_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Sign the DEB packages with debsigs
+        env:
+          SIGNING_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
+          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          SIGNING_PRIVATE_PASSPHRASE: ${{ secrets.SIGNING_PRIVATE_PASSPHRASE }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+        run: ./omnibus/package-scripts/sign_debian_package.sh
+
+      - name: Publish the DEB packages to the pre-release apt repository
+        env:
+          SIGNING_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
+          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          SIGNING_PRIVATE_PASSPHRASE: ${{ secrets.SIGNING_PRIVATE_PASSPHRASE }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+        run: ./omnibus/package-scripts/publish_package.sh stackstate-agent-3-test
+
+  generate-install-script:
+    name: Generate the pre-release agent install script
+    needs: godeps-cache-amd64
+    if: github.event_name == 'push'
+    runs-on: xlarge-public
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    container:
+      image: ${{ needs.godeps-cache-amd64.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Render install.sh against the pre-release repositories
+        env:
+          STS_AWS_TEST_BUCKET: stackstate-agent-3-test
+          STS_AWS_TEST_BUCKET_YUM: stackstate-agent-3-rpm-test
+          STS_AWS_TEST_BUCKET_WIN: stackstate-agent-3-test
+        run: |
+          set -eo pipefail
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          git config --global --add safe.directory '*'
+          inv release.generate-install -t
+          grep -q 's3.amazonaws.com' ./cmd/agent/install.sh
+          if grep -q 'None.s3.amazonaws.com' ./cmd/agent/install.sh; then
+            echo "install.sh references an unset bucket variable" >&2
+            exit 1
+          fi
+
+      - name: Upload the rendered install script
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: agent-install-script
+          path: cmd/agent/install.sh
+          retention-days: 5
+          if-no-files-found: error
+
+  publish-install-script:
+    name: Publish the pre-release agent install script to S3
+    needs:
+      - generate-install-script
+      - sign-and-publish-deb
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    environment: agent-pre-release
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download the rendered install script
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: agent-install-script
+
+      - name: Assume the pre-release publishing role
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ vars.AGENT_PRERELEASE_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Upload install.sh
+        run: |
+          set -euo pipefail
+          aws s3 cp ./install.sh s3://stackstate-agent-3-test/install.sh --acl public-read
+          aws s3 ls s3://stackstate-agent-3-test/
+
+  cerberus-notify:
+    name: Report failure to Slack (Cerberus)
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+      - build-deb
+      - test-deb-renaming
+      - build-agent-image
+      - publish-agent-image
+      - merge-agent-manifest
+      - sign-and-publish-deb
+      - generate-install-script
+      - publish-install-script
+    if: >-
+      always()
+      && (github.event_name == 'push' || github.event_name == 'schedule')
+      && contains(needs.*.result, 'failure')
+    uses: ./.github/workflows/cerberus-notify.yml
+    with:
+      suite: deb-package
+    secrets:
+      CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
+      CERBERUS_API_TOKEN: ${{ secrets.CERBERUS_API_TOKEN }}
+
+  ci-success:
+    name: CI success (DEB package build)
+    needs:
+      - godeps-cache-amd64
+      - godeps-cache-arm64
+      - build-deb
+      - test-deb-renaming
+      - build-agent-image
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate upstream job results
+        env:
+          GODEPS_CACHE_AMD64: ${{ needs.godeps-cache-amd64.result }}
+          GODEPS_CACHE_ARM64: ${{ needs.godeps-cache-arm64.result }}
+          BUILD_DEB: ${{ needs.build-deb.result }}
+          TEST_DEB_RENAMING: ${{ needs.test-deb-renaming.result }}
+          BUILD_AGENT_IMAGE: ${{ needs.build-agent-image.result }}
+        run: |
+          set -euo pipefail
+          status=0
+
+          # Every job below is skipped on a fork pull request, so "skipped" must not
+          # satisfy the gate -- otherwise the merge check goes green having built nothing.
+          # The signing, publishing and manifest jobs are excluded on purpose: they only
+          # run on push, so they can never report on a pull request.
+          require_success() {
+            printf '  %-30s %s\n' "$1" "$2"
+            [ "$2" = "success" ] || status=1
+          }
+
+          require_success "Go dependency cache (amd64)" "${GODEPS_CACHE_AMD64}"
+          require_success "Go dependency cache (arm64)" "${GODEPS_CACHE_ARM64}"
+          require_success "DEB package" "${BUILD_DEB}"
+          require_success "DEB branding verification" "${TEST_DEB_RENAMING}"
+          require_success "Agent image" "${BUILD_AGENT_IMAGE}"
+
+          exit "${status}"

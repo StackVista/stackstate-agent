@@ -1,0 +1,166 @@
+name: Go dependency cache image
+
+on:
+  workflow_call:
+    inputs:
+      arch:
+        description: Target architecture, amd64 or arm64. Selects the datadog_build base image and the runner that builds the cache.
+        type: string
+        required: true
+      base_image_tag:
+        description: Tag of the datadog_build base image the cache derives FROM. Both arch variants carry the same tag.
+        type: string
+        default: "7af9194f"
+      build_delay_seconds:
+        description: >-
+          How long to wait for a sibling workflow to publish the cache image before
+          building it here. Consumers stagger this so one builds immediately and the
+          rest wait out a normal build first. See the build job for why this is not a
+          concurrency group.
+        type: number
+        default: 0
+    outputs:
+      ci_image:
+        description: Proxy pull ref of the cache image, for use as a consumer job `container.image`.
+        value: ${{ jobs.metadata.outputs.ci_image }}
+      image_exists:
+        description: Whether the computed cache image tag already exists in the registry.
+        value: ${{ jobs.metadata.outputs.image_exists }}
+    secrets:
+      REGISTRY_PASSWORD:
+        description: Password for the read-only registry.tooling quay proxy (pull the base image).
+        required: true
+      QUAY_PASSWORD:
+        description: Password for quay.io/stackstate (inspect + push the cache image).
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    name: Compute ${{ inputs.arch }} cache image tag and look up existing image
+    runs-on: docker-public
+    timeout-minutes: 15
+    outputs:
+      ci_image: ${{ steps.metadata.outputs.ci_image }}
+      image_exists: ${{ steps.metadata.outputs.image_exists }}
+    env:
+      QUAY_REGISTRY: quay.io
+      REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+      QUAY_USER: ${{ vars.QUAY_USER }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+      BASE_IMAGE_TAG: ${{ inputs.base_image_tag }}
+      BASE_IMAGE_NAME: ${{ inputs.arch == 'arm64' && 'datadog_build_linux_arm64' || 'datadog_build_linux_x64' }}
+      ARCH: ${{ inputs.arch }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Compute cache image metadata and check existence
+        id: metadata
+        run: |
+          set -euo pipefail
+          source .github/scripts/agent-godeps-cache-metadata.sh
+          agent_godeps_compute_metadata
+
+          # Presence-gated login: same-repo runs have QUAY_* wired; a run without
+          # them still computes the tag and reports the image as missing.
+          if [[ -n "$QUAY_USER" && -n "$QUAY_PASSWORD" ]]; then
+            echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USER" --password-stdin "$QUAY_REGISTRY"
+          fi
+
+          if docker manifest inspect "$ci_image_push" >/dev/null 2>&1; then
+            image_exists=true
+          else
+            image_exists=false
+          fi
+
+          {
+            echo "ci_image=${ci_image}"
+            echo "image_exists=${image_exists}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Cache push ref:     ${ci_image_push}"
+          echo "Cache pull ref:     ${ci_image}"
+          echo "Cache image exists: ${image_exists}"
+
+  build:
+    name: Build and publish missing ${{ inputs.arch }} cache image
+    if: ${{ needs.metadata.outputs.image_exists != 'true' }}
+    needs: metadata
+    runs-on: ${{ inputs.arch == 'arm64' && 'arm64-xlarge-public' || 'docker-public' }}
+    timeout-minutes: 60
+    env:
+      QUAY_REGISTRY: quay.io
+      REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+      REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_USER: ${{ vars.QUAY_USER }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+      BASE_IMAGE_TAG: ${{ inputs.base_image_tag }}
+      BASE_IMAGE_NAME: ${{ inputs.arch == 'arm64' && 'datadog_build_linux_arm64' || 'datadog_build_linux_x64' }}
+      ARCH: ${{ inputs.arch }}
+      BUILD_DELAY_SECONDS: ${{ inputs.build_delay_seconds }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Build and publish Go dependency cache image
+        run: |
+          set -euo pipefail
+          source .github/scripts/agent-godeps-cache-metadata.sh
+          agent_godeps_compute_metadata
+
+          base_image="${REGISTRY_HOST}/quay/stackstate/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG}"
+
+          # Log into both registries: pull the base via the registry.tooling proxy,
+          # push the result to quay.io/stackstate.
+          echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin "$REGISTRY_HOST"
+          echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USER" --password-stdin "$QUAY_REGISTRY"
+
+          # Staggered wait: give the caller designated to build first (delay 0) a full
+          # build's worth of time before duplicating its work. Polling before the first
+          # build would only waste the delay, which is why the builder gets 0.
+          waited=0
+          while [ "$waited" -lt "${BUILD_DELAY_SECONDS}" ]; do
+            if docker manifest inspect "$ci_image_push" >/dev/null 2>&1; then
+              echo "Published by a sibling workflow after ${waited}s: ${ci_image_push}"
+              exit 0
+            fi
+            sleep 20
+            waited=$((waited + 20))
+          done
+
+          # Backstop: the metadata lookup, and any wait above, can be stale by the time
+          # we get here. Pushing the same content-addressed tag twice is harmless, but
+          # rebuilding it is not free.
+          if docker manifest inspect "$ci_image_push" >/dev/null 2>&1; then
+            echo "Already published by a concurrent run: ${ci_image_push}"
+            exit 0
+          fi
+
+          # Minimal build context: the module manifests (repo paths preserved so
+          # nested modules and their local `replace ../` targets resolve) plus the
+          # cache Dockerfile. Assembled outside the checkout so `docker build`
+          # streams only what the image needs.
+          context="$(mktemp -d)"
+          mkdir -p "${context}/manifests"
+          git ls-files -z -- \
+            '*go.mod' '*go.sum' 'go.work' 'go.work.sum' 'modules.yml' \
+          | while IFS= read -r -d '' f; do
+              mkdir -p "${context}/manifests/$(dirname "$f")"
+              cp "$f" "${context}/manifests/${f}"
+            done
+          cp .github/docker/godeps-cache/Dockerfile "${context}/Dockerfile"
+
+          docker build \
+            --pull \
+            --build-arg "BASE_IMAGE=${base_image}" \
+            --tag "$ci_image_push" \
+            "$context"
+          docker push "$ci_image_push"

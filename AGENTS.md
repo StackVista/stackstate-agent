@@ -155,7 +155,7 @@ Go build tags control feature inclusion, some examples are:
 - `datadog.yaml` - Main agent configuration
 - `modules.yml` - Go module definitions
 - `release.json` - Release version information
-- `.gitlab-ci.yml` - CI/CD pipeline configuration
+- `.github/workflows/` - CI/CD pipeline configuration
 
 ### Documentation
 - `/docs/` - Internal documentation
@@ -165,14 +165,13 @@ Go build tags control feature inclusion, some examples are:
 
 ## CI/CD Pipeline
 
-### GitLab CI
-- Primary CI system
-- Defined in `.gitlab-ci.yml` and `.gitlab/` directory
-- Runs tests, builds, and deployments
-
 ### GitHub Actions
-- Secondary CI for specific workflows
-- Tests about the pull-request settings or repository configuration
+- Primary CI system
+- Defined in `.github/workflows/` — lint and unit tests, binary builds, DEB package build
+- Runs tests, builds, publishes images and pre-release packages
+
+### GitLab CI
+- Retired. The `.gitlab/` directory is upstream DataDog configuration that STS pipelines never included; it is kept only to avoid conflicts on upstream merges.
 - Release automation workflows
 
 ### Contributing

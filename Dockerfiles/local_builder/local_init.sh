@@ -98,7 +98,7 @@ case $1 in
     cat << EOF
 
     ---------------------------------------------------------------------------------------
-    Here few helpful commands to get you started (check .gitlab-ci-agent.yml for more):
+    Here few helpful commands to get you started (check .github/workflows/ for more):
       # When starting the first time you always need to pull deps
       $COMMAND__INSTALL_DEPS
 

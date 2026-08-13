@@ -1,0 +1,27 @@
+schema_version: '1'
+vulnerability:
+  id: GO-2026-5932
+  severity: UNKNOWN
+product:
+  consumer: stackstate-k8s-agent
+  image: quay.io/stackstate/stackstate-k8s-agent
+component:
+  purl: pkg:golang/golang.org/x/crypto@v0.53.0
+  paths:
+  - opt/stackstate-agent/bin/agent/agent
+  - opt/stackstate-agent/bin/installer/installer
+status: accepted_with_compensating_control
+reason: unpublished_image_vex_identity_bridge
+expires: '2026-08-20'
+owner: "@StackVista/observability-team"
+upstream_owner: golang
+upstream_reference: https://pkg.go.dev/vuln/GO-2026-5932
+statement: |
+  The affected openpgp and openpgp/clearsign packages are absent from this
+  binary's command dependency graph. StackVista/vexhub carries the reviewed
+  image-scoped not_affected statement, but Grype and Trivy match VEX products
+  by exact image digest or tag, and this gate scans a freshly built commit
+  image whose identity cannot exist in the VEX hub in advance. The same
+  bridge is already in place for stackstate-process-agent. Keep it only until
+  the scan pipeline can apply reviewed statements to unpublished images
+  without broadening them to every consumer of golang.org/x/crypto.

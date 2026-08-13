@@ -130,9 +130,6 @@ List all tasks: `invoke --list`
 - **macOS:** Supported, some container features disabled (docker, containerd, cri, crio)
 - **Tags excluded on non-Linux:** netcgo, systemd, jetson, linux_bpf, nvml, pcap, podman, trivy
 
-### GitLab CI Optimization
-Include `[cluster-agent]` in commit messages to run only cluster-agent pipeline steps.
-
 ### Upstream Datadog Merges
 This fork is periodically merged with upstream Datadog Agent releases. This is an intensive, infrequent task with its own workflows, branding scripts, and CI patterns. See [UPSTREAM_MERGE.md](UPSTREAM_MERGE.md) for the full guide.
 
@@ -140,7 +137,6 @@ This fork is periodically merged with upstream Datadog Agent releases. This is a
 When modifying the stackstate-agent helm chart:
 1. Add test helm repo: `helm repo add stackstate-test https://helm-test.stackstate.io && helm repo update`
 2. Install test chart version: `helm upgrade --install ... stackstate-test/stackstate-agent --version <version>`
-3. Update `.gitlab-ci-agent.yml` with `AGENT_HELM_CHART_VERSION` to test in pipeline
 
 ## Important Build Behavior
 

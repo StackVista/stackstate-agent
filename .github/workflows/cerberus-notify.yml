@@ -1,0 +1,83 @@
+name: Cerberus notify
+
+on:
+  workflow_call:
+    inputs:
+      suite:
+        description: Suite label shown in the Slack message, e.g. lint-and-unit-tests.
+        required: true
+        type: string
+    secrets:
+      CERBERUS_LAMBDA_URL:
+        required: false
+      CERBERUS_API_TOKEN:
+        required: false
+
+permissions: {}
+
+jobs:
+  notify:
+    name: Notify Slack via Cerberus
+    runs-on: docker-public
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Post the failure to Cerberus
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
+          CERBERUS_API_TOKEN: ${{ secrets.CERBERUS_API_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          PIPELINE: ${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          SUITE: ${{ inputs.suite }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CERBERUS_LAMBDA_URL}" ] || [ -z "${CERBERUS_API_TOKEN}" ]; then
+            echo "::warning title=Cerberus not configured::CERBERUS_LAMBDA_URL and/or CERBERUS_API_TOKEN is not visible to this repo, so the ${SUITE} failure was not reported to Slack. Both are provisioned as repo-level secrets by pulumi-infra (STAC-25461)."
+            exit 0
+          fi
+
+          COMMIT_TITLE=$(printf '%s' "${COMMIT_MESSAGE}" | head -n1)
+
+          # schedule payloads carry no head_commit, which is exactly when the
+          # Slack message still has to name the commit that is failing.
+          if [ -z "${COMMIT_TITLE}" ]; then
+            COMMIT_TITLE=$(gh api "repos/${REPOSITORY}/commits/${COMMIT_SHA}" \
+              --jq '.commit.message | split("\n")[0]' 2>/dev/null || true)
+          fi
+
+          if [ -z "${COMMIT_TITLE}" ]; then
+            COMMIT_TITLE="(commit title unavailable)"
+          fi
+
+          curl --fail --silent --show-error \
+            -X POST "${CERBERUS_LAMBDA_URL}" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${CERBERUS_API_TOKEN}" \
+            -d "$(jq -n \
+              --arg repo "${REPOSITORY}" \
+              --arg branch "${BRANCH}" \
+              --arg pipeline "${PIPELINE}" \
+              --arg sha "${COMMIT_SHA}" \
+              --arg title "${COMMIT_TITLE}" \
+              --arg suite "${SUITE}" \
+              '{
+                action: "notify",
+                context: {
+                  platform: "github",
+                  "project.id": $repo,
+                  "project.slug": $repo,
+                  "project.name": "StackState Agent",
+                  branch: $branch,
+                  pipeline: $pipeline,
+                  "commit.sha": $sha,
+                  "commit.title": $title,
+                  suite: $suite
+                }
+              }'
+            )"

@@ -1,0 +1,276 @@
+name: Lint and unit tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - stackstate-7.78.2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CONDA_ENV: ddpy3
+
+jobs:
+  godeps-cache:
+    name: Go dependency cache image (amd64)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/godeps-cache.yml
+    with:
+      arch: amd64
+      build_delay_seconds: 900
+    secrets:
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+  filename-linting:
+    name: Filename linting
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: docker-public
+    timeout-minutes: 20
+    container:
+      image: ${{ vars.REGISTRY_HOST }}/quay/stackstate/datadog_build_linux_x64:7af9194f
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: inv linter.filenames
+        run: |
+          set -eo pipefail
+          # linter.filenames only shells out to `git ls-files` + path checks, so
+          # it needs no Go deps/vendoring (the GitLab job carried that as boilerplate).
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
+          inv -e linter.filenames
+
+  workflow-security-lint:
+    name: Workflow security lint (Zizmor)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Audit workflows and composite actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # renovate: datasource=pypi depName=zizmor
+          ZIZMOR_VERSION: 1.29.0
+        run: |
+          set -euo pipefail
+          pipx run --spec "zizmor==${ZIZMOR_VERSION}" zizmor --collect=workflows,actions .
+
+  mod-tidy:
+    name: Go module tidiness (go.mod / go.sum)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: godeps-cache
+    runs-on: xlarge-public
+    timeout-minutes: 60
+    container:
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: inv check-mod-tidy
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # check-mod-tidy reports by mutating the tree (`go work sync`, then `go mod
+          # tidy` per module) and diffing it, so git has to accept the checkout.
+          git config --global --add safe.directory '*'
+          # `go mod tidy` resolves the full module graph including test dependencies of
+          # dependencies, which is wider than the `go mod download` set baked into the
+          # cache image, so expect some network fetches here even on a warm cache.
+          inv -e check-mod-tidy
+
+  unbranded-unit-tests:
+    name: Unit tests (unbranded / DataDog)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: godeps-cache
+    runs-on: xlarge-public
+    timeout-minutes: 150
+    container:
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Build agent and run unit tests
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429), keyed
+          # to the module-graph hash: no `go clean -modcache` and no per-job
+          # `inv deps` reconcile. Materialise vendor/ against the warm cache
+          # (offline). Go tool binaries come from `invoke install-tools` below --
+          # the removed second `inv deps` never installed them (it is go mod
+          # download + tidy, not a tool install).
+          go work sync
+          go work vendor
+          export AGENT_GITHUB_ORG=DataDog
+          export GITHUB_ORG=DataDog
+          export BRANDED=false
+          export AGENT_REPO_NAME=datadog-agent
+          inv -e agent.build --race
+          gofmt -l -w -s ./pkg ./cmd
+          inv -e rtloader.test
+          invoke install-tools
+          # Go 1.25+ no longer ships prebuilt tool binaries; build covdata into
+          # GOTOOLDIR so `go test -cover` resolves it (golang/go#75031).
+          go build -o "$(go env GOTOOLDIR)/covdata" cmd/covdata
+          # Drop build tags for features StackState does not ship in its images.
+          export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
+          inv -e test --coverage --race --profile --cpus 4 --build-exclude="${STS_UT_BUILD_EXCLUDE}" --timeout=600
+
+  branded-unit-tests:
+    name: Unit tests (branded / StackState)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: godeps-cache
+    runs-on: xlarge-public
+    timeout-minutes: 150
+    container:
+      image: ${{ needs.godeps-cache.outputs.ci_image }} # zizmor: ignore[unpinned-images]
+      credentials:
+        username: ${{ vars.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Build agent and run unit tests
+        run: |
+          set -eo pipefail
+          export PATH="$PATH:/usr/local/go/bin"
+          . /root/miniforge3/etc/profile.d/conda.sh
+          conda activate "${CONDA_ENV}"
+          # Work volume is owned by the ARC runner uid but the job container runs as
+          # root, so git rejects the repo as "dubious ownership"; mark it safe.
+          git config --global --add safe.directory '*'
+          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429): no
+          # `go clean -modcache` and no per-job `inv deps` reconcile. Materialise
+          # vendor/ against the warm cache (offline). Go tool binaries come from
+          # `invoke install-tools` below.
+          go work sync
+          go work vendor
+          export AGENT_GITHUB_ORG=DataDog
+          export GITHUB_ORG=DataDog
+          export BRANDED=true
+          export AGENT_REPO_NAME=datadog-agent
+          export OMNIBUS_FORCE_PACKAGES=true
+          # Rebrand DataDog -> StackState, then verify no unbranded literals remain.
+          # fix_branding.sh defaults its target dir to $CI_PROJECT_DIR (a GitLab
+          # built-in that is unset here); pass the checkout root explicitly.
+          ./fix_branding.sh "${GITHUB_WORKSPACE}"
+          ./scripts/verify_branding_literals.sh
+          inv -e agent.build --race
+          gofmt -l -w -s ./pkg ./cmd
+          inv -e rtloader.test
+          invoke install-tools
+          go build -o "$(go env GOTOOLDIR)/covdata" cmd/covdata
+          export STS_UT_BUILD_EXCLUDE="oracle,trivy,trivy_no_javadb,nvml,jetson,bundle_installer,systemd"
+          inv -e test --coverage --race --profile --cpus 4 --build-exclude="${STS_UT_BUILD_EXCLUDE}" --timeout=600
+
+  cerberus-notify:
+    name: Report failure to Slack (Cerberus)
+    needs:
+      - godeps-cache
+      - filename-linting
+      - mod-tidy
+      - unbranded-unit-tests
+      - branded-unit-tests
+      - workflow-security-lint
+    if: >-
+      always()
+      && github.event_name == 'push'
+      && contains(needs.*.result, 'failure')
+    uses: ./.github/workflows/cerberus-notify.yml
+    with:
+      suite: lint-and-unit-tests
+    secrets:
+      CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
+      CERBERUS_API_TOKEN: ${{ secrets.CERBERUS_API_TOKEN }}
+
+  ci-success:
+    name: CI success (lint and unit tests)
+    needs:
+      - godeps-cache
+      - filename-linting
+      - mod-tidy
+      - unbranded-unit-tests
+      - branded-unit-tests
+      - workflow-security-lint
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate upstream job results
+        env:
+          GODEPS_CACHE: ${{ needs.godeps-cache.result }}
+          FILENAME_LINTING: ${{ needs.filename-linting.result }}
+          MOD_TIDY: ${{ needs.mod-tidy.result }}
+          UNBRANDED_UNIT_TESTS: ${{ needs.unbranded-unit-tests.result }}
+          BRANDED_UNIT_TESTS: ${{ needs.branded-unit-tests.result }}
+          WORKFLOW_SECURITY_LINT: ${{ needs.workflow-security-lint.result }}
+        run: |
+          set -euo pipefail
+          status=0
+
+          # Every job below is skipped on a fork pull request, so "skipped" must not
+          # satisfy the gate -- otherwise the merge check goes green having run nothing.
+          require_success() {
+            printf '  %-30s %s\n' "$1" "$2"
+            [ "$2" = "success" ] || status=1
+          }
+
+          require_success "Go dependency cache" "${GODEPS_CACHE}"
+          require_success "Filename linting" "${FILENAME_LINTING}"
+          require_success "Unit tests (unbranded)" "${UNBRANDED_UNIT_TESTS}"
+          require_success "Unit tests (branded)" "${BRANDED_UNIT_TESTS}"
+          require_success "Go module tidiness" "${MOD_TIDY}"
+          require_success "Workflow security lint" "${WORKFLOW_SECURITY_LINT}"
+
+          exit "${status}"
