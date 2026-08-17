@@ -16,7 +16,7 @@ on:
         type: string
         default: ""
       agent_hash_under_test:
-        description: Agent commit beest should pin the image to (empty = the commit this workflow runs on)
+        description: Agent commit beest should pin the images to (empty = the tip of the branch under test)
         type: string
         default: ""
       scenarios:
@@ -42,9 +42,90 @@ jobs:
   trigger:
     name: Trigger beest agent verification
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions: {}
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
     steps:
+      - name: Resolve the agent commit under test
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENT_BRANCH: ${{ inputs.agent_branch_under_test || github.ref_name }}
+          AGENT_BRANCH_INPUT: ${{ inputs.agent_branch_under_test }}
+          AGENT_HASH_INPUT: ${{ inputs.agent_hash_under_test }}
+          AGENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          # beest pins the agent, cluster-agent and checks-agent images to <sha8>-<arch>,
+          # but only when a hash reaches it: resolve-agent-hashes.sh deliberately does not
+          # resolve a branch, so an unset hash silently falls back to the Helm chart default
+          # and the run passes while testing an agent nobody asked for. Always resolve to a
+          # concrete commit -- an overridden branch resolves to its tip.
+          if [ -n "${AGENT_HASH_INPUT}" ]; then
+            ref="${AGENT_HASH_INPUT}"
+          elif [ -n "${AGENT_BRANCH_INPUT}" ]; then
+            ref="${AGENT_BRANCH_INPUT}"
+          else
+            ref="${AGENT_SHA}"
+          fi
+
+          if ! sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${ref}" --jq .sha)"; then
+            echo "::error::cannot resolve '${ref}' to a commit in ${GITHUB_REPOSITORY}"
+            exit 1
+          fi
+
+          echo "agent branch under test: ${AGENT_BRANCH}"
+          echo "agent commit under test: ${sha}"
+
+          {
+            echo "agent_branch=${AGENT_BRANCH}"
+            echo "agent_sha=${sha}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Require published agent images for the commit under test
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENT_SHA: ${{ steps.resolve.outputs.agent_sha }}
+        run: |
+          set -euo pipefail
+
+          # In GitLab this job was only playable once both manifest jobs had published.
+          # A standalone dispatch has no such barrier, so without this check it can burn a
+          # full beest run -- and the global beest AWS lock -- on images that were never
+          # pushed, or whose publication failed. Fail closed.
+          required=(
+            "Publish and sign multi-architecture agent image"
+            "Publish and sign multi-architecture cluster-agent image"
+          )
+
+          succeeded="$(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${AGENT_SHA}&per_page=100" \
+              --jq '.workflow_runs[].id' |
+              while read -r run_id; do
+                gh api --paginate \
+                  "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" \
+                  --jq '.jobs[] | select(.conclusion == "success") | .name'
+              done
+          )"
+
+          missing=0
+          for job in "${required[@]}"; do
+            if printf '%s\n' "${succeeded}" | grep -Fxq "${job}"; then
+              echo "published: ${job}"
+            else
+              echo "::error::no successful '${job}' for ${AGENT_SHA}; beest would deploy an image that does not exist"
+              missing=1
+            fi
+          done
+
+          if [ "${missing}" -ne 0 ]; then
+            echo "::error::agent images for ${AGENT_SHA} are not published - refusing to dispatch beest"
+            exit 1
+          fi
+
       - name: Mint GitHub App token (dispatch beest workflows)
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
@@ -59,10 +140,8 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           SUITE: ${{ inputs.suite }}
-          AGENT_BRANCH: ${{ inputs.agent_branch_under_test || github.ref_name }}
-          AGENT_BRANCH_INPUT: ${{ inputs.agent_branch_under_test }}
-          AGENT_HASH_INPUT: ${{ inputs.agent_hash_under_test }}
-          AGENT_SHA: ${{ github.sha }}
+          AGENT_BRANCH: ${{ steps.resolve.outputs.agent_branch }}
+          AGENT_HASH: ${{ steps.resolve.outputs.agent_sha }}
           SCENARIOS: ${{ inputs.scenarios }}
           NO_DESTROY: ${{ inputs.no_destroy }}
           BEEST_REF: ${{ inputs.beest_ref }}
@@ -76,25 +155,13 @@ jobs:
             *)    echo "::error::unknown suite '${SUITE}'"; exit 1 ;;
           esac
 
-          # A branch builds many images, so pin the exact commit rather than letting
-          # beest pick the newest build. Default to this run's SHA, but only when the
-          # branch was not overridden -- against another branch our SHA means nothing,
-          # so leave it unset and let beest fall back.
-          agent_hash="${AGENT_HASH_INPUT}"
-          if [ -z "${agent_hash}" ] && [ -z "${AGENT_BRANCH_INPUT}" ]; then
-            agent_hash="${AGENT_SHA}"
-          fi
-
-          echo "agent branch under test: ${AGENT_BRANCH}"
-          echo "agent commit under test: ${agent_hash:-(unpinned - beest chart default)}"
-
           {
             echo "## Beest verification dispatched"
             echo
             echo "| field | value |"
             echo "| --- | --- |"
             echo "| agent branch under test | \`${AGENT_BRANCH}\` |"
-            echo "| agent commit under test | \`${agent_hash:-(unpinned - beest chart default)}\` |"
+            echo "| agent commit under test | \`${AGENT_HASH}\` |"
             echo "| suite | \`${SUITE}\` |"
             echo "| scenarios | \`${SCENARIOS:-(beest default)}\` |"
             echo "| keep infrastructure | \`${NO_DESTROY}\` |"
@@ -105,22 +172,43 @@ jobs:
           for wf in "${workflows[@]}"; do
             args=(--repo StackVista/beest --ref "${BEEST_REF}")
             args+=(--field "agent_branch_under_test=${AGENT_BRANCH}")
+            args+=(--field "hashes_under_test=agent=${AGENT_HASH}")
             args+=(--field "no_destroy=${NO_DESTROY}")
-            if [ -n "${agent_hash}" ]; then
-              args+=(--field "hashes_under_test=agent=${agent_hash}")
-            fi
             if [ -n "${SCENARIOS}" ]; then
               args+=(--field "scenarios=${SCENARIOS}")
             fi
 
+            # Snapshot the runs that already exist, because gh does not report the run it
+            # queued and every beest AWS workflow shares one global lock -- so the newest
+            # run is routinely somebody else's, or an older queued one.
+            before="$(gh run list --repo StackVista/beest --workflow "${wf}" \
+              --branch "${BEEST_REF}" --limit 100 --json databaseId \
+              --jq '[.[].databaseId | tostring] | join(",")' 2>/dev/null || true)"
+
             echo "dispatching ${wf}"
             gh workflow run "${wf}" "${args[@]}"
 
-            # gh does not report the queued run, and every beest AWS workflow shares
-            # one global lock, so look the run up rather than assuming it started.
-            sleep 10
-            url="$(gh run list --repo StackVista/beest --workflow "${wf}" \
-              --limit 1 --json url --jq '.[0].url' 2>/dev/null || true)"
-            fallback="https://github.com/StackVista/beest/actions/workflows/${wf}"
-            echo "- \`${wf}\` -> ${url:-${fallback}}" >> "${GITHUB_STEP_SUMMARY}"
+            url=""
+            for _ in $(seq 1 30); do
+              sleep 5
+              while read -r id candidate; do
+                case ",${before}," in
+                  *",${id},"*) ;;
+                  *) url="${candidate}"; break ;;
+                esac
+              done < <(gh run list --repo StackVista/beest --workflow "${wf}" \
+                --branch "${BEEST_REF}" --limit 100 --json databaseId,url \
+                --jq '.[] | "\(.databaseId) \(.url)"' 2>/dev/null || true)
+              if [ -n "${url}" ]; then
+                break
+              fi
+            done
+
+            if [ -n "${url}" ]; then
+              echo "${wf} -> ${url}"
+              echo "- \`${wf}\` -> ${url}" >> "${GITHUB_STEP_SUMMARY}"
+            else
+              echo "::warning::dispatched ${wf} but no new run appeared within 150s"
+              echo "- \`${wf}\` -> https://github.com/StackVista/beest/actions/workflows/${wf} (new run not detected)" >> "${GITHUB_STEP_SUMMARY}"
+            fi
           done
