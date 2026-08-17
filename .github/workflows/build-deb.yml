@@ -471,7 +471,7 @@ jobs:
           SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
           SIGNING_PRIVATE_PASSPHRASE: ${{ secrets.SIGNING_PRIVATE_PASSPHRASE }}
           SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
-        run: ./omnibus/package-scripts/publish_package.sh stackstate-agent-3-test
+        run: ./omnibus/package-scripts/publish_package.sh sts-agent-prerelease
 
   generate-install-script:
     name: Generate the pre-release agent install script
@@ -494,7 +494,7 @@ jobs:
 
       - name: Render install.sh against the pre-release repositories
         env:
-          STS_AWS_TEST_BUCKET: stackstate-agent-3-test
+          STS_AWS_TEST_BUCKET: sts-agent-prerelease
           STS_AWS_TEST_BUCKET_YUM: stackstate-agent-3-rpm-test
           STS_AWS_TEST_BUCKET_WIN: stackstate-agent-3-test
         run: |
@@ -544,8 +544,8 @@ jobs:
       - name: Upload install.sh
         run: |
           set -euo pipefail
-          aws s3 cp ./install.sh s3://stackstate-agent-3-test/install.sh --acl public-read
-          aws s3 ls s3://stackstate-agent-3-test/
+          aws s3 cp ./install.sh s3://sts-agent-prerelease/install.sh --acl public-read
+          aws s3 ls s3://sts-agent-prerelease/
 
   cerberus-notify:
     name: Report failure to Slack (Cerberus)
