@@ -70,23 +70,17 @@ class TestUpdatePython(unittest.TestCase):
 class TestGetCurrentPythonVersion(unittest.TestCase):
     @unittest.mock.patch('tasks.python_version.Path')
     def test_get_current_python_version(self, mock_path):
-        """Test reading current Python version from omnibus file."""
+        """Test reading current Python version from the Bazel definition."""
         from tasks.python_version import _get_current_python_version
 
         # Mock file content
         mock_file = unittest.mock.MagicMock()
-        mock_file.read_text.return_value = '''name "python3"
-
-default_version "3.13.7"
-
-unless windows?
-  dependency "libffi"
-end
-'''
+        mock_file.read_text.return_value = 'PYTHON_VERSION = "3.13.7"\n'
         mock_path.return_value = mock_file
 
         version = _get_current_python_version()
         self.assertEqual(version, "3.13.7")
+        mock_path.assert_called_once_with("deps/cpython/cpython.MODULE.bazel")
 
     @unittest.mock.patch('tasks.python_version.Path')
     def test_get_current_python_version_not_found(self, mock_path):
@@ -95,7 +89,7 @@ end
 
         # Mock file without version
         mock_file = unittest.mock.MagicMock()
-        mock_file.read_text.return_value = 'name "python3"\n# No version here'
+        mock_file.read_text.return_value = '# No version here\n'
         mock_path.return_value = mock_file
 
         with self.assertRaises(Exit):
@@ -104,16 +98,13 @@ end
 
 class TestOmnibusUpdate(unittest.TestCase):
     @unittest.mock.patch('tasks.python_version.Path')
-    def test_update_omnibus_python_version_and_sha(self, mock_path):
-        """Test preparing version and SHA256 update for omnibus file."""
+    def test_update_omnibus_python_version(self, mock_path):
+        """Test preparing the version update for omnibus metadata."""
         from tasks.python_version import _prepare_omnibus_update
 
         original_content = '''name "python3"
 
 default_version "3.13.7"
-
-source :url => "https://python.org/ftp/python/#{version}/Python-#{version}.tgz",
-       :sha256 => "6c9d80839cfa20024f34d9a6dd31ae2a9cd97ff5e980e969209746037a5153b2"
 '''
 
         # Mock file operations
@@ -122,17 +113,11 @@ source :url => "https://python.org/ftp/python/#{version}/Python-#{version}.tgz",
         mock_path.return_value = mock_file
 
         # Prepare update to new version
-        file_path, new_content = _prepare_omnibus_update(
-            "3.13.9", "c4c066af19c98fb7835d473bebd7e23be84f6e9874d47db9e39a68ee5d0ce35c"
-        )
+        file_path, new_content = _prepare_omnibus_update("3.13.9")
 
         # Verify version was updated
         self.assertIn('default_version "3.13.9"', new_content)
         self.assertNotIn('default_version "3.13.7"', new_content)
-
-        # Verify SHA256 was updated
-        self.assertIn(':sha256 => "c4c066af19c98fb7835d473bebd7e23be84f6e9874d47db9e39a68ee5d0ce35c"', new_content)
-        self.assertNotIn('6c9d80839cfa20024f34d9a6dd31ae2a9cd97ff5e980e969209746037a5153b2', new_content)
 
 
 class TestBazelUpdate(unittest.TestCase):
@@ -149,6 +134,11 @@ http_archive(
     name = "cpython",
     sha256 = "6c9d80839cfa20024f34d9a6dd31ae2a9cd97ff5e980e969209746037a5153b2",
     strip_prefix = "Python-{}".format(PYTHON_VERSION),
+)
+
+http_archive(
+    name = "sqlite_win",
+    sha256 = "bf3733d7c71b3ab0f6fd8a9ea0052ad87fa037d94333e14ce09878ba3492c3b0",
 )
 '''
 
@@ -169,6 +159,7 @@ http_archive(
         # Verify SHA256 was updated
         self.assertIn('sha256 = "c4c066af19c98fb7835d473bebd7e23be84f6e9874d47db9e39a68ee5d0ce35c"', new_content)
         self.assertNotIn('6c9d80839cfa20024f34d9a6dd31ae2a9cd97ff5e980e969209746037a5153b2', new_content)
+        self.assertIn('sha256 = "bf3733d7c71b3ab0f6fd8a9ea0052ad87fa037d94333e14ce09878ba3492c3b0"', new_content)
 
 
 class TestGoTestUpdate(unittest.TestCase):
@@ -182,7 +173,7 @@ class TestGoTestUpdate(unittest.TestCase):
 const (
 	ExpectedPythonVersion2 = "2.7.18"
 	// ExpectedPythonVersion3 is the expected python 3 version
-	// Bump this version when the version in omnibus/config/software/python3.rb changes
+	// Bump this version when deps/cpython/cpython.MODULE.bazel changes
 	ExpectedPythonVersion3 = "3.13.7"
 )
 '''
