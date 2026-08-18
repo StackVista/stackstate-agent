@@ -1,6 +1,6 @@
 name "python3"
 
-default_version "3.13.14"
+default_version "3.13.15"
 
 # [sts] STAC-24773 Phase D1: Python via Bazel @cpython (replaces omnibus source build).
 # Mirrors origin/base-7.78.2 with --downloader_config=/dev/null on every bazelisk

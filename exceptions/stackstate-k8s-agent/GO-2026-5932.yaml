@@ -6,7 +6,7 @@ product:
   consumer: stackstate-k8s-agent
   image: quay.io/stackstate/stackstate-k8s-agent
 component:
-  purl: pkg:golang/golang.org/x/crypto@v0.53.0
+  purl: pkg:golang/golang.org/x/crypto@v0.55.0
   paths:
   - opt/stackstate-agent/bin/agent/agent
   - opt/stackstate-agent/bin/installer/installer

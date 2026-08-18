@@ -6,7 +6,16 @@ RUN rm -vf /etc/ssl/openssl.cnf
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y gdb build-essential strace less vim
 
 # Install go
-RUN curl -fSL -o golang.tgz https://go.dev/dl/go1.25.11.linux-$(dpkg --print-architecture).tar.gz
+ARG GO_SHA256_AMD64=708effb774be8237570d0add163225abbdfaf4fca28b2611df167beba4feef89
+ARG GO_SHA256_ARM64=d0507e9e9d7fe012aae570108cbd76c15de879e17130ab8cb90d4d7445cb1f2e
+RUN arch="$(dpkg --print-architecture)" \
+ && case "${arch}" in \
+      amd64) go_sha256="${GO_SHA256_AMD64}" ;; \
+      arm64) go_sha256="${GO_SHA256_ARM64}" ;; \
+      *) echo "Unsupported architecture: ${arch}" >&2; exit 1 ;; \
+    esac \
+ && curl -fSL -o golang.tgz "https://go.dev/dl/go1.26.6.linux-${arch}.tar.gz" \
+ && echo "${go_sha256}  golang.tgz" | sha256sum -c -
 RUN tar xzvf golang.tgz
 RUN ln -s /go /goroot
 

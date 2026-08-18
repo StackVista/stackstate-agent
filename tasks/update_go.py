@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+import requests
 from invoke import exceptions
 from invoke.context import Context
 from invoke.tasks import task
@@ -13,6 +14,11 @@ from tasks.libs.common.color import color_message
 from tasks.libs.common.gomodules import get_default_modules
 
 GO_VERSION_FILE = "./.go-version"
+GO_DOWNLOADS_URL = "https://go.dev/dl/?mode=json&include=all"
+GO_CHECKSUM_REFERENCES = {
+    "amd64": ("./tools/gdb/Dockerfile", "GO_SHA256_AMD64"),
+    "arm64": ("./tools/gdb/Dockerfile", "GO_SHA256_ARM64"),
+}
 
 # list of references of Go versions
 # each tuple is (path, pre_pattern, post_pattern, minor), where
@@ -182,6 +188,40 @@ def _update_references(warn: bool, version: str, dry_run: bool = False):
         replace = rf'\g<1>{new_version}\g<2>'
 
         update_file(warn, path, pattern, replace, dry_run=dry_run)
+
+    if not dry_run:
+        _update_go_archive_checksums(warn, version)
+
+
+def _extract_go_archive_checksums(releases: list[dict], version: str) -> dict[str, str]:
+    release = next((release for release in releases if release.get("version") == f"go{version}"), None)
+    if release is None:
+        raise ValueError(f"Go {version} is missing from {GO_DOWNLOADS_URL}")
+
+    checksums = {
+        file["arch"]: file["sha256"]
+        for file in release.get("files", [])
+        if file.get("os") == "linux" and file.get("arch") in GO_CHECKSUM_REFERENCES
+    }
+    missing = GO_CHECKSUM_REFERENCES.keys() - checksums.keys()
+    if missing:
+        raise ValueError(f"Go {version} is missing Linux checksums for: {', '.join(sorted(missing))}")
+    return checksums
+
+
+def _update_go_archive_checksums(warn: bool, version: str):
+    try:
+        response = requests.get(GO_DOWNLOADS_URL, timeout=30)
+        response.raise_for_status()
+        checksums = _extract_go_archive_checksums(response.json(), version)
+    except (requests.RequestException, ValueError) as e:
+        if warn:
+            print(color_message(f"WARNING: {e}", "orange"))
+            return
+        raise exceptions.Exit(str(e)) from e
+
+    for arch, (path, argument) in GO_CHECKSUM_REFERENCES.items():
+        update_file(warn, path, rf"^ARG {argument}=[0-9a-f]{{64}}$", f"ARG {argument}={checksums[arch]}")
 
 
 def _update_go_mods(warn: bool, version: str, include_otel_modules: bool, dry_run: bool = False):

@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/tools/build-ddot-byoc
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/google/go-containerregistry v0.20.7
@@ -22,8 +22,8 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/vbatts/tar-split v0.12.2 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 )
 

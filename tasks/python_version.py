@@ -86,7 +86,7 @@ def update(
     # Prepare all updates first to validate patterns before writing anything
     updates = []
     try:
-        updates.append(_prepare_omnibus_update(target_version, sha256_hash))
+        updates.append(_prepare_omnibus_update(target_version))
         updates.append(_prepare_bazel_update(target_version, sha256_hash))
         updates.append(_prepare_test_update(target_version))
     except Exit:
@@ -107,13 +107,13 @@ def update(
 
 
 def _get_current_python_version() -> str:
-    """Get the current Python version from omnibus config."""
-    omnibus_file = Path("omnibus/config/software/python3.rb")
-    content = omnibus_file.read_text()
+    """Get the current Python version from the Bazel CPython definition."""
+    bazel_file = Path("deps/cpython/cpython.MODULE.bazel")
+    content = bazel_file.read_text()
 
-    match = re.search(r'^default_version\s+"([0-9.]+)"', content, re.MULTILINE)
+    match = re.search(r'^PYTHON_VERSION\s+=\s+"([0-9.]+)"', content, re.MULTILINE)
     if not match:
-        raise Exit("Could not find default_version in omnibus/config/software/python3.rb")
+        raise Exit(f"Could not find PYTHON_VERSION in {bazel_file}")
 
     return match.group(1)
 
@@ -225,8 +225,8 @@ def _get_python_sha256_hash(version: str) -> str:
     return hash_value.lower()
 
 
-def _prepare_omnibus_update(version: str, sha256: str) -> tuple[Path, str]:
-    """Prepare Python version and SHA256 update for omnibus config.
+def _prepare_omnibus_update(version: str) -> tuple[Path, str]:
+    """Prepare the Python version update for omnibus metadata.
 
     Returns:
         Tuple of (file_path, new_content) ready to write
@@ -240,13 +240,6 @@ def _prepare_omnibus_update(version: str, sha256: str) -> tuple[Path, str]:
 
     if count != 1:
         raise Exit(f"Expected 1 version match in {file_path}, found {count}")
-
-    # Update SHA256
-    sha_pattern = r'(:sha256\s+=>\s+")([0-9a-fA-F]{64})(")'
-    new_content, count = re.subn(sha_pattern, rf'\g<1>{sha256}\g<3>', new_content)
-
-    if count != 1:
-        raise Exit(f"Expected 1 SHA256 match in {file_path}, found {count}")
 
     return (file_path, new_content)
 
@@ -268,8 +261,8 @@ def _prepare_bazel_update(version: str, sha256: str) -> tuple[Path, str]:
         raise Exit(f"Expected 1 PYTHON_VERSION match in {file_path}, found {count}")
 
     # Update sha256
-    sha_pattern = r'(sha256\s+=\s+")([0-9a-fA-F]{64})(")'
-    new_content, count = re.subn(sha_pattern, rf'\g<1>{sha256}\g<3>', new_content)
+    sha_pattern = r'(http_archive\(\s+name = "cpython",.*?\s+sha256 = ")([0-9a-fA-F]{64})(")'
+    new_content, count = re.subn(sha_pattern, rf'\g<1>{sha256}\g<3>', new_content, flags=re.DOTALL)
 
     if count != 1:
         raise Exit(f"Expected 1 sha256 match in {file_path}, found {count}")

@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/security/seclwin
 
-go 1.25.0
+go 1.26.0
 
 require github.com/DataDog/datadog-agent/pkg/security/secl v0.78.3-rc.2
 
@@ -9,10 +9,10 @@ require (
 	github.com/charlievieth/strcase v0.0.5 // indirect
 	github.com/jellydator/ttlcache/v3 v3.4.0 // indirect
 	github.com/weppos/publicsuffix-go v0.50.3 // indirect
-	golang.org/x/net v0.56.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.39.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
