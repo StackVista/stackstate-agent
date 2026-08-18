@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/comp/core/status/statusimpl
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/DataDog/datadog-agent/comp/api/api/def v0.78.3-rc.2
@@ -19,7 +19,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/fx v1.24.0
-	golang.org/x/text v0.39.0
+	golang.org/x/text v0.41.0
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -85,9 +85,9 @@ require (
 	go.uber.org/zap v1.28.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/net v0.56.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 )
 
