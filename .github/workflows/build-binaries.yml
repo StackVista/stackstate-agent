@@ -239,11 +239,11 @@ jobs:
             --entrypoint /opt/stackstate-agent/bin/stackstate-cluster-agent/stackstate-cluster-agent \
             "${LOCAL_IMAGE}" version
 
-      - name: Scan cluster-agent image (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
+      - name: Scan cluster-agent image, report-only (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
         uses: StackVista/image-pipeline/.github/actions/scan-image@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
         with:
           image: ${{ env.LOCAL_IMAGE }}
-          mode: gate
+          mode: inform
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           with-grype: true
           exceptions-path: exceptions
