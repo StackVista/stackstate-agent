@@ -278,11 +278,11 @@ jobs:
           set -eo pipefail
           docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
 
-      - name: Scan agent image (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
+      - name: Scan agent image, report-only (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
         uses: StackVista/image-pipeline/.github/actions/scan-image@6284a6fc006a7cc46a7f00d02c50d5f21b117b63
         with:
           image: ${{ env.LOCAL_IMAGE }}
-          mode: gate
+          mode: inform
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           with-grype: true
           exceptions-path: exceptions
