@@ -155,6 +155,32 @@ jobs:
             *)    echo "::error::unknown suite '${SUITE}'"; exit 1 ;;
           esac
 
+          # beest's scenario choices are architecture-specific and disjoint, so a value that
+          # is valid for one workflow is rejected by the other. Validate every target before
+          # dispatching any of them -- a half-dispatched suite still takes the global beest
+          # AWS lock.
+          scenarios_for() {
+            case "$1" in
+              agent-x86.yml) printf '%s\n' contd-eks-x86-1-36 contd-eks-x86-1-34 contd-eks-x86-1-35-fips all ;;
+              arm.yml)       printf '%s\n' contd-eks-arm-1-36 contd-eks-arm-1-34 all ;;
+            esac
+          }
+
+          if [ -n "${SCENARIOS}" ]; then
+            invalid=0
+            for wf in "${workflows[@]}"; do
+              valid="$(scenarios_for "${wf}")"
+              if ! printf '%s\n' "${valid}" | grep -Fxq "${SCENARIOS}"; then
+                echo "::error::scenario '${SCENARIOS}' is not accepted by ${wf}; valid values: $(printf '%s' "${valid}" | tr '\n' ' ')"
+                invalid=1
+              fi
+            done
+            if [ "${invalid}" -ne 0 ]; then
+              echo "::error::refusing to dispatch suite '${SUITE}' - use a scenario every selected workflow accepts ('all'), or leave it empty for each workflow's own default"
+              exit 1
+            fi
+          fi
+
           {
             echo "## Beest verification dispatched"
             echo
@@ -180,26 +206,43 @@ jobs:
 
             # Snapshot the runs that already exist, because gh does not report the run it
             # queued and every beest AWS workflow shares one global lock -- so the newest
-            # run is routinely somebody else's, or an older queued one.
-            before="$(gh run list --repo StackVista/beest --workflow "${wf}" \
+            # run is routinely somebody else's, or an older queued one. A failure here would
+            # leave the baseline empty and make every existing run look new, so it must not
+            # be swallowed.
+            if ! before="$(gh run list --repo StackVista/beest --workflow "${wf}" \
               --branch "${BEEST_REF}" --limit 100 --json databaseId \
-              --jq '[.[].databaseId | tostring] | join(",")' 2>/dev/null || true)"
+              --jq '[.[].databaseId | tostring] | join(",")')"; then
+              echo "::error::cannot list existing ${wf} runs; refusing to dispatch without a baseline"
+              exit 1
+            fi
 
             echo "dispatching ${wf}"
             gh workflow run "${wf}" "${args[@]}"
 
+            # Link a run only when exactly one new one appeared: a concurrent dispatch of the
+            # same workflow and ref is indistinguishable from this one, and linking the wrong
+            # run sends someone to read unrelated results.
             url=""
+            note=""
             for _ in $(seq 1 30); do
               sleep 5
+              candidates=""
               while read -r id candidate; do
                 case ",${before}," in
                   *",${id},"*) ;;
-                  *) url="${candidate}"; break ;;
+                  *) candidates="${candidates}${candidate}"$'\n' ;;
                 esac
               done < <(gh run list --repo StackVista/beest --workflow "${wf}" \
                 --branch "${BEEST_REF}" --limit 100 --json databaseId,url \
                 --jq '.[] | "\(.databaseId) \(.url)"' 2>/dev/null || true)
-              if [ -n "${url}" ]; then
+
+              count="$(printf '%s' "${candidates}" | grep -c . || true)"
+              if [ "${count}" -eq 1 ]; then
+                url="$(printf '%s' "${candidates}" | head -n 1)"
+                break
+              fi
+              if [ "${count}" -gt 1 ]; then
+                note="${count} new runs appeared, so this dispatch cannot be identified"
                 break
               fi
             done
@@ -208,7 +251,10 @@ jobs:
               echo "${wf} -> ${url}"
               echo "- \`${wf}\` -> ${url}" >> "${GITHUB_STEP_SUMMARY}"
             else
-              echo "::warning::dispatched ${wf} but no new run appeared within 150s"
-              echo "- \`${wf}\` -> https://github.com/StackVista/beest/actions/workflows/${wf} (new run not detected)" >> "${GITHUB_STEP_SUMMARY}"
+              if [ -z "${note}" ]; then
+                note="no new run appeared within 150s"
+              fi
+              echo "::warning::dispatched ${wf} but ${note}"
+              echo "- \`${wf}\` -> https://github.com/StackVista/beest/actions/workflows/${wf} (${note})" >> "${GITHUB_STEP_SUMMARY}"
             fi
           done
