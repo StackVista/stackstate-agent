@@ -105,15 +105,20 @@ To install the official release:
      or
     $ wget -qO- https://stackstate-agent-3.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" bash
 
-##### Test
+##### Pre-release
 
-If you want to install a branch version use the test repository:
+If you want to install a pre-release build use the pre-release repository:
 
-    $ curl -o- https://stackstate-agent-3-test.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" CODE_NAME="PR_NAME" bash
+    $ curl -fLo- https://sts-agent-prerelease.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" CODE_NAME="RELEASE_BRANCH" bash
      or
-    $ wget -qO- https://stackstate-agent-3-test.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" CODE_NAME="PR_NAME" bash
+    $ wget -qO- https://sts-agent-prerelease.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" CODE_NAME="RELEASE_BRANCH" bash
 
-and replace `PR_NAME` with the branch name (e.g. `master`, `STAC-xxxx`).
+and replace `RELEASE_BRANCH` with the release branch name (e.g. `stackstate-7.78.2`).
+
+Only the release branch is published here: the publishing job runs on pushes to
+that branch and uses the branch name as the apt codename. Per-branch builds such
+as `master` or `STAC-xxxx` are no longer produced — historical ones remain
+readable at `https://stackstate-agent-3-test.s3.amazonaws.com`.
 
 ### Docker
 
