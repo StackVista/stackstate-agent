@@ -1,0 +1,260 @@
+name: Beest verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which beest agent suite to run (GitLab triggered x86 only)
+        type: choice
+        default: x86
+        options:
+          - x86
+          - arm
+          - both
+      agent_branch_under_test:
+        description: Agent branch beest should deploy (empty = the branch this workflow runs on)
+        type: string
+        default: ""
+      agent_hash_under_test:
+        description: Agent commit beest should pin the images to (empty = the tip of the branch under test)
+        type: string
+        default: ""
+      scenarios:
+        description: Beest scenario selector (empty = whatever the beest workflow defaults to)
+        type: string
+        default: ""
+      no_destroy:
+        description: Keep the beest infrastructure after the run (for debugging a failure)
+        type: boolean
+        default: false
+      beest_ref:
+        description: Ref of StackVista/beest to dispatch
+        type: string
+        default: main
+
+permissions: {}
+
+concurrency:
+  group: beest-verification-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    name: Trigger beest agent verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Resolve the agent commit under test
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENT_BRANCH: ${{ inputs.agent_branch_under_test || github.ref_name }}
+          AGENT_BRANCH_INPUT: ${{ inputs.agent_branch_under_test }}
+          AGENT_HASH_INPUT: ${{ inputs.agent_hash_under_test }}
+          AGENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          # beest pins the agent, cluster-agent and checks-agent images to <sha8>-<arch>,
+          # but only when a hash reaches it: resolve-agent-hashes.sh deliberately does not
+          # resolve a branch, so an unset hash silently falls back to the Helm chart default
+          # and the run passes while testing an agent nobody asked for. Always resolve to a
+          # concrete commit -- an overridden branch resolves to its tip.
+          if [ -n "${AGENT_HASH_INPUT}" ]; then
+            ref="${AGENT_HASH_INPUT}"
+          elif [ -n "${AGENT_BRANCH_INPUT}" ]; then
+            ref="${AGENT_BRANCH_INPUT}"
+          else
+            ref="${AGENT_SHA}"
+          fi
+
+          if ! sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${ref}" --jq .sha)"; then
+            echo "::error::cannot resolve '${ref}' to a commit in ${GITHUB_REPOSITORY}"
+            exit 1
+          fi
+
+          echo "agent branch under test: ${AGENT_BRANCH}"
+          echo "agent commit under test: ${sha}"
+
+          {
+            echo "agent_branch=${AGENT_BRANCH}"
+            echo "agent_sha=${sha}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Require published agent images for the commit under test
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENT_SHA: ${{ steps.resolve.outputs.agent_sha }}
+        run: |
+          set -euo pipefail
+
+          # In GitLab this job was only playable once both manifest jobs had published.
+          # A standalone dispatch has no such barrier, so without this check it can burn a
+          # full beest run -- and the global beest AWS lock -- on images that were never
+          # pushed, or whose publication failed. Fail closed.
+          required=(
+            "Publish and sign multi-architecture agent image"
+            "Publish and sign multi-architecture cluster-agent image"
+          )
+
+          succeeded="$(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${AGENT_SHA}&per_page=100" \
+              --jq '.workflow_runs[].id' |
+              while read -r run_id; do
+                gh api --paginate \
+                  "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" \
+                  --jq '.jobs[] | select(.conclusion == "success") | .name'
+              done
+          )"
+
+          missing=0
+          for job in "${required[@]}"; do
+            if printf '%s\n' "${succeeded}" | grep -Fxq "${job}"; then
+              echo "published: ${job}"
+            else
+              echo "::error::no successful '${job}' for ${AGENT_SHA}; beest would deploy an image that does not exist"
+              missing=1
+            fi
+          done
+
+          if [ "${missing}" -ne 0 ]; then
+            echo "::error::agent images for ${AGENT_SHA} are not published - refusing to dispatch beest"
+            exit 1
+          fi
+
+      - name: Mint GitHub App token (dispatch beest workflows)
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.BEEST_GH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.BEEST_GH_APP_PRIVATE_KEY }}
+          owner: StackVista
+          repositories: beest
+          permission-actions: write
+
+      - name: Dispatch beest verification
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SUITE: ${{ inputs.suite }}
+          AGENT_BRANCH: ${{ steps.resolve.outputs.agent_branch }}
+          AGENT_HASH: ${{ steps.resolve.outputs.agent_sha }}
+          SCENARIOS: ${{ inputs.scenarios }}
+          NO_DESTROY: ${{ inputs.no_destroy }}
+          BEEST_REF: ${{ inputs.beest_ref }}
+        run: |
+          set -euo pipefail
+
+          case "${SUITE}" in
+            x86)  workflows=("agent-x86.yml") ;;
+            arm)  workflows=("arm.yml") ;;
+            both) workflows=("agent-x86.yml" "arm.yml") ;;
+            *)    echo "::error::unknown suite '${SUITE}'"; exit 1 ;;
+          esac
+
+          # beest's scenario choices are architecture-specific and disjoint, so a value that
+          # is valid for one workflow is rejected by the other. Validate every target before
+          # dispatching any of them -- a half-dispatched suite still takes the global beest
+          # AWS lock.
+          scenarios_for() {
+            case "$1" in
+              agent-x86.yml) printf '%s\n' contd-eks-x86-1-36 contd-eks-x86-1-34 contd-eks-x86-1-35-fips all ;;
+              arm.yml)       printf '%s\n' contd-eks-arm-1-36 contd-eks-arm-1-34 all ;;
+            esac
+          }
+
+          if [ -n "${SCENARIOS}" ]; then
+            invalid=0
+            for wf in "${workflows[@]}"; do
+              valid="$(scenarios_for "${wf}")"
+              if ! printf '%s\n' "${valid}" | grep -Fxq "${SCENARIOS}"; then
+                echo "::error::scenario '${SCENARIOS}' is not accepted by ${wf}; valid values: $(printf '%s' "${valid}" | tr '\n' ' ')"
+                invalid=1
+              fi
+            done
+            if [ "${invalid}" -ne 0 ]; then
+              echo "::error::refusing to dispatch suite '${SUITE}' - use a scenario every selected workflow accepts ('all'), or leave it empty for each workflow's own default"
+              exit 1
+            fi
+          fi
+
+          {
+            echo "## Beest verification dispatched"
+            echo
+            echo "| field | value |"
+            echo "| --- | --- |"
+            echo "| agent branch under test | \`${AGENT_BRANCH}\` |"
+            echo "| agent commit under test | \`${AGENT_HASH}\` |"
+            echo "| suite | \`${SUITE}\` |"
+            echo "| scenarios | \`${SCENARIOS:-(beest default)}\` |"
+            echo "| keep infrastructure | \`${NO_DESTROY}\` |"
+            echo "| beest ref | \`${BEEST_REF}\` |"
+            echo
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          for wf in "${workflows[@]}"; do
+            args=(--repo StackVista/beest --ref "${BEEST_REF}")
+            args+=(--field "agent_branch_under_test=${AGENT_BRANCH}")
+            args+=(--field "hashes_under_test=agent=${AGENT_HASH}")
+            args+=(--field "no_destroy=${NO_DESTROY}")
+            if [ -n "${SCENARIOS}" ]; then
+              args+=(--field "scenarios=${SCENARIOS}")
+            fi
+
+            # Snapshot the runs that already exist, because gh does not report the run it
+            # queued and every beest AWS workflow shares one global lock -- so the newest
+            # run is routinely somebody else's, or an older queued one. A failure here would
+            # leave the baseline empty and make every existing run look new, so it must not
+            # be swallowed.
+            if ! before="$(gh run list --repo StackVista/beest --workflow "${wf}" \
+              --branch "${BEEST_REF}" --limit 100 --json databaseId \
+              --jq '[.[].databaseId | tostring] | join(",")')"; then
+              echo "::error::cannot list existing ${wf} runs; refusing to dispatch without a baseline"
+              exit 1
+            fi
+
+            echo "dispatching ${wf}"
+            gh workflow run "${wf}" "${args[@]}"
+
+            # Link a run only when exactly one new one appeared: a concurrent dispatch of the
+            # same workflow and ref is indistinguishable from this one, and linking the wrong
+            # run sends someone to read unrelated results.
+            url=""
+            note=""
+            for _ in $(seq 1 30); do
+              sleep 5
+              candidates=""
+              while read -r id candidate; do
+                case ",${before}," in
+                  *",${id},"*) ;;
+                  *) candidates="${candidates}${candidate}"$'\n' ;;
+                esac
+              done < <(gh run list --repo StackVista/beest --workflow "${wf}" \
+                --branch "${BEEST_REF}" --limit 100 --json databaseId,url \
+                --jq '.[] | "\(.databaseId) \(.url)"' 2>/dev/null || true)
+
+              count="$(printf '%s' "${candidates}" | grep -c . || true)"
+              if [ "${count}" -eq 1 ]; then
+                url="$(printf '%s' "${candidates}" | head -n 1)"
+                break
+              fi
+              if [ "${count}" -gt 1 ]; then
+                note="${count} new runs appeared, so this dispatch cannot be identified"
+                break
+              fi
+            done
+
+            if [ -n "${url}" ]; then
+              echo "${wf} -> ${url}"
+              echo "- \`${wf}\` -> ${url}" >> "${GITHUB_STEP_SUMMARY}"
+            else
+              if [ -z "${note}" ]; then
+                note="no new run appeared within 150s"
+              fi
+              echo "::warning::dispatched ${wf} but ${note}"
+              echo "- \`${wf}\` -> https://github.com/StackVista/beest/actions/workflows/${wf} (${note})" >> "${GITHUB_STEP_SUMMARY}"
+            fi
+          done
