@@ -74,6 +74,10 @@ jobs:
       OMNIBUS_BASE_DIR: /omnibus
       OMNIBUS_GIT_CACHE_DIR: ${{ github.workspace }}/.omnibus-git-cache
       BAZEL_CACHE_ROOT: ${{ github.workspace }}/.cache
+      GIT_AUTHOR_NAME: github-actions[bot]
+      GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+      GIT_COMMITTER_NAME: github-actions[bot]
+      GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
