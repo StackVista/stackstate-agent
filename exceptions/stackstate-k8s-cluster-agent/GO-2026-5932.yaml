@@ -11,7 +11,7 @@ component:
   - opt/stackstate-agent/bin/stackstate-cluster-agent/stackstate-cluster-agent
 status: accepted_with_compensating_control
 reason: unpublished_image_vex_identity_bridge
-expires: '2026-08-20'
+expires: '2026-09-04'
 owner: "@StackVista/observability-team"
 upstream_owner: golang
 upstream_reference: https://pkg.go.dev/vuln/GO-2026-5932
