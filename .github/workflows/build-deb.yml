@@ -72,12 +72,43 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     env:
       OMNIBUS_BASE_DIR: /omnibus
+      OMNIBUS_GIT_CACHE_DIR: ${{ github.workspace }}/.omnibus-git-cache
+      BAZEL_CACHE_ROOT: ${{ github.workspace }}/.cache
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           fetch-depth: 0
+
+      - name: Configure git identity for the omnibus cache
+        run: |
+          # omnibus runs with replace_env=True, so a job-level env identity and
+          # $HOME/.gitconfig are both invisible to its `git commit`. /etc/gitconfig
+          # is read regardless of environment.
+          git config --system user.name 'github-actions[bot]'
+          git config --system user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Restore omnibus git cache (${{ matrix.arch }})
+        id: omnibus-git-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.OMNIBUS_GIT_CACHE_DIR }}
+          key: omnibus-git-${{ matrix.arch }}-${{ hashFiles('omnibus/**', 'release.json') }}
+          restore-keys: |
+            omnibus-git-${{ matrix.arch }}-
+
+      - name: Restore bazel caches (${{ matrix.arch }})
+        id: bazel-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ env.BAZEL_CACHE_ROOT }}/bazelisk
+            ${{ env.BAZEL_CACHE_ROOT }}/bazel/install
+            ${{ env.BAZEL_CACHE_ROOT }}/bazel-repo
+          key: bazel-${{ matrix.arch }}-${{ hashFiles('.bazelversion', 'MODULE.bazel.lock', 'omnibus/config/software/datadog-agent-dependencies.rb') }}
+          restore-keys: |
+            bazel-${{ matrix.arch }}-
 
       - name: Build DEB package with omnibus
         env:
@@ -104,8 +135,9 @@ jobs:
           # DD 7.78 builds some dependencies through bazelisk from
           # omnibus/config/software/datadog-agent-dependencies.rb. bazelisk aborts
           # with "XDG_CACHE_HOME () must denote a directory in CI!" unless these
-          # point at real directories.
-          export XDG_CACHE_HOME="${GITHUB_WORKSPACE}/.cache"
+          # point at real directories. BAZEL_CACHE_ROOT is what the cache steps
+          # restore and save, so the two must stay in agreement.
+          export XDG_CACHE_HOME="${BAZEL_CACHE_ROOT}"
           export BAZELISK_HOME="${XDG_CACHE_HOME}/bazelisk"
           mkdir -p "${XDG_CACHE_HOME}/bazel" "${XDG_CACHE_HOME}/bazel-repo" "${BAZELISK_HOME}"
           # .bazelrc:75 `try-import %workspace%/user.bazelrc` is the upstream-blessed
@@ -157,6 +189,23 @@ jobs:
             --skip-deps \
             --skip-sign \
             --install-directory /opt/stackstate-agent
+
+      - name: Save omnibus git cache (${{ matrix.arch }})
+        if: github.event_name != 'pull_request' && steps.omnibus-git-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.OMNIBUS_GIT_CACHE_DIR }}
+          key: omnibus-git-${{ matrix.arch }}-${{ hashFiles('omnibus/**', 'release.json') }}
+
+      - name: Save bazel caches (${{ matrix.arch }})
+        if: github.event_name != 'pull_request' && steps.bazel-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ env.BAZEL_CACHE_ROOT }}/bazelisk
+            ${{ env.BAZEL_CACHE_ROOT }}/bazel/install
+            ${{ env.BAZEL_CACHE_ROOT }}/bazel-repo
+          key: bazel-${{ matrix.arch }}-${{ hashFiles('.bazelversion', 'MODULE.bazel.lock', 'omnibus/config/software/datadog-agent-dependencies.rb') }}
 
       - name: Collect package outputs
         run: |
