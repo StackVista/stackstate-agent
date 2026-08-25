@@ -2,6 +2,7 @@ name: DEB package build
 
 on:
   pull_request:
+  merge_group:
   push:
     branches:
       - stackstate-7.78.2
@@ -191,14 +192,14 @@ jobs:
             --install-directory /opt/stackstate-agent
 
       - name: Save omnibus git cache (${{ matrix.arch }})
-        if: github.event_name != 'pull_request' && steps.omnibus-git-cache.outputs.cache-hit != 'true'
+        if: github.event_name != 'pull_request' && github.event_name != 'merge_group' && steps.omnibus-git-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.OMNIBUS_GIT_CACHE_DIR }}
           key: omnibus-git-${{ matrix.arch }}-${{ hashFiles('omnibus/**', 'release.json') }}
 
       - name: Save bazel caches (${{ matrix.arch }})
-        if: github.event_name != 'pull_request' && steps.bazel-cache.outputs.cache-hit != 'true'
+        if: github.event_name != 'pull_request' && github.event_name != 'merge_group' && steps.bazel-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |

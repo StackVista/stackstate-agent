@@ -2,6 +2,7 @@ name: Lint and unit tests
 
 on:
   pull_request:
+  merge_group:
   push:
     branches:
       - stackstate-7.78.2
