@@ -14,16 +14,6 @@ $ export CI_PROJECT_DIR=/go/src/github.com/StackVista/stackstate-agent && \
 
 Remember to `git pull` every time you push a change.
 
-### Configure Artifactory
-
-We use some private python libraries for our integrations therefore you need to configure artifactory as pypi repository:
-```bash
-$ export GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL=gitlab.com/api/v4/projects/71271774/packages/pypi/simple && \
-  export artifactory_user=... && \
-  export artifactory_password=... && \
-  source ./.gitlab-scripts/setup_artifact_registry.sh
-```
-
 ### Build using Python3 interpreter
 ```bash
 $ conda activate ddpy3 && \

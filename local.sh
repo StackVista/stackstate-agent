@@ -50,9 +50,6 @@ if [ "${WHAT}" = "SHELL" ]; then
         -e MAJOR_VERSION="3" \
         -e USER_ID="$(id -u)" -e GROUP_ID="$(id -g)" \
         -e CI_PROJECT_DIR=${PWD} \
-        -e GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL="${GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL}" \
-        -e GITLAB_PACKAGE_REGISTRY_USER="${GITLAB_PACKAGE_REGISTRY_USER}" \
-        -e GITLAB_PACKAGE_REGISTRY_TOKEN="${GITLAB_PACKAGE_REGISTRY_TOKEN}" \
         -e BRANDED=${BRANDED} \
         -e REGISTRY="${REGISTRY}" \
         -e ORG="${ORG:-stackstate}" \
@@ -199,7 +196,6 @@ if [ "${WHAT}" = "ALL" ] || [ "${WHAT}" = "BUILD_DEB" ] || [ "${WHAT}" = "UP_TO_
     mv "$SRC_PATH"/.omnibus /omnibus || mkdir -p /omnibus
     inv agent.version
     cat version.txt || true
-    source setup_artifact_registry.sh
     export OMNIBUS_BASE_DIR="/.omnibus"
     inv -e omnibus.build --gem-path $SRC_PATH/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $SRC_PATH/vendor --skip-deps --skip-sign
 

@@ -261,19 +261,6 @@ def build(
     # If a python_mirror is set then use it for pip by adding it in the pip.conf file
     pip_index_url = f"[global]\nindex-url = {python_mirror}" if python_mirror else ""
 
-    # [sts] Add private GitLab PyPI registry as extra-index-url if credentials are available.
-    # Credentials are not included in the URL here, they are expected to be in ~/.netrc (see
-    # .gitlab-scripts/setup_artifact_registry.sh). Without this block, the omnibus-managed
-    # pip.conf is empty, pip only queries PyPI default, and STS-only packages like
-    # vsphere-automation-sdk==1.82.0 fail with "Could not find a version that satisfies".
-    artifact_registry_pypi_url = os.environ.get("GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL")
-    if artifact_registry_pypi_url:
-        python_extra_mirror = f"https://{artifact_registry_pypi_url}"
-        if pip_index_url:
-            pip_index_url += f"\nextra-index-url = {python_extra_mirror}"
-        else:
-            pip_index_url = f"[global]\nextra-index-url = {python_extra_mirror}"
-
     # We're passing the --index-url arg through a pip.conf file so that omnibus doesn't leak the token
     with open(pip_config_file, 'w') as f:
         f.write(pip_index_url)
