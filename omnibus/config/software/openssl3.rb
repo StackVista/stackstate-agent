@@ -28,10 +28,10 @@ dependency "cacerts"
 # STAC-24773 D1 in python3.rb / datadog-agent-dependencies.rb). zlib is now
 # installed inline via @zlib//:install and is no longer an omnibus dependency.
 #
-# Version is kept at 3.5.7 to match deps/openssl/version.bzl (STS is a patch
-# release ahead of upstream base-7.78.2's 3.5.6; bumped in commit 42e0e0b8bf
-# for CVE-2025-9230 / openssl issue #30728).
-default_version "3.5.7"
+# Must match deps/openssl/version.bzl — the Bazel repo rule is what actually
+# builds OpenSSL, and a divergence here silently reports the wrong version.
+# STS runs ahead of upstream base-7.78.2's 3.5.6 to carry CVE fixes.
+default_version "3.5.8"
 
 relative_path "openssl-#{version}"
 
