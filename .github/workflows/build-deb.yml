@@ -112,10 +112,6 @@ jobs:
             bazel-${{ matrix.arch }}-
 
       - name: Build DEB package with omnibus
-        env:
-          GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL: ${{ vars.GITLAB_PACKAGE_REGISTRY_PYPI_SIMPLE_URL }}
-          GITLAB_PACKAGE_REGISTRY_USER: ${{ secrets.GITLAB_PACKAGE_REGISTRY_USER }}
-          GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD: ${{ secrets.GITLAB_PACKAGE_REGISTRY_READONLY_PASSWORD }}
         run: |
           set -eo pipefail
           export PATH="$PATH:/usr/local/go/bin"
@@ -172,10 +168,6 @@ jobs:
           # the version string.
           inv agent.version -u > version.txt
           cat version.txt
-
-          # Writes pip.conf + ~/.netrc for the private Python index. Hard-exits if
-          # the GITLAB_PACKAGE_REGISTRY_* variables above are unset.
-          source ./.gitlab-scripts/setup_artifact_registry.sh
 
           export LD_LIBRARY_PATH="/opt/stackstate-agent/embedded/lib/python3.12/site-packages/psycopg2_binary.libs:/opt/stackstate-agent/embedded/lib"
 

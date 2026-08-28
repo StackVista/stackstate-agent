@@ -35,7 +35,6 @@ if [[ ! -z "${AGENT_SOURCE_MOUNT}" ]]; then
 fi
 
 cd ${PROJECT_DIR}
-source .gitlab-scripts/setup_artifactory.sh
 
 # List of rtloader commands
 COMMAND__RTLOADER_CLEAN="inv rtloader.clean"

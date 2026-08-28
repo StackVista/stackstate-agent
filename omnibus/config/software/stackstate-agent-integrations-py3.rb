@@ -175,11 +175,9 @@ build do
     # Use pip-compile to create the final requirements file. Notice when we invoke `pip` through `python -m pip <...>`,
     # there's no need to refer to `pip`, the interpreter will pick the right script.
     # --no-emit-{index-url,find-links}: defence in depth so the resolved
-    # requirements file does not echo any auth-bearing URL from pip.conf
-    # back into the image. Source-side fix is in tasks/agent.py and
-    # .gitlab-scripts/setup_artifactory.sh (STAC-24642); these flags
-    # prevent future regressions reaching the image even if a pip.conf
-    # with credentials-in-URL is reintroduced upstream.
+    # requirements file does not echo any auth-bearing URL from pip.conf back
+    # into the image (STAC-24642). No authenticated index is configured any more
+    # (STAC-25553), so these flags now only guard against one being reintroduced.
     if windows?
       command "#{python} -m pip install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_base"
 
