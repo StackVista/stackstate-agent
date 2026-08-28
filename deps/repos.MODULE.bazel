@@ -107,9 +107,9 @@ http_archive(
     patch_strip = 1,
     # [sts] STAC-24773 B1 fix-up 3: patch 0002 dropped. It cherry-picks an
     # April 2026 upstream fix for OSSL_PARAM_BLD_push_octet_* NULL handling
-    # (openssl issue #30728); openssl-3.5.7 (bumped from 3.5.6 in commit
-    # 1740d83631 / STAC-25035) already incorporates that fix, so re-applying
-    # the patch fails with CONTENT_DOES_NOT_MATCH_TARGET at line 383. Surfaced
+    # (openssl issue #30728); every 3.5.x from 3.5.7 on already incorporates
+    # that fix, so re-applying the patch fails with
+    # CONTENT_DOES_NOT_MATCH_TARGET at line 383. Surfaced
     # by B1 because @rpm//:install is the first openscap-chain Bazel target
     # that transitively pulls @openssl — `//packages/agent/dependencies:install`
     # (the only Bazel target hit by STAC-24773's pre-B1 commits) doesn't.
