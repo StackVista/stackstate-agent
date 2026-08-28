@@ -41,16 +41,18 @@ type ContainerCorrelation struct {
 type ContainerCorrelator struct {
 	NodeIdentifierCorrChan <-chan *NodeIdentifierCorrelation
 	ContainerCorrChan      <-chan *ContainerCorrelation
+	Enabled                bool
 	ClusterTopologyCorrelator
 }
 
 // NewContainerCorrelator
 func NewContainerCorrelator(
 	nodeIdentifierCorrChan <-chan *NodeIdentifierCorrelation, containerCorrChannel <-chan *ContainerCorrelation,
-	clusterTopologyCorrelator ClusterTopologyCorrelator) ClusterTopologyCorrelator {
+	clusterTopologyCorrelator ClusterTopologyCorrelator, enabled bool) ClusterTopologyCorrelator {
 	return &ContainerCorrelator{
 		NodeIdentifierCorrChan:    nodeIdentifierCorrChan,
 		ContainerCorrChan:         containerCorrChannel,
+		Enabled:                   enabled,
 		ClusterTopologyCorrelator: clusterTopologyCorrelator,
 	}
 }
@@ -66,6 +68,14 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 	// map containers that require the Node instanceId
 	for nodeNameToNodeIdentifierCorrelation := range cc.NodeIdentifierCorrChan {
 		nodeMap[nodeNameToNodeIdentifierCorrelation.NodeName] = *nodeNameToNodeIdentifierCorrelation
+	}
+
+	// The channel is unbuffered, so it has to be drained even when container topology is
+	// disabled, otherwise the Pod collector blocks sending into it.
+	if !cc.Enabled {
+		for range cc.ContainerCorrChan { //nolint:revive // draining a channel we deliberately ignore
+		}
+		return nil
 	}
 
 	for containerCorrelation := range cc.ContainerCorrChan {

@@ -401,12 +401,13 @@ func executeRelationCorrelation(
 		containerCorrChannel, volumeCorrChannel,
 		podCorrChannel,
 		commonClusterCollector,
+		true,
 	)
 	configMapCollector := NewConfigMapCollector(commonClusterCollector, TestMaxDataSize)
 	secretCollector := NewSecretCollector(commonClusterCollector)
 	nodeCollector := NewNodeCollector(nodeIdentifierCorrChan, commonClusterCollector)
 
-	containerCorrelator := NewContainerCorrelator(nodeIdentifierCorrChan, containerCorrChannel, NewClusterTopologyCorrelator(commonClusterCollector))
+	containerCorrelator := NewContainerCorrelator(nodeIdentifierCorrChan, containerCorrChannel, NewClusterTopologyCorrelator(commonClusterCollector), true)
 
 	collectorsFinished := false
 

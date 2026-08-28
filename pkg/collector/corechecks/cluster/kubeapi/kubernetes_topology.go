@@ -180,6 +180,7 @@ func (t *TopologyCheck) Run() error {
 			volumeCorrelationChannel,
 			podCorrelationChannel,
 			commonClusterCollector,
+			t.instance.Resources.Pods,
 		),
 		// Register Service Component Collector
 		collectors.NewServiceCollector(
@@ -268,6 +269,7 @@ func (t *TopologyCheck) Run() error {
 			nodeIdentifierCorrelationChannel,
 			containerCorrelationChannel,
 			commonClusterCorrelator,
+			t.instance.Resources.Containers,
 		),
 		collectors.NewVolumeCorrelator(
 			volumeCorrelationChannel,
