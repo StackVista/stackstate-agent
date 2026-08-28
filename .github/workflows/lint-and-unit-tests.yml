@@ -83,6 +83,28 @@ jobs:
           set -euo pipefail
           pipx run --spec "zizmor==${ZIZMOR_VERSION}" zizmor --collect=workflows,actions .
 
+  cve-exception-expiry:
+    name: CVE exception expiry
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Check exceptions/ for lapsed CVE deferrals
+        env:
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: 6.0.3
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/exception-lint
+          /tmp/exception-lint/bin/pip install --quiet --disable-pip-version-check "PyYAML==${PYYAML_VERSION}"
+          /tmp/exception-lint/bin/python scripts/check_cve_exception_expiry.py
+
   mod-tidy:
     name: Go module tidiness (go.mod / go.sum)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -224,6 +246,7 @@ jobs:
       - unbranded-unit-tests
       - branded-unit-tests
       - workflow-security-lint
+      - cve-exception-expiry
     if: >-
       always()
       && github.event_name == 'push'
@@ -244,6 +267,7 @@ jobs:
       - unbranded-unit-tests
       - branded-unit-tests
       - workflow-security-lint
+      - cve-exception-expiry
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -256,6 +280,7 @@ jobs:
           UNBRANDED_UNIT_TESTS: ${{ needs.unbranded-unit-tests.result }}
           BRANDED_UNIT_TESTS: ${{ needs.branded-unit-tests.result }}
           WORKFLOW_SECURITY_LINT: ${{ needs.workflow-security-lint.result }}
+          CVE_EXCEPTION_EXPIRY: ${{ needs.cve-exception-expiry.result }}
         run: |
           set -euo pipefail
           status=0
@@ -273,5 +298,6 @@ jobs:
           require_success "Unit tests (branded)" "${BRANDED_UNIT_TESTS}"
           require_success "Go module tidiness" "${MOD_TIDY}"
           require_success "Workflow security lint" "${WORKFLOW_SECURITY_LINT}"
+          require_success "CVE exception expiry" "${CVE_EXCEPTION_EXPIRY}"
 
           exit "${status}"
