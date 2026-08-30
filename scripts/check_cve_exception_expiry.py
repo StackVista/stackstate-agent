@@ -8,13 +8,16 @@ tree at all. This check is what makes `expires` a real deadline.
 """
 
 import argparse
+import collections.abc
 import datetime
 import pathlib
+import re
 import sys
 
 import yaml
 
 DEFAULT_WARN_DAYS = 14
+EXPIRES_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
 
 
 def load(path):
@@ -29,7 +32,14 @@ def check(path, today, warn_days):
     except (yaml.YAMLError, OSError) as exc:
         return [f"{path}: cannot be parsed: {exc}"], []
 
-    cve = (doc.get("vulnerability") or {}).get("id") or "<no vulnerability.id>"
+    if not isinstance(doc, collections.abc.Mapping):
+        return [f"{path}: document must be a YAML mapping"], []
+
+    vulnerability = doc.get("vulnerability") or {}
+    if not isinstance(vulnerability, collections.abc.Mapping):
+        return [f"{path}: vulnerability must be a YAML mapping"], []
+
+    cve = vulnerability.get("id") or "<no vulnerability.id>"
     raw = doc.get("expires")
 
     if raw is None or str(raw).strip() == "":
@@ -38,13 +48,15 @@ def check(path, today, warn_days):
     # The scan treats an unparseable date as already expired, so an exception
     # that looks valid but is not parseable must fail here too rather than
     # sitting in the tree looking effective.
-    if isinstance(raw, datetime.date):
+    if type(raw) is datetime.date:
         expires = raw
-    else:
+    elif isinstance(raw, str) and EXPIRES_PATTERN.fullmatch(raw):
         try:
-            expires = datetime.date.fromisoformat(str(raw).strip())
+            expires = datetime.date.fromisoformat(raw)
         except ValueError:
             return [f"{path}: {cve} has an unparseable expires date {raw!r} (want YYYY-MM-DD)"], []
+    else:
+        return [f"{path}: {cve} has an unparseable expires date {raw!r} (want YYYY-MM-DD)"], []
 
     # Same boundary as the scan evaluator: valid through the expires date, dead
     # the day after.

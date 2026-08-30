@@ -103,6 +103,7 @@ jobs:
           set -euo pipefail
           python3 -m venv /tmp/exception-lint
           /tmp/exception-lint/bin/pip install --quiet --disable-pip-version-check "PyYAML==${PYYAML_VERSION}"
+          /tmp/exception-lint/bin/python scripts/check_cve_exception_expiry_test.py
           /tmp/exception-lint/bin/python scripts/check_cve_exception_expiry.py
 
   mod-tidy:
