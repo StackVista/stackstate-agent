@@ -635,6 +635,7 @@ func executeVolumeCorrelation(
 		containerCorrChannel, volumeCorrChannel,
 		podCorrChannel,
 		commonClusterCollector,
+		true,
 	)
 
 	collectorsFinishChan := make(chan bool)

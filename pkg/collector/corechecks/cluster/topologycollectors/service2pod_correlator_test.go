@@ -200,6 +200,7 @@ func executeCorrelation(
 		containerCorrChannel, volumeCorrChannel,
 		podCorrChannel,
 		commonClusterCollector,
+		true,
 	)
 	svcCollector := NewServiceCollector(
 		serviceCorrChannel,

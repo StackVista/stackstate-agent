@@ -15,6 +15,7 @@ type PodCollector struct {
 	ContainerCorrChan chan<- *ContainerCorrelation
 	VolumeCorrChan    chan<- *VolumeCorrelation
 	PodCorrChan       chan *PodLabelCorrelation
+	Enabled           bool
 	ClusterTopologyCollector
 }
 
@@ -30,12 +31,14 @@ func NewPodCollector(
 	volumeCorrChannel chan<- *VolumeCorrelation,
 	podCorrChannel chan *PodLabelCorrelation,
 	clusterTopologyCollector ClusterTopologyCollector,
+	enabled bool,
 ) ClusterTopologyCollector {
 
 	return &PodCollector{
 		ContainerCorrChan:        containerCorrChannel,
 		VolumeCorrChan:           volumeCorrChannel,
 		PodCorrChan:              podCorrChannel,
+		Enabled:                  enabled,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -52,6 +55,13 @@ func (pc *PodCollector) CollectorFunction() error {
 	defer close(pc.ContainerCorrChan)
 	defer close(pc.VolumeCorrChan)
 	defer close(pc.PodCorrChan)
+
+	// Returning here rather than skipping registration in the check is deliberate: the
+	// correlation channels are unbuffered and the correlators range over them, so they only
+	// terminate once these channels are closed. The deferred closes above must still run.
+	if !pc.Enabled {
+		return nil
+	}
 
 	pods, err := pc.GetAPIClient().GetPods()
 	if err != nil {

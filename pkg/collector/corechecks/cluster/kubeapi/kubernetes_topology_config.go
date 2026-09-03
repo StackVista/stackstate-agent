@@ -41,6 +41,8 @@ type ResourcesConfig struct {
 	Jobs                   bool `yaml:"jobs"`
 	CronJobs               bool `yaml:"cronjobs"`
 	Secrets                bool `yaml:"secrets"`
+	Pods                   bool `yaml:"pods"`
+	Containers             bool `yaml:"containers"`
 }
 
 var defaultResourcesConfig = ResourcesConfig{
@@ -57,6 +59,8 @@ var defaultResourcesConfig = ResourcesConfig{
 	Jobs:                   true,
 	CronJobs:               true,
 	Secrets:                true,
+	Pods:                   true,
+	Containers:             true,
 }
 
 func (c *TopologyConfig) parse(data []byte) error {

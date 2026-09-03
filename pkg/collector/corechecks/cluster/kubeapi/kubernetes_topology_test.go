@@ -129,6 +129,8 @@ func TestConfigurationParsing(t *testing.T) {
 			Jobs:                   true,
 			CronJobs:               true,
 			Secrets:                true,
+			Pods:                   true,
+			Containers:             true,
 		},
 	}
 	testConfigParsed(t, "", defaultConfig)
@@ -149,6 +151,8 @@ resources:
   jobs: false
   cronjobs: false
   secrets: false
+  pods: false
+  containers: false
 `
 	expectedSimple := defaultConfig
 	expectedSimple.ClusterName = "mycluster"
