@@ -57,6 +57,7 @@ func TestContainerCollector(t *testing.T) {
 							"exitCode":     int32(123),
 							"tags": map[string]string{
 								"cluster-name":   "test-cluster-name",
+								"collector":      "agent",
 								"cluster-type":   "kubernetes",
 								"component-type": "kubernetes-container",
 								"namespace":      "namespace-1",
@@ -110,6 +111,7 @@ func TestContainerCollector(t *testing.T) {
 							"startTime":     startedAtTime,
 							"tags": map[string]string{
 								"cluster-name":   "test-cluster-name",
+								"collector":      "agent",
 								"cluster-type":   "kubernetes",
 								"component-type": "kubernetes-container",
 								"namespace":      "namespace-2",

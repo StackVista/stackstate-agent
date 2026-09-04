@@ -64,6 +64,7 @@ func TestJobCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-job",
 						"namespace":      "test-namespace",
@@ -81,6 +82,7 @@ func TestJobCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-job",
 						"namespace":      "test-namespace",
@@ -119,6 +121,7 @@ func TestJobCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-job",
 						"namespace":      "test-namespace",
@@ -186,6 +189,7 @@ func TestJobCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-job",
 						"namespace":      "test-namespace",
@@ -203,6 +207,7 @@ func TestJobCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-job",
 						"namespace":      "test-namespace",
@@ -238,6 +243,7 @@ func TestJobCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-job",
 						"namespace":      "test-namespace",
@@ -302,6 +308,7 @@ func TestJobCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-job",
 						"namespace":      "test-namespace",
@@ -320,6 +327,7 @@ func TestJobCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-job",
 						"namespace":      "test-namespace",
@@ -356,6 +364,7 @@ func TestJobCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-job",
 						"namespace":      "test-namespace",

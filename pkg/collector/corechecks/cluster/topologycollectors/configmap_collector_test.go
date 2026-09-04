@@ -58,6 +58,7 @@ func TestConfigMapCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector":      "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-configmap",
 						"namespace":      "test-namespace",
@@ -94,6 +95,7 @@ func TestConfigMapCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector":      "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-configmap",
 						"namespace":      "test-namespace"},
@@ -123,6 +125,7 @@ func TestConfigMapCollector(t *testing.T) {
 					"name": "test-configmap-3",
 					"tags": map[string]string{
 						"cluster-name":   "test-cluster-name",
+						"collector":      "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-configmap",
 						"namespace":      "test-namespace",
@@ -144,7 +147,7 @@ func TestConfigMapCollector(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(testCaseName(tc.testCase,), func(t *testing.T) {
+		t.Run(testCaseName(tc.testCase), func(t *testing.T) {
 			component := <-componentChannel
 			assert.EqualValues(t, tc.expectedKubeStatus, component)
 		})

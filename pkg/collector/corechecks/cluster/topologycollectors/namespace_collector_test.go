@@ -50,6 +50,7 @@ func TestNamespaceCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-namespace",
 					},
@@ -82,6 +83,7 @@ func TestNamespaceCollector(t *testing.T) {
 					"name": "test-namespace-2",
 					"tags": map[string]string{
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-namespace",
 					},

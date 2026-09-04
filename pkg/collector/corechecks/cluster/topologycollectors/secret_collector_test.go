@@ -51,6 +51,7 @@ func TestSecretCollector(t *testing.T) {
 							"tags": map[string]string{
 								"test":           "label",
 								"cluster-name":   "test-cluster-name",
+								"collector": "agent",
 								"cluster-type":   "kubernetes",
 								"component-type": "kubernetes-secret",
 								"namespace":      "test-namespace",
@@ -88,6 +89,7 @@ func TestSecretCollector(t *testing.T) {
 							"tags": map[string]string{
 								"test":           "label",
 								"cluster-name":   "test-cluster-name",
+								"collector": "agent",
 								"cluster-type":   "kubernetes",
 								"component-type": "kubernetes-secret",
 								"namespace":      "test-namespace",
@@ -124,6 +126,7 @@ func TestSecretCollector(t *testing.T) {
 							"name": "test-secret-3",
 							"tags": map[string]string{
 								"cluster-name":   "test-cluster-name",
+								"collector": "agent",
 								"cluster-type":   "kubernetes",
 								"component-type": "kubernetes-secret",
 								"namespace":      "test-namespace",
@@ -159,6 +162,7 @@ func TestSecretCollector(t *testing.T) {
 							"name": "test-secret-4",
 							"tags": map[string]string{
 								"cluster-name":   "test-cluster-name",
+								"collector": "agent",
 								"cluster-type":   "kubernetes",
 								"component-type": "kubernetes-secret",
 								"namespace":      "test-namespace",
@@ -196,6 +200,7 @@ func TestSecretCollector(t *testing.T) {
 							"name": "test-secret-5",
 							"tags": map[string]string{
 								"cluster-name":   "test-cluster-name",
+								"collector": "agent",
 								"cluster-type":   "kubernetes",
 								"component-type": "kubernetes-secret",
 								"namespace":      "test-namespace",

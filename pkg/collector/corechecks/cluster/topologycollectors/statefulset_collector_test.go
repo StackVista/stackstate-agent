@@ -58,6 +58,7 @@ func TestStatefulSetCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-statefulset",
 						"namespace":      "test-namespace",
@@ -113,6 +114,7 @@ func TestStatefulSetCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-statefulset",
 						"namespace":      "test-namespace",
@@ -168,6 +170,7 @@ func TestStatefulSetCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-statefulset",
 						"namespace":      "test-namespace",

@@ -195,6 +195,7 @@ func expectedPodComponent(pod coreV1.Pod) *topology.Component {
 			"name": pod.Name,
 			"tags": map[string]string{
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-pod",
 				"namespace":      pod.Namespace,
@@ -245,6 +246,7 @@ func expectedConfigMapComponent(cm coreV1.ConfigMap) *topology.Component {
 			"name": cm.Name,
 			"tags": map[string]string{
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-configmap",
 				"namespace":      cm.Namespace,
@@ -324,6 +326,7 @@ func expectedNodeComponent(n coreV1.Node, clusterName string) *topology.Componen
 			"sts_host":   hostname,
 			"tags": map[string]string{
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-node",
 			},
@@ -354,6 +357,7 @@ func expectedSecretComponent(s coreV1.Secret) *topology.Component {
 			"name": s.Name,
 			"tags": map[string]string{
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-secret",
 				"namespace":      s.Namespace,

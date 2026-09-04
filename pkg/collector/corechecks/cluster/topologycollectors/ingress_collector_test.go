@@ -181,6 +181,7 @@ func expectEndpointAmazon213() func(*testing.T, chan *topology.Component, chan *
 			"tags": map[string]string{
 				"test":           "label",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -211,6 +212,7 @@ func expectEndpointIP213() func(*testing.T, chan *topology.Component, chan *topo
 			"tags": map[string]string{
 				"test":           "label",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -263,6 +265,7 @@ func expectIngress213(creationTimeFormatted string) func(*testing.T, chan *topol
 				"tags": map[string]string{
 					"test":           "label",
 					"cluster-name":   "test-cluster-name",
+					"collector":      "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-ingress",
 					"namespace":      "test-namespace",
@@ -345,6 +348,7 @@ func expectEndpointAmazon212() func(*testing.T, chan *topology.Component, chan *
 			"tags": map[string]string{
 				"test":           "label",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -375,6 +379,7 @@ func expectEndpointIP212() func(*testing.T, chan *topology.Component, chan *topo
 			"tags": map[string]string{
 				"test":           "label",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -405,6 +410,7 @@ func expectIngress212(creationTimeFormatted string) func(*testing.T, chan *topol
 				"tags": map[string]string{
 					"test":           "label",
 					"cluster-name":   "test-cluster-name",
+					"collector":      "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-ingress",
 					"namespace":      "test-namespace",
@@ -467,6 +473,7 @@ func expectEndpointAmazon21() func(*testing.T, chan *topology.Component, chan *t
 			"tags": map[string]string{
 				"test":           "label",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -497,6 +504,7 @@ func expectEndpoint211() func(*testing.T, chan *topology.Component, chan *topolo
 			"tags": map[string]string{
 				"test":           "label",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -516,6 +524,7 @@ func expectIngress211(creationTimeFormatted string) func(*testing.T, chan *topol
 				"tags": map[string]string{
 					"test":           "label",
 					"cluster-name":   "test-cluster-name",
+					"collector":      "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-ingress",
 					"namespace":      "test-namespace",
@@ -573,6 +582,7 @@ func expectEndpointAmazon22() func(*testing.T, chan *topology.Component, chan *t
 			"tags": map[string]string{
 				"test":           "label22",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -603,6 +613,7 @@ func expectEndpointIP223() func(*testing.T, chan *topology.Component, chan *topo
 			"tags": map[string]string{
 				"test":           "label22",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -655,6 +666,7 @@ func expectIngress223(creationTimeFormatted string) func(*testing.T, chan *topol
 				"tags": map[string]string{
 					"test":           "label22",
 					"cluster-name":   "test-cluster-name",
+					"collector":      "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-ingress",
 					"namespace":      "test-namespace",
@@ -759,6 +771,7 @@ func expectEndpointIP222() func(*testing.T, chan *topology.Component, chan *topo
 			"tags": map[string]string{
 				"test":           "label22",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -789,6 +802,7 @@ func expectIngress222(creationTimeFormatted string) func(*testing.T, chan *topol
 				"tags": map[string]string{
 					"test":           "label22",
 					"cluster-name":   "test-cluster-name",
+					"collector":      "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-ingress",
 					"namespace":      "test-namespace",
@@ -863,6 +877,7 @@ func expectEndpointIP221() func(*testing.T, chan *topology.Component, chan *topo
 			"tags": map[string]string{
 				"test":           "label22",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
@@ -882,6 +897,7 @@ func expectIngress221(creationTimeFormatted string) func(*testing.T, chan *topol
 				"tags": map[string]string{
 					"test":           "label22",
 					"cluster-name":   "test-cluster-name",
+					"collector":      "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-ingress",
 					"namespace":      "test-namespace",
@@ -1185,6 +1201,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 							"tags": map[string]string{
 								"test":           "label",
 								"cluster-name":   "test-cluster-name",
+								"collector":      "agent",
 								"cluster-type":   "kubernetes",
 								"component-type": "kubernetes-ingress",
 								"namespace":      "test-namespace",
@@ -1235,6 +1252,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 						"tags": map[string]string{
 							"test":           "label",
 							"cluster-name":   "test-cluster-name",
+							"collector":      "agent",
 							"cluster-type":   "kubernetes",
 							"component-type": "kubernetes-endpoint",
 							"namespace":      "test-namespace",
@@ -1259,6 +1277,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 						"tags": map[string]string{
 							"test":           "label",
 							"cluster-name":   "test-cluster-name",
+							"collector":      "agent",
 							"cluster-type":   "kubernetes",
 							"component-type": "kubernetes-endpoint",
 							"namespace":      "test-namespace",

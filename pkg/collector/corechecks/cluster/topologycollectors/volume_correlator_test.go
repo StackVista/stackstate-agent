@@ -67,6 +67,7 @@ func TestVolumeCorrelator(t *testing.T) {
 				"name": pod1Name,
 				"tags": map[string]string{
 					"cluster-name":   "test-cluster-name",
+					"collector": "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-pod",
 					"namespace":      namespace,
@@ -135,6 +136,7 @@ func TestVolumeCorrelator(t *testing.T) {
 				"name": pod2Name,
 				"tags": map[string]string{
 					"cluster-name":   "test-cluster-name",
+					"collector": "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-pod",
 					"namespace":      namespace,
@@ -188,6 +190,7 @@ func TestVolumeCorrelator(t *testing.T) {
 				"name": pod3Name,
 				"tags": map[string]string{
 					"cluster-name":   "test-cluster-name",
+					"collector": "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-pod",
 					"namespace":      namespace,
@@ -253,6 +256,7 @@ func TestVolumeCorrelator(t *testing.T) {
 				"name": pod4Name,
 				"tags": map[string]string{
 					"cluster-name":   "test-cluster-name",
+					"collector": "agent",
 					"cluster-type":   "kubernetes",
 					"component-type": "kubernetes-pod",
 					"namespace":      namespace,
@@ -560,6 +564,7 @@ func volumeComponent(namespace, podName, volumeName, volumeType, someTimestampFo
 	volumeSource coreV1.VolumeSource) *topology.Component {
 	tags := map[string]string{
 		"cluster-name":   "test-cluster-name",
+		"collector": "agent",
 		"cluster-type":   "kubernetes",
 		"component-type": "kubernetes-volume",
 		"namespace":      namespace,

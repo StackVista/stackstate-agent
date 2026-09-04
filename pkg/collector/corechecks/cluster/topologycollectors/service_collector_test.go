@@ -90,6 +90,7 @@ func serviceCollectorTestCases(creationTimeFormatted string) []serviceCollectorT
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-service",
 						"namespace":      "test-namespace",
@@ -147,6 +148,7 @@ func serviceCollectorTestCases(creationTimeFormatted string) []serviceCollectorT
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector": "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-service",
 						"namespace":      "test-namespace",
@@ -223,6 +225,7 @@ func serviceCollectorTestCases(creationTimeFormatted string) []serviceCollectorT
 						"tags": map[string]string{
 							"test":           "label",
 							"cluster-name":   "test-cluster-name",
+							"collector": "agent",
 							"cluster-type":   "kubernetes",
 							"component-type": "kubernetes-service",
 							"namespace":      "test-namespace",
@@ -284,6 +287,7 @@ func serviceCollectorTestCases(creationTimeFormatted string) []serviceCollectorT
 						"tags": map[string]string{
 							"test":           "label",
 							"cluster-name":   "test-cluster-name",
+							"collector": "agent",
 							"cluster-type":   "kubernetes",
 							"component-type": "kubernetes-service",
 							"namespace":      "test-namespace",
@@ -347,6 +351,7 @@ func serviceCollectorTestCases(creationTimeFormatted string) []serviceCollectorT
 						"tags": map[string]string{
 							"test":           "label",
 							"cluster-name":   "test-cluster-name",
+							"collector": "agent",
 							"cluster-type":   "kubernetes",
 							"component-type": "kubernetes-service",
 							"namespace":      "test-namespace",
@@ -407,6 +412,7 @@ func serviceCollectorTestCases(creationTimeFormatted string) []serviceCollectorT
 						"tags": map[string]string{
 							"test":           "label",
 							"cluster-name":   "test-cluster-name",
+							"collector": "agent",
 							"cluster-type":   "kubernetes",
 							"component-type": "kubernetes-service",
 							"namespace":      "test-namespace",
@@ -466,6 +472,7 @@ func serviceCollectorTestCases(creationTimeFormatted string) []serviceCollectorT
 						"tags": map[string]string{
 							"test":           "label",
 							"cluster-name":   "test-cluster-name",
+							"collector": "agent",
 							"cluster-type":   "kubernetes",
 							"component-type": "kubernetes-service",
 							"namespace":      "test-namespace",
@@ -509,6 +516,7 @@ func serviceCollectorTestCases(creationTimeFormatted string) []serviceCollectorT
 						"tags": map[string]string{
 							"test":           "label",
 							"cluster-name":   "test-cluster-name",
+							"collector": "agent",
 							"cluster-type":   "kubernetes",
 							"component-type": "kubernetes-externalservice",
 							"namespace":      "test-namespace",
