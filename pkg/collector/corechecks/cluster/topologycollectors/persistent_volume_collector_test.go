@@ -90,6 +90,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolume",
 									"namespace":      "test-namespace",
@@ -132,6 +133,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-volumesource",
 									"namespace":      "test-namespace",
@@ -182,6 +184,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"name":        "aws-elastic-block-store-volume-claim",
 								"tags": map[string]string{
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolumeclaim",
 									"namespace":      "test-namespace",
@@ -258,6 +261,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolume",
 									"namespace":      "test-namespace",
@@ -299,6 +303,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-volumesource",
 									"namespace":      "test-namespace",
@@ -348,6 +353,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"name":        "gce-persistent-disk-volume-claim",
 								"tags": map[string]string{
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolumeclaim",
 									"namespace":      "test-namespace",
@@ -425,6 +431,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolume",
 									"namespace":      "test-namespace",
@@ -469,6 +476,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"name":        "host-path-volume-claim",
 								"tags": map[string]string{
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolumeclaim",
 									"namespace":      "test-namespace",
@@ -545,6 +553,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolume",
 									"namespace":      "test-namespace",
@@ -595,6 +604,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-volumesource",
 									"namespace":      "test-namespace",
@@ -659,6 +669,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								"name":        "trident-csi-storage-volume-claim",
 								"tags": map[string]string{
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolumeclaim",
 									"namespace":      "test-namespace",
@@ -776,6 +787,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolume",
 									"namespace":      "test-namespace",
@@ -830,6 +842,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 								"name":        "trident-csi-storage-volume-claim",
 								"tags": map[string]string{
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolumeclaim",
 									"namespace":      "test-namespace",
@@ -946,6 +959,7 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 								"tags": map[string]string{
 									"test":                   "label",
 									"cluster-name":           "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":           "kubernetes",
 									"component-type":         "kubernetes-persistentvolume",
 									"namespace":              "test-namespace",
@@ -989,6 +1003,7 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-volumesource",
 									"namespace":      "test-namespace",
@@ -1039,6 +1054,7 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 								"name":        "aws-elastic-block-store-volume-claim",
 								"tags": map[string]string{
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-persistentvolumeclaim",
 									"namespace":      "test-namespace",

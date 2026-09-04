@@ -82,6 +82,7 @@ func TestPodCollector(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-pod",
 									"namespace":      "test-namespace"},
@@ -132,6 +133,7 @@ func TestPodCollector(t *testing.T) {
 								"tags": map[string]string{
 									"test":            "label",
 									"cluster-name":    "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":    "kubernetes",
 									"component-type":  "kubernetes-pod",
 									"namespace":       "test-namespace",
@@ -192,6 +194,7 @@ func TestPodCollector(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-pod",
 									"namespace":      "test-namespace",
@@ -308,6 +311,7 @@ func TestPodCollector(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-pod",
 									"namespace":      "test-namespace",
@@ -387,6 +391,7 @@ func TestPodCollector(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-pod",
 									"namespace":      "test-namespace",
@@ -475,6 +480,7 @@ func TestPodCollector(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-pod",
 									"namespace":      "test-namespace",
@@ -563,6 +569,7 @@ func TestPodCollector(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-pod",
 									"namespace":      "test-namespace",
@@ -625,6 +632,7 @@ func TestPodCollector(t *testing.T) {
 							Labels: map[string]string{
 								"test":           "label",
 								"cluster-name":   "test-cluster-name",
+								"collector": "agent",
 								"cluster-type":   "kubernetes",
 								"component-type": "kubernetes-pod",
 								"namespace":      "test-namespace",
@@ -663,6 +671,7 @@ func TestPodCollector(t *testing.T) {
 								"tags": map[string]string{
 									"test":           "label",
 									"cluster-name":   "test-cluster-name",
+									"collector": "agent",
 									"cluster-type":   "kubernetes",
 									"component-type": "kubernetes-pod",
 									"namespace":      "test-namespace",

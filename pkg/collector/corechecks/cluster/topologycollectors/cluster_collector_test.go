@@ -36,6 +36,7 @@ func TestClusterCollector(t *testing.T) {
 					"name": "test-cluster-name",
 					"tags": map[string]string{
 						"cluster-name":   "test-cluster-name",
+						"collector":      "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-cluster",
 					}},

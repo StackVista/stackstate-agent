@@ -322,6 +322,8 @@ func (c *clusterTopologyCommon) initTags(meta metav1.ObjectMeta, tpe metav1.Type
 
 	tags["component-type"] = fmt.Sprintf("%s-%s", string(c.ClusterType), strings.ToLower(tpe.Kind))
 
+	tags["collector"] = "agent"
+
 	return tags
 }
 

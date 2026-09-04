@@ -126,6 +126,7 @@ func cronJobV1B1SPPlusStatus2() *topology.Component {
 			"tags": map[string]string{
 				"test":           "label",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-cronjob",
 				"namespace":      "test-namespace",
@@ -183,6 +184,7 @@ func cronJobV1B1SPPlusStatus1() *topology.Component {
 			"tags": map[string]string{
 				"test":           "label",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-cronjob",
 				"namespace":      "test-namespace",
@@ -241,6 +243,7 @@ func cronJobV1SPPlusStatus() *topology.Component {
 			"tags": map[string]string{
 				"test":           "label",
 				"cluster-name":   "test-cluster-name",
+				"collector":      "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-cronjob",
 				"namespace":      "test-namespace",

@@ -89,6 +89,7 @@ func expectedServiceComponent(svc coreV1.Service) *topology.Component {
 			"name": svc.Name,
 			"tags": map[string]string{
 				"cluster-name":   clusterName,
+				"collector": "agent",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-service",
 				"namespace":      svc.Namespace,
@@ -108,6 +109,7 @@ func expectedPodComponentWithLabels(pod coreV1.Pod, labels map[string]string) *t
 	externalID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, pod.Namespace, pod.Name)
 	tags := map[string]string{
 		"cluster-name":   clusterName,
+		"collector": "agent",
 		"cluster-type":   "kubernetes",
 		"component-type": "kubernetes-pod",
 		"namespace":      pod.Namespace,

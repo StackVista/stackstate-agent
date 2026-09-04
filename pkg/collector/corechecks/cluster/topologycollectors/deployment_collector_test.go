@@ -60,6 +60,7 @@ func TestDeploymentCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector":      "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-deployment",
 						"namespace":      "test-namespace",
@@ -124,6 +125,7 @@ func TestDeploymentCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector":      "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-deployment",
 						"namespace":      "test-namespace",
@@ -186,6 +188,7 @@ func TestDeploymentCollector(t *testing.T) {
 					"tags": map[string]string{
 						"test":           "label",
 						"cluster-name":   "test-cluster-name",
+						"collector":      "agent",
 						"cluster-type":   "kubernetes",
 						"component-type": "kubernetes-deployment",
 						"namespace":      "test-namespace",

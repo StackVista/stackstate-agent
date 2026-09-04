@@ -60,6 +60,7 @@ func TestNodeCollector(t *testing.T) {
 									"tags": map[string]string{
 										"test":           "label",
 										"cluster-name":   "test-cluster-name",
+										"collector": "agent",
 										"cluster-type":   "kubernetes",
 										"component-type": "kubernetes-node",
 										"namespace":      "test-namespace",
@@ -149,6 +150,7 @@ func TestNodeCollector(t *testing.T) {
 									"tags": map[string]string{
 										"test":           "label",
 										"cluster-name":   "test-cluster-name",
+										"collector": "agent",
 										"cluster-type":   "kubernetes",
 										"component-type": "kubernetes-node",
 										"namespace":      "test-namespace",
@@ -244,6 +246,7 @@ func TestNodeCollector(t *testing.T) {
 									"tags": map[string]string{
 										"test":           "label",
 										"cluster-name":   "test-cluster-name",
+										"collector": "agent",
 										"cluster-type":   "kubernetes",
 										"component-type": "kubernetes-node",
 										"namespace":      "test-namespace",
