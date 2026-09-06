@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/trace
 
-go 1.25.0
+go 1.26.0
 
 // NOTE: Prefer using simple `require` directives instead of using `replace` if possible.
 // See https://github.com/DataDog/datadog-agent/blob/main/docs/dev/gomodreplace.md
@@ -38,7 +38,7 @@ require (
 	go.uber.org/atomic v1.11.0
 	golang.org/x/sys v0.47.0
 	golang.org/x/time v0.15.0
-	google.golang.org/grpc v1.82.1
+	google.golang.org/grpc v1.83.1
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/ini.v1 v1.67.1
 	k8s.io/apimachinery v0.35.3
