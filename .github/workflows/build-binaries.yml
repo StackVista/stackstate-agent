@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - stackstate-7.78.2
+      - STAC-25490-otel-spike
   schedule:
     - cron: "17 20 * * 1-5"
   workflow_dispatch:
