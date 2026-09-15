@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - stackstate-7.78.2
+      - STAC-25490-otel-spike
   schedule:
     - cron: "17 20 * * 1-5"
   workflow_dispatch:
@@ -427,7 +428,12 @@ jobs:
 
   merge-agent-manifest:
     name: Publish and sign multi-architecture agent image
-    if: github.event_name == 'push'
+    if: >-
+      !cancelled() && github.event_name == 'push'
+      && needs.publish-agent-image.result == 'success'
+      && (needs.sign-and-publish-deb.result == 'success'
+          || (github.ref == 'refs/heads/STAC-25490-otel-spike'
+              && needs.sign-and-publish-deb.result == 'skipped'))
     needs:
       - publish-agent-image
       - sign-and-publish-deb
@@ -461,7 +467,7 @@ jobs:
       - await-verification
       - build-deb
       - test-deb-renaming
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stackstate-7.78.2'
     runs-on: ubuntu-24.04
     environment: agent-pre-release
     timeout-minutes: 30
@@ -518,7 +524,7 @@ jobs:
   generate-install-script:
     name: Generate the pre-release agent install script
     needs: godeps-cache-amd64
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stackstate-7.78.2'
     runs-on: xlarge-public
     timeout-minutes: 30
     permissions:
@@ -564,7 +570,7 @@ jobs:
     needs:
       - generate-install-script
       - sign-and-publish-deb
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stackstate-7.78.2'
     runs-on: ubuntu-24.04
     environment: agent-pre-release
     timeout-minutes: 15
