@@ -157,11 +157,6 @@ jobs:
           # built-in that is unset here); pass the checkout root explicitly.
           ./fix_branding.sh "${GITHUB_WORKSPACE}"
 
-          # GOMODCACHE is pre-warmed by the godeps-cache image (STAC-25429), keyed
-          # to the module-graph hash, so there is no `go clean -modcache` and no
-          # per-job `inv deps` (go mod download + tidy) reconcile. Materialise
-          # vendor/ for this checkout against the warm cache (offline; no download).
-          # omnibus.build is handed this vendor/ as its --go-mod-cache below.
           go work sync
           go work vendor
           # version.txt is consumed by the packaging/image phases. deps_deb produced
@@ -179,7 +174,7 @@ jobs:
           inv -e omnibus.build \
             --gem-path "${GITHUB_WORKSPACE}/.gems" \
             --base-dir "${OMNIBUS_BASE_DIR}" \
-            --go-mod-cache "${GITHUB_WORKSPACE}/vendor" \
+            --go-mod-cache "$(go env GOMODCACHE)" \
             --skip-deps \
             --skip-sign \
             --install-directory /opt/stackstate-agent
