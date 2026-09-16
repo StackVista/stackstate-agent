@@ -229,7 +229,7 @@ jobs:
           # puts that directory on PATH so CMD can exec `stackstate-cluster-agent`
           # by name. Flattening it to a bare binary breaks the image.
           cp -r bin/stackstate-cluster-agent Dockerfiles/cluster-agent/
-          docker build -t "${LOCAL_IMAGE}" Dockerfiles/cluster-agent
+          docker build --pull -t "${LOCAL_IMAGE}" Dockerfiles/cluster-agent
 
       - name: Smoke test cluster-agent image
         run: |

@@ -56,6 +56,8 @@ its Ruby recipes, but does not track the Bazel dependency manifests and overlays
 The stage must invoke Bazel on every package build so Bazel can validate its own
 cache against those inputs. After a native dependency update, verify the version
 inside the resulting DEB or image, including when Omnibus restores a warm cache.
+Image builds using mutable base tags must pull those tags before building so
+cached base images do not hide distribution security updates.
 
 ### Shared libraries → `install` + `replace_prefix`
 

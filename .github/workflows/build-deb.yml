@@ -313,7 +313,7 @@ jobs:
           cp "${debs[0]}" Dockerfiles/agent/
           # publish_image.sh also passes --build-arg S6_ARCH; the agent Dockerfile
           # declares no such ARG, so it is dropped here rather than kept as a warning.
-          docker build --build-arg ARCH="${ARCH}" -t "${LOCAL_IMAGE}" Dockerfiles/agent
+          docker build --pull --build-arg ARCH="${ARCH}" -t "${LOCAL_IMAGE}" Dockerfiles/agent
 
       - name: Smoke test agent image
         run: |
