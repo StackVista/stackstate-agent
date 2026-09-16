@@ -49,6 +49,14 @@ Also pass `flavor_flag` (`--//packages/agent:flavor=fips` or heroku) where upstr
 
 ## Core patterns
 
+### Cache ownership
+
+Keep `always_build true` in `datadog-agent-dependencies.rb`. Omnibus fingerprints
+its Ruby recipes, but does not track the Bazel dependency manifests and overlays.
+The stage must invoke Bazel on every package build so Bazel can validate its own
+cache against those inputs. After a native dependency update, verify the version
+inside the resulting DEB or image, including when Omnibus restores a warm cache.
+
 ### Shared libraries → `install` + `replace_prefix`
 
 **Do not** ship Bazel-built `.so` files only via `//packages/agent/dependencies:install` / `pkg_filegroup all_files` if they need to live under `/opt/stackstate-agent/embedded/lib` with embedded RPATH. That failed omnibus health check (C2 pipeline 2619669055): `DT_NEEDED` pointed at system `/lib` for `libz` / `liblzma`.
