@@ -21,8 +21,6 @@ package(
     default_visibility = ["@@//packages:__subpackages__"],
 )
 
-VERSION = "8.18.0"
-
 SO_VERSION = "4.8.0"
 
 license(
@@ -32,8 +30,6 @@ license(
     license_text = "COPYING",
     visibility = ["//visibility:public"],
 )
-
-SONAME = "libcurl.so.%s" % VERSION
 
 PUBLIC_HEADERS = [
     "include/curl/curl.h",
@@ -66,7 +62,11 @@ LOCAL_DEFINES = [
     "SM4_ASM",
     "VPAES_ASM",
     "VPSM4_ASM",
-]
+] + select({
+    # Match configure.ac: glibc extension prototypes require this feature macro.
+    "@platforms//os:linux": ["_GNU_SOURCE"],
+    "//conditions:default": [],
+})
 
 copy_file(
     name = "copy_config_h",

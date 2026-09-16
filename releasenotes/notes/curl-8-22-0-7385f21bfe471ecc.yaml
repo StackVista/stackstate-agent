@@ -1,0 +1,4 @@
+---
+security:
+  - |
+    Update embedded curl to 8.22.0.
