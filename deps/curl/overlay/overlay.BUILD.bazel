@@ -62,7 +62,11 @@ LOCAL_DEFINES = [
     "SM4_ASM",
     "VPAES_ASM",
     "VPSM4_ASM",
-]
+] + select({
+    # Match configure.ac: glibc extension prototypes require this feature macro.
+    "@platforms//os:linux": ["_GNU_SOURCE"],
+    "//conditions:default": [],
+})
 
 copy_file(
     name = "copy_config_h",
