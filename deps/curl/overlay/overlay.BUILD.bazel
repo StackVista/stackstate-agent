@@ -21,8 +21,6 @@ package(
     default_visibility = ["@@//packages:__subpackages__"],
 )
 
-VERSION = "8.18.0"
-
 SO_VERSION = "4.8.0"
 
 license(
@@ -32,8 +30,6 @@ license(
     license_text = "COPYING",
     visibility = ["//visibility:public"],
 )
-
-SONAME = "libcurl.so.%s" % VERSION
 
 PUBLIC_HEADERS = [
     "include/curl/curl.h",
