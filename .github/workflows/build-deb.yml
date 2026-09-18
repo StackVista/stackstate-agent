@@ -327,6 +327,8 @@ jobs:
 
       - name: Scan agent image, report-only (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
         uses: StackVista/image-pipeline/.github/actions/scan-image@ab8ac3d608530ee0a295483c973d720230174348
+        env:
+          GRYPE_NAME: stackstate-k8s-agent
         with:
           image: ${{ env.LOCAL_IMAGE }}
           mode: inform
