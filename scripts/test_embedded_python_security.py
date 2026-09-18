@@ -3,6 +3,7 @@
 import hashlib
 import io
 import poplib
+import stringprep
 import sys
 import tarfile
 import tempfile
@@ -51,6 +52,18 @@ class EmbeddedPythonSecurityTests(unittest.TestCase):
                 self.assertEqual((destination / "sub/file").read_bytes(), content)
                 self.assertFalse((Path(root) / "outside").exists())
 
+    def test_idna_uses_unicode_3_2_case_folding(self):
+        cases = (
+            ("\N{CHEROKEE LETTER A}\N{CHEROKEE LETTER A}", b"xn--58da"),
+            ("\N{GEORGIAN CAPITAL LETTER AN}.", b"xn--7md."),
+            ("\N{CYRILLIC LETTER PALOCHKA}.example", b"xn--d5a.example"),
+            ("\N{ROMAN NUMERAL REVERSED ONE HUNDRED}.example.", b"xn--q5g.example."),
+        )
+        for name, encoded in cases:
+            with self.subTest(name=name):
+                self.assertEqual(name.encode("idna"), encoded)
+        self.assertEqual("example.invalid".encode("idna"), b"example.invalid")
+
     def test_pop3_rejects_control_characters_before_sending(self):
         client = poplib.POP3.__new__(poplib.POP3)
         client._debugging = 0
@@ -67,7 +80,7 @@ class EmbeddedPythonSecurityTests(unittest.TestCase):
 
 if __name__ == "__main__":
     print(f"Embedded interpreter: {sys.executable}; version: {sys.version}", flush=True)
-    for module in (urllib.request, tarfile, poplib):
+    for module in (urllib.request, tarfile, poplib, stringprep):
         source = Path(module.__file__)
         print(f"{module.__name__}: {source}; sha256={hashlib.sha256(source.read_bytes()).hexdigest()}", flush=True)
     unittest.main(verbosity=2)
