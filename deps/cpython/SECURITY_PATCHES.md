@@ -5,6 +5,10 @@ upstream fixes during the source build on every supported platform. The version
 string stays 3.13.15; version-only vulnerability scanners can still report these
 CVEs. These patches do not change VEX or exception decisions.
 
+The Omnibus `python3` recipe uses `always_build true`: Omnibus does not fingerprint
+Bazel patch inputs, so Bazel must validate its own cache even when the Python
+version stays unchanged.
+
 | CVE | Upstream source | Local adaptation |
 | --- | --- | --- |
 | CVE-2026-15806 | [3.13 commit a2773a34](https://github.com/python/cpython/commit/a2773a34183b7d94a243bb98fd658926cc5348ce) | None |
