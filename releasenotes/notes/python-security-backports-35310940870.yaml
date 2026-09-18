@@ -1,0 +1,5 @@
+---
+security:
+  - |
+    Backport CVE-2026-17084 to embedded Python 3.13.15 so IDNA string
+    preparation uses the Unicode 3.2 case-folding rules required by RFC 3454.

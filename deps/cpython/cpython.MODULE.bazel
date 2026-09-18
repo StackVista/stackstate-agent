@@ -12,6 +12,7 @@ http_archive(
     patches = [
         "//deps/cpython:0001-customize-windows-build-script.patch",
         "//deps/cpython:0002-Set-the-install-name-to-use-rpath-instead-of-absolut.patch",
+        "//deps/cpython:0006-CVE-2026-17084-stringprep-unicode.patch",
     ],
     sha256 = "c28d9d213c09b5b5ab2c29812950e12f746999e099b82894231be954b26baed9",
     strip_prefix = "Python-{}".format(PYTHON_VERSION),
