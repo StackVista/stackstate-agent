@@ -1,0 +1,8 @@
+---
+security:
+  - |
+    Backport Python fixes for CVE-2026-15806, CVE-2026-19672 and CVE-2025-15367.
+    HTTP authentication credentials are scoped by URL scheme, tar extraction
+    filters avoid creating directories outside the destination, and POP3
+    commands reject control characters. The embedded Python version remains
+    3.13.15 with these source patches applied.

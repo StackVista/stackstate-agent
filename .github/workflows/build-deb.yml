@@ -320,6 +320,11 @@ jobs:
           set -eo pipefail
           docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
 
+      - name: Verify embedded Python security fixes
+        run: |
+          set -eo pipefail
+          docker run --rm -i --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${LOCAL_IMAGE}" - < scripts/test_embedded_python_security.py
+
       - name: Scan agent image, report-only (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
         uses: StackVista/image-pipeline/.github/actions/scan-image@ab8ac3d608530ee0a295483c973d720230174348
         with:
