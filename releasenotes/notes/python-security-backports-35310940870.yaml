@@ -1,11 +1,5 @@
 ---
 security:
   - |
-    Backport Python fixes for CVE-2026-15806, CVE-2026-19672, CVE-2025-15367,
-    CVE-2026-17084, CVE-2026-15310 and CVE-2026-87910.
-    HTTP authentication credentials are scoped by URL scheme, tar extraction
-    filters avoid creating directories outside the destination, and POP3
-    commands reject control characters. IDNA string preparation uses the
-    Unicode 3.2 case-folding rules required by RFC 3454. The Python version remains
-    3.13.15 with these source patches applied. ZIP reads bound decompression
-    memory, and tar link fallbacks honor extraction-filter rejections.
+    Backport CVE-2026-17084 to embedded Python 3.13.15 so IDNA string
+    preparation uses the Unicode 3.2 case-folding rules required by RFC 3454.
