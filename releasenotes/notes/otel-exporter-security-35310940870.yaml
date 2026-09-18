@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Update the OpenTelemetry trace SDK and exporters to 1.45.0 to prevent
+    exporter endpoints appearing in verbose internal diagnostics
+    (CVE-2026-81870). Update the OTLP log gRPC exporter to 0.21.0 so configured
+    environment CA and client certificate settings are applied to TLS
+    connections (CVE-2026-81871).
