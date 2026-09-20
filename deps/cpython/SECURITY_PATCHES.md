@@ -1,5 +1,15 @@
 # Embedded CPython security patch
 
+CVE-2026-82049 is fixed by the unchanged upstream Python 3.13 backport
+[b8f23e30](https://github.com/python/cpython/commit/b8f23e307097552eaea2604383a12ab280520d0d).
+It resolves hard-link targets before creating links, preventing relocation of
+a relative symbolic link from bypassing the `data` and `tar` extraction filters.
+The patch includes the upstream regression and NEWS entry. Package CI adapts
+that regression to the installed interpreter on native AMD64 and ARM64, covering
+both filters and the packaged `build.safe_extractall` wrapper, including unchanged
+outside-file contents and metadata. Remove this patch once a Python release
+containing the fix is adopted; retain the packaged regression.
+
 CVE-2026-17084 is fixed by the unchanged upstream Python 3.13 backport
 [c28b121a](https://github.com/python/cpython/commit/c28b121a4f0b975937c8b5a1b4934bb361d84296).
 It corrects StringPrep's Unicode tables used by the shipped IDNA call paths.
