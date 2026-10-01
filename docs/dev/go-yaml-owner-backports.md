@@ -88,3 +88,12 @@ the retained third_party trees from root BUILD generation. Original owner identi
 and explicit replacements remain unchanged. Package qualification must use fresh
 CI, including the Omnibus `@openssl//:install` analysis that previously failed on
 the stale module-extension import; a mirror warning alone is not that failure.
+
+Bazel 8.6.0 qualification: the supported five-step generation sequence passes;
+no BUILD rules or registered Go manifests drift. Gazelle reports three inherited
+missing dyninst fixture patterns (rc_tester.json, rc_tester_v1.json, decoded),
+without failing generation. `bazel mod show_repo` confirms all four logical owner
+identities select the linked local sources, and maintained parser repositories
+select v2.4.4/v3.0.5. `bazel build --nobuild @openssl//:install` passes analysis
+(5851 configured targets); this is not a compiled package or image qualification.
+The generated lockfile only refreshes SDK facts to the already selected Go 1.26.6.
