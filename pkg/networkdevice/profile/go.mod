@@ -206,3 +206,5 @@ replace (
 )
 
 replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+
+replace github.com/wk8/go-ordered-map/v2 => ../../../third_party/go-ordered-map

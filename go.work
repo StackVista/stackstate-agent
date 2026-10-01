@@ -6,6 +6,10 @@ godebug tlsmlkem=0
 
 use (
 	.
+	./third_party/go-cfclient
+	./third_party/go-ordered-map
+	./third_party/goflow2
+	./third_party/opa
 	comp/api/api/def
 	comp/core/agenttelemetry/def
 	comp/core/agenttelemetry/fx

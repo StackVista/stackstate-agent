@@ -1278,8 +1278,8 @@ replace k8s.io/kube-state-metrics/v2 v2.13.1-0.20241025121156-110f03d7331f => gi
 // among with the Connect, Bind and Accept requests
 replace github.com/iceber/iouring-go => github.com/lebauce/iouring-go v0.0.0-20250513121434-2d4fb49003b5
 
-// Fork to remove some text/template usage, https://github.com/DataDog/opa/tree/lightweight-1.7.1
-replace github.com/open-policy-agent/opa => github.com/DataDog/opa v0.0.0-20251126100856-d2e1e78e0816
+// Preserve Datadog lightweight OPA patches; see third_party/opa/PROVENANCE.md.
+replace github.com/open-policy-agent/opa => ./third_party/opa
 
 // TODO: Remove this replace once v0.148.0 is released
 
@@ -1463,3 +1463,9 @@ replace (
 	github.com/DataDog/datadog-agent/test/new-e2e => ./test/new-e2e
 	github.com/DataDog/datadog-agent/test/otel => ./test/otel
 )
+
+replace github.com/netsampler/goflow2 => ./third_party/goflow2
+
+replace github.com/wk8/go-ordered-map/v2 => ./third_party/go-ordered-map
+
+replace github.com/cloudfoundry-community/go-cfclient/v2 => ./third_party/go-cfclient
