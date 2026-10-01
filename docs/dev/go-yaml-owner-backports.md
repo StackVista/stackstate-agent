@@ -56,11 +56,15 @@ reproduces on the previous candidate. Compliance fixture file-mode assertions
 require a process-local umask that permits the requested fixture permissions.
 Run the normal module consistency and native/CI build checks as well.
 
-Known packaging blocker: both candidate DEB jobs and baseline run 36773106564
-fail the cacerts checksum check before package compilation (expected
-`f66dff1bdf8f96060b8177976f8b7d9254bc89bc4db933d769f7384d28480bc9`, received
-`a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505`). Preserve
-that supply-chain check; its owning packaging fix and image qualification remain.
+The original candidate and baseline run 36773106564 failed the cacerts checksum
+check before package compilation: mutable `https://curl.se/ca/cacert.pem` returned
+September 25 bytes against the older pinned checksum. The recipe now pins
+`https://curl.se/ca/cacert-2026-09-25.pem`, independently verified against curl's
+published `cacert-2026-09-25.pem.sha256` and CA-extract publication. SHA256:
+`a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505`
+(188900 bytes, 121 certificates). Target filename, installed trust paths, modes
+and checksum enforcement are preserved. Fresh package/image CI qualification
+remains necessary; repairing the source prerequisite does not establish adoption.
 A local agent build needs systemd development headers or the documented systemd
 exclusion. Inherited Windows API failures and the bundled-events timeout were
 qualified separately in the original handoff.
