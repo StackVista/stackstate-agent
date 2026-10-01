@@ -27,8 +27,8 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/sergi/go-diff v1.4.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.9.1
-	github.com/spf13/pflag v1.0.7
+	github.com/spf13/cobra v1.10.2
+	github.com/spf13/pflag v1.0.9
 	github.com/spf13/viper v1.20.1
 	github.com/tchap/go-patricia/v2 v2.3.3
 	github.com/vektah/gqlparser/v2 v2.5.30

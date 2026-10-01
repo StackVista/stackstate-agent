@@ -10,19 +10,14 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4
 )
 
-require gopkg.in/yaml.v3 v3.0.1 // indirect
-
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually

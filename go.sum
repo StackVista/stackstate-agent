@@ -2594,8 +2594,6 @@ github.com/DataDog/netlink v1.0.1-0.20240223195320-c7a4f832a3d1 h1:HnvrdC79xJ+RP
 github.com/DataDog/netlink v1.0.1-0.20240223195320-c7a4f832a3d1/go.mod h1:whJevzBpTrid75eZy99s3DqCmy05NfibNaF2Ol5Ox5A=
 github.com/DataDog/nikos v1.12.12 h1:72YrdzMeQT3wcXIDgiS1ClU53SzUdR7uAbp5FSSpo5k=
 github.com/DataDog/nikos v1.12.12/go.mod h1:kZGOhfE76+nXS7V5PAlIw3MRxWKM70ynET4VeuZ4U4k=
-github.com/DataDog/opa v0.0.0-20251126100856-d2e1e78e0816 h1:8diKw2aLYE6LsjWfYxDEqx0ZmcyMMmqB+qapRJrGtys=
-github.com/DataDog/opa v0.0.0-20251126100856-d2e1e78e0816/go.mod h1:7cPuErOAt7k/oVWAVJnxqAC6mwArrAazkvk0RXiih2A=
 github.com/DataDog/opentelemetry-ebpf-profiler v0.0.0-20260317195537-817b91eb7dd4 h1:9+K8vjF7sQSLjVJporNyv6nw46cMg/Q8ogxbBZmrf+A=
 github.com/DataDog/opentelemetry-ebpf-profiler v0.0.0-20260317195537-817b91eb7dd4/go.mod h1:KEBv+q78RzBcDPNFm1WB0V0za14gY95E/Atp3dJZ/8M=
 github.com/DataDog/rshell v0.0.9 h1:HS38O5aVK43ctHkTFm5RGTZA1JCP5oDxcD5O97NnoSc=
@@ -3012,8 +3010,6 @@ github.com/cloudflare/circl v1.6.3 h1:9GPOhQGF9MCYUeXyMYlqTR6a5gTrgR/fBLXvUgtVcg
 github.com/cloudflare/circl v1.6.3/go.mod h1:2eXP6Qfat4O/Yhh8BznvKnJ+uzEoTQ6jVKJRn81BiS4=
 github.com/cloudfoundry-community/go-cfclient v0.0.0-20220930021109-9c4e6c59ccf1 h1:ef0OsiQjSQggHrLFAMDRiu6DfkVSElA5jfG1/Nkyu6c=
 github.com/cloudfoundry-community/go-cfclient v0.0.0-20220930021109-9c4e6c59ccf1/go.mod h1:sgaEj3tRn0hwe7GPdEUwxrdOqjBzyjyvyOCGf1OQyZY=
-github.com/cloudfoundry-community/go-cfclient/v2 v2.0.1-0.20230503155151-3d15366c5820 h1:ixkQUDJYG6eSxgUEl6LLE2l2TD2C5AYmlm+fVhsr6Zs=
-github.com/cloudfoundry-community/go-cfclient/v2 v2.0.1-0.20230503155151-3d15366c5820/go.mod h1:hB1MLDqhbVF09FbBLrU430kDZZPAO9lVck00xhljoqU=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cncf/udpa/go v0.0.0-20200629203442-efcf912fb354/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
 github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
@@ -3702,9 +3698,8 @@ github.com/gophercloud/gophercloud v0.1.0 h1:P/nh25+rzXouhytV2pUHBb65fnds26Ghl8/
 github.com/gophercloud/gophercloud v0.1.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
 github.com/gophercloud/gophercloud/v2 v2.11.1 h1:jCs4vLH8sJgRqrPzqVfWgl7uI6JnIIlsgeIRM0uHjxY=
 github.com/gophercloud/gophercloud/v2 v2.11.1/go.mod h1:Rm0YvKQ4QYX2rY9XaDKnjRzSGwlG5ge4h6ABYnmkKQM=
+github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 h1:EGx4pi6eqNxGaHF6qqu48+N2wcFQ5qg5FXgOdqsJ5d8=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
-github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 h1:l5lAOZEym3oK3SQ2HBHWsJUfbNBiTXJDeW2QDxw9AQ0=
-github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gorilla/handlers v1.5.2 h1:cLTUSsNkgcwhgRqvCNmdbRWG0A3N4F+M2nWKdScwyEE=
 github.com/gorilla/handlers v1.5.2/go.mod h1:dX+xVpaxdSw+q0Qek8SSsl3dfMk3jNddUkMzo0GtH0w=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
@@ -4463,8 +4458,6 @@ github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+
 github.com/ncruces/go-strftime v0.1.9 h1:bY0MQC28UADQmHmaF5dgpLmImcShSi2kHU9XLdhx/f4=
 github.com/ncruces/go-strftime v0.1.9/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls=
 github.com/ncw/swift v1.0.30/go.mod h1:23YIA4yWVnGwv2dQlN4bB7egfYX6YLn0Yo/S6zZO/ZM=
-github.com/netsampler/goflow2 v1.3.3 h1:uheCMgWwbaHnVdsvc2bqbdQe93E73pVF77WGu/kPE7U=
-github.com/netsampler/goflow2 v1.3.3/go.mod h1:mUjr4ERDTtNUAVtf2EomWHmr6Xvz2N9DahhFkhNnFkQ=
 github.com/neurosnap/sentences v1.0.6 h1:iBVUivNtlwGkYsJblWV8GGVFmXzZzak907Ci8aA0VTE=
 github.com/neurosnap/sentences v1.0.6/go.mod h1:pg1IapvYpWCJJm/Etxeh0+gtMf1rI1STY9S7eUCPbDc=
 github.com/nexus-rpc/sdk-go v0.5.1 h1:UFYYfoHlQc+Pn9gQpmn9QE7xluewAn2AO1OSkAh7YFU=
@@ -4946,9 +4939,8 @@ github.com/skeema/knownhosts v1.3.1 h1:X2osQ+RAjK76shCbvhHHHVl3ZlgDm8apHEHFqRjnB
 github.com/skeema/knownhosts v1.3.1/go.mod h1:r7KTdC8l4uxWRyK2TpQZ/1o5HaSzh06ePQNxPwTcfiY=
 github.com/skydive-project/go-debouncer v1.0.1 h1:N75Mdusd65Jjbc7k5t2oo+7qLIdMtSNJKssmpEYuSgo=
 github.com/skydive-project/go-debouncer v1.0.1/go.mod h1:7pK+5HBlYCD8W2cXhvMRsMsdWelDEPfpbE6PwSlDX68=
+github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d h1:zE9ykElWQ6/NYmHa3jpm/yHnI4xSofP+UP6SpjHcSeM=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
-github.com/smartystreets/assertions v1.1.0 h1:MkTeG1DMwsrdH7QtLXy5W+fUxWq+vmb6cLmyJ7aRtF0=
-github.com/smartystreets/assertions v1.1.0/go.mod h1:tcbTF8ujkAEcZ8TElKY+i30BzYlVhC/LOxJk7iOWnoo=
 github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a h1:pa8hGb/2YqsZKovtsgrwcDH1RZhVbTKCjLp47XpqCDs=
 github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
 github.com/smira/commander v0.0.0-20140515201010-f408b00e68d5/go.mod h1:XTQy55hw5s3pxmC42m7X0/b+9naXQ1rGN9Of6BGIZmU=
@@ -5164,8 +5156,6 @@ github.com/wI2L/jsondiff v0.7.0 h1:1lH1G37GhBPqCfp/lrs91rf/2j3DktX6qYAKZkLuCQQ=
 github.com/wI2L/jsondiff v0.7.0/go.mod h1:KAEIojdQq66oJiHhDyQez2x+sRit0vIzC9KeK0yizxM=
 github.com/weppos/publicsuffix-go v0.50.3 h1:eT5dcjHQcVDNc0igpFEsGHKIip30feuB2zuuI9eJxiE=
 github.com/weppos/publicsuffix-go v0.50.3/go.mod h1:/rOa781xBykZhHK/I3QeHo92qdDKVmKZKF7s8qAEM/4=
-github.com/wk8/go-ordered-map/v2 v2.1.8 h1:5h/BUHu93oj4gIdvHHHGsScSTMijfx5PeYkE/fJgbpc=
-github.com/wk8/go-ordered-map/v2 v2.1.8/go.mod h1:5nJHM5DyteebpVlHnWMV0rPz6Zp7+xBAnxjb1X5vnTw=
 github.com/wsxiaoys/terminal v0.0.0-20160513160801-0940f3fc43a0 h1:3UeQBvD0TFrlVjOeLOBz+CPAI8dnbqNSVwUwRrkp7vQ=
 github.com/wsxiaoys/terminal v0.0.0-20160513160801-0940f3fc43a0/go.mod h1:IXCdmsXIht47RaVFLEdVnh1t+pgYtTAhQGj73kz+2DM=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
