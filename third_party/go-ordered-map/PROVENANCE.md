@@ -16,3 +16,15 @@ lightweight OPA patch release) with maintained YAML and passing consumer tests,
 then remove this source and its explicit root/workspace/consumer selections.
 Dependency replacements do not propagate: external consumers must explicitly
 select this independently addressable nested module as well.
+
+Long upstream fixture/document paths are stored byte-for-byte in
+`LONG_PATHS.tar.gz` with `LONG_PATHS.sha256` verification, preserving the agent's
+Windows checkout path limit without weakening its filename gate. Before running
+all upstream fixtures, restore them from this module directory with:
+
+```sh
+tar -xzf LONG_PATHS.tar.gz
+sha256sum -c LONG_PATHS.sha256
+```
+
+These are fixture/docs assets, not Go source or embedded production resources.

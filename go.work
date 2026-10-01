@@ -6,10 +6,6 @@ godebug tlsmlkem=0
 
 use (
 	.
-	./third_party/go-cfclient
-	./third_party/go-ordered-map
-	./third_party/goflow2
-	./third_party/opa
 	comp/api/api/def
 	comp/core/agenttelemetry/def
 	comp/core/agenttelemetry/fx
@@ -198,3 +194,11 @@ use (
 )
 
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.311.4-0.20260507094802-91c184a899b8
+
+replace github.com/netsampler/goflow2 => ./third_party/goflow2
+
+replace github.com/wk8/go-ordered-map/v2 => ./third_party/go-ordered-map
+
+replace github.com/cloudfoundry-community/go-cfclient/v2 => ./third_party/go-cfclient
+
+replace github.com/open-policy-agent/opa => ./third_party/opa
