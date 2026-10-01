@@ -34,6 +34,9 @@ def _filter_lines(rctx):
         return False
 
     in_use_block, lines, symlinks = 0, [], set()
+    # Local owner replacements resolve relative to this filtered workspace.
+    if any(["./third_party/" in line for line in go_work]):
+        symlinks.add("third_party")
     for line in go_work:
         stripped = line.strip()
         if stripped == "use (":

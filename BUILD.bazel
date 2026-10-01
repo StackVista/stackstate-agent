@@ -12,6 +12,7 @@ package(default_visibility = ["//visibility:public"])
 # gazelle:exclude comp
 # gazelle:exclude internal/remote-agent
 # gazelle:exclude internal/third_party
+# gazelle:exclude third_party
 # gazelle:exclude internal/tools/gotest-custom
 # gazelle:exclude internal/tools/independent-lint
 # gazelle:exclude internal/tools/modformatter

@@ -79,3 +79,12 @@ OPA patch release) selects maintained YAML and passes the same consumer fixtures
 Approved release rebuilds still require both architectures, artifact provenance,
 image/secret/VEX checks and downstream chart/GitOps adoption. A source PR or local
 binary does not establish that adoption.
+
+Bazel metadata follows `tasks/go.py:_bazel_tidy`: prune imports, sync/tidy
+registered modules, reconcile imports, then infer BUILD rules. The initial
+`bazel mod tidy` removes stale ghodss and old YAML imports and selects ordered-map.
+The filtered Bazel workspace links the local owner sources, while Gazelle excludes
+the retained third_party trees from root BUILD generation. Original owner identities
+and explicit replacements remain unchanged. Package qualification must use fresh
+CI, including the Omnibus `@openssl//:install` analysis that previously failed on
+the stale module-extension import; a mirror warning alone is not that failure.
