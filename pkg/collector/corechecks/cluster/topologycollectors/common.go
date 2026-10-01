@@ -79,7 +79,7 @@ type clusterTopologyCommon struct {
 	possibleRelations             []*topology.Relation
 	k8sVersion                    *version.Info
 	useRelationCache              bool
-	relationCacheWG               sync.WaitGroup
+	relationCacheMu               sync.Mutex
 }
 
 // NewClusterTopologyCommon creates a clusterTopologyCommon
@@ -101,7 +101,6 @@ func NewClusterTopologyCommon(
 		relationChan:                  relationChan,
 		k8sVersion:                    k8sVersion,
 		useRelationCache:              true,
-		relationCacheWG:               sync.WaitGroup{},
 	}
 }
 
@@ -121,9 +120,9 @@ func (c *clusterTopologyCommon) SubmitRelation(relation *topology.Relation) {
 		if sourceExists && targetExists {
 			c.relationChan <- relation
 		} else {
-			c.relationCacheWG.Add(1)
+			c.relationCacheMu.Lock()
 			c.possibleRelations = append(c.possibleRelations, relation)
-			c.relationCacheWG.Done()
+			c.relationCacheMu.Unlock()
 		}
 	} else {
 		c.relationChan <- relation
@@ -131,8 +130,10 @@ func (c *clusterTopologyCommon) SubmitRelation(relation *topology.Relation) {
 }
 
 func (c *clusterTopologyCommon) CorrelateRelations() {
-	c.relationCacheWG.Add(1)
-	for _, relation := range c.possibleRelations {
+	c.relationCacheMu.Lock()
+	possibleRelations := c.possibleRelations
+	c.relationCacheMu.Unlock()
+	for _, relation := range possibleRelations {
 		_, sourceExists := c.componentIDCache.Load(relation.SourceID)
 		_, targetExists := c.componentIDCache.Load(relation.TargetID)
 		if sourceExists && targetExists {
@@ -145,7 +146,6 @@ func (c *clusterTopologyCommon) CorrelateRelations() {
 			}
 		}
 	}
-	c.relationCacheWG.Done()
 }
 
 // SetUseRelationCache sets if the relation cache should be used or not
