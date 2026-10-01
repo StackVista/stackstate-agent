@@ -110,11 +110,11 @@ func testConfigParsed(t *testing.T, input string, expected TopologyConfig) {
 func TestConfigurationParsing(t *testing.T) {
 	defaultConfig := TopologyConfig{
 		// for empty config something is coming from global configuration
-		ClusterName:             pkgconfigsetup.Datadog().GetString("cluster_name"),
-		CollectTopology:         pkgconfigsetup.Datadog().GetBool("collect_kubernetes_topology"),
-		CollectTimeout:          pkgconfigsetup.Datadog().GetInt("collect_kubernetes_timeout"),
-		ConfigMapMaxDataSize:    DefaultConfigMapDataSizeLimit,
-		CSIPVMapperEnabled:      pkgconfigsetup.Datadog().GetBool("kubernetes_csi_pv_mapper_enabled"),
+		ClusterName:          pkgconfigsetup.Datadog().GetString("cluster_name"),
+		CollectTopology:      pkgconfigsetup.Datadog().GetBool("collect_kubernetes_topology"),
+		CollectTimeout:       pkgconfigsetup.Datadog().GetInt("collect_kubernetes_timeout"),
+		ConfigMapMaxDataSize: DefaultConfigMapDataSizeLimit,
+		CSIPVMapperEnabled:   pkgconfigsetup.Datadog().GetBool("kubernetes_csi_pv_mapper_enabled"),
 		Resources: ResourcesConfig{
 			Persistentvolumes:      true,
 			Persistentvolumeclaims: true,
@@ -154,6 +154,29 @@ resources:
 	expectedSimple.ClusterName = "mycluster"
 	expectedSimple.Resources = ResourcesConfig{}
 	testConfigParsed(t, allResourcesAreDisabledConfig, expectedSimple)
+
+	aliasedResourcesConfig := `
+resource_defaults: &resource_defaults
+  configmaps: no
+  secrets: false
+cluster_name: |-
+  mycluster
+collect_topology: yes
+collect_timeout: 0x2a
+configmap_max_datasize: null
+resources:
+  <<: *resource_defaults
+  namespaces: false
+`
+	expectedAliased := defaultConfig
+	expectedAliased.ClusterName = "mycluster"
+	expectedAliased.CollectTopology = true
+	expectedAliased.CollectTimeout = 42
+	expectedAliased.ConfigMapMaxDataSize = 0
+	expectedAliased.Resources.ConfigMaps = false
+	expectedAliased.Resources.Secrets = false
+	expectedAliased.Resources.Namespaces = false
+	testConfigParsed(t, aliasedResourcesConfig, expectedAliased)
 }
 
 func TestRunClusterCollectors(t *testing.T) {

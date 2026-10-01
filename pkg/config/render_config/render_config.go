@@ -223,7 +223,7 @@ func lint(destFile string) error {
 	normalized = bytes.TrimSpace(normalized)
 
 	// [sts] Collapse runs of blank lines on both sides before comparing. The
-	// gopkg.in/yaml.v3 encoder is non-idempotent around bare null keys (e.g.
+	// go.yaml.in/yaml/v3 encoder is non-idempotent around bare null keys (e.g.
 	// `api_key:` followed by a blank line and a `## @param` block) — it
 	// arbitrarily adds or removes the blank line depending on what follows in
 	// the file, even though the YAML node tree is identical. The lint's
@@ -252,7 +252,7 @@ func lint(destFile string) error {
 }
 
 // collapseBlankLines drops every blank-only line so the lint comparison ignores
-// cosmetic whitespace shuffling that the gopkg.in/yaml.v3 encoder introduces
+// cosmetic whitespace shuffling that the go.yaml.in/yaml/v3 encoder introduces
 // around null-value scalar nodes (e.g. it arbitrarily adds or removes the
 // single blank line between `api_key:` and a following `## @param` block,
 // even when the YAML node tree is identical). Blank lines in YAML carry no

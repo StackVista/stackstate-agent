@@ -16,17 +16,17 @@ The StackState Agent is a monitoring and observability agent forked from Datadog
 ## Common Development Commands
 
 ### Initial Setup
+
+Install the `dda` development CLI following [the setup guide](docs/public/setup/required.md). It manages the Python environment used by Invoke tasks.
+
 ```bash
-# 1. Install Python dependencies (use virtual environment recommended)
-pip install -r requirements.txt
+# 1. Install Go tools
+dda inv install-tools
 
-# 2. Install Go tools
-invoke install-tools
+# 2. Install Go dependencies
+dda inv deps
 
-# 3. Install Go dependencies
-invoke deps
-
-# 4. Create dev configuration (stackstate.yaml, not datadog.yaml)
+# 3. Create dev configuration (stackstate.yaml, not datadog.yaml)
 echo "api_key: <API_KEY>" > dev/dist/stackstate.yaml
 ```
 
@@ -64,7 +64,7 @@ invoke test --targets=./pkg/collector/python
 ### Linting
 ```bash
 # Run Go linters (do this before committing)
-invoke lint-go
+dda inv linter.go
 
 # Run linters on specific module/targets
 invoke linter.go --targets=./pkg/collector/check,./pkg/aggregator

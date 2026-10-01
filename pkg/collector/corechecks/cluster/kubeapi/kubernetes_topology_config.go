@@ -8,7 +8,7 @@ import (
 	pkgconfigsetup "github.com/DataDog/datadog-agent/pkg/config/setup"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-receiver-go-client/pkg/model/topology"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v2"
 )
 
 const (
@@ -17,14 +17,14 @@ const (
 
 // TopologyConfig is the config of the API server.
 type TopologyConfig struct {
-	ClusterName             string          `yaml:"cluster_name"`
-	CollectTopology         bool            `yaml:"collect_topology"`
-	CollectTimeout          int             `yaml:"collect_timeout"`
-	ConfigMapMaxDataSize    int             `yaml:"configmap_max_datasize"`
-	CSIPVMapperEnabled      bool            `yaml:"csi_pv_mapper_enabled"`
-	Resources               ResourcesConfig `yaml:"resources"`
-	CheckID                 checkid.ID
-	Instance                topology.Instance
+	ClusterName          string          `yaml:"cluster_name"`
+	CollectTopology      bool            `yaml:"collect_topology"`
+	CollectTimeout       int             `yaml:"collect_timeout"`
+	ConfigMapMaxDataSize int             `yaml:"configmap_max_datasize"`
+	CSIPVMapperEnabled   bool            `yaml:"csi_pv_mapper_enabled"`
+	Resources            ResourcesConfig `yaml:"resources"`
+	CheckID              checkid.ID
+	Instance             topology.Instance
 }
 
 type ResourcesConfig struct {

@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	extensionsPkg "github.com/DataDog/datadog-agent/pkg/fleet/installer/packages/extensions"
 )
@@ -84,6 +84,33 @@ installer:
 
 	assert.Equal(t, "default.registry.com", config.Installer.Registry.URL)
 	assert.Nil(t, config.Installer.Registry.Extensions)
+}
+
+func TestParseRegistryConfigAliases(t *testing.T) {
+	configContent := `
+registry_defaults: &registry_defaults
+  url: registry.example.com
+  auth: password
+  username: null
+  password: |-
+    first line
+    second line
+installer:
+  registry:
+    <<: *registry_defaults
+    extensions:
+      datadog-agent:
+        ddot: *registry_defaults
+`
+	var config datadogAgentConfig
+	require.NoError(t, yaml.Unmarshal([]byte(configContent), &config))
+	registry := config.Installer.Registry
+	assert.Equal(t, "registry.example.com", registry.URL)
+	assert.Empty(t, registry.Username)
+	assert.Equal(t, "first line\nsecond line", registry.Password)
+	require.Contains(t, registry.Extensions[agentPackage], "ddot")
+	assert.Equal(t, registry.URL, registry.Extensions[agentPackage]["ddot"].URL)
+	assert.Equal(t, registry.Password, registry.Extensions[agentPackage]["ddot"].Password)
 }
 
 func TestInstallDDOTExtensionIfEnabled_Disabled(t *testing.T) {
