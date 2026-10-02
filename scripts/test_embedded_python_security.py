@@ -1,4 +1,4 @@
-"""Check security backports using the packaged Python interpreter."""
+"""Check security fixes using the packaged Python interpreter and dependencies."""
 
 import hashlib
 import io
@@ -10,10 +10,23 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import jwt
 from build._compat.tarfile import safe_extractall
 
 
 class EmbeddedPythonSecurityTests(unittest.TestCase):
+    def test_jwt_options_reuse_preserves_claim_verification(self):
+        # CVE-2026-103001: an unsigned inspection must not mutate reusable
+        # options and disable expiry checking on a later verified decode.
+        secret = 'embedded-python-security-test-key'
+        token = jwt.encode({'exp': 1}, secret, algorithm='HS256')
+        options = {'verify_signature': False}
+        self.assertEqual(jwt.decode(token, options=options), {'exp': 1})
+        self.assertEqual(options, {'verify_signature': False})
+        options['verify_signature'] = True
+        with self.assertRaises(jwt.ExpiredSignatureError):
+            jwt.decode(token, secret, algorithms=['HS256'], options=options)
+
     def test_idna_uses_unicode_3_2_case_folding(self):
         cases = (
             ("\N{CHEROKEE LETTER A}\N{CHEROKEE LETTER A}", b"xn--58da"),
