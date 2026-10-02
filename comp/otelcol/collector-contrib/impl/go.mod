@@ -392,6 +392,7 @@ require (
 	github.com/prometheus/prometheus v0.311.3 // indirect
 	github.com/prometheus/sigv4 v0.4.1 // indirect
 	github.com/richardartoul/molecule v1.0.1-0.20240531184615-7ca0df43c0b3 // indirect
+	github.com/rogpeppe/go-internal v1.15.0 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36 // indirect
