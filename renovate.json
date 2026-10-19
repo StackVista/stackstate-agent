@@ -1,10 +1,25 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "enabledManagers": ["custom.regex", "pre-commit", "github-actions", "dockerfile", "docker-compose"],
+    "extends": [
+      "github>StackVista/renovate-config",
+      "github>StackVista/renovate-config:go",
+      "github>StackVista/renovate-config:docker",
+      "github>StackVista/renovate-config:automerge"
+    ],
+    "enabledManagers": ["custom.regex", "gomod", "pre-commit", "github-actions", "dockerfile", "docker-compose"],
     "labels": ["dependencies", "changelog/no-changelog", "qa/no-code-change"],
     "stopUpdatingLabel": "stop-updating",
     "platformCommit": "enabled",
     "packageRules": [
+      {
+        "matchDatasources": ["golang-version"],
+        "matchUpdateTypes": ["patch"],
+        "groupName": "Go build environment",
+        "groupSlug": "go-build-environment",
+        "automerge": true,
+        "minimumReleaseAge": null,
+        "rebaseWhen": "behind-base-branch"
+      },
       {
         "matchDepNames": ["integrations-core"],
         "changelogUrl": "https://github.com/DataDog/integrations-core/compare/{{currentDigest}}..{{newDigest}}",
@@ -59,6 +74,16 @@
       "managerFilePatterns": [".pre-commit-config.yaml"]
     },
     "customManagers" : [
+      {
+        "customType": "regex",
+        "managerFilePatterns": ["/^\\.go-version$/", "/^go\\.work$/"],
+        "matchStrings": [
+          "(?:^|\\n)(?:go\\s+)?(?<currentValue>\\d+\\.\\d+\\.\\d+)(?:\\s|$)"
+        ],
+        "depNameTemplate": "go",
+        "depTypeTemplate": "toolchain",
+        "datasourceTemplate": "golang-version"
+      },
       {
         "customType": "regex",
         "managerFilePatterns": [".gitlab-ci.yml"],

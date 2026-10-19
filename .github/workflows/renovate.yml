@@ -1,0 +1,22 @@
+name: Renovate
+
+on:
+  schedule:
+    - cron: "0 1,8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  renovate:
+    uses: StackVista/renovate-config/.github/workflows/renovate.yml@f390d2bef95ac180f581d8263b288ded387c085c # main
+    with:
+      docker_registry_1: quay.io
+      docker_registry_1_username: ${{ vars.QUAY_USER }}
+      docker_registry_2: registry.tooling.stackstate.io
+      docker_registry_2_username: ${{ vars.REGISTRY_USER }}
+    secrets:
+      RENOVATE_GH_APP_PRIVATE_KEY: ${{ secrets.RENOVATE_GH_APP_PRIVATE_KEY }}
+      DOCKER_REGISTRY_1_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+      DOCKER_REGISTRY_2_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

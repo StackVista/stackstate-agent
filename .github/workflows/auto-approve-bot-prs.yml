@@ -1,0 +1,26 @@
+name: Renovate Auto-Approve
+
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: renovate-auto-approve
+
+jobs:
+  approve:
+    if: github.ref == 'refs/heads/stackstate-7.78.2' && vars.RENOVATE_APPROVAL_GH_APP_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Approve verified Renovate PRs
+        uses: StackVista/renovate-config/.github/actions/auto-approve-renovate@f390d2bef95ac180f581d8263b288ded387c085c # main
+        with:
+          app-client-id: ${{ vars.RENOVATE_APPROVAL_GH_APP_CLIENT_ID }}
+          app-private-key: ${{ secrets.RENOVATE_APPROVAL_GH_APP_PRIVATE_KEY }}
