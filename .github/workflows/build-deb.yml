@@ -29,7 +29,7 @@ jobs:
   godeps-cache-amd64:
     name: Go dependency cache image (amd64)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    uses: ./.github/workflows/godeps-cache.yml
+    uses: $/.github/workflows/godeps-cache.yml
     with:
       arch: amd64
       build_delay_seconds: 0
@@ -40,7 +40,7 @@ jobs:
   godeps-cache-arm64:
     name: Go dependency cache image (arm64)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    uses: ./.github/workflows/godeps-cache.yml
+    uses: $/.github/workflows/godeps-cache.yml
     with:
       arch: arm64
       build_delay_seconds: 900
@@ -343,7 +343,7 @@ jobs:
     if: github.event_name == 'push'
     permissions:
       checks: read
-    uses: ./.github/workflows/await-checks.yml
+    uses: $/.github/workflows/await-checks.yml
     with:
       checks: CI success (lint and unit tests)
 
@@ -613,7 +613,7 @@ jobs:
       always()
       && (github.event_name == 'push' || github.event_name == 'schedule')
       && contains(needs.*.result, 'failure')
-    uses: ./.github/workflows/cerberus-notify.yml
+    uses: $/.github/workflows/cerberus-notify.yml
     with:
       suite: deb-package
     secrets:

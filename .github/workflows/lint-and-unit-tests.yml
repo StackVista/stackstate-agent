@@ -26,7 +26,7 @@ jobs:
   godeps-cache:
     name: Go dependency cache image (amd64)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    uses: ./.github/workflows/godeps-cache.yml
+    uses: $/.github/workflows/godeps-cache.yml
     with:
       arch: amd64
       build_delay_seconds: 900
@@ -74,14 +74,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Audit workflows and composite actions
+      - name: Audit workflows, composite actions, and Dependabot
         env:
           GH_TOKEN: ${{ github.token }}
           # renovate: datasource=pypi depName=zizmor
-          ZIZMOR_VERSION: 1.29.0
+          ZIZMOR_VERSION: 1.31.1
         run: |
           set -euo pipefail
-          pipx run --spec "zizmor==${ZIZMOR_VERSION}" zizmor --collect=workflows,actions .
+          pipx run --spec "zizmor==${ZIZMOR_VERSION}" zizmor --strict-collection --collect=workflows,actions,dependabot .
 
   mod-tidy:
     name: Go module tidiness (go.mod / go.sum)
@@ -228,7 +228,7 @@ jobs:
       always()
       && github.event_name == 'push'
       && contains(needs.*.result, 'failure')
-    uses: ./.github/workflows/cerberus-notify.yml
+    uses: $/.github/workflows/cerberus-notify.yml
     with:
       suite: lint-and-unit-tests
     secrets:
