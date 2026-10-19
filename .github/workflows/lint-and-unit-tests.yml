@@ -75,13 +75,12 @@ jobs:
           persist-credentials: false
 
       - name: Audit workflows, composite actions, and Dependabot
-        env:
-          GH_TOKEN: ${{ github.token }}
-          # renovate: datasource=pypi depName=zizmor
-          ZIZMOR_VERSION: 1.31.1
-        run: |
-          set -euo pipefail
-          pipx run --spec "zizmor==${ZIZMOR_VERSION}" zizmor --strict-collection --collect=workflows,actions,dependabot .
+        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+        with:
+          advanced-security: false
+          version: 1.31.1
+          inputs: .
+          collect: workflows,actions,dependabot
 
   mod-tidy:
     name: Go module tidiness (go.mod / go.sum)
