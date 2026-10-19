@@ -20,7 +20,7 @@ jobs:
       pull-requests: read
     steps:
       - name: Approve verified Renovate PRs
-        uses: StackVista/renovate-config/.github/actions/auto-approve-renovate@f390d2bef95ac180f581d8263b288ded387c085c # main
+        uses: StackVista/renovate-config/.github/actions/auto-approve-renovate@c5f974f5b7b1951c12daaa63b607d9eecc2574d3 # main
         with:
           app-client-id: ${{ vars.RENOVATE_APPROVAL_GH_APP_CLIENT_ID }}
           app-private-key: ${{ secrets.RENOVATE_APPROVAL_GH_APP_PRIVATE_KEY }}
