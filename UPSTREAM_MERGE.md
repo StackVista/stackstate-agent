@@ -360,6 +360,7 @@ Upstream Datadog merges can silently drop StackState-specific code blocks (usual
 - **StackState-owned — never delete:** everything under `.github/workflows/`, `.github/scripts/`, `.github/docker/`, plus `.github/deb-s3-gems.sha256`. Check with `git log --oneline -- <path>` if a file's origin is unclear: ours carry `STAC-` commit prefixes.
 - **Why:** the GitLab→GitHub mirror that motivated the original blanket deletion is retired, and GitHub is now the canonical remote and the only pipeline.
 - **Symptom if missed:** deleting the tree takes the agent pipeline with it; leaving Datadog's files in place runs their workflows on our runners.
+- **Default-branch rename:** update the `jobs.approve.if` branch guard in `.github/workflows/auto-approve-bot-prs.yml` when switching the GitHub default branch.
 
 ### Tagger: `kube_cluster_name` on all pod tags
 - **File:** `comp/core/tagger/collectors/workloadmeta_extract.go` (old path: `pkg/tagger/collectors/workloadmeta_extract.go`)
