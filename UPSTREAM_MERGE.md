@@ -6,6 +6,8 @@ This document covers the periodic task of merging upstream Datadog Agent changes
 
 The StackState Agent is a fork of the Datadog Agent. Periodically, upstream Datadog releases are merged into the fork to pick up new features, bug fixes, and dependency updates. This is a large, intensive task that touches most of the codebase.
 
+Upstream merges supply routine major and minor dependency upgrades. Preserve the fork's `renovate.json` rules: major updates are disabled, routine Go module minors are disabled, and security fixes requiring minor updates can automerge after required checks pass.
+
 **Fork structure:**
 - Main branch is named `stackstate-<DD-version>` after the DD version it tracks (e.g., `stackstate-7.71.2`).
 - Each merge produces a new main branch; the previous one is left in place as historical reference.

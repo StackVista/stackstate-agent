@@ -1,7 +1,7 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
-      "github>StackVista/renovate-config",
+      "github>StackVista/renovate-config#f5d8a69a238645b13ddedc25457daced35834d98",
       "github>StackVista/renovate-config:go",
       "github>StackVista/renovate-config:docker",
       "github>StackVista/renovate-config:automerge"
@@ -67,6 +67,26 @@
         "matchManagers": ["docker-compose"],
         "matchFileNames": ["**/testdata/**", "**/fixtures/**", "**/testfixtures/**", "pkg/collector/corechecks/oracle/compose/**"],
         "enabled": false
+      },
+      {
+        "matchUpdateTypes": ["major"],
+        "enabled": false
+      },
+      {
+        "matchManagers": ["gomod"],
+        "matchDepTypes": ["require", "indirect", "replace"],
+        "matchUpdateTypes": ["minor"],
+        "matchJsonata": ["$not(isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion))"],
+        "enabled": false
+      },
+      {
+        "matchManagers": ["gomod"],
+        "matchDepTypes": ["require", "indirect", "replace"],
+        "matchUpdateTypes": ["minor"],
+        "matchJsonata": ["isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion)"],
+        "enabled": true,
+        "automerge": true,
+        "rebaseWhen": "behind-base-branch"
       }
     ],
     "pre-commit": {
