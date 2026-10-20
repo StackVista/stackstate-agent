@@ -1,7 +1,7 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
-      "github>StackVista/renovate-config#f5d8a69a238645b13ddedc25457daced35834d98",
+      "github>StackVista/renovate-config",
       "github>StackVista/renovate-config:go",
       "github>StackVista/renovate-config:docker",
       "github>StackVista/renovate-config:automerge"
@@ -70,6 +70,7 @@
       },
       {
         "matchUpdateTypes": ["major"],
+        "matchJsonata": ["$not(isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion))"],
         "enabled": false
       },
       {
@@ -97,7 +98,23 @@
           "linux-images",
           "windows-images"
         ],
+        "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest", "lockFileMaintenance", "rollback", "replacement"],
+        "matchJsonata": ["$not(isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion))"],
         "enabled": false
+      },
+      {
+        "matchDepNames": [
+          "/datadog/i",
+          "github.com/StackVista/sketches-go",
+          "integrations-core",
+          "omnibus-ruby",
+          "linux-images",
+          "windows-images"
+        ],
+        "matchJsonata": ["isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion)"],
+        "enabled": true,
+        "automerge": false,
+        "rebaseWhen": "conflicted"
       }
     ],
     "pre-commit": {
