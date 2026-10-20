@@ -1,10 +1,25 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "enabledManagers": ["custom.regex", "pre-commit", "github-actions", "dockerfile", "docker-compose"],
+    "extends": [
+      "github>StackVista/renovate-config#c308265fc9a7ee7aecaf1590383094214045049a",
+      "github>StackVista/renovate-config:go#c308265fc9a7ee7aecaf1590383094214045049a",
+      "github>StackVista/renovate-config:docker#c308265fc9a7ee7aecaf1590383094214045049a",
+      "github>StackVista/renovate-config:automerge#c308265fc9a7ee7aecaf1590383094214045049a"
+    ],
+    "enabledManagers": ["custom.regex", "gomod", "pre-commit", "github-actions", "dockerfile", "docker-compose"],
     "labels": ["dependencies", "changelog/no-changelog", "qa/no-code-change"],
     "stopUpdatingLabel": "stop-updating",
     "platformCommit": "enabled",
     "packageRules": [
+      {
+        "matchDatasources": ["golang-version"],
+        "matchUpdateTypes": ["patch"],
+        "groupName": "Go build environment",
+        "groupSlug": "go-build-environment",
+        "automerge": true,
+        "minimumReleaseAge": null,
+        "rebaseWhen": "behind-base-branch"
+      },
       {
         "matchDepNames": ["integrations-core"],
         "changelogUrl": "https://github.com/DataDog/integrations-core/compare/{{currentDigest}}..{{newDigest}}",
@@ -52,6 +67,37 @@
         "matchManagers": ["docker-compose"],
         "matchFileNames": ["**/testdata/**", "**/fixtures/**", "**/testfixtures/**", "pkg/collector/corechecks/oracle/compose/**"],
         "enabled": false
+      },
+      {
+        "matchUpdateTypes": ["major"],
+        "enabled": false
+      },
+      {
+        "matchManagers": ["gomod"],
+        "matchDepTypes": ["require", "indirect", "replace"],
+        "matchUpdateTypes": ["minor"],
+        "matchJsonata": ["$not(isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion))"],
+        "enabled": false
+      },
+      {
+        "matchManagers": ["gomod"],
+        "matchDepTypes": ["require", "indirect", "replace"],
+        "matchUpdateTypes": ["minor"],
+        "matchJsonata": ["isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion)"],
+        "enabled": true,
+        "automerge": true,
+        "rebaseWhen": "behind-base-branch"
+      },
+      {
+        "matchDepNames": [
+          "/datadog/i",
+          "github.com/StackVista/sketches-go",
+          "integrations-core",
+          "omnibus-ruby",
+          "linux-images",
+          "windows-images"
+        ],
+        "enabled": false
       }
     ],
     "pre-commit": {
@@ -59,6 +105,16 @@
       "managerFilePatterns": [".pre-commit-config.yaml"]
     },
     "customManagers" : [
+      {
+        "customType": "regex",
+        "managerFilePatterns": ["/^\\.go-version$/", "/^go\\.work$/"],
+        "matchStrings": [
+          "(?:^|\\n)(?:go\\s+)?(?<currentValue>\\d+\\.\\d+\\.\\d+)(?:\\s|$)"
+        ],
+        "depNameTemplate": "go",
+        "depTypeTemplate": "toolchain",
+        "datasourceTemplate": "golang-version"
+      },
       {
         "customType": "regex",
         "managerFilePatterns": [".gitlab-ci.yml"],

@@ -23,11 +23,12 @@ repos:
     hooks:
       - id: end-of-file-fixer
         files: release.json
-- repo: https://github.com/rhysd/actionlint
-  rev: v1.7.11
+- repo: https://github.com/zizmorcore/zizmor-pre-commit
+  rev: c92afdf2c6ca336aaa8f39e2bd8d48f62dbd8e1f # v1.31.1
   hooks:
-    - id: actionlint
-      args: [ "-ignore", "shellcheck" ]
+    - id: zizmor
+      args: [ "--strict-collection" ]
+      files: ^\.github/workflows/.*\.ya?ml$
 - repo: local
   hooks:
     - id: protected-branches
