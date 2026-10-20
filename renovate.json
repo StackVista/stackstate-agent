@@ -87,6 +87,17 @@
         "enabled": true,
         "automerge": true,
         "rebaseWhen": "behind-base-branch"
+      },
+      {
+        "matchDepNames": [
+          "/(^|[/.])datadog(hq)?([/._-]|$)/i",
+          "github.com/StackVista/sketches-go",
+          "integrations-core",
+          "omnibus-ruby",
+          "linux-images",
+          "windows-images"
+        ],
+        "enabled": false
       }
     ],
     "pre-commit": {

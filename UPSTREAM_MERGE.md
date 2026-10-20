@@ -8,6 +8,8 @@ The StackState Agent is a fork of the Datadog Agent. Periodically, upstream Data
 
 Upstream merges supply routine major and minor dependency upgrades. Preserve the fork's `renovate.json` rules: major updates are disabled, routine Go module minors are disabled, and security fixes requiring minor updates can automerge after required checks pass.
 
+Renovate excludes Datadog dependencies, including their forks and build images, even for security fixes. Updatecli owns their controlled updates.
+
 **Fork structure:**
 - Main branch is named `stackstate-<DD-version>` after the DD version it tracks (e.g., `stackstate-7.71.2`).
 - Each merge produces a new main branch; the previous one is left in place as historical reference.
