@@ -2,9 +2,9 @@
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
       "github>StackVista/renovate-config#c308265fc9a7ee7aecaf1590383094214045049a",
-      "github>StackVista/renovate-config:go",
-      "github>StackVista/renovate-config:docker",
-      "github>StackVista/renovate-config:automerge"
+      "github>StackVista/renovate-config:go#c308265fc9a7ee7aecaf1590383094214045049a",
+      "github>StackVista/renovate-config:docker#c308265fc9a7ee7aecaf1590383094214045049a",
+      "github>StackVista/renovate-config:automerge#c308265fc9a7ee7aecaf1590383094214045049a"
     ],
     "enabledManagers": ["custom.regex", "gomod", "pre-commit", "github-actions", "dockerfile", "docker-compose"],
     "labels": ["dependencies", "changelog/no-changelog", "qa/no-code-change"],
