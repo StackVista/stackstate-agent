@@ -90,7 +90,7 @@
       },
       {
         "matchDepNames": [
-          "/(^|[/.])datadog(hq)?([/._-]|$)/i",
+          "/datadog/i",
           "github.com/StackVista/sketches-go",
           "integrations-core",
           "omnibus-ruby",
