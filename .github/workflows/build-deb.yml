@@ -410,7 +410,7 @@ jobs:
           description: Node agent collecting metrics, logs, traces and topology for SUSE Observability.
           component: stackstate-k8s-agent
           dockerfile: Dockerfiles/agent/Dockerfile
-          base-name: registry.suse.com/bci/bci-micro:latest
+          base-name: registry.suse.com/bci/bci-micro:15.7
           registry-credentials: |
             [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
 

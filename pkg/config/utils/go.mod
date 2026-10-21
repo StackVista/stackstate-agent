@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/config/utils
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/DataDog/datadog-agent/pkg/config/mock v0.78.3-rc.2
@@ -11,7 +11,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/version v0.78.3-rc.2
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/net v0.58.0
+	golang.org/x/net v0.60.0
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -61,9 +61,9 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 )
 

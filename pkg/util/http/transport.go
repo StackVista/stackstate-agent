@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"golang.org/x/net/http/httpproxy"
-	"golang.org/x/net/http2"
 
 	pkgconfigmodel "github.com/DataDog/datadog-agent/pkg/config/model"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -230,13 +229,14 @@ func GetProxyTransportFunc(p *pkgconfigmodel.Proxy, cfg pkgconfigmodel.Reader) f
 	}
 }
 
-// WithHTTP2 returns a http2 as a transport option
+// WithHTTP2 enables HTTP/2 while allowing fallback to HTTP/1.1.
 func WithHTTP2() func(*http.Transport) {
 	return func(transport *http.Transport) {
-		err := http2.ConfigureTransport(transport)
-		if err != nil {
-			log.Warnf("Failed to configure HTTP/2 transport: %v. Resolving to best available protocol", err)
+		if transport.Protocols == nil {
+			transport.Protocols = new(http.Protocols)
+			transport.Protocols.SetHTTP1(true)
 		}
+		transport.Protocols.SetHTTP2(true)
 	}
 }
 

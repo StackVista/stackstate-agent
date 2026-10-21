@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Update the agents to Go 1.26.10, golang.org/x/net 0.60.0, embedded
+    Python 3.13.16, OpenSSL 3.5.9 and curl 8.23.0. Require certifi
+    2026.10.19 or newer and use the maintained SUSE BCI 15.7 runtime.
