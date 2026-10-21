@@ -1,6 +1,6 @@
 name "python3"
 
-default_version "3.13.15"
+default_version "3.13.16"
 
 # Omnibus does not fingerprint Bazel source patches. Always invoke Bazel so its
 # own cache validates the CPython inputs, including same-version security fixes.

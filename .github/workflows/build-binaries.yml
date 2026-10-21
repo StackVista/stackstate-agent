@@ -241,7 +241,7 @@ jobs:
             "${LOCAL_IMAGE}" version
 
       - name: Scan cluster-agent image, report-only (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
-        uses: StackVista/image-pipeline/.github/actions/scan-image@ec325c73909d0d00420121bbde6754b964e80ac3 # main
+        uses: StackVista/image-pipeline/.github/actions/scan-image@ec325c73909d0d00420121bbde6754b964e80ac3
         with:
           image: ${{ env.LOCAL_IMAGE }}
           mode: inform
@@ -318,7 +318,7 @@ jobs:
           description: Cluster-level agent collecting Kubernetes topology and cluster checks for SUSE Observability.
           component: stackstate-k8s-cluster-agent
           dockerfile: Dockerfiles/cluster-agent/Dockerfile
-          base-name: registry.suse.com/bci/bci-micro:latest
+          base-name: registry.suse.com/bci/bci-micro:15.7
           registry-credentials: |
             [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
 

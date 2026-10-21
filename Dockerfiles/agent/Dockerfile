@@ -28,7 +28,7 @@ RUN dpkg -x /stackstate-agent*_${ARCH}.deb . \
 #   - copy default config files
 COPY stackstate*.yaml etc/stackstate-agent/
 
-FROM ${BCI_IMAGE_REGISTRY}/bci-base:latest AS software
+FROM ${BCI_IMAGE_REGISTRY}/bci-base:15.7 AS software
 # as per comment here: https://github.com/rancher/rancher/blob/main/package/Dockerfile#L12
 # No-op command to create an explicit layer - this fixes a weird buildkit/buildx bug on macos arm
 RUN :
@@ -36,7 +36,7 @@ RUN :
 # Actual docker image construction #
 ####################################
 
-FROM ${BCI_IMAGE_REGISTRY}/bci-micro:latest
+FROM ${BCI_IMAGE_REGISTRY}/bci-micro:15.7
 LABEL maintainer="StackState <info@stackstate.com>"
 # Install system packages using builder image that has zypper
 
