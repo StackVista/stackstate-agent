@@ -1,12 +1,12 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
-      "github>StackVista/renovate-config#005e342f15c5481932542b5552b23cdd21e624a9",
-      "github>StackVista/renovate-config:go#005e342f15c5481932542b5552b23cdd21e624a9",
-      "github>StackVista/renovate-config:docker#005e342f15c5481932542b5552b23cdd21e624a9",
-      "github>StackVista/renovate-config:automerge#005e342f15c5481932542b5552b23cdd21e624a9"
+      "github>StackVista/renovate-config#v1.1.0",
+      "github>StackVista/renovate-config:go#v1.1.0",
+      "github>StackVista/renovate-config:docker#v1.1.0",
+      "github>StackVista/renovate-config:automerge#v1.1.0"
     ],
-    "enabledManagers": ["custom.regex", "gomod", "pre-commit", "github-actions", "dockerfile", "docker-compose"],
+    "enabledManagers": ["custom.regex", "gomod", "pre-commit", "github-actions", "dockerfile", "docker-compose", "renovate-config"],
     "labels": ["dependencies", "changelog/no-changelog", "qa/no-code-change"],
     "stopUpdatingLabel": "stop-updating",
     "platformCommit": "enabled",
@@ -101,7 +101,7 @@
       },
     {
       "matchManagers": [
-        "custom.regex",
+        "renovate-config",
         "github-actions"
       ],
       "matchPackageNames": [
@@ -189,23 +189,7 @@
         "depNameTemplate": "integrations-core",
         "packageNameTemplate": "https://github.com/DataDog/integrations-core",
         "datasourceTemplate": "git-refs"
-      },
-    {
-      "customType": "regex",
-      "description": "Track the release behind shared Renovate preset SHA pins.",
-      "managerFilePatterns": [
-        "/(^|/)renovate\\.json$/"
-      ],
-      "matchStringsStrategy": "recursive",
-      "matchStrings": [
-        "^[\\s\\S]*\"description\"\\s*:\\s*\"Renovate release (?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)\"[\\s\\S]*$",
-        "^[\\s\\S]*?(?:local|github)>StackVista/renovate-config(?:(?::|//)[^\"#]+)?#(?<currentDigest>[a-f0-9]{40})[\\s\\S]*$"
-      ],
-      "depNameTemplate": "StackVista/renovate-config",
-      "datasourceTemplate": "github-tags",
-      "versioningTemplate": "semver",
-      "autoReplaceStringTemplate": "{{{replace '((?:local|github)>StackVista/renovate-config(?:(?::|//)[^\"#]+)?#)[a-f0-9]{40}' (replace 'SHA' newDigest '$1SHA') (replace '(\"description\"\\s*:\\s*\"Renovate release )v[0-9]+\\.[0-9]+\\.[0-9]+' (replace 'VERSION' newValue '$1VERSION') replaceString)}}}"
-    }
+      }
   ],
     "customDatasources": {
       "linux-images": {
@@ -220,6 +204,5 @@
           "{\"releases\": $map(results, function($v) { {\"version\": $v.name, \"releaseTimestamp\": $v.last_updated } }) }"
         ]
       }
-    },
-  "description": "Renovate release v1.0.0"
+    }
 }

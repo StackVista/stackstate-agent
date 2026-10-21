@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   renovate:
-    uses: StackVista/renovate-config/.github/workflows/renovate.yml@005e342f15c5481932542b5552b23cdd21e624a9 # v1.0.0
+    uses: StackVista/renovate-config/.github/workflows/renovate.yml@9e21a606e5995439dc37b1da98754da9983989a0 # v1.1.0
     with:
       docker_registry_1: quay.io
       docker_registry_1_username: ${{ vars.QUAY_USER }}
