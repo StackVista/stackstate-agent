@@ -200,7 +200,9 @@ See the marketplace README for installation instructions.
 The project uses Go modules with multiple sub-modules. `modules.yml` records
 module participation and test targets; `go.work` defines the active workspace.
 Use `go work sync` and `dda inv tidy` to synchronize registered modules, then
-`dda inv check-mod-tidy` to validate them. Modules marked `ignored` in
+`dda inv check-mod-tidy` to validate them. The check uses unstaged `git diff`:
+stage intended dependency edits first, then require no further module
+diffs after the check. Modules marked `ignored` in
 `modules.yml`, and unregistered module trees absent from that file, are outside
 these checks: leave their dependency fixtures unchanged
 unless they are part of the task, or run standalone tidy and validation for them

@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/config/setup
 
-go 1.25.0
+go 1.26.0
 
 // Internal deps fix version
 replace github.com/spf13/cast => github.com/DataDog/cast v1.8.0
@@ -23,7 +23,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/util/winutil v0.78.3-rc.2
 	github.com/stretchr/testify v1.11.1
 	go.yaml.in/yaml/v2 v2.4.4
-	golang.org/x/sys v0.47.0
+	golang.org/x/sys v0.48.0
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -64,8 +64,8 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 )
 
