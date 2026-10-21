@@ -323,7 +323,8 @@ jobs:
             [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
 
       - name: Build, publish, and sign architecture image
-        uses: StackVista/image-pipeline/.github/actions/push-single-arch@ab8ac3d608530ee0a295483c973d720230174348
+        id: publish
+        uses: StackVista/image-pipeline/.github/actions/push-single-arch@27cf07bd5f5f3bafdb714e3b24d72d85480d2a60
         with:
           image: ${{ env.IMAGE }}
           tag: ${{ steps.image.outputs.tag }}
@@ -339,6 +340,27 @@ jobs:
           target-registry-user: ${{ vars.QUAY_USER }}
           target-registry-password: ${{ secrets.QUAY_PASSWORD }}
 
+      - name: Record signed architecture digest
+        env:
+          TAG: ${{ steps.image.outputs.tag }}
+          ARCH: ${{ matrix.arch }}
+          DIGEST: ${{ steps.publish.outputs.digest }}
+        run: |
+          set -euo pipefail
+          jq -n --arg image "${IMAGE}" --arg tag "${TAG}" --arg arch "${ARCH}" \
+            --arg digest "${DIGEST}" --arg repository "${GITHUB_REPOSITORY}" \
+            --arg sha "${GITHUB_SHA}" --arg run_id "${GITHUB_RUN_ID}" \
+            '{image: $image, tag: $tag, arch: $arch, digest: $digest,
+              repository: $repository, sha: $sha, run_id: $run_id}' \
+            > "${RUNNER_TEMP}/publication-digest.json"
+
+      - name: Upload signed architecture digest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cluster-agent-publication-digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/publication-digest.json
+          if-no-files-found: error
+
   merge-cluster-agent-manifest:
     name: Publish and sign multi-architecture cluster-agent image
     if: github.event_name == 'push'
@@ -349,6 +371,12 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - name: Download signed architecture digests
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: cluster-agent-publication-digest-*
+          path: publication-digests
+
       - name: Resolve image tag
         id: image
         env:
@@ -358,11 +386,12 @@ jobs:
           echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
 
       - name: Merge and sign multi-architecture manifest
-        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@ab8ac3d608530ee0a295483c973d720230174348
+        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@27cf07bd5f5f3bafdb714e3b24d72d85480d2a60
         with:
           image: quay.io/stackstate/stackstate-k8s-cluster-agent
           tag: ${{ steps.image.outputs.tag }}
           arches: amd64,arm64
+          receipts: publication-digests
           target-registry: quay.io
           target-registry-user: ${{ vars.QUAY_USER }}
           target-registry-password: ${{ secrets.QUAY_PASSWORD }}

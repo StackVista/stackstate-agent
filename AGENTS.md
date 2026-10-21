@@ -169,6 +169,9 @@ Go build tags control feature inclusion, some examples are:
 - Primary CI system
 - Defined in `.github/workflows/` — lint and unit tests, binary builds, DEB package build
 - Runs tests, builds, publishes images and pre-release packages
+- Image publication records each signed architecture digest as a workflow
+  artifact. Manifest retries use those receipts to finish interrupted signing
+  while rejecting an existing manifest that differs from the recorded inputs.
 
 ### GitLab CI
 - Retired. The `.gitlab/` directory is upstream DataDog configuration that STS pipelines never included; it is kept only to avoid conflicts on upstream merges.
