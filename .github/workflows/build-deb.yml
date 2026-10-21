@@ -326,7 +326,7 @@ jobs:
           docker run --rm -i --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${LOCAL_IMAGE}" - < scripts/test_embedded_python_security.py
 
       - name: Scan agent image, report-only (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
-        uses: StackVista/image-pipeline/.github/actions/scan-image@ec325c73909d0d00420121bbde6754b964e80ac3 # main
+        uses: StackVista/image-pipeline/.github/actions/scan-image@ec325c73909d0d00420121bbde6754b964e80ac3
         env:
           GRYPE_NAME: stackstate-k8s-agent
         with:
