@@ -241,7 +241,7 @@ jobs:
             "${LOCAL_IMAGE}" version
 
       - name: Scan cluster-agent image, report-only (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
-        uses: StackVista/image-pipeline/.github/actions/scan-image@ec325c73909d0d00420121bbde6754b964e80ac3
+        uses: StackVista/image-pipeline/.github/actions/scan-image@5eac3de192cbd6ad4225e6799c41ad2741deadd1
         with:
           image: ${{ env.LOCAL_IMAGE }}
           mode: inform

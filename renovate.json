@@ -1,12 +1,12 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
-      "github>StackVista/renovate-config#c308265fc9a7ee7aecaf1590383094214045049a",
-      "github>StackVista/renovate-config:go#c308265fc9a7ee7aecaf1590383094214045049a",
-      "github>StackVista/renovate-config:docker#c308265fc9a7ee7aecaf1590383094214045049a",
-      "github>StackVista/renovate-config:automerge#c308265fc9a7ee7aecaf1590383094214045049a"
+      "github>StackVista/renovate-config#v1.1.0",
+      "github>StackVista/renovate-config:go#v1.1.0",
+      "github>StackVista/renovate-config:docker#v1.1.0",
+      "github>StackVista/renovate-config:automerge#v1.1.0"
     ],
-    "enabledManagers": ["custom.regex", "gomod", "pre-commit", "github-actions", "dockerfile", "docker-compose"],
+    "enabledManagers": ["custom.regex", "gomod", "pre-commit", "github-actions", "dockerfile", "docker-compose", "renovate-config"],
     "labels": ["dependencies", "changelog/no-changelog", "qa/no-code-change"],
     "stopUpdatingLabel": "stop-updating",
     "platformCommit": "enabled",
@@ -98,8 +98,22 @@
           "windows-images"
         ],
         "enabled": false
-      }
-    ],
+      },
+    {
+      "matchManagers": [
+        "renovate-config",
+        "github-actions"
+      ],
+      "matchPackageNames": [
+        "StackVista/renovate-config"
+      ],
+      "groupName": "Renovate configuration",
+      "groupSlug": "renovate-config",
+      "separateMajorMinor": false,
+      "separateMinorPatch": false,
+      "automerge": false
+    }
+  ],
     "pre-commit": {
       "enabled": true,
       "managerFilePatterns": [".pre-commit-config.yaml"]
@@ -176,7 +190,7 @@
         "packageNameTemplate": "https://github.com/DataDog/integrations-core",
         "datasourceTemplate": "git-refs"
       }
-    ],
+  ],
     "customDatasources": {
       "linux-images": {
         "defaultRegistryUrlTemplate": "https://hub.docker.com/v2/namespaces/datadog/repositories/agent-buildimages-linux/tags",
@@ -191,4 +205,4 @@
         ]
       }
     }
-  }
+}
