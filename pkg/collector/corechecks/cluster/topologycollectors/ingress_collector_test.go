@@ -60,13 +60,12 @@ func TestIngressCollector_1_18(t *testing.T) {
 			},
 		},
 		{
+			// Shared endpoint components were emitted with the first ingress.
 			testCase: "Test Service 2 - Default Backend",
 			assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 				expectIngress212(creationTimeFormatted),
 				expectRelationIngress212Service(),
-				expectEndpointIP212(),
 				expectRelationEndpointIP21Ingress212(),
-				expectEndpointAmazon212(),
 				expectRelationEndpointAmazonIngress212(),
 			},
 		},
@@ -77,9 +76,7 @@ func TestIngressCollector_1_18(t *testing.T) {
 				expectRelationIngress213Service1(),
 				expectRelationIngress213Service2(),
 				expectRelationIngress213Service3(),
-				expectEndpointIP213(),
 				expectRelationEndpointIPIngress213(),
-				expectEndpointAmazon213(),
 				expectRelationEndpointAmazonIngress213(),
 			},
 		},
@@ -128,13 +125,12 @@ func TestIngressCollector_1_22(t *testing.T) {
 			},
 		},
 		{
+			// Shared endpoint components were emitted with the first ingress.
 			testCase: "Test Service 2 - Default Backend",
 			assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 				expectIngress222(creationTimeFormatted),
 				expectRelationIngressService222(),
-				expectEndpointIP222(),
 				expectRelationEndpointIPIngress222(),
-				expectEndpointAmazon22(),
 				expectRelationEndpointAmazonIngress222(),
 			},
 		},
@@ -145,9 +141,7 @@ func TestIngressCollector_1_22(t *testing.T) {
 				expectRelationIngress223Service1(),
 				expectRelationIngress223Service2(),
 				expectRelationIngress223Service3(),
-				expectEndpointIP223(),
 				expectRelationEndpointIP22Ingress223(),
-				expectEndpointAmazon22(),
 				expectRelationEndpointAmazonIngress223(),
 			},
 		},
@@ -170,26 +164,6 @@ func expectRelationEndpointAmazonIngress213() func(*testing.T, chan *topology.Co
 	})
 }
 
-func expectEndpointAmazon213() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
-	return expectComponent(&topology.Component{
-		ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-		Type:       topology.Type{Name: "endpoint"},
-		Data: topology.Data{
-			"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-			"kind":              "Endpoint",
-			"creationTimestamp": creationTime,
-			"tags": map[string]string{
-				"test":           "label",
-				"cluster-name":   "test-cluster-name",
-				"cluster-type":   "kubernetes",
-				"component-type": "kubernetes-endpoint",
-				"namespace":      "test-namespace",
-			},
-			"identifiers": []string{},
-		},
-	})
-}
-
 func expectRelationEndpointIPIngress213() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
@@ -197,26 +171,6 @@ func expectRelationEndpointIPIngress213() func(*testing.T, chan *topology.Compon
 		TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
 		Type:       topology.Type{Name: "routes"},
 		Data:       map[string]interface{}{},
-	})
-}
-
-func expectEndpointIP213() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
-	return expectComponent(&topology.Component{
-		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
-		Type:       topology.Type{Name: "endpoint"},
-		Data: topology.Data{
-			"name":              "34.100.200.15",
-			"kind":              "Endpoint",
-			"creationTimestamp": creationTime,
-			"tags": map[string]string{
-				"test":           "label",
-				"cluster-name":   "test-cluster-name",
-				"cluster-type":   "kubernetes",
-				"component-type": "kubernetes-endpoint",
-				"namespace":      "test-namespace",
-			},
-			"identifiers": []string{},
-		},
 	})
 }
 
@@ -334,26 +288,6 @@ func expectRelationEndpointAmazonIngress212() func(*testing.T, chan *topology.Co
 	})
 }
 
-func expectEndpointAmazon212() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
-	return expectComponent(&topology.Component{
-		ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-		Type:       topology.Type{Name: "endpoint"},
-		Data: topology.Data{
-			"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-			"kind":              "Endpoint",
-			"creationTimestamp": creationTime,
-			"tags": map[string]string{
-				"test":           "label",
-				"cluster-name":   "test-cluster-name",
-				"cluster-type":   "kubernetes",
-				"component-type": "kubernetes-endpoint",
-				"namespace":      "test-namespace",
-			},
-			"identifiers": []string{},
-		},
-	})
-}
-
 func expectRelationEndpointIP21Ingress212() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
@@ -361,26 +295,6 @@ func expectRelationEndpointIP21Ingress212() func(*testing.T, chan *topology.Comp
 		TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
 		Type:       topology.Type{Name: "routes"},
 		Data:       map[string]interface{}{},
-	})
-}
-
-func expectEndpointIP212() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
-	return expectComponent(&topology.Component{
-		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
-		Type:       topology.Type{Name: "endpoint"},
-		Data: topology.Data{
-			"name":              "34.100.200.15",
-			"kind":              "Endpoint",
-			"creationTimestamp": creationTime,
-			"tags": map[string]string{
-				"test":           "label",
-				"cluster-name":   "test-cluster-name",
-				"cluster-type":   "kubernetes",
-				"component-type": "kubernetes-endpoint",
-				"namespace":      "test-namespace",
-			},
-			"identifiers": []string{},
-		},
 	})
 }
 
@@ -592,26 +506,6 @@ func expectRelationEndpointIP22Ingress223() func(*testing.T, chan *topology.Comp
 	})
 }
 
-func expectEndpointIP223() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
-	return expectComponent(&topology.Component{
-		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.22",
-		Type:       topology.Type{Name: "endpoint"},
-		Data: topology.Data{
-			"name":              "34.100.200.22",
-			"kind":              "Endpoint",
-			"creationTimestamp": creationTime,
-			"tags": map[string]string{
-				"test":           "label22",
-				"cluster-name":   "test-cluster-name",
-				"cluster-type":   "kubernetes",
-				"component-type": "kubernetes-endpoint",
-				"namespace":      "test-namespace",
-			},
-			"identifiers": []string{},
-		},
-	})
-}
-
 func expectRelationIngress223Service3() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-3->" +
@@ -745,26 +639,6 @@ func expectRelationEndpointIPIngress222() func(*testing.T, chan *topology.Compon
 		TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-2",
 		Type:       topology.Type{Name: "routes"},
 		Data:       map[string]interface{}{},
-	})
-}
-
-func expectEndpointIP222() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
-	return expectComponent(&topology.Component{
-		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.22",
-		Type:       topology.Type{Name: "endpoint"},
-		Data: topology.Data{
-			"name":              "34.100.200.22",
-			"kind":              "Endpoint",
-			"creationTimestamp": creationTime,
-			"tags": map[string]string{
-				"test":           "label22",
-				"cluster-name":   "test-cluster-name",
-				"cluster-type":   "kubernetes",
-				"component-type": "kubernetes-endpoint",
-				"namespace":      "test-namespace",
-			},
-			"identifiers": []string{},
-		},
 	})
 }
 
