@@ -10,7 +10,7 @@ skip_transitive_dependency_licensing true
 
 source path: '..',
        options: {
-         exclude: ["**/.cache/**/*"],
+         exclude: ["**/.cache/**/*", "**/.omnibus-git-cache/**/*"],
        }
 relative_path 'src/github.com/StackVista/stackstate-agent'
 
