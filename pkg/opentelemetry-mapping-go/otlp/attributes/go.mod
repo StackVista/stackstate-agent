@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/opentelemetry-mapping-go/otlp/attributes
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/DataDog/datadog-agent/pkg/trace/log v0.78.3-rc.2
@@ -36,7 +36,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 )
 
 retract v0.4.0 // see #107
