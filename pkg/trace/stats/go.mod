@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/trace/stats
 
-go 1.26.0
+go 1.27.3
 
 require (
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.78.3-rc.2
@@ -17,8 +17,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d
 	google.golang.org/protobuf v1.36.11
 )
-
-require gopkg.in/yaml.v3 v3.0.1 // indirect
 
 require (
 	github.com/DataDog/datadog-agent/comp/core/tagger/origindetection v0.78.3-rc.2 // indirect
@@ -65,6 +63,7 @@ require (
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	gopkg.in/ini.v1 v1.67.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually

@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/orchestrator/model
 
-go 1.25.0
+go 1.27.3
 
 require (
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
