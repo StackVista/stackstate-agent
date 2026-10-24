@@ -11,7 +11,7 @@
 # On the contrary, since our 1909 windows-docker host image does have this update,
 # we use a base container image that does have this update.
 # TODO: Once the 1809 windows-docker host image is updated, update the base container image.
-ARG BASE_IMAGE=mcr.microsoft.com/dotnet/framework/runtime:4.8-20200114-windowsservercore-ltsc2019
+ARG BASE_IMAGE=mcr.microsoft.com/dotnet/framework/runtime:4.8-20200114-windowsservercore-ltsc2019@sha256:85433707a809232402827a359c80d0aa08226e7833aa2914be2113e694d2b6ae
 
 FROM ${BASE_IMAGE}
 
