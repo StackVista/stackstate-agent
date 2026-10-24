@@ -3,7 +3,7 @@ module github.com/DataDog/datadog-agent/tools/build-ddot-byoc
 go 1.26.0
 
 require (
-	github.com/google/go-containerregistry v0.21.4
+	github.com/google/go-containerregistry v0.21.9
 	github.com/klauspost/compress v1.18.7
 )
 
@@ -26,4 +26,4 @@ require (
 	gotest.tools/v3 v3.5.2 // indirect
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2

@@ -19,7 +19,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.78.3-rc.2
 	github.com/DataDog/datadog-go/v5 v5.8.3
 	github.com/DataDog/sketches-go v1.4.8 // indirect
-	github.com/Microsoft/go-winio v0.6.2
+	github.com/Microsoft/go-winio v0.6.4
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/golang/protobuf v1.5.4 // indirect
@@ -27,7 +27,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/probabilisticsamplerprocessor v0.150.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tinylib/msgp v1.6.3
+	github.com/tinylib/msgp v1.6.5
 	github.com/vmihailenco/msgpack/v4 v4.3.13
 	go.opentelemetry.io/collector/component v1.57.0 // indirect
 	go.opentelemetry.io/collector/consumer v1.57.0
@@ -39,8 +39,8 @@ require (
 	golang.org/x/sys v0.48.0
 	golang.org/x/time v0.15.0
 	google.golang.org/grpc v1.83.2
-	google.golang.org/protobuf v1.36.11
-	gopkg.in/ini.v1 v1.67.1
+	google.golang.org/protobuf v1.36.12
+	gopkg.in/ini.v1 v1.67.3
 	k8s.io/apimachinery v0.35.3
 )
 
@@ -55,7 +55,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/trace/otel v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/trace/stats v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/trace/traceutil v0.78.3-rc.2
-	github.com/shirou/gopsutil/v4 v4.26.3
+	github.com/shirou/gopsutil/v4 v4.26.9
 	go.opentelemetry.io/collector/component/componenttest v0.150.0
 )
 
@@ -335,4 +335,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2

@@ -5,20 +5,20 @@ go 1.26.0
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/alecthomas/participle v0.7.1
-	github.com/charlievieth/strcase v0.0.5
+	github.com/charlievieth/strcase v0.0.6
 	github.com/google/go-cmp v0.7.0
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
-	github.com/jellydator/ttlcache/v3 v3.4.0
+	github.com/jellydator/ttlcache/v3 v3.4.1
 	github.com/skydive-project/go-debouncer v1.0.1
 	github.com/spf13/cast v1.10.0
 	github.com/stretchr/testify v1.11.1
 	github.com/weppos/publicsuffix-go v0.50.3
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.uber.org/atomic v1.11.0
-	go.yaml.in/yaml/v3 v3.0.4
+	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/sys v0.48.0
 	golang.org/x/text v0.42.0
 	sigs.k8s.io/yaml v1.6.0
@@ -218,4 +218,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2

@@ -18,7 +18,7 @@ require (
 	go.opentelemetry.io/collector/pdata v1.57.0
 	go.opentelemetry.io/otel v1.45.0
 	go.uber.org/zap v1.28.0
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12
 )
 
 require (
@@ -238,4 +238,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2

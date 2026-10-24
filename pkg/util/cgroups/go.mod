@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/pointer v0.78.3-rc.2
-	github.com/containerd/cgroups/v3 v3.1.2
+	github.com/containerd/cgroups/v3 v3.1.3
 	github.com/google/go-cmp v0.7.0
 	github.com/stretchr/testify v1.11.1
 )
@@ -210,4 +210,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2

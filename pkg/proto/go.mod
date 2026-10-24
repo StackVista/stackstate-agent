@@ -9,10 +9,10 @@ require (
 	github.com/google/gofuzz v1.2.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
 	github.com/stretchr/testify v1.11.1
-	github.com/tinylib/msgp v1.6.3
+	github.com/tinylib/msgp v1.6.5
 	github.com/vmihailenco/msgpack/v4 v4.3.13
 	google.golang.org/grpc v1.83.2
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -215,4 +215,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2

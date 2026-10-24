@@ -5,9 +5,9 @@ go 1.26.0
 require (
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/winutil v0.78.3-rc.2
-	github.com/gofrs/flock v0.13.0
+	github.com/gofrs/flock v0.13.1
 	github.com/hectane/go-acl v0.0.0-20230225031251-cdfc9e3acf94
-	github.com/shirou/gopsutil/v4 v4.26.3
+	github.com/shirou/gopsutil/v4 v4.26.9
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sync v0.23.0
 	golang.org/x/sys v0.48.0
@@ -210,4 +210,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2
