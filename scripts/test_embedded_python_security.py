@@ -1,20 +1,72 @@
 """Check security fixes using the packaged Python interpreter and dependencies."""
 
+import contextlib
 import hashlib
 import io
+import os
 import platform
+import shutil
 import stringprep
 import sys
 import tarfile
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import jwt
 from build._compat.tarfile import safe_extractall
 
 
 class EmbeddedPythonSecurityTests(unittest.TestCase):
+    @unittest.skipUnless(
+        os.name == "posix" and shutil.rmtree.avoids_symlink_attacks,
+        "requires POSIX fd-based directory removal",
+    )
+    @unittest.skipIf(hasattr(os, "geteuid") and os.geteuid() == 0, "requires a non-root user")
+    def test_temporary_directory_cleanup_with_symlink_race(self):
+        # Adapt CPython gh-157579's deterministic permission-recovery race.
+        with tempfile.TemporaryDirectory() as outside:
+            target = Path(outside) / "file1"
+            target.write_bytes(b"outside")
+            before = target.stat()
+            directory = tempfile.TemporaryDirectory()
+            original = Path(directory.name) / "dir1"
+            moved = Path(directory.name) / "dir1_moved"
+            original.mkdir()
+            (original / "file1").write_bytes(b"inside")
+            original.chmod(0o500)
+            unlink = os.unlink
+            raced = False
+
+            def replace_on_permission_error(path, *, dir_fd=None):
+                nonlocal raced
+                try:
+                    return unlink(path, dir_fd=dir_fd)
+                except PermissionError:
+                    if not original.is_symlink():
+                        original.chmod(0o700)
+                        original.rename(moved)
+                        original.symlink_to(outside, target_is_directory=True)
+                        raced = True
+                    raise
+
+            try:
+                with mock.patch("os.unlink", replace_on_permission_error), contextlib.suppress(OSError):
+                    directory.cleanup()
+                self.assertTrue(raced, "permission recovery must exercise the symlink race")
+                self.assertTrue(target.is_file(), "cleanup must preserve the outside file")
+                self.assertEqual(target.read_bytes(), b"outside")
+                after = target.stat()
+                self.assertEqual((after.st_mode, after.st_mtime_ns), (before.st_mode, before.st_mtime_ns))
+            finally:
+                if original.is_symlink():
+                    original.unlink()
+                    moved.rename(original)
+                if original.exists():
+                    original.chmod(0o700)
+                directory.cleanup()
+
     def test_jwt_options_reuse_preserves_claim_verification(self):
         # CVE-2026-103001: an unsigned inspection must not mutate reusable
         # options and disable expiry checking on a later verified decode.
