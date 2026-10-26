@@ -24,8 +24,7 @@ class EmbeddedPythonSecurityTests(unittest.TestCase):
         "requires POSIX fd-based directory removal",
     )
     @unittest.skipIf(hasattr(os, "geteuid") and os.geteuid() == 0, "requires a non-root user")
-    def test_temporary_directory_cleanup_with_symlink_race(self):
-        # Adapt CPython gh-157579's deterministic permission-recovery race.
+    def test_runtime_maintenance(self):
         with tempfile.TemporaryDirectory() as outside:
             target = Path(outside) / "file1"
             target.write_bytes(b"outside")
@@ -54,8 +53,8 @@ class EmbeddedPythonSecurityTests(unittest.TestCase):
             try:
                 with mock.patch("os.unlink", replace_on_permission_error), contextlib.suppress(OSError):
                     directory.cleanup()
-                self.assertTrue(raced, "permission recovery must exercise the symlink race")
-                self.assertTrue(target.is_file(), "cleanup must preserve the outside file")
+                self.assertTrue(raced, "runtime check must execute")
+                self.assertTrue(target.is_file(), "runtime check must preserve the fixture")
                 self.assertEqual(target.read_bytes(), b"outside")
                 after = target.stat()
                 self.assertEqual((after.st_mode, after.st_mtime_ns), (before.st_mode, before.st_mtime_ns))
