@@ -27,9 +27,9 @@ name "cacerts"
 
 # Pinned to a dated curl release: the moving cacert.pem breaks every build when
 # curl publishes a new bundle, and this fork has no monitor for it.
-default_version "2026-09-25"
+default_version "2026-10-20"
 source url: "https://curl.se/ca/cacert-#{version}.pem",
-       sha256: "a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505",
+       sha256: "796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe",
        target_filename: "cacert.pem"
 
 relative_path "cacerts-#{version}"
