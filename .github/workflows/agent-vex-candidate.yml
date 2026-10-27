@@ -1,0 +1,178 @@
+name: Validate scoped agent VEX candidate
+
+on:
+  push:
+    branches:
+      - agent-3e7e2d95-vex-validation
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  scan:
+    name: VEX consumption (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: published-amd64
+            runner: docker-public
+            arch: amd64
+            digest: sha256:eeaedbed37f105f341d6f584c6e180dc578dc6d3175ed08399257d9b020c2792
+            source: 3e7e2d95587599d7c76518582e12220201be6d1f
+            decision: passed
+          - name: published-arm64
+            runner: arm64-xlarge-public
+            arch: arm64
+            digest: sha256:a0738b65c3274de9fbe3755d8e755c0c9eab6c6a9dfbf7e8a72e839b31bfb9f2
+            source: 3e7e2d95587599d7c76518582e12220201be6d1f
+            decision: passed
+          - name: unlisted-3.13.18-control
+            runner: docker-public
+            arch: amd64
+            digest: sha256:0c0cf944c584032fe19ba795c4a128edb02f8f1856447746dd5bc898ced5d2a1
+            source: 03af30a2b76d2902a394c7abb7dfdfc75e658115
+            decision: failed
+    env:
+      IMAGE_REF: quay.io/stackstate/stackstate-k8s-agent@${{ matrix.digest }}
+      ARCH: ${{ matrix.arch }}
+      SOURCE_SHA: ${{ matrix.source }}
+      EXPECTED_DECISION: ${{ matrix.decision }}
+      VEX_SHA: fe5eaf9f58d76ba340aab686bd09b43b3f95f056
+    steps:
+      - name: Check out maintained runtime checks
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: 3e7e2d95587599d7c76518582e12220201be6d1f
+          persist-credentials: false
+
+      - name: Check out pinned shared scanner
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: StackVista/image-pipeline
+          ref: 508730536961e38718dbc2403448e2d418b1136f
+          path: image-pipeline
+          persist-credentials: false
+
+      - name: Check out exact VEX candidate
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: StackVista/vexhub
+          ref: fe5eaf9f58d76ba340aab686bd09b43b3f95f056
+          path: candidate-vex
+          persist-credentials: false
+
+      - name: Verify source, interpreter and unchanged reviewed POP3 module
+        run: |
+          set -euo pipefail
+          docker pull "${IMAGE_REF}"
+          test "$(docker image inspect "${IMAGE_REF}" --format '{{.Architecture}}')" = "${ARCH}"
+          test "$(docker image inspect "${IMAGE_REF}" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "${SOURCE_SHA}"
+          docker run --rm --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${IMAGE_REF}" -c 'import hashlib, pathlib, poplib, sys; digest = hashlib.sha256(pathlib.Path(poplib.__file__).read_bytes()).hexdigest(); print(sys.version, poplib.__file__, digest); assert sys.version_info[:3] == (3, 13, 18); assert digest == "527e714523264093910a0a0b1a55c6583f952835c89061537fc40ad98c347056"'
+
+      - name: Prepare disposable candidate VEX overlay
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          action = Path("image-pipeline/.github/actions/scan-image/action.yml")
+          needle = "    - name: Log in to source registry\n"
+          overlay = """    - name: Overlay approved candidate VEX in disposable cache
+                shell: bash
+                run: |
+                  set -euo pipefail
+                  candidate="${GITHUB_WORKSPACE}/candidate-vex"
+                  repositories="${TRIVY_CACHE_DIR:-${HOME}/.cache/trivy}/vex/repositories"
+                  internal="${repositories}/stackvista/0.1"
+                  test -f "${internal}/index.json"
+                  cp "${candidate}/index.json" "${internal}/index.json"
+                  cp "${candidate}/pkg/oci/stackstate-k8s-agent/scan.openvex.json" "${internal}/pkg/oci/stackstate-k8s-agent/scan.openvex.json"
+                  image-pipeline-grype-vex --cache-dir "${repositories}" \
+                    --config "${HOME}/.trivy/vex/repository.yaml" \
+                    --output-dir reports/grype-candidate-vex \
+                    --documents-list reports/grype-vex-documents.txt \
+                    --mode gate
+
+          """
+          # Dedent the injected action step to the composite action's indentation.
+          lines = overlay.splitlines()
+          overlay = lines[0] + "\n" + "\n".join(
+              line[10:] if line.startswith("          ") else line
+              for line in lines[1:]
+          ) + "\n"
+          content = action.read_text()
+          assert content.count(needle) == 1
+          action.write_text(content.replace(needle, overlay + needle))
+          PY
+
+      - name: Scan published digest with unchanged chart gate policy
+        id: scan
+        continue-on-error: true
+        uses: ./image-pipeline/.github/actions/scan-image
+        with:
+          image: ${{ env.IMAGE_REF }}
+          mode: gate
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          with-grype: true
+          upload-sarif: false
+          sarif-category: agent-vex-candidate
+
+      - name: Verify actual VEX matches and digest scope
+        if: always()
+        env:
+          ACTUAL_DECISION: ${{ steps.scan.outputs.decision }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(Path("reports/grype.json").read_text())
+          wanted = {"CVE-2026-12345", "CVE-2025-15367"}
+          active = {m["vulnerability"]["id"] for m in report.get("matches", [])}
+          ignored = {
+              m["vulnerability"]["id"]: m
+              for m in report.get("ignoredMatches", [])
+              if m["vulnerability"]["id"] in wanted
+          }
+          expected = os.environ["EXPECTED_DECISION"]
+          assert os.environ["ACTUAL_DECISION"] == expected, os.environ["ACTUAL_DECISION"]
+          if expected == "passed":
+              assert not active, active
+              assert set(ignored) == wanted, ignored
+              for match in ignored.values():
+                  assert match["artifact"]["version"] == "3.13.18", match
+                  assert any(
+                      r.get("namespace") == "vex" and r.get("vex-status") == "not_affected"
+                      for r in match["appliedIgnoreRules"]
+                  ), match
+          else:
+              assert wanted <= active, active
+              assert not ignored, ignored
+          Path("reports/consumption-identity.json").write_text(json.dumps({
+              "image": os.environ["IMAGE_REF"],
+              "arch": os.environ["ARCH"],
+              "source_sha": os.environ["SOURCE_SHA"],
+              "vex_sha": os.environ["VEX_SHA"],
+              "decision": os.environ["ACTUAL_DECISION"],
+              "active": sorted(active),
+              "approved_ignored": sorted(ignored),
+              "negative_control": expected == "failed",
+          }, indent=2) + "\n")
+          PY
+
+      - name: Retain scanner, VEX and identity evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: vex-consumption-${{ matrix.name }}
+          path: reports/
+          if-no-files-found: error
