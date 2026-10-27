@@ -45,6 +45,7 @@ jobs:
       SOURCE_SHA: ${{ matrix.source }}
       EXPECTED_DECISION: ${{ matrix.decision }}
       VEX_SHA: fe5eaf9f58d76ba340aab686bd09b43b3f95f056
+      GOWORK: "off"
     steps:
       - name: Check out maintained runtime checks
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
