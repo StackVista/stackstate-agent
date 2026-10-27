@@ -9,9 +9,10 @@ defaults:
   run:
     shell: bash
 env:
-  SOURCE_SHA: 404f8b044e3b697d80d3345278cbb9bd9356f40d
-  TAG: candidate-404f8b04
+  SOURCE_SHA: 03af30a2b76d2902a394c7abb7dfdfc75e658115
+  TAG: candidate-03af30a2
   BCI_DIGEST: sha256:f1427da6f40791aa5a9f73bb339674970ea93a2b158adc81bc99bcd1b7899a74
+  CA_BUNDLE_SHA: 796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe
 jobs:
   verify:
     name: Verify signed candidate and green source CI
@@ -32,7 +33,7 @@ jobs:
           jq -e --arg sha "${SOURCE_SHA}" '.object.sha == $sha'
         while :; do
           pending=0
-          for run_id in 40469135744 40469135722 40469135707; do
+          for run_id in 40469744165 40469744085 40469744116; do
             result=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
             printf '%s' "${result}" | jq -e --arg sha "${SOURCE_SHA}" '.head_sha == $sha' >/dev/null
             status=$(printf '%s' "${result}" | jq -r '.status')
@@ -78,21 +79,21 @@ jobs:
       ARCH: ${{ matrix.arch }}
       COMPONENT: ${{ matrix.component }}
       IMAGE: quay.io/stackstate/stackstate-k8s-${{ matrix.component }}
-      TAG: candidate-404f8b04
-      SOURCE_SHA: 404f8b044e3b697d80d3345278cbb9bd9356f40d
+      TAG: candidate-03af30a2
+      SOURCE_SHA: 03af30a2b76d2902a394c7abb7dfdfc75e658115
       LOCAL_IMAGE: quay.io/stackstate/stackstate-k8s-${{ matrix.component }}:candidate-local-${{ matrix.arch }}
     steps:
     - name: Check out repository
       uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
       with:
         persist-credentials: false
-        ref: 404f8b044e3b697d80d3345278cbb9bd9356f40d
+        ref: 03af30a2b76d2902a394c7abb7dfdfc75e658115
     - name: Download DEB package
       uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
       with:
         name: deb-package-${{ matrix.arch }}
         github-token: ${{ github.token }}
-        run-id: '40469135707'
+        run-id: '40469744116'
       if: matrix.component == 'agent'
     - name: Stage the DEB in the image build context
       run: |
@@ -111,7 +112,7 @@ jobs:
       with:
         name: cluster-agent-binary-${{ matrix.arch }}
         github-token: ${{ github.token }}
-        run-id: '40469135722'
+        run-id: '40469744085'
     - name: Prepare native candidate build
       env:
         REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
@@ -128,6 +129,8 @@ jobs:
         docker build --pull --build-arg ARCH="${ARCH}" -t "${LOCAL_IMAGE}" "Dockerfiles/${COMPONENT}"
         docker run --rm --read-only --user 12345:0 --tmpfs /tmp --entrypoint /bin/sh "${LOCAL_IMAGE}" -c 'find /tmp -maxdepth 0; printf "runtime\n" | sed s/runtime/ok/ | xargs | grep ok'
         if [ "${COMPONENT}" = agent ]; then
+          docker run --rm --entrypoint /bin/sh "${LOCAL_IMAGE}" -c 'sha256sum /etc/ssl/certs/cacert.pem' | tee embedded-ca.txt
+          grep -F "${CA_BUNDLE_SHA}" embedded-ca.txt
           docker run --rm --read-only --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
           docker run --rm -i --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${LOCAL_IMAGE}" - < scripts/test_embedded_python_security.py
           docker run --rm --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${LOCAL_IMAGE}" -c 'import ssl, urllib.request; assert ssl.get_default_verify_paths().cafile; print(urllib.request.urlopen("https://www.python.org", timeout=30).status)'
@@ -159,6 +162,7 @@ jobs:
         path: |-
           reports/
           base-package.txt
+          embedded-ca.txt
         if-no-files-found: error
     - name: Resolve canonical OCI labels
       id: oci
@@ -240,6 +244,7 @@ jobs:
         path: |-
           reports/
           base-package.txt
+          embedded-ca.txt
         if-no-files-found: error
   merge:
     name: Publish and sign candidate manifest (${{ matrix.component }})
