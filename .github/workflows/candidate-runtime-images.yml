@@ -1,0 +1,282 @@
+name: Candidate agent runtime images
+'on':
+  push:
+    branches:
+    - runtime-404f8b04-image
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  SOURCE_SHA: 404f8b044e3b697d80d3345278cbb9bd9356f40d
+  TAG: candidate-404f8b04
+  BCI_DIGEST: sha256:f1427da6f40791aa5a9f73bb339674970ea93a2b158adc81bc99bcd1b7899a74
+jobs:
+  verify:
+    name: Verify signed candidate and green source CI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    permissions:
+      actions: read
+      contents: read
+    steps:
+    - name: Require successful candidate workflows
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        gh api "repos/${GITHUB_REPOSITORY}/commits/${SOURCE_SHA}" |
+          jq -e '.commit.verification.verified == true'
+        gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/bump-python-3.13.18" |
+          jq -e --arg sha "${SOURCE_SHA}" '.object.sha == $sha'
+        while :; do
+          pending=0
+          for run_id in 40469135744 40469135722 40469135707; do
+            result=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
+            printf '%s' "${result}" | jq -e --arg sha "${SOURCE_SHA}" '.head_sha == $sha' >/dev/null
+            status=$(printf '%s' "${result}" | jq -r '.status')
+            if [ "${status}" != completed ]; then
+              pending=1
+              echo "Waiting for source CI run ${run_id}: ${status}"
+            else
+              printf '%s' "${result}" | jq -e '.conclusion == "success"'
+            fi
+          done
+          [ "${pending}" -eq 1 ] || break
+          sleep 30
+        done
+        gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/bump-python-3.13.18" |
+          jq -e --arg sha "${SOURCE_SHA}" '.object.sha == $sha'
+  publish:
+    name: Build, scan, publish and verify candidate (${{ matrix.component }}, ${{ matrix.arch }})
+    needs:
+    - verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - component: agent
+          arch: amd64
+          runner: docker-public
+        - component: agent
+          arch: arm64
+          runner: arm64-xlarge-public
+        - component: cluster-agent
+          arch: amd64
+          runner: docker-public
+        - component: cluster-agent
+          arch: arm64
+          runner: arm64-xlarge-public
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      actions: read
+    env:
+      ARCH: ${{ matrix.arch }}
+      COMPONENT: ${{ matrix.component }}
+      IMAGE: quay.io/stackstate/stackstate-k8s-${{ matrix.component }}
+      TAG: candidate-404f8b04
+      SOURCE_SHA: 404f8b044e3b697d80d3345278cbb9bd9356f40d
+      LOCAL_IMAGE: quay.io/stackstate/stackstate-k8s-${{ matrix.component }}:candidate-local-${{ matrix.arch }}
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      with:
+        persist-credentials: false
+        ref: 404f8b044e3b697d80d3345278cbb9bd9356f40d
+    - name: Download DEB package
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        name: deb-package-${{ matrix.arch }}
+        github-token: ${{ github.token }}
+        run-id: '40469135707'
+      if: matrix.component == 'agent'
+    - name: Stage the DEB in the image build context
+      run: |
+        set -eo pipefail
+        shopt -s nullglob
+        debs=(outcomes/pkg/stackstate-agent_*_"${ARCH}".deb)
+        if [ "${#debs[@]}" -ne 1 ]; then
+          echo "Expected exactly one stackstate-agent_*_${ARCH}.deb, found ${#debs[@]}: ${debs[*]}" >&2
+          exit 1
+        fi
+        cp "${debs[0]}" Dockerfiles/agent/
+      if: matrix.component == 'agent'
+    - name: Download cluster-agent binary
+      if: matrix.component == 'cluster-agent'
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        name: cluster-agent-binary-${{ matrix.arch }}
+        github-token: ${{ github.token }}
+        run-id: '40469135722'
+    - name: Prepare native candidate build
+      env:
+        REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+        REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+        REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      run: |
+        set -euo pipefail
+        printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
+        if [ "${COMPONENT}" = cluster-agent ]; then
+          chmod +x bin/stackstate-cluster-agent/stackstate-cluster-agent
+          cp bin/stackstate-cluster-agent/stackstate-cluster-agent Dockerfiles/cluster-agent/
+        fi
+        sed -i "s|/bci-micro:15.7|/bci-micro:15.7@${BCI_DIGEST}|" "Dockerfiles/${COMPONENT}/Dockerfile"
+        docker build --pull --build-arg ARCH="${ARCH}" -t "${LOCAL_IMAGE}" "Dockerfiles/${COMPONENT}"
+        docker run --rm --read-only --user 12345:0 --tmpfs /tmp --entrypoint /bin/sh "${LOCAL_IMAGE}" -c 'find /tmp -maxdepth 0; printf "runtime\n" | sed s/runtime/ok/ | xargs | grep ok'
+        if [ "${COMPONENT}" = agent ]; then
+          docker run --rm --read-only --entrypoint /opt/stackstate-agent/bin/agent/agent "${LOCAL_IMAGE}" version
+          docker run --rm -i --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${LOCAL_IMAGE}" - < scripts/test_embedded_python_security.py
+          docker run --rm --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${LOCAL_IMAGE}" -c 'import ssl, urllib.request; assert ssl.get_default_verify_paths().cafile; print(urllib.request.urlopen("https://www.python.org", timeout=30).status)'
+        else
+          docker run --rm --read-only --entrypoint /opt/stackstate-agent/bin/stackstate-cluster-agent "${LOCAL_IMAGE}" version
+        fi
+        cid=$(docker create "${LOCAL_IMAGE}")
+        mkdir -p "${RUNNER_TEMP}/candidate-rpm"
+        docker cp "${cid}:/usr/lib/sysimage/rpm/." "${RUNNER_TEMP}/candidate-rpm/"
+        docker rm "${cid}"
+        docker run --rm -v "${RUNNER_TEMP}/candidate-rpm:/rpm:ro" registry.suse.com/bci/bci-base:15.7 rpm --dbpath /rpm -q ca-certificates-mozilla-prebuilt | tee base-package.txt
+        grep -Fx 'ca-certificates-mozilla-prebuilt-2.92-150200.50.3.noarch' base-package.txt
+    - name: Scan candidate before publication
+      uses: StackVista/image-pipeline/.github/actions/scan-image@5eac3de192cbd6ad4225e6799c41ad2741deadd1
+      env:
+        GRYPE_NAME: stackstate-k8s-${{ matrix.component }}
+      with:
+        image: ${{ env.LOCAL_IMAGE }}
+        mode: inform
+        severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+        with-grype: true
+        exceptions-path: exceptions
+        upload-sarif: false
+        sarif-category: stackstate-k8s-${{ matrix.component }}-${{ matrix.arch }}
+    - name: Retain native scan evidence
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: runtime-evidence-${{ matrix.component }}-${{ matrix.arch }}
+        path: |-
+          reports/
+          base-package.txt
+        if-no-files-found: error
+    - name: Resolve canonical OCI labels
+      id: oci
+      uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@ab8ac3d608530ee0a295483c973d720230174348
+      with:
+        image-name: stackstate-k8s-${{ matrix.component }}
+        tag: ${{ env.TAG }}
+        title: SUSE Observability Agent
+        description: Node agent collecting metrics, logs, traces and topology for SUSE Observability.
+        component: stackstate-k8s-${{ matrix.component }}
+        dockerfile: Dockerfiles/${{ matrix.component }}/Dockerfile
+        base-name: registry.suse.com/bci/bci-micro:15.7
+        registry-credentials: |
+          [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+        base-digest: ${{ env.BCI_DIGEST }}
+    - name: Build, publish, and sign architecture image
+      id: publish
+      uses: StackVista/image-pipeline/.github/actions/push-single-arch@27cf07bd5f5f3bafdb714e3b24d72d85480d2a60
+      with:
+        image: ${{ env.IMAGE }}
+        tag: ${{ env.TAG }}
+        arch: ${{ matrix.arch }}
+        docker-context: Dockerfiles/${{ matrix.component }}
+        dockerfile: Dockerfiles/${{ matrix.component }}/Dockerfile
+        build-args: ARCH=${{ matrix.arch }}
+        labels: |
+          ${{ steps.oci.outputs.labels }}
+          org.opencontainers.image.revision=${{ env.SOURCE_SHA }}
+        source-registry-credentials: |
+          [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
+        target-registry: quay.io
+        target-registry-user: ${{ vars.QUAY_USER }}
+        target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+    - name: Record signed architecture digest
+      env:
+        TAG: ${{ env.TAG }}
+        DIGEST: ${{ steps.publish.outputs.digest }}
+      run: |
+        set -euo pipefail
+        jq -n --arg image "${IMAGE}" --arg tag "${TAG}" --arg arch "${ARCH}" \
+          --arg digest "${DIGEST}" --arg repository "${GITHUB_REPOSITORY}" \
+          --arg source_sha "${SOURCE_SHA}" --arg sha "${GITHUB_SHA}" --arg run_id "${GITHUB_RUN_ID}" \
+          '{image: $image, tag: $tag, arch: $arch, digest: $digest,
+            repository: $repository, sha: $sha, source_sha: $source_sha, run_id: $run_id}' \
+          > "${RUNNER_TEMP}/publication-digest.json"
+    - name: Upload signed architecture digest
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: ${{ matrix.component }}-publication-digest-${{ matrix.arch }}
+        path: ${{ runner.temp }}/publication-digest.json
+        if-no-files-found: error
+    - name: Verify published interpreter and packaged regressions
+      env:
+        DIGEST: ${{ steps.publish.outputs.digest }}
+      run: |
+        set -euo pipefail
+        ref="${IMAGE}@${DIGEST}"
+        docker pull "${ref}"
+        docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${ref}" version
+        docker run --rm --entrypoint /opt/stackstate-agent/embedded/bin/python3.13 "${ref}" -c 'import sys; assert sys.version_info[:3] == (3, 13, 18); print(sys.version)'
+        docker run --rm -i --entrypoint /opt/stackstate-agent/embedded/bin/python3.13 "${ref}" - < scripts/test_embedded_python_security.py
+      if: matrix.component == 'agent'
+    - name: Scan published candidate digest (Trivy and Grype)
+      uses: StackVista/image-pipeline/.github/actions/scan-image@5eac3de192cbd6ad4225e6799c41ad2741deadd1
+      env:
+        GRYPE_NAME: stackstate-k8s-${{ matrix.component }}
+      with:
+        image: ${{ env.IMAGE }}@${{ steps.publish.outputs.digest }}
+        mode: inform
+        severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+        with-grype: true
+        exceptions-path: exceptions
+        upload-sarif: false
+        sarif-category: stackstate-k8s-${{ matrix.component }}-${{ matrix.arch }}
+  merge:
+    name: Publish and sign candidate manifest (${{ matrix.component }})
+    needs:
+    - publish
+    runs-on: docker-public
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+    - name: Download signed architecture digests
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        pattern: ${{ matrix.component }}-publication-digest-*
+        path: publication-digests
+    - name: Merge and sign multi-architecture manifest
+      uses: StackVista/image-pipeline/.github/actions/merge-multiarch@27cf07bd5f5f3bafdb714e3b24d72d85480d2a60
+      with:
+        image: ${{ env.IMAGE }}
+        tag: ${{ env.TAG }}
+        arches: amd64,arm64
+        receipts: publication-digests
+        target-registry: quay.io
+        target-registry-user: ${{ vars.QUAY_USER }}
+        target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+      id: manifest
+    - name: Record candidate manifest digest
+      env:
+        DIGEST: ${{ steps.manifest.outputs.digest }}
+      run: |
+        set -euo pipefail
+        jq -n --arg image "${IMAGE}" --arg tag "${TAG}"   --arg digest "${DIGEST}" --arg source_sha "${SOURCE_SHA}"   '{image: $image, tag: $tag, digest: $digest, source_sha: $source_sha}' > candidate-manifest.json
+        cat candidate-manifest.json
+    - name: Upload candidate manifest receipt
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: candidate-manifest-${{ matrix.component }}
+        path: candidate-manifest.json
+        if-no-files-found: error
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+        - agent
+        - cluster-agent
+    env:
+      IMAGE: quay.io/stackstate/stackstate-k8s-${{ matrix.component }}
