@@ -233,6 +233,14 @@ jobs:
         exceptions-path: exceptions
         upload-sarif: false
         sarif-category: stackstate-k8s-${{ matrix.component }}-${{ matrix.arch }}
+    - name: Retain published digest scan evidence
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: published-evidence-${{ matrix.component }}-${{ matrix.arch }}
+        path: |-
+          reports/
+          base-package.txt
+        if-no-files-found: error
   merge:
     name: Publish and sign candidate manifest (${{ matrix.component }})
     needs:
