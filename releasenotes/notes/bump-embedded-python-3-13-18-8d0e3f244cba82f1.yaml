@@ -1,0 +1,4 @@
+---
+enhancements:
+  - |
+    Bump embedded Python to 3.13.18 and refresh the bundled CA certificates.
