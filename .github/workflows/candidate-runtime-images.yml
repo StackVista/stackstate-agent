@@ -131,7 +131,7 @@ jobs:
         printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
         if [ "${COMPONENT}" = cluster-agent ]; then
           chmod +x bin/stackstate-cluster-agent/stackstate-cluster-agent
-          cp bin/stackstate-cluster-agent/stackstate-cluster-agent Dockerfiles/cluster-agent/
+          cp -r bin/stackstate-cluster-agent Dockerfiles/cluster-agent/
         fi
         sed -i "s|/bci-micro:15.7|/bci-micro:15.7@${BCI_DIGEST}|" "Dockerfiles/${COMPONENT}/Dockerfile"
         docker build --pull --build-arg ARCH="${ARCH}" -t "${LOCAL_IMAGE}" "Dockerfiles/${COMPONENT}"
@@ -143,7 +143,8 @@ jobs:
           docker run --rm -i --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${LOCAL_IMAGE}" - < scripts/test_embedded_python_security.py
           docker run --rm --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${LOCAL_IMAGE}" -c 'import ssl, urllib.request; assert ssl.get_default_verify_paths().cafile; print(urllib.request.urlopen("https://www.python.org", timeout=30).status)'
         else
-          docker run --rm --read-only --entrypoint /opt/stackstate-agent/bin/stackstate-cluster-agent "${LOCAL_IMAGE}" version
+          docker run --rm --read-only --entrypoint /opt/stackstate-agent/bin/stackstate-cluster-agent/stackstate-cluster-agent "${LOCAL_IMAGE}" version
+          docker run --rm -e STS_API_KEY=validation "${LOCAL_IMAGE}" stackstate-cluster-agent version
         fi
         cid=$(docker create "${LOCAL_IMAGE}")
         mkdir -p "${RUNNER_TEMP}/candidate-rpm"
