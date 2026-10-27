@@ -1,0 +1,208 @@
+name: Published agent image gate
+
+on:
+  push:
+    branches:
+      - agent-3e7e2d95-gate
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_SHA: 3e7e2d95587599d7c76518582e12220201be6d1f
+  IMAGE_TAG: 3e7e2d95
+
+jobs:
+  resolve:
+    name: Verify publication and resolve signed image receipts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      matrix: ${{ steps.receipts.outputs.matrix }}
+    steps:
+      - name: Await successful merge publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          while :; do
+            pending=0
+            for run_id in 40487922079 40487922090 40487922146; do
+              result=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
+              jq -e --arg sha "${SOURCE_SHA}" '.head_sha == $sha and .event == "push"' <<< "${result}" >/dev/null
+              if [ "$(jq -r .status <<< "${result}")" != completed ]; then
+                pending=1
+              else
+                jq -e '.conclusion == "success"' <<< "${result}" >/dev/null
+              fi
+            done
+            [ "${pending}" -eq 1 ] || break
+            echo "Waiting for merge publication workflows"
+            sleep 30
+          done
+
+      - name: Download signed node-agent architecture receipts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          github-token: ${{ github.token }}
+          run-id: '40487922146'
+          pattern: agent-publication-digest-*
+          path: publication-receipts
+
+      - name: Download signed cluster-agent architecture receipts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          github-token: ${{ github.token }}
+          run-id: '40487922090'
+          pattern: cluster-agent-publication-digest-*
+          path: publication-receipts
+
+      - name: Validate receipt source and record published manifests
+        id: receipts
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          expected = {
+              (f"quay.io/stackstate/stackstate-k8s-{component}", arch)
+              for component in ("agent", "cluster-agent")
+              for arch in ("amd64", "arm64")
+          }
+          entries = []
+          seen = set()
+          for path in sorted(Path("publication-receipts").rglob("publication-digest.json")):
+              receipt = json.loads(path.read_text())
+              identity = (receipt["image"], receipt["arch"])
+              assert identity in expected and identity not in seen, identity
+              assert receipt["sha"] == os.environ["SOURCE_SHA"], receipt
+              assert receipt["tag"] == os.environ["IMAGE_TAG"], receipt
+              assert re.fullmatch(r"sha256:[0-9a-f]{64}", receipt["digest"]), receipt
+              seen.add(identity)
+              entries.append({
+                  "image": receipt["image"],
+                  "arch": receipt["arch"],
+                  "digest": receipt["digest"],
+                  "name": path.parent.name,
+                  "runner": "docker-public" if receipt["arch"] == "amd64" else "arm64-xlarge-public",
+              })
+          assert seen == expected, (seen, expected)
+          manifests = []
+          for image in sorted({entry["image"] for entry in entries}):
+              reference = f"{image}:{os.environ['IMAGE_TAG']}"
+              digest = subprocess.check_output(
+                  ["docker", "buildx", "imagetools", "inspect", reference,
+                   "--format", "{{.Manifest.Digest}}"], text=True
+              ).strip()
+              assert re.fullmatch(r"sha256:[0-9a-f]{64}", digest), digest
+              raw = json.loads(subprocess.check_output(
+                  ["docker", "buildx", "imagetools", "inspect", reference, "--raw"], text=True
+              ))
+              assert {"amd64", "arm64"} <= {
+                  child.get("platform", {}).get("architecture")
+                  for child in raw["manifests"]
+              }, raw
+              published_children = {child["digest"] for child in raw["manifests"]}
+              for entry in entries:
+                  if entry["image"] != image:
+                      continue
+                  receipt_manifest = json.loads(subprocess.check_output(
+                      ["docker", "buildx", "imagetools", "inspect",
+                       f"{image}@{entry['digest']}", "--raw"], text=True
+                  ))
+                  receipt_children = {child["digest"] for child in receipt_manifest.get("manifests", [])}
+                  assert (receipt_children or {entry["digest"]}) <= published_children, entry
+              manifests.append({"image": image, "tag": os.environ["IMAGE_TAG"],
+                                "digest": digest, "source_sha": os.environ["SOURCE_SHA"],
+                                "manifest": raw})
+          Path("published-manifests.json").write_text(json.dumps(manifests, indent=2) + "\n")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write("matrix=" + json.dumps({"include": entries}) + "\n")
+          PY
+
+      - name: Retain publication identities
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: published-agent-identities
+          path: |
+            publication-receipts/
+            published-manifests.json
+          if-no-files-found: error
+
+  scan:
+    name: Gate published ${{ matrix.name }}
+    needs: resolve
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve.outputs.matrix) }}
+    env:
+      IMAGE: ${{ matrix.image }}
+      DIGEST: ${{ matrix.digest }}
+      ARCH: ${{ matrix.arch }}
+    steps:
+      - name: Check out maintained runtime checks
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: 3e7e2d95587599d7c76518582e12220201be6d1f
+          persist-credentials: false
+
+      - name: Verify published source and native runtime
+        run: |
+          set -euo pipefail
+          reference="${IMAGE}@${DIGEST}"
+          docker pull "${reference}"
+          test "$(docker image inspect "${reference}" --format '{{.Architecture}}')" = "${ARCH}"
+          test "$(docker image inspect "${reference}" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "${SOURCE_SHA}"
+          if [ "${IMAGE}" = quay.io/stackstate/stackstate-k8s-agent ]; then
+            docker run --rm --entrypoint /opt/stackstate-agent/bin/agent/agent "${reference}" version
+            docker run --rm -i --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${reference}" - < scripts/test_embedded_python_security.py
+            docker run --rm --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${reference}" -c 'import hashlib, pathlib, ssl, sys; assert sys.version_info[:3] == (3, 13, 18); assert hashlib.sha256(pathlib.Path(ssl.get_default_verify_paths().cafile).read_bytes()).hexdigest() == "796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe"; print(sys.version)'
+          else
+            docker run --rm -e STS_API_KEY=validation "${reference}" stackstate-cluster-agent version
+          fi
+
+      - name: Gate published digest with chart scan policy and VEX
+        id: scan
+        uses: StackVista/image-pipeline/.github/actions/scan-image@508730536961e38718dbc2403448e2d418b1136f # main
+        with:
+          image: ${{ matrix.image }}@${{ matrix.digest }}
+          mode: gate
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          with-grype: true
+          upload-sarif: false
+          sarif-category: published-agent
+
+      - name: Record gate decision and artifact identity
+        if: always()
+        env:
+          SCAN_DECISION: ${{ steps.scan.outputs.decision }}
+          SCAN_OUTCOME: ${{ steps.scan.outcome }}
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          jq -n --arg image "${IMAGE}" --arg digest "${DIGEST}" --arg arch "${ARCH}" \
+            --arg source_sha "${SOURCE_SHA}" --arg decision "${SCAN_DECISION}" \
+            --arg outcome "${SCAN_OUTCOME}" \
+            '{image: $image, digest: $digest, arch: $arch, source_sha: $source_sha,
+              decision: $decision, outcome: $outcome}' > reports/published-identity.json
+
+      - name: Retain published vulnerability and secret scan evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: gate-${{ matrix.name }}
+          path: reports/
+          if-no-files-found: error
