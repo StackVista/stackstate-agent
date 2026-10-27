@@ -60,15 +60,23 @@ jobs:
         - component: agent
           arch: amd64
           runner: docker-public
+          title: SUSE Observability Agent
+          description: Node agent collecting metrics, logs, traces and topology for SUSE Observability.
         - component: agent
           arch: arm64
           runner: arm64-xlarge-public
+          title: SUSE Observability Agent
+          description: Node agent collecting metrics, logs, traces and topology for SUSE Observability.
         - component: cluster-agent
           arch: amd64
           runner: docker-public
+          title: SUSE Observability Cluster Agent
+          description: Kubernetes cluster agent for SUSE Observability.
         - component: cluster-agent
           arch: arm64
           runner: arm64-xlarge-public
+          title: SUSE Observability Cluster Agent
+          description: Kubernetes cluster agent for SUSE Observability.
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     permissions:
@@ -170,8 +178,8 @@ jobs:
       with:
         image-name: stackstate-k8s-${{ matrix.component }}
         tag: ${{ env.TAG }}
-        title: SUSE Observability Agent
-        description: Node agent collecting metrics, logs, traces and topology for SUSE Observability.
+        title: ${{ matrix.title }}
+        description: ${{ matrix.description }}
         component: stackstate-k8s-${{ matrix.component }}
         dockerfile: Dockerfiles/${{ matrix.component }}/Dockerfile
         base-name: registry.suse.com/bci/bci-micro:15.7
