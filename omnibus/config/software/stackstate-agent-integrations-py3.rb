@@ -43,6 +43,8 @@ blacklist_packages = Array.new
 
 # We build these manually
 blacklist_packages.push(/^aerospike==/)
+# The embedded tracing version is selected below rather than by the integrations ref.
+blacklist_packages.push(/^ddtrace==/)
 
 
 if suse?
@@ -166,6 +168,7 @@ build do
     # Adding pympler for memory debug purposes
     requirements.push("pympler==0.7\n")
     requirements.push("certifi>=2026.10.19\n")
+    requirements.push("ddtrace==4.15.6\n")
 
     # Render the filtered requirements file
     erb source: "static_requirements.txt.erb",
