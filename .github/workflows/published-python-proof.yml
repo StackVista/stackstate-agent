@@ -1,0 +1,130 @@
+name: Published Python evidence for 431eff6b
+
+on:
+  push:
+    branches:
+      - agent-431eff6b-proof
+    paths:
+      - .github/workflows/published-python-proof.yml
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  native:
+    name: Published Python maintenance and scans (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            machine: x86_64
+            runner: docker-public
+            leaf: c0844e99b9dcb5f5962a542ff5081be83bc7065610c5f5404dab287d9e8a09cf
+            config: 3e413e86e281ccfb175834c2126b0eaa119cd20293a8238735c91257ca6757e1
+          - arch: arm64
+            machine: aarch64
+            runner: arm64-xlarge-public
+            leaf: 2acc0677134d389df87e43cc2af6150f191deeac00911e35e7bd5dd3b12b0b75
+            config: c55ac2c685622770d46b37bbb1aee7d741747c0973db4c20e116123fcc1f5e7e
+    env:
+      SOURCE_SHA: 431eff6bf393d845d75f2d3e7c954ff692572ff0
+      IMAGE_REF: registry.tooling.stackstate.io/quay/stackstate/stackstate-k8s-agent@sha256:${{ matrix.leaf }}
+      ARCH: ${{ matrix.arch }}
+      MACHINE: ${{ matrix.machine }}
+      CONFIG_DIGEST: sha256:${{ matrix.config }}
+    steps:
+      - name: Check out maintained checks at the published source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: 431eff6bf393d845d75f2d3e7c954ff692572ff0
+          persist-credentials: false
+
+      - name: Log in to the registry proxy
+        env:
+          REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+          REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          printf '%s' "${REGISTRY_PASSWORD}" | docker login -u "${REGISTRY_USER}" --password-stdin "${REGISTRY_HOST}"
+
+      - name: Verify immutable image, source and native host
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          test "$(uname -m)" = "${MACHINE}"
+          docker pull "${IMAGE_REF}"
+          docker image inspect "${IMAGE_REF}" > reports/image-inspect.json
+          test "$(docker image inspect "${IMAGE_REF}" --format '{{.Architecture}}')" = "${ARCH}"
+          test "$(docker image inspect "${IMAGE_REF}" --format '{{.Id}}')" = "${CONFIG_DIGEST}"
+          test "$(docker image inspect "${IMAGE_REF}" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "${SOURCE_SHA}"
+          printf '%s\n' "${IMAGE_REF}" > reports/image-reference.txt
+          sha256sum scripts/test_embedded_python_security.py > reports/test-source.sha256
+
+      - name: Verify embedded interpreter, module bytes and non-root fd support
+        run: |
+          set -euo pipefail
+          docker run --rm -i -e EXPECTED_MACHINE="${MACHINE}" \
+            --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${IMAGE_REF}" - <<'PY' | tee reports/runtime-identity.txt
+          import hashlib
+          import os
+          import pathlib
+          import platform
+          import poplib
+          import shutil
+          import sys
+          import tempfile
+
+          assert sys.version_info[:3] == (3, 13, 18), sys.version
+          assert platform.machine() == os.environ["EXPECTED_MACHINE"]
+          assert sys.executable.startswith("/opt/stackstate-agent/embedded/bin/")
+          assert os.geteuid() != 0
+          assert os.name == "posix" and shutil.rmtree.avoids_symlink_attacks
+          for module, expected in (
+              (tempfile, "05f12fd8e347c9ac71777e3a5b2811a8b9da5200999b3bea83f660599ae460da"),
+              (shutil, "7619899fbdf67c74d77537968dd8382033aa2f8a9436adba5cdd1e724e50e7e9"),
+              (poplib, "527e714523264093910a0a0b1a55c6583f952835c89061537fc40ad98c347056"),
+          ):
+              path = pathlib.Path(module.__file__)
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              assert digest == expected, (path, digest)
+              print(path, digest)
+          print(sys.version, sys.executable, platform.machine(), "uid", os.geteuid(),
+                "fd_rmtree", shutil.rmtree.avoids_symlink_attacks)
+          PY
+
+      - name: Run maintained security checks and require maintenance to execute
+        run: |
+          set -euo pipefail
+          docker run --rm -i --entrypoint /opt/stackstate-agent/embedded/bin/python3 \
+            "${IMAGE_REF}" - < scripts/test_embedded_python_security.py 2>&1 | tee reports/security-tests.txt
+          grep -E '^test_runtime_maintenance .* \.\.\. ok$' reports/security-tests.txt
+          if grep -E 'skipped|FAILED' reports/security-tests.txt; then
+            exit 1
+          fi
+
+      - name: Trivy and Grype vulnerabilities (inform), Trivy secrets (blocking)
+        uses: StackVista/image-pipeline/.github/actions/scan-image@d847894223a794b4f4834654af20a04278b16b4f # scan 40870003216
+        with:
+          image: ${{ env.IMAGE_REF }}
+          mode: inform
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          with-grype: true
+          upload-sarif: false
+          sarif-category: published-python-${{ matrix.arch }}
+
+      - name: Retain exact published-image evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: published-python-${{ matrix.arch }}
+          path: reports/
+          if-no-files-found: error
