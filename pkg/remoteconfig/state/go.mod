@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/DataDog/go-tuf v1.1.1-0.5.2
-	github.com/secure-systems-lab/go-securesystemslib v0.9.0
+	github.com/secure-systems-lab/go-securesystemslib v0.9.1
 	github.com/stretchr/testify v1.11.1
 )
 
@@ -198,4 +198,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2

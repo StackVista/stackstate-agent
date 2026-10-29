@@ -12,7 +12,7 @@ require (
 	github.com/DataDog/datadog-agent/comp/otelcol/status/def v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/prometheus v0.78.3-rc.2
 	github.com/stretchr/testify v1.11.1
-	go.yaml.in/yaml/v3 v3.0.4
+	go.yaml.in/yaml/v3 v3.0.5
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -289,4 +289,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2
