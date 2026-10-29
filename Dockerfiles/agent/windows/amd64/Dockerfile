@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=mcr.microsoft.com/powershell:lts-windowsservercore-1809
+ARG BASE_IMAGE=mcr.microsoft.com/powershell:lts-windowsservercore-1809@sha256:cc2aebf0b8986f5c7cc10537072904da14cdcba7ad2cac227519849dc75d25c7
 FROM ${BASE_IMAGE}
 ARG BASE_IMAGE
 ARG BASE_IMAGE_OS="windows server core"
