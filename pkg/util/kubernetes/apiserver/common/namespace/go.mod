@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common/namespace
 
-go 1.26.0
+go 1.27.3
 
 require (
 	github.com/DataDog/datadog-agent/pkg/config/setup v0.78.3-rc.2

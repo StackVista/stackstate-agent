@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/util/fxutil
 
-go 1.26.0
+go 1.27.3
 
 require (
 	github.com/DataDog/datadog-agent/comp/def v0.78.3-rc.2
@@ -9,8 +9,6 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/fx v1.24.0
 )
-
-require gopkg.in/yaml.v3 v3.0.1 // indirect
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -21,6 +19,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
