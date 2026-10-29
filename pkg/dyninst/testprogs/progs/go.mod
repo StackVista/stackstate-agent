@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/dyninst/testprogs/progs
 
-go 1.26.0
+go 1.27.3
 
 require (
 	github.com/DataDog/dd-trace-go/contrib/net/http/v2 v2.0.1
@@ -78,6 +78,7 @@ require (
 	go.opentelemetry.io/contrib/bridges/otelzap v0.10.0 // indirect
 	go.opentelemetry.io/otel v1.47.0 // indirect
 	go.opentelemetry.io/otel/log v1.47.0 // indirect
+	go.opentelemetry.io/otel/log/logtest v0.23.0 // indirect
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
@@ -95,9 +96,5 @@ require (
 	google.golang.org/grpc v1.83.2 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-)
-
-require (
-	go.opentelemetry.io/otel/log/logtest v0.23.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
