@@ -398,26 +398,26 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da
 	google.golang.org/grpc v1.83.2
 	google.golang.org/grpc/examples v0.0.0-20250407062114-b368379ef8f6
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gopkg.in/DataDog/dd-trace-go.v1 v1.72.2
 	gopkg.in/zorkian/go-datadog-api.v2 v2.30.0
 	istio.io/api v1.27.3
 	istio.io/client-go v1.27.3
-	k8s.io/api v0.35.3
-	k8s.io/apiextensions-apiserver v0.35.0
-	k8s.io/apimachinery v0.35.3
+	k8s.io/api v0.35.9
+	k8s.io/apiextensions-apiserver v0.35.9
+	k8s.io/apimachinery v0.35.9
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.2.2
-	k8s.io/cli-runtime v0.35.0
-	k8s.io/client-go v0.35.3
-	k8s.io/component-base v0.35.0
-	k8s.io/cri-api v0.34.1
-	k8s.io/cri-client v0.34.1
+	k8s.io/cli-runtime v0.35.9
+	k8s.io/client-go v0.35.9
+	k8s.io/component-base v0.35.9
+	k8s.io/cri-api v0.34.12
+	k8s.io/cri-client v0.34.12
 	k8s.io/klog/v2 v2.140.0
-	k8s.io/kube-aggregator v0.34.1
+	k8s.io/kube-aggregator v0.34.12
 	k8s.io/kube-state-metrics/v2 v2.13.1-0.20241025121156-110f03d7331f
-	k8s.io/kubectl v0.35.0
-	k8s.io/kubelet v0.34.1
-	k8s.io/metrics v0.35.0
+	k8s.io/kubectl v0.35.9
+	k8s.io/kubelet v0.34.12
+	k8s.io/metrics v0.35.9
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5
 	pgregory.net/rapid v1.2.0
 	sigs.k8s.io/custom-metrics-apiserver v1.33.0
@@ -1215,17 +1215,17 @@ require (
 
 // github.com/aws/karpenter-provider-aws requires alpha versions of K8s libraries. We are only using some constants from these packages.
 replace (
-	k8s.io/api => k8s.io/api v0.34.1
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.34.1
-	k8s.io/apimachinery => k8s.io/apimachinery v0.34.1
-	k8s.io/apiserver => k8s.io/apiserver v0.34.1
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.34.1
-	k8s.io/client-go => k8s.io/client-go v0.34.1
-	k8s.io/component-base => k8s.io/component-base v0.34.1
-	k8s.io/component-helpers => k8s.io/component-helpers v0.34.1
-	k8s.io/kms => k8s.io/kms v0.34.1
-	k8s.io/kubectl => k8s.io/kubectl v0.34.1
-	k8s.io/metrics => k8s.io/metrics v0.34.1
+	k8s.io/api => k8s.io/api v0.34.12
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.34.12
+	k8s.io/apimachinery => k8s.io/apimachinery v0.34.12
+	k8s.io/apiserver => k8s.io/apiserver v0.34.12
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.34.12
+	k8s.io/client-go => k8s.io/client-go v0.34.12
+	k8s.io/component-base => k8s.io/component-base v0.34.12
+	k8s.io/component-helpers => k8s.io/component-helpers v0.34.12
+	k8s.io/kms => k8s.io/kms v0.34.12
+	k8s.io/kubectl => k8s.io/kubectl v0.34.12
+	k8s.io/metrics => k8s.io/metrics v0.34.12
 )
 
 // Envoy Gateway raises these transitive dependencies to versions that require
