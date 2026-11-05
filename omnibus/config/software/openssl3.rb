@@ -31,7 +31,7 @@ dependency "cacerts"
 # Must match deps/openssl/version.bzl — the Bazel repo rule is what actually
 # builds OpenSSL, and a divergence here silently reports the wrong version.
 # STS runs ahead of upstream base-7.78.2's 3.5.6 to carry CVE fixes.
-default_version "3.5.8"
+default_version "3.5.9"
 
 relative_path "openssl-#{version}"
 

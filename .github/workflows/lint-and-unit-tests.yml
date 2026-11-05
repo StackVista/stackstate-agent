@@ -26,7 +26,7 @@ jobs:
   godeps-cache:
     name: Go dependency cache image (amd64)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    uses: ./.github/workflows/godeps-cache.yml
+    uses: $/.github/workflows/godeps-cache.yml
     with:
       arch: amd64
       build_delay_seconds: 900
@@ -46,7 +46,7 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
 
@@ -70,18 +70,17 @@ jobs:
       contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
 
-      - name: Audit workflows and composite actions
-        env:
-          GH_TOKEN: ${{ github.token }}
-          # renovate: datasource=pypi depName=zizmor
-          ZIZMOR_VERSION: 1.29.0
-        run: |
-          set -euo pipefail
-          pipx run --spec "zizmor==${ZIZMOR_VERSION}" zizmor --collect=workflows,actions .
+      - name: Audit workflows, composite actions, and Dependabot
+        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+        with:
+          advanced-security: false
+          version: 1.31.1
+          inputs: .
+          collect: workflows,actions,dependabot
 
   mod-tidy:
     name: Go module tidiness (go.mod / go.sum)
@@ -96,7 +95,7 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
 
@@ -127,7 +126,7 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -177,7 +176,7 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -228,7 +227,7 @@ jobs:
       always()
       && github.event_name == 'push'
       && contains(needs.*.result, 'failure')
-    uses: ./.github/workflows/cerberus-notify.yml
+    uses: $/.github/workflows/cerberus-notify.yml
     with:
       suite: lint-and-unit-tests
     secrets:

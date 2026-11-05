@@ -1,4 +1,4 @@
-go 1.26.6
+go 1.26.10
 
 // Disable post-quantum TLS key exchanges for compatibility with middleboxes
 // that drop larger ClientHello messages. See https://github.com/DataDog/datadog-agent/issues/34323.

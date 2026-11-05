@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/obfuscate
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/DataDog/datadog-go/v5 v5.8.3
@@ -23,8 +23,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 

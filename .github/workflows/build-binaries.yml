@@ -28,7 +28,7 @@ jobs:
   godeps-cache-amd64:
     name: Go dependency cache image (amd64)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    uses: ./.github/workflows/godeps-cache.yml
+    uses: $/.github/workflows/godeps-cache.yml
     with:
       arch: amd64
       build_delay_seconds: 900
@@ -39,7 +39,7 @@ jobs:
   godeps-cache-arm64:
     name: Go dependency cache image (arm64)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    uses: ./.github/workflows/godeps-cache.yml
+    uses: $/.github/workflows/godeps-cache.yml
     with:
       arch: arm64
       build_delay_seconds: 0
@@ -72,7 +72,7 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -134,7 +134,7 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -196,7 +196,7 @@ jobs:
       LOCAL_IMAGE: quay.io/stackstate/stackstate-k8s-cluster-agent:ci-${{ matrix.arch }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
 
@@ -256,7 +256,7 @@ jobs:
     if: github.event_name == 'push'
     permissions:
       checks: read
-    uses: ./.github/workflows/await-checks.yml
+    uses: $/.github/workflows/await-checks.yml
     with:
       checks: |
         CI success (lint and unit tests)
@@ -285,7 +285,7 @@ jobs:
       IMAGE: quay.io/stackstate/stackstate-k8s-cluster-agent
     steps:
       - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
 
@@ -318,11 +318,12 @@ jobs:
           description: Cluster-level agent collecting Kubernetes topology and cluster checks for SUSE Observability.
           component: stackstate-k8s-cluster-agent
           dockerfile: Dockerfiles/cluster-agent/Dockerfile
-          base-name: registry.suse.com/bci/bci-micro:latest
+          base-name: registry.suse.com/bci/bci-micro:15.7
           registry-credentials: |
             [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
 
       - name: Build, publish, and sign architecture image
+        id: publish
         uses: StackVista/image-pipeline/.github/actions/push-single-arch@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: ${{ env.IMAGE }}
@@ -339,6 +340,27 @@ jobs:
           target-registry-user: ${{ vars.QUAY_USER }}
           target-registry-password: ${{ secrets.QUAY_PASSWORD }}
 
+      - name: Record signed architecture digest
+        env:
+          TAG: ${{ steps.image.outputs.tag }}
+          ARCH: ${{ matrix.arch }}
+          DIGEST: ${{ steps.publish.outputs.digest }}
+        run: |
+          set -euo pipefail
+          jq -n --arg image "${IMAGE}" --arg tag "${TAG}" --arg arch "${ARCH}" \
+            --arg digest "${DIGEST}" --arg repository "${GITHUB_REPOSITORY}" \
+            --arg sha "${GITHUB_SHA}" --arg run_id "${GITHUB_RUN_ID}" \
+            '{image: $image, tag: $tag, arch: $arch, digest: $digest,
+              repository: $repository, sha: $sha, run_id: $run_id}' \
+            > "${RUNNER_TEMP}/publication-digest.json"
+
+      - name: Upload signed architecture digest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cluster-agent-publication-digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/publication-digest.json
+          if-no-files-found: error
+
   merge-cluster-agent-manifest:
     name: Publish and sign multi-architecture cluster-agent image
     if: github.event_name == 'push'
@@ -349,6 +371,12 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - name: Download signed architecture digests
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: cluster-agent-publication-digest-*
+          path: publication-digests
+
       - name: Resolve image tag
         id: image
         env:
@@ -363,6 +391,7 @@ jobs:
           image: quay.io/stackstate/stackstate-k8s-cluster-agent
           tag: ${{ steps.image.outputs.tag }}
           arches: amd64,arm64
+          receipts: publication-digests
           target-registry: quay.io
           target-registry-user: ${{ vars.QUAY_USER }}
           target-registry-password: ${{ secrets.QUAY_PASSWORD }}
@@ -381,7 +410,7 @@ jobs:
       always()
       && (github.event_name == 'push' || github.event_name == 'schedule')
       && contains(needs.*.result, 'failure')
-    uses: ./.github/workflows/cerberus-notify.yml
+    uses: $/.github/workflows/cerberus-notify.yml
     with:
       suite: binary-builds
     secrets:

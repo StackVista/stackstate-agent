@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/util/filesystem
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
@@ -9,8 +9,8 @@ require (
 	github.com/hectane/go-acl v0.0.0-20230225031251-cdfc9e3acf94
 	github.com/shirou/gopsutil/v4 v4.26.3
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/sync v0.22.0
-	golang.org/x/sys v0.47.0
+	golang.org/x/sync v0.23.0
+	golang.org/x/sys v0.48.0
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect

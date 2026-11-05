@@ -23,6 +23,13 @@ Default: **enabled**
 ## Kubernetes Api Topology Check (_WIP_)
 This fetches all kubernetes topology components.
 
+Each snapshot emits a component or relation identity only once, even when several
+collectors discover it concurrently. Examples include shared host paths and a
+container mounting multiple files from one ConfigMap. The first observation is
+retained, matching the receiver's existing handling of duplicates; identifiers
+are unchanged. Relations still require both endpoints. Identity caches belong
+to one snapshot, so subsequent snapshots continue to refresh existing topology.
+
 The check is enabled using the: `collect_kubernetes_topology` config parameter or the `STS_COLLECT_KUBERNETES_TOPOLOGY` environment variable.
 
 Default: **enabled**

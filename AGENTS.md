@@ -169,6 +169,9 @@ Go build tags control feature inclusion, some examples are:
 - Primary CI system
 - Defined in `.github/workflows/` — lint and unit tests, binary builds, DEB package build
 - Runs tests, builds, publishes images and pre-release packages
+- Image publication records each signed architecture digest as a workflow
+  artifact. Manifest retries use those receipts to finish interrupted signing
+  while rejecting an existing manifest that differs from the recorded inputs.
 
 ### GitLab CI
 - Retired. The `.gitlab/` directory is upstream DataDog configuration that STS pipelines never included; it is kept only to avoid conflicts on upstream merges.
@@ -200,7 +203,9 @@ See the marketplace README for installation instructions.
 The project uses Go modules with multiple sub-modules. `modules.yml` records
 module participation and test targets; `go.work` defines the active workspace.
 Use `go work sync` and `dda inv tidy` to synchronize registered modules, then
-`dda inv check-mod-tidy` to validate them. Modules marked `ignored` in
+`dda inv check-mod-tidy` to validate them. The check uses unstaged `git diff`:
+stage intended dependency edits first, then require no further module
+diffs after the check. Modules marked `ignored` in
 `modules.yml`, and unregistered module trees absent from that file, are outside
 these checks: leave their dependency fixtures unchanged
 unless they are part of the task, or run standalone tidy and validation for them

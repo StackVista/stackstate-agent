@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/comp/core/agenttelemetry/def
 
-go 1.25.0
+go 1.26.0
 
 require github.com/DataDog/datadog-agent/pkg/fleet/installer v0.78.3-rc.2
 
@@ -19,7 +19,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 )
 

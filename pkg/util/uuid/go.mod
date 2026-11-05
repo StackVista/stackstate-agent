@@ -1,12 +1,12 @@
 module github.com/DataDog/datadog-agent/pkg/util/uuid
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/DataDog/datadog-agent/pkg/util/cache v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
 	github.com/shirou/gopsutil/v4 v4.26.3
-	golang.org/x/sys v0.47.0
+	golang.org/x/sys v0.48.0
 )
 
 require (
