@@ -241,7 +241,7 @@ jobs:
             "${LOCAL_IMAGE}" version
 
       - name: Scan cluster-agent image, report-only (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
-        uses: StackVista/image-pipeline/.github/actions/scan-image@5eac3de192cbd6ad4225e6799c41ad2741deadd1
+        uses: StackVista/image-pipeline/.github/actions/scan-image@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: ${{ env.LOCAL_IMAGE }}
           mode: inform
@@ -310,7 +310,7 @@ jobs:
 
       - name: Resolve canonical OCI labels
         id: oci
-        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@ab8ac3d608530ee0a295483c973d720230174348
+        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image-name: stackstate-k8s-cluster-agent
           tag: ${{ steps.image.outputs.tag }}
@@ -324,7 +324,7 @@ jobs:
 
       - name: Build, publish, and sign architecture image
         id: publish
-        uses: StackVista/image-pipeline/.github/actions/push-single-arch@27cf07bd5f5f3bafdb714e3b24d72d85480d2a60
+        uses: StackVista/image-pipeline/.github/actions/push-single-arch@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: ${{ env.IMAGE }}
           tag: ${{ steps.image.outputs.tag }}
@@ -386,7 +386,7 @@ jobs:
           echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
 
       - name: Merge and sign multi-architecture manifest
-        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@27cf07bd5f5f3bafdb714e3b24d72d85480d2a60
+        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: quay.io/stackstate/stackstate-k8s-cluster-agent
           tag: ${{ steps.image.outputs.tag }}
