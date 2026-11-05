@@ -326,7 +326,7 @@ jobs:
           docker run --rm -i --entrypoint /opt/stackstate-agent/embedded/bin/python3 "${LOCAL_IMAGE}" - < scripts/test_embedded_python_security.py
 
       - name: Scan agent image, report-only (Trivy and Grype vulnerabilities, VEX-aware, plus Trivy secrets)
-        uses: StackVista/image-pipeline/.github/actions/scan-image@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
+        uses: StackVista/image-pipeline/.github/actions/scan-image@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         env:
           GRYPE_NAME: stackstate-k8s-agent
         with:
@@ -402,7 +402,7 @@ jobs:
 
       - name: Resolve canonical OCI labels
         id: oci
-        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
+        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image-name: stackstate-k8s-agent
           tag: ${{ steps.image.outputs.tag }}
@@ -415,7 +415,7 @@ jobs:
             [{"registry": "${{ vars.REGISTRY_HOST }}", "username": "${{ vars.REGISTRY_USER }}", "password": "${{ secrets.REGISTRY_PASSWORD }}"}]
 
       - name: Build, publish, and sign architecture image
-        uses: StackVista/image-pipeline/.github/actions/push-single-arch@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
+        uses: StackVista/image-pipeline/.github/actions/push-single-arch@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: ${{ env.IMAGE }}
           tag: ${{ steps.image.outputs.tag }}
@@ -453,7 +453,7 @@ jobs:
           echo "tag=$(printf '%s' "${SOURCE_SHA}" | cut -c1-8)" >> "${GITHUB_OUTPUT}"
 
       - name: Merge and sign multi-architecture manifest
-        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
+        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: quay.io/stackstate/stackstate-k8s-agent
           tag: ${{ steps.image.outputs.tag }}
