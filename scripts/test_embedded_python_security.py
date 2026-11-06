@@ -3,6 +3,7 @@
 import contextlib
 import hashlib
 import io
+import json
 import os
 import platform
 import shutil
@@ -16,9 +17,35 @@ from unittest import mock
 
 import jwt
 from build._compat.tarfile import safe_extractall
+from oauthlib.common import Request
+from oauthlib.oauth2 import BearerToken, DeviceCodeGrant
 
 
 class EmbeddedPythonSecurityTests(unittest.TestCase):
+    def test_oauth_device_flow_requires_valid_device_code(self):
+        # CVE-2026-49272: knowing a valid client ID must not bypass device
+        # authorization. Exercise the packaged library with an accepted client.
+        for code, error in ((None, "invalid_request"), ("bogus", "invalid_grant")):
+            with self.subTest(device_code=code):
+                validator = mock.MagicMock()
+                validator.validate_device_code.return_value = False
+                request = Request(
+                    "https://example.invalid/token",
+                    http_method="POST",
+                    body="grant_type=urn:ietf:params:oauth:grant-type:device_code&client_id=client",
+                )
+                request.client = mock.Mock(client_id="client")
+                request.device_code = code
+                grant = DeviceCodeGrant(validator)
+                _, body, status = grant.create_token_response(request, BearerToken(validator))
+                self.assertEqual(status, 400)
+                self.assertEqual(json.loads(body)["error"], error)
+                validator.save_token.assert_not_called()
+                if code is None:
+                    validator.validate_device_code.assert_not_called()
+                else:
+                    validator.validate_device_code.assert_called_once_with("client", code, request)
+
     @unittest.skipUnless(
         os.name == "posix" and shutil.rmtree.avoids_symlink_attacks,
         "requires POSIX fd-based directory removal",

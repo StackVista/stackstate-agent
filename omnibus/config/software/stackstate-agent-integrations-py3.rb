@@ -45,6 +45,8 @@ blacklist_packages = Array.new
 blacklist_packages.push(/^aerospike==/)
 # The embedded tracing version is selected below rather than by the integrations ref.
 blacklist_packages.push(/^ddtrace==/)
+# Keep the device authorization fix even when building an older integrations ref.
+blacklist_packages.push(/^oauthlib==/)
 
 
 if suse?
@@ -169,6 +171,7 @@ build do
     requirements.push("pympler==0.7\n")
     requirements.push("certifi>=2026.10.19\n")
     requirements.push("ddtrace==4.15.6\n")
+    requirements.push("oauthlib>=4.0.1\n")
 
     # Render the filtered requirements file
     erb source: "static_requirements.txt.erb",
