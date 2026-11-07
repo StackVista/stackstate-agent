@@ -1,14 +1,12 @@
 module github.com/DataDog/datadog-agent/pkg/util/prometheus
 
-go 1.26.0
+go 1.27.3
 
 require (
 	github.com/prometheus/common v0.67.5
 	github.com/prometheus/prometheus v0.311.3
 	github.com/stretchr/testify v1.11.1
 )
-
-require gopkg.in/yaml.v3 v3.0.1 // indirect
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.41.5 // indirect
@@ -39,6 +37,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/grpc v1.83.2 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5 // indirect
 )
 
