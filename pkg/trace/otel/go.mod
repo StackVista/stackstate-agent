@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/trace/otel
 
-go 1.26.0
+go 1.27.3
 
 require (
 	github.com/DataDog/datadog-agent/comp/core/tagger/origindetection v0.78.3-rc.2
@@ -25,8 +25,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.45.0
 	google.golang.org/protobuf v1.36.11
 )
-
-require gopkg.in/yaml.v3 v3.0.1 // indirect
 
 require (
 	cloud.google.com/go/auth v0.18.2 // indirect
@@ -190,6 +188,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/grpc v1.83.2 // indirect
 	gopkg.in/ini.v1 v1.67.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 // This section was automatically added by 'dda inv modules.add-all-replace' command, do not edit manually
