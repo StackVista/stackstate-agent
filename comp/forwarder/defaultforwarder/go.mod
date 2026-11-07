@@ -33,7 +33,7 @@ require (
 	go.uber.org/atomic v1.11.0
 	go.uber.org/fx v1.24.0
 	golang.org/x/sync v0.23.0
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -293,4 +293,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2

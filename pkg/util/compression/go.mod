@@ -6,7 +6,7 @@ require (
 	github.com/DataDog/datadog-agent/comp/core/config v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/log v0.78.3-rc.2
 	github.com/DataDog/zstd v1.5.7
-	github.com/klauspost/compress v1.20.2
+	github.com/klauspost/compress v1.20.3
 )
 
 require gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -263,4 +263,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2
