@@ -12,7 +12,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/config/mock v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/config/model v0.78.3-rc.2
 	github.com/DataDog/datadog-agent/pkg/util/flavor v0.78.3-rc.2
-	github.com/gofrs/flock v0.13.0
+	github.com/gofrs/flock v0.13.1
 	github.com/stretchr/testify v1.11.1
 )
 
@@ -269,4 +269,4 @@ replace (
 	github.com/DataDog/datadog-agent/test/otel => ../../../../test/otel
 )
 
-replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.1
+replace github.com/go-openapi/testify/v2 => github.com/go-openapi/testify/v2 v2.4.2
