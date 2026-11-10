@@ -199,9 +199,9 @@ require (
 	github.com/blabber/go-freebsd-sysctl v0.0.0-20201130114544-503969f39d8f
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575 // indirect
-	github.com/cilium/ebpf v0.21.0
+	github.com/cilium/ebpf v0.22.0
 	github.com/clbanning/mxj v1.8.4
-	github.com/cloudflare/cbpfc v0.0.0-20240920015331-ff978e94500b
+	github.com/cloudflare/cbpfc v0.0.0-20260901110337-083e74b275b0
 	github.com/cloudfoundry-community/go-cfclient/v2 v2.0.1-0.20230503155151-3d15366c5820
 	github.com/containerd/cgroups/v3 v3.1.2
 	github.com/containerd/containerd v1.7.36
@@ -307,7 +307,7 @@ require (
 	github.com/safchain/baloum v0.0.0-20260120132056-b70fa9c29846
 	github.com/safchain/ethtool v0.7.0
 	github.com/samber/lo v1.52.0
-	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
+	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
 	github.com/shirou/gopsutil/v4 v4.26.3
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/sijms/go-ora/v2 v2.8.24
@@ -383,8 +383,8 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4
 	go.yaml.in/yaml/v3 v3.0.4
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb
-	go4.org/mem v0.0.0-20220726221520-4f986261bf13
-	go4.org/netipx v0.0.0-20220812043211-3cc044ffd68d
+	go4.org/mem v0.0.0-20240501181205-ae6ca9944745
+	go4.org/netipx v0.0.0-20260823151212-3075585bcbeb
 	golang.org/x/arch v0.25.0
 	golang.org/x/crypto v0.58.0
 	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90
@@ -491,7 +491,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/Showmax/go-fqdn v1.0.0 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
-	github.com/StackVista/stackstate-receiver-go-client v0.0.0-20251027145110-84e00b9623fc
+	github.com/StackVista/stackstate-receiver-go-client v0.0.0-20261021065957-0eec368dd97e
 	github.com/alecthomas/participle v0.7.1 // indirect
 	github.com/alecthomas/participle/v2 v2.1.4 // indirect
 	github.com/antchfx/xmlquery v1.5.1 // indirect
@@ -905,7 +905,7 @@ require (
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap/exp v0.3.0
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20231121144256-b99613f794b6 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20251125195548-87e1e737ad39 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20260209203927-2842357ff358 // indirect
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067 // indirect
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/telemetry v0.0.0-20260924152758-ed294f943157 // indirect
@@ -923,7 +923,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	honnef.co/go/tools v0.6.1 // indirect
+	honnef.co/go/tools v0.7.0 // indirect
 	k8s.io/apiserver v0.35.0 // indirect
 	k8s.io/cloud-provider v0.34.1 // indirect
 	k8s.io/component-helpers v0.35.0 // indirect
