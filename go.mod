@@ -418,7 +418,7 @@ require (
 	k8s.io/kubectl v0.35.0
 	k8s.io/kubelet v0.34.1
 	k8s.io/metrics v0.35.0
-	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5
+	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab
 	pgregory.net/rapid v1.2.0
 	sigs.k8s.io/custom-metrics-apiserver v1.33.0
 	sigs.k8s.io/gateway-api v1.4.1
