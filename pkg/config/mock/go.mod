@@ -1,6 +1,6 @@
 module github.com/DataDog/datadog-agent/pkg/config/mock
 
-go 1.26.0
+go 1.27.4
 
 require (
 	github.com/DataDog/datadog-agent/pkg/config/create v0.78.3-rc.2
