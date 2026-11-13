@@ -1,5 +1,5 @@
 #FROM debian:wheezy-backports
-FROM golang:1.16.7-stretch
+FROM golang:1.18.3-stretch@sha256:a9718cb62e77cc03411ea11fd71f3541e508f211169dd8f8d69ba2036545cd80
 
 RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list \
     && sed -i 's/^#\s*\(deb.*multiverse\)$/\1/g' /etc/apt/sources.list \
