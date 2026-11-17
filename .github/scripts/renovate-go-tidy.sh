@@ -11,9 +11,22 @@ dirs=$(go list -m -f '{{.Dir}}')
 mapfile -t modules <<<"$dirs"
 
 tree_state() {
-  # A new go.sum is untracked; intent-to-add makes it visible to git diff.
-  git add -N -- '*go.sum'
-  git diff | sha256sum
+  # Renovate does not commit intent-to-add files, so hash new go.sum files directly.
+  {
+    git diff
+    git ls-files -o --exclude-standard -- '*go.sum' | xargs -r sha256sum
+  } | sha256sum
+}
+
+# Modules outside go.work that Renovate edited still need their go.sum.
+tidy_outside_workspace() {
+  local mod dir
+  git diff --name-only HEAD -- '*go.mod' | while read -r mod; do
+    dir=$(cd "$(dirname "$mod")" && pwd)
+    if ! printf '%s\n' "${modules[@]}" | grep -qxF "$dir"; then
+      GOWORK=off go -C "$dir" mod tidy
+    fi
+  done
 }
 
 # A tidy reads sibling go.mod files through local replaces, so one pass can
@@ -24,6 +37,7 @@ for _ in 1 2 3 4; do
   synced=$(tree_state)
   printf '%s\0' "${modules[@]}" | xargs -0 -P "$(nproc)" -I{} go -C {} mod tidy
   if [[ "$synced" == "$before" && "$(tree_state)" == "$before" ]]; then
+    tidy_outside_workspace
     exit 0
   fi
 done
