@@ -22,6 +22,12 @@
         "rebaseWhen": "behind-base-branch"
       },
       {
+        "description": "Keep e2e fixtures out of updates; their Go modules are workspace members and stay in",
+        "matchManagers": ["dockerfile", "docker-compose"],
+        "matchFileNames": ["test/**"],
+        "enabled": false
+      },
+      {
         "description": "Let one workspace-wide sync and tidy own go.mod and go.sum, as inv check-mod-tidy expects",
         "matchDatasources": ["go", "golang-version"],
         "skipArtifactsUpdate": true,
@@ -81,12 +87,14 @@
         "enabled": false
       },
       {
+        "description": "Docker images, CI actions and the shared Renovate config also get major updates",
+        "matchManagers": ["!dockerfile", "!docker-compose", "!github-actions", "!renovate-config"],
         "matchUpdateTypes": ["major"],
         "enabled": false
       },
       {
-        "description": "Upstream Datadog merges bring routine upgrades; Renovate only proposes security fixes",
-        "matchPackageNames": ["*"],
+        "description": "Upstream Datadog merges bring routine Go upgrades; Renovate only proposes Go security fixes",
+        "matchDatasources": ["go", "golang-version"],
         "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest", "lockFileMaintenance", "rollback", "bump", "replacement"],
         "matchJsonata": ["$not(isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion))"],
         "enabled": false
@@ -109,11 +117,6 @@
         "matchDatasources": ["golang-version"],
         "matchUpdateTypes": ["minor", "major"],
         "enabled": false
-      },
-      {
-        "description": "Shared Renovate configuration fixes reach this repository through its own updates",
-        "matchPackageNames": ["StackVista/renovate-config"],
-        "enabled": true
       },
       {
         "matchManagers": ["gomod"],
