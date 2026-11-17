@@ -28,6 +28,17 @@
         "enabled": false
       },
       {
+        "description": "Let one workspace-wide sync and tidy own go.mod and go.sum, as inv check-mod-tidy expects",
+        "matchDatasources": ["go", "golang-version"],
+        "skipArtifactsUpdate": true,
+        "postUpgradeTasks": {
+          "commands": ["bash .github/scripts/renovate-go-tidy.sh"],
+          "executionMode": "branch",
+          "installTools": {"golang": {}},
+          "fileFilters": ["**/go.mod", "**/go.sum", "go.work", "go.work.sum"]
+        }
+      },
+      {
         "matchDepNames": ["integrations-core"],
         "changelogUrl": "https://github.com/DataDog/integrations-core/compare/{{currentDigest}}..{{newDigest}}",
         "schedule": ["* 2-6 * * 1,3"]
