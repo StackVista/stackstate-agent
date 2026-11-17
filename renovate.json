@@ -91,11 +91,34 @@
         "enabled": false
       },
       {
-        "matchManagers": ["gomod"],
-        "matchDepTypes": ["require", "indirect", "replace"],
-        "matchUpdateTypes": ["minor"],
+        "description": "Upstream Datadog merges bring routine upgrades; Renovate only proposes security fixes",
+        "matchPackageNames": ["*"],
+        "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest", "lockFileMaintenance", "rollback", "bump", "replacement"],
         "matchJsonata": ["$not(isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion))"],
         "enabled": false
+      },
+      {
+        "description": "Offer the Go toolchain patch in .go-version and go.work on its own, even when a newer minor exists",
+        "matchManagers": ["custom.regex"],
+        "matchDatasources": ["golang-version"],
+        "separateMinorPatch": true
+      },
+      {
+        "description": "Go toolchain patch releases are nearly always security fixes; module go directives stay minimums",
+        "matchManagers": ["custom.regex"],
+        "matchDatasources": ["golang-version"],
+        "matchUpdateTypes": ["patch"],
+        "enabled": true
+      },
+      {
+        "matchDatasources": ["golang-version"],
+        "matchUpdateTypes": ["minor", "major"],
+        "enabled": false
+      },
+      {
+        "description": "Shared Renovate configuration fixes reach this repository through its own updates",
+        "matchPackageNames": ["StackVista/renovate-config"],
+        "enabled": true
       },
       {
         "matchManagers": ["gomod"],
