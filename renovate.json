@@ -9,6 +9,7 @@
     "enabledManagers": ["custom.regex", "gomod", "pre-commit", "github-actions", "dockerfile", "docker-compose", "renovate-config"],
     "labels": ["dependencies", "changelog/no-changelog", "qa/no-code-change"],
     "stopUpdatingLabel": "stop-updating",
+    "ignorePaths": ["**/node_modules/**", "**/bower_components/**", "**/vendor/**", "**/examples/**", "**/__tests__/**", "**/tests/**", "**/__fixtures__/**", "**/test/integration/**"],
     "platformCommit": "enabled",
     "packageRules": [
       {
@@ -19,6 +20,12 @@
         "automerge": true,
         "minimumReleaseAge": null,
         "rebaseWhen": "behind-base-branch"
+      },
+      {
+        "description": "Keep e2e fixtures out of updates; their Go modules are workspace members and stay in",
+        "matchManagers": ["dockerfile", "docker-compose"],
+        "matchFileNames": ["test/**"],
+        "enabled": false
       },
       {
         "matchDepNames": ["integrations-core"],
