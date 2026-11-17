@@ -11,8 +11,10 @@ package oci
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -144,12 +146,19 @@ func TestDownloadPlatformNotAvailable(t *testing.T) {
 func TestDownloadRegistryWithOverride(t *testing.T) {
 	s := newTestDownloadServer(t)
 	defer s.Close()
+	var overrideHits atomic.Int32
+	override := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		overrideHits.Add(1)
+		http.NotFound(w, r)
+	}))
+	defer override.Close()
 	d := s.DownloaderWithEnv(&env.Env{
-		RegistryOverride: "fake.io",
+		RegistryOverride: override.URL,
 	})
 
 	_, err := d.Download(context.Background(), s.PackageURL(fixtures.FixtureSimpleV1))
-	assert.Error(t, err) // Host not found
+	assert.Error(t, err)
+	assert.NotZero(t, overrideHits.Load(), "override registry was not contacted")
 }
 
 func TestGetRefAndKeychain(t *testing.T) {
