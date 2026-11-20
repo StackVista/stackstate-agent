@@ -100,10 +100,8 @@
         "enabled": false
       },
       {
-        "description": "Protobuf stays security-only, like the Go dependencies",
+        "description": "Protobuf is bumped by hand; Renovate has no vulnerability data for github-releases",
         "matchDepNames": ["protocolbuffers/protobuf"],
-        "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest", "lockFileMaintenance", "rollback", "bump", "replacement"],
-        "matchJsonata": ["$not(isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion))"],
         "enabled": false
       },
       {
