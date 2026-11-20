@@ -4,7 +4,9 @@
 set -euo pipefail
 
 # Renovate installs the latest Go; tidy output depends on the version.
-export GOTOOLCHAIN="go$(sed -n 's/^go \([0-9.]*\)$/\1/p' go.work)+auto"
+go_version=$(sed -n 's/^go \([0-9.]*\)$/\1/p' go.work)
+[[ -n "$go_version" ]]
+export GOTOOLCHAIN="go${go_version}+auto"
 
 dirs=$(go list -m -f '{{.Dir}}')
 [[ -n "$dirs" ]]
