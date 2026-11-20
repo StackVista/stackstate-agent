@@ -100,6 +100,13 @@
         "enabled": false
       },
       {
+        "description": "Protobuf stays security-only, like the Go dependencies",
+        "matchDepNames": ["protocolbuffers/protobuf"],
+        "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest", "lockFileMaintenance", "rollback", "bump", "replacement"],
+        "matchJsonata": ["$not(isVulnerabilityAlert = true or $exists(vulnerabilityFixVersion))"],
+        "enabled": false
+      },
+      {
         "description": "Offer the Go toolchain patch in .go-version and go.work on its own, even when a newer minor exists",
         "matchManagers": ["custom.regex"],
         "matchDatasources": ["golang-version"],
