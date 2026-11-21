@@ -19,8 +19,8 @@ require (
 	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/vbatts/tar-split v0.12.2 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sync v0.25.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 )
 
