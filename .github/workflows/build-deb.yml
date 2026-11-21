@@ -497,7 +497,7 @@ jobs:
       - build-deb
       - test-deb-renaming
     if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment: agent-pre-release
     timeout-minutes: 30
     permissions:
@@ -600,7 +600,7 @@ jobs:
       - generate-install-script
       - sign-and-publish-deb
     if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment: agent-pre-release
     timeout-minutes: 15
     permissions:
@@ -657,7 +657,7 @@ jobs:
       - test-deb-renaming
       - build-agent-image
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Evaluate upstream job results

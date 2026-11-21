@@ -64,7 +64,7 @@ jobs:
 
   workflow-security-lint:
     name: Workflow security lint (Zizmor)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -243,7 +243,7 @@ jobs:
       - branded-unit-tests
       - workflow-security-lint
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Evaluate upstream job results
