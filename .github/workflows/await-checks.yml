@@ -21,7 +21,7 @@ permissions: {}
 jobs:
   await:
     name: Wait for verification to pass
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: ${{ inputs.timeout_minutes }}
     permissions:
       checks: read
