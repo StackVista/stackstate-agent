@@ -9,8 +9,8 @@ require (
 	github.com/hectane/go-acl v0.0.0-20230225031251-cdfc9e3acf94
 	github.com/shirou/gopsutil/v4 v4.26.3
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/sync v0.24.0
-	golang.org/x/sys v0.49.0
+	golang.org/x/sync v0.25.0
+	golang.org/x/sys v0.50.0
 )
 
 require (
