@@ -30,7 +30,7 @@ end
 
 source path: '..',
        options: {
-         exclude: ["**/testdata/**/*"],
+         exclude: ["**/testdata/**/*", "**/.omnibus-git-cache/**/*"],
        }
 relative_path 'src/github.com/DataDog/datadog-agent'
 

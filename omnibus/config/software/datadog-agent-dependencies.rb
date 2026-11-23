@@ -1,6 +1,9 @@
 name 'datadog-agent-dependencies'
 
-description "Enforce building dependencies as soon as possible so they can be cached"
+description "Build and install the Bazel-managed agent dependencies"
+
+# Omnibus does not fingerprint Bazel inputs; let Bazel validate its own cache.
+always_build true
 
 # [sts] STAC-24773: Bazel migration. The remaining `dependency '...'` lines below
 # (jmxfetch, libpcap, systemd, snmp-traps, procps-ng) are progressively replaced by

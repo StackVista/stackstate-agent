@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Fix CVE-2026-82049 in embedded Python's tarfile extraction filters by
+    backporting the upstream Python 3.13 hard-link target resolution fix.

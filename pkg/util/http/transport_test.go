@@ -8,6 +8,7 @@ package http
 import (
 	"crypto/tls"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -201,17 +202,43 @@ func TestCreateHTTP1Transport(t *testing.T) {
 	assert.Nil(t, transport.TLSNextProto)
 }
 
-func TestCreateHTTP2Transport(t *testing.T) {
-	c := configmock.New(t)
+func TestHTTPTransportProtocolNegotiation(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		clientHTTP2 bool
+		serverHTTP2 bool
+		wantMajor   int
+	}{
+		{"HTTP1", false, false, 1},
+		{"HTTP1 with HTTP2 server", false, true, 1},
+		{"HTTP2", true, true, 2},
+		{"HTTP2 fallback", true, false, 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, tc.wantMajor, r.ProtoMajor)
+				w.WriteHeader(http.StatusOK)
+			}))
+			server.EnableHTTP2 = tc.serverHTTP2
+			server.StartTLS()
+			t.Cleanup(server.Close)
 
-	transport := CreateHTTPTransport(c, WithHTTP2())
-	require.NotNil(t, transport)
-
-	assert.NotNil(t, transport.TLSNextProto)
-	assert.Contains(t, transport.TLSNextProto, "h2", "TLSNextProto should indicate HTTP/2 support")
-
-	assert.Contains(t, transport.TLSClientConfig.NextProtos, "h2", "NextProtos should prefer HTTP/2")
-	assert.Contains(t, transport.TLSClientConfig.NextProtos, "http/1.1", "NextProtos should allow fallback to HTTP/1.1")
+			cfg := configmock.New(t)
+			cfg.SetWithoutSource("skip_ssl_validation", true)
+			var options []func(*http.Transport)
+			if tc.clientHTTP2 {
+				options = append(options, WithHTTP2())
+			}
+			transport := CreateHTTPTransport(cfg, options...)
+			t.Cleanup(transport.CloseIdleConnections)
+			client := &http.Client{Transport: transport, Timeout: 5 * time.Second}
+			response, err := client.Get(server.URL)
+			require.NoError(t, err)
+			defer response.Body.Close()
+			assert.Equal(t, http.StatusOK, response.StatusCode)
+			assert.Equal(t, tc.wantMajor, response.ProtoMajor)
+		})
+	}
 }
 
 func TestNoProxyWarningMap(t *testing.T) {

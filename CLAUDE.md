@@ -17,8 +17,8 @@ The StackState Agent is a monitoring and observability agent forked from Datadog
 
 ### Initial Setup
 ```bash
-# 1. Install Python dependencies (use virtual environment recommended)
-pip install -r requirements.txt
+# 1. Install the development task runner (use virtual environment recommended)
+pip install dda
 
 # 2. Install Go tools
 invoke install-tools
@@ -53,9 +53,6 @@ invoke system-probe.build
 # Test specific package (most common during development)
 invoke test --targets=./pkg/aggregator
 
-# Skip linters during development for faster iteration
-invoke test --targets=./pkg/aggregator --skip-linters
-
 # Run tests that depend on rtloader
 invoke rtloader.make && invoke rtloader.install
 invoke test --targets=./pkg/collector/python
@@ -64,7 +61,7 @@ invoke test --targets=./pkg/collector/python
 ### Linting
 ```bash
 # Run Go linters (do this before committing)
-invoke lint-go
+dda inv linter.go
 
 # Run linters on specific module/targets
 invoke linter.go --targets=./pkg/collector/check,./pkg/aggregator

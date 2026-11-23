@@ -9,3 +9,12 @@ This test attempts to build the files in `test/otel` with the same build args us
 
 ## `check-otel-module-versions`
 This test reads the modules in `modules.py` with the `used_by_otel` flag and verifies that all of their `go.mod` versions match the same version that opentelemetry-collector-contrib uses. If these versions are out of sync, the modules can no longer be imported in upstream and this test will fail.
+
+## Exporter security regressions
+
+Run `go test ./test/otel/security -count=1 -v` from the repository root.
+These local tests cover verbose trace diagnostics omitting exporter endpoints
+(CVE-2026-81870) and the log gRPC exporter honoring both generic and log-specific
+OTLP environment CA/client certificate settings (CVE-2026-81871). The TLS test
+starts a loopback collector requiring a private CA and mutual authentication;
+it does not provision infrastructure or send telemetry to an external collector.

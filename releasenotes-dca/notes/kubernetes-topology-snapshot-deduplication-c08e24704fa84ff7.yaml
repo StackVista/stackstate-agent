@@ -1,0 +1,7 @@
+fixes:
+  - |
+    Emit each Kubernetes topology component and relation identity only once
+    per snapshot. This prevents duplicate-item synchronization errors when
+    workloads share endpoints or host paths, or a container mounts multiple
+    files from the same ConfigMap. Existing identities and updates in later
+    snapshots are preserved.

@@ -1,6 +1,10 @@
 name "python3"
 
-default_version "3.13.15"
+default_version "3.13.18"
+
+# Omnibus does not fingerprint Bazel source patches. Always invoke Bazel so its
+# own cache validates the CPython inputs, including same-version security fixes.
+always_build true
 
 # [sts] STAC-24773 Phase D1: Python via Bazel @cpython (replaces omnibus source build).
 # Mirrors origin/base-7.78.2 with --downloader_config=/dev/null on every bazelisk

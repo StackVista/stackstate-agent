@@ -14,8 +14,6 @@ import (
 	"strconv"
 	"testing"
 
-	"golang.org/x/net/http2"
-
 	"github.com/DataDog/datadog-agent/comp/api/api/apiimpl/observability"
 	api "github.com/DataDog/datadog-agent/comp/api/api/def"
 	grpc "github.com/DataDog/datadog-agent/comp/api/grpcserver/def"
@@ -29,6 +27,7 @@ import (
 	// package dependencies
 
 	"github.com/DataDog/datadog-agent/pkg/util/fxutil"
+	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
 
 	// third-party dependencies
 	dto "github.com/prometheus/client_model/go"
@@ -243,7 +242,7 @@ func TestStartServerWithGrpcServer(t *testing.T) {
 		TLSClientConfig: deps.IPC.GetTLSClientConfig(),
 	}
 
-	http2.ConfigureTransport(transport)
+	httputils.WithHTTP2()(transport)
 	http2Client := &http.Client{
 		Transport: transport,
 	}
@@ -288,7 +287,7 @@ func TestStartServerWithoutGrpcServer(t *testing.T) {
 		TLSClientConfig: deps.IPC.GetTLSClientConfig(),
 	}
 
-	http2.ConfigureTransport(transport)
+	httputils.WithHTTP2()(transport)
 	http2Client := &http.Client{
 		Transport: transport,
 	}

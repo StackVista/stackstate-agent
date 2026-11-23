@@ -25,13 +25,11 @@
 # doing this.
 name "cacerts"
 
-# We have a synthetic monitor on the latest cacerts file to warn us when the latest
-# cacerts bundle changes.
-# This allows us to always use up-to-date cacerts, without breaking all builds
-# when they change.
-default_version "latest"
-source url: "https://curl.se/ca/cacert.pem",
-       sha256: "f66dff1bdf8f96060b8177976f8b7d9254bc89bc4db933d769f7384d28480bc9",
+# Pinned to a dated curl release: the moving cacert.pem breaks every build when
+# curl publishes a new bundle, and this fork has no monitor for it.
+default_version "2026-10-20"
+source url: "https://curl.se/ca/cacert-#{version}.pem",
+       sha256: "796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe",
        target_filename: "cacert.pem"
 
 relative_path "cacerts-#{version}"

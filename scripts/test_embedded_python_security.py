@@ -1,0 +1,165 @@
+"""Check security fixes using the packaged Python interpreter and dependencies."""
+
+import contextlib
+import hashlib
+import io
+import json
+import os
+import platform
+import shutil
+import stringprep
+import sys
+import tarfile
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+import jwt
+from build._compat.tarfile import safe_extractall
+from oauthlib.common import Request
+from oauthlib.oauth2 import BearerToken, DeviceCodeGrant
+
+
+class EmbeddedPythonSecurityTests(unittest.TestCase):
+    def test_oauth_device_flow_requires_valid_device_code(self):
+        # CVE-2026-49272: knowing a valid client ID must not bypass device
+        # authorization. Exercise the packaged library with an accepted client.
+        for code, error in ((None, "invalid_request"), ("bogus", "invalid_grant")):
+            with self.subTest(device_code=code):
+                validator = mock.MagicMock()
+                validator.validate_device_code.return_value = False
+                request = Request(
+                    "https://example.invalid/token",
+                    http_method="POST",
+                    body="grant_type=urn:ietf:params:oauth:grant-type:device_code&client_id=client",
+                )
+                request.client = mock.Mock(client_id="client")
+                request.device_code = code
+                grant = DeviceCodeGrant(validator)
+                _, body, status = grant.create_token_response(request, BearerToken(validator))
+                self.assertEqual(status, 400)
+                self.assertEqual(json.loads(body)["error"], error)
+                validator.save_token.assert_not_called()
+                if code is None:
+                    validator.validate_device_code.assert_not_called()
+                else:
+                    validator.validate_device_code.assert_called_once_with("client", code, request)
+
+    @unittest.skipUnless(
+        os.name == "posix" and shutil.rmtree.avoids_symlink_attacks,
+        "requires POSIX fd-based directory removal",
+    )
+    @unittest.skipIf(hasattr(os, "geteuid") and os.geteuid() == 0, "requires a non-root user")
+    def test_runtime_maintenance(self):
+        with tempfile.TemporaryDirectory() as outside:
+            target = Path(outside) / "file1"
+            target.write_bytes(b"outside")
+            before = target.stat()
+            directory = tempfile.TemporaryDirectory()
+            original = Path(directory.name) / "dir1"
+            moved = Path(directory.name) / "dir1_moved"
+            original.mkdir()
+            (original / "file1").write_bytes(b"inside")
+            original.chmod(0o500)
+            unlink = os.unlink
+            raced = False
+
+            def replace_on_permission_error(path, *, dir_fd=None):
+                nonlocal raced
+                try:
+                    return unlink(path, dir_fd=dir_fd)
+                except PermissionError:
+                    if not original.is_symlink():
+                        original.chmod(0o700)
+                        original.rename(moved)
+                        original.symlink_to(outside, target_is_directory=True)
+                        raced = True
+                    raise
+
+            try:
+                with mock.patch("os.unlink", replace_on_permission_error), contextlib.suppress(OSError):
+                    directory.cleanup()
+                self.assertTrue(raced, "runtime check must execute")
+                self.assertTrue(target.is_file(), "runtime check must preserve the fixture")
+                self.assertEqual(target.read_bytes(), b"outside")
+                after = target.stat()
+                self.assertEqual((after.st_mode, after.st_mtime_ns), (before.st_mode, before.st_mtime_ns))
+            finally:
+                if original.is_symlink():
+                    original.unlink()
+                    moved.rename(original)
+                if original.exists():
+                    original.chmod(0o700)
+                directory.cleanup()
+
+    def test_jwt_options_reuse_preserves_claim_verification(self):
+        # CVE-2026-103001: an unsigned inspection must not mutate reusable
+        # options and disable expiry checking on a later verified decode.
+        secret = 'embedded-python-security-test-key'
+        token = jwt.encode({'exp': 1}, secret, algorithm='HS256')
+        options = {'verify_signature': False}
+        self.assertEqual(jwt.decode(token, options=options), {'exp': 1})
+        self.assertEqual(options, {'verify_signature': False})
+        options['verify_signature'] = True
+        with self.assertRaises(jwt.ExpiredSignatureError):
+            jwt.decode(token, secret, algorithms=['HS256'], options=options)
+
+    def test_idna_uses_unicode_3_2_case_folding(self):
+        cases = (
+            ("\N{CHEROKEE LETTER A}\N{CHEROKEE LETTER A}", b"xn--58da"),
+            ("\N{GEORGIAN CAPITAL LETTER AN}.", b"xn--7md."),
+            ("\N{CYRILLIC LETTER PALOCHKA}.example", b"xn--d5a.example"),
+            ("\N{ROMAN NUMERAL REVERSED ONE HUNDRED}.example.", b"xn--q5g.example."),
+        )
+        for name, encoded in cases:
+            with self.subTest(name=name):
+                self.assertEqual(name.encode("idna"), encoded)
+        self.assertEqual("example.invalid".encode("idna"), b"example.invalid")
+
+    def test_tarfile_hardlink_relocation(self):
+        # CPython gh-157190's test_sneaky_hardlink_relocation, also exercised
+        # through the packaged build frontend's extraction wrapper.
+        for extraction in ("data", "tar", "build.safe_extractall"):
+            with self.subTest(extraction=extraction), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                outside = root / "escape"
+                outside.write_bytes(b"outside")
+                before = outside.stat()
+                destination = root / "dest"
+                destination.mkdir()
+                archive = io.BytesIO()
+                with tarfile.open(fileobj=archive, mode="w") as tar:
+                    member = tarfile.TarInfo("a/escape")
+                    member.size = len(b"decoy")
+                    tar.addfile(member, io.BytesIO(b"decoy"))
+                    member = tarfile.TarInfo("a/b/s")
+                    member.type = tarfile.SYMTYPE
+                    member.linkname = "../escape"
+                    tar.addfile(member)
+                    member = tarfile.TarInfo("s")
+                    member.type = tarfile.LNKTYPE
+                    member.linkname = "a/b/s"
+                    tar.addfile(member)
+                archive.seek(0)
+                with tarfile.open(fileobj=archive) as tar:
+                    if extraction == "build.safe_extractall":
+                        safe_extractall(tar, destination)
+                    else:
+                        tar.extractall(destination, filter=extraction)
+                self.assertEqual((destination / "a/escape").read_bytes(), b"decoy")
+                self.assertTrue((destination / "a/b/s").is_symlink())
+                self.assertFalse((destination / "s").is_symlink())
+                self.assertEqual((destination / "s").read_bytes(), b"decoy")
+                self.assertEqual(outside.read_bytes(), b"outside")
+                after = outside.stat()
+                self.assertEqual((after.st_mode, after.st_mtime_ns), (before.st_mode, before.st_mtime_ns))
+
+
+if __name__ == "__main__":
+    print(sys.version)
+    print(platform.machine())
+    for imported in (stringprep, tarfile):
+        module = Path(imported.__file__)
+        print(f"{module}: {hashlib.sha256(module.read_bytes()).hexdigest()}")
+    unittest.main(verbosity=2)
