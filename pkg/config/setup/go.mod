@@ -23,7 +23,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/util/winutil v0.78.3-rc.2
 	github.com/stretchr/testify v1.12.1
 	go.yaml.in/yaml/v2 v2.4.4
-	golang.org/x/sys v0.49.0
+	golang.org/x/sys v0.50.0
 )
 
 require (
@@ -61,7 +61,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/net v0.62.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 )
 
