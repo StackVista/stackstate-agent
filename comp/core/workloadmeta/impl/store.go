@@ -707,6 +707,9 @@ func (w *workloadmeta) startCandidates(ctx context.Context) bool {
 			w.firstCollectorReadyOnce.Do(func() {
 				close(w.firstCollectorReady)
 			})
+		} else if pkgerrors.IsDisabled(err) {
+			// [sts] Expected when a runtime is absent, e.g. no container runtime socket is mounted.
+			w.log.Debugf("workloadmeta collector %q is disabled: %s", id, err)
 		} else {
 			w.log.Infof("workloadmeta collector %q could not start. error: %s", id, err)
 		}
