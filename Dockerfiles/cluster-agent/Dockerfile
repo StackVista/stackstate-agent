@@ -25,7 +25,7 @@ RUN chmod 755 entrypoint.sh \
 # Actual docker image construction #
 ####################################
 
-FROM ${BCI_IMAGE_REGISTRY}/bci-base:15.7 AS software
+FROM ${BCI_IMAGE_REGISTRY}/bci-base:16.1@sha256:78b251b18006a8c8ea18eb9b9bb245084e4b381aa1a115fcac653453bf7d6de6 AS software
 # as per comment here: https://github.com/rancher/rancher/blob/main/package/Dockerfile#L12
 # No-op command to create an explicit layer - this fixes a weird buildkit/buildx bug on macos arm
 RUN :
