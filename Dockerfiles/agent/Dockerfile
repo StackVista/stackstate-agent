@@ -1,5 +1,5 @@
 ARG BASE_IMAGE_REGISTRY=registry.tooling.stackstate.io/docker/library
-ARG BASE_IMAGE_UBUNTU_VERSION=24.04
+ARG BASE_IMAGE_UBUNTU_VERSION=26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db
 ARG BCI_IMAGE_REGISTRY=registry.tooling.stackstate.io/suse/bci
 
 ##########################################
