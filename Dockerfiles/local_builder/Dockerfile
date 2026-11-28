@@ -1,4 +1,4 @@
-FROM registry.tooling.stackstate.io/quay/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
+FROM registry.tooling.stackstate.io/quay/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511@sha256:447fceec0c84a113338551192030b812e392a5abde2032b24b0f81dc27398e89
 
 ARG UID
 ARG GID

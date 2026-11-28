@@ -5,7 +5,7 @@ ARG BCI_IMAGE_REGISTRY=registry.tooling.stackstate.io/suse/bci
 # Preparation stage: layout and chmods #
 ########################################
 
-FROM ${BASE_IMAGE_REGISTRY}/ubuntu:20.04 as builder
+FROM ${BASE_IMAGE_REGISTRY}/ubuntu:20.04@sha256:8feb4d8ca5354def3d8fce243717141ce31e2c428701f6682bd2fafe15388214 as builder
 
 WORKDIR /output
 
@@ -25,12 +25,12 @@ RUN chmod 755 entrypoint.sh \
 # Actual docker image construction #
 ####################################
 
-FROM ${BCI_IMAGE_REGISTRY}/bci-base:15.7 AS software
+FROM ${BCI_IMAGE_REGISTRY}/bci-base:15.7@sha256:8cd100ae2ec5ab23d6ec7aa1c0fe2dc30ca852c609406097797c9d298b7decdd AS software
 # as per comment here: https://github.com/rancher/rancher/blob/main/package/Dockerfile#L12
 # No-op command to create an explicit layer - this fixes a weird buildkit/buildx bug on macos arm
 RUN :
 
-FROM ${BCI_IMAGE_REGISTRY}/bci-micro:15.7 AS final
+FROM ${BCI_IMAGE_REGISTRY}/bci-micro:15.7@sha256:dbfc093371c573a6628d896e73b1063b19f2e660f92b306816fd33694175dca4 AS final
 LABEL maintainer="StackState <info@stackstate.com>"
 
 ARG user="stackstate-agent"
