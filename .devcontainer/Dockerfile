@@ -1,14 +1,14 @@
 ARG DEBIAN_VERSION=bullseye-slim
-ARG DOCKER_VERSION=29.10.0@sha256:4bbc7223f81db790097c6dea42fb93e05b8fead4f0431fbe6ccaba6e8473201c
-ARG DOCKER_COMPOSE_VERSION=debian-1.28.4
+ARG DOCKER_VERSION=29.10.1@sha256:fbbc96e0af32cdc190aff92ba97a1281a115351a723afe21af78879cc55126b0
+ARG DOCKER_COMPOSE_VERSION=debian-1.28.4@sha256:30ee50f1bde2414b58bc5f643a790a0ca07ce8cb533402d166511f5096b603d8
 ARG GOLANG_VERSION=1.15
-ARG GOLANGCI_LINT_VERSION=v1.42.1
+ARG GOLANGCI_LINT_VERSION=v1.64.8@sha256:2987913e27f4eca9c8a39129d2c7bc1e74fbcf77f181e01cea607be437aa5cb8
 
 FROM docker:${DOCKER_VERSION} AS docker-cli
 FROM docker/compose:${DOCKER_COMPOSE_VERSION} AS docker-compose
 FROM golangci/golangci-lint:${GOLANGCI_LINT_VERSION} as golangci-lint
 
-FROM golang:latest
+FROM golang:latest@sha256:5f1b98fa02fe396ebce2a0227a0e08309e11792915b9dd2e1f71053d7e7e6666
 
 # Configure to avoid build warnings and errors as described in official VSCode Remote-Containers extension documentation.
 # See https://code.visualstudio.com/docs/remote/containers-advanced#_reducing-dockerfile-build-warnings.
