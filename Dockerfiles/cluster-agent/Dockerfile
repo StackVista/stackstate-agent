@@ -30,7 +30,7 @@ FROM ${BCI_IMAGE_REGISTRY}/bci-base:15.7 AS software
 # No-op command to create an explicit layer - this fixes a weird buildkit/buildx bug on macos arm
 RUN :
 
-FROM ${BCI_IMAGE_REGISTRY}/bci-micro:15.7 AS final
+FROM ${BCI_IMAGE_REGISTRY}/bci-micro:16.1@sha256:fefab9e733eb35ae19294ed3db2a408794f297d765c472199a1cac0ec00f39af AS final
 LABEL maintainer="StackState <info@stackstate.com>"
 
 ARG user="stackstate-agent"

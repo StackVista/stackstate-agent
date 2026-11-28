@@ -36,7 +36,7 @@ RUN :
 # Actual docker image construction #
 ####################################
 
-FROM ${BCI_IMAGE_REGISTRY}/bci-micro:15.7
+FROM ${BCI_IMAGE_REGISTRY}/bci-micro:16.1@sha256:fefab9e733eb35ae19294ed3db2a408794f297d765c472199a1cac0ec00f39af
 LABEL maintainer="StackState <info@stackstate.com>"
 # Install system packages using builder image that has zypper
 
