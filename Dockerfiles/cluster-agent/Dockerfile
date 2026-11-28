@@ -5,7 +5,7 @@ ARG BCI_IMAGE_REGISTRY=registry.tooling.stackstate.io/suse/bci
 # Preparation stage: layout and chmods #
 ########################################
 
-FROM ${BASE_IMAGE_REGISTRY}/ubuntu:20.04 as builder
+FROM ${BASE_IMAGE_REGISTRY}/ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db as builder
 
 WORKDIR /output
 
